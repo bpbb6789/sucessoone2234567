@@ -5,6 +5,8 @@ import { useTheme } from "@/hooks/use-theme";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Link } from "wouter";
+import { ROUTES } from "@/lib/constants";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -34,14 +36,16 @@ export function Header() {
             <Menu className="h-5 w-5" />
           </Button>
 
-          <div className="flex items-center space-x-1 cursor-pointer" data-testid="link-home" onClick={() => window.location.href = "/"}>
-            <div className="text-youtube-red text-2xl">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-              </svg>
+          <Link href={ROUTES.HOME}>
+            <div className="flex items-center space-x-1 cursor-pointer" data-testid="link-home">
+              <div className="text-youtube-red text-2xl">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+              </div>
+              <span className="text-xl font-medium hidden sm:inline">YouTube</span>
             </div>
-            <span className="text-xl font-medium hidden sm:inline">YouTube</span>
-          </div>
+          </Link>
         </div>
 
         {/* Search Section */}
@@ -62,9 +66,13 @@ export function Header() {
                 variant="outline"
                 className="px-6 py-2 border border-l-0 border-gray-300 dark:border-youtube-dark-secondary rounded-r-full bg-gray-50 dark:bg-youtube-dark-secondary hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
                 data-testid="button-search"
-                onClick={() => window.location.href = "/search"}
+                asChild
               >
-                <Search className="h-4 w-4" />
+                <Link href={ROUTES.SEARCH}>
+                  <div>
+                    <Search className="h-4 w-4" />
+                  </div>
+                </Link>
               </Button>
             </div>
             <Button
@@ -86,9 +94,13 @@ export function Header() {
               size="icon"
               className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
               data-testid="button-search-mobile"
-              onClick={() => window.location.href = "/search"}
+              asChild
             >
-              <Search className="h-4 w-4" />
+              <Link href={ROUTES.SEARCH}>
+                <div>
+                  <Search className="h-4 w-4" />
+                </div>
+              </Link>
             </Button>
           )}
 
@@ -111,9 +123,13 @@ export function Header() {
             size="icon"
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
             data-testid="button-upload"
-            onClick={() => window.location.href = "/create"}
+            asChild
           >
-            <Upload className="h-4 w-4" />
+            <Link href={ROUTES.CREATE}>
+              <div>
+                <Upload className="h-4 w-4" />
+              </div>
+            </Link>
           </Button>
 
           <Button
@@ -121,18 +137,23 @@ export function Header() {
             size="icon"
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
             data-testid="button-notifications"
-            onClick={() => window.location.href = "/notifications"}
+            asChild
           >
-            <Bell className="h-4 w-4" />
+            <Link href={ROUTES.NOTIFICATIONS}>
+              <div>
+                <Bell className="h-4 w-4" />
+              </div>
+            </Link>
           </Button>
 
-          <img
-            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40"
-            alt="User Avatar"
-            className="w-8 h-8 rounded-full cursor-pointer"
-            data-testid="img-user-avatar"
-            onClick={() => window.location.href = "/profile"}
-          />
+          <Link href={ROUTES.PROFILE}>
+            <img
+              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40"
+              alt="User Avatar"
+              className="w-8 h-8 rounded-full cursor-pointer"
+              data-testid="img-user-avatar"
+            />
+          </Link>
         </div>
       </div>
     </header>

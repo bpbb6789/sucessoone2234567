@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { icon: Home, label: "Home", href: ROUTES.HOME },
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
-  { icon: PlusCircle, label: "Create", href: "#" },
+  { icon: PlusCircle, label: "Create", href: ROUTES.CREATE },
   { icon: Radio, label: "Subscriptions", href: ROUTES.SUBSCRIPTIONS },
   { icon: Folder, label: "Library", href: ROUTES.LIBRARY },
 ];
@@ -29,19 +29,6 @@ export function MobileNavigation() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href;
-          
-          if (item.href === "#") {
-            return (
-              <button
-                key={item.label}
-                className="mobile-nav-item"
-                data-testid={`mobile-nav-${item.label.toLowerCase()}`}
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-xs mt-1">{item.label}</span>
-              </button>
-            );
-          }
           
           return (
             <Link key={item.href} href={item.href}>
