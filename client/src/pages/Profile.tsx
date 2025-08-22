@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Edit, Share2, Bell, Shield } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
-import { ShortsCard } from "@/components/ShortsCard";
+import ShortsCard from "@/components/ShortsCard";
 
 interface ProfileData {
   id: string;
