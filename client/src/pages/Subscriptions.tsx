@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { VideoCard } from "@/components/VideoCard";
+import VideoCard from "@/components/VideoCard";
 import { type VideoWithChannel, type Channel } from "@shared/schema";
 
 export default function Subscriptions() {

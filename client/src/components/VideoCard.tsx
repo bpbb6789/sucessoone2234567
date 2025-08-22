@@ -6,7 +6,7 @@ interface VideoCardProps {
   onClick?: () => void;
 }
 
-export function VideoCard({ video, onClick }: VideoCardProps) {
+function VideoCard({ video, onClick }: VideoCardProps) {
   return (
     <div 
       className="video-card cursor-pointer"
@@ -51,3 +51,5 @@ export function VideoCard({ video, onClick }: VideoCardProps) {
     </div>
   );
 }
+
+export default VideoCard;

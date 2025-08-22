@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ShortsCard } from "@/components/ShortsCard";
+import ShortsCard from "@/components/ShortsCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { type ShortsWithChannel } from "@shared/schema";
 import { formatViewCount } from "@/lib/constants";

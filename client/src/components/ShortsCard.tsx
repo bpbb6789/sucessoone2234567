@@ -6,7 +6,7 @@ interface ShortsCardProps {
   onClick?: () => void;
 }
 
-export function ShortsCard({ shorts, onClick }: ShortsCardProps) {
+function ShortsCard({ shorts, onClick }: ShortsCardProps) {
   return (
     <div 
       className="shorts-card cursor-pointer group"
@@ -30,3 +30,5 @@ export function ShortsCard({ shorts, onClick }: ShortsCardProps) {
     </div>
   );
 }
+
+export default ShortsCard;
