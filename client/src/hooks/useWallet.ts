@@ -154,7 +154,7 @@ export function useWallet() {
     }
   }, [toast]);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
     setWalletState({
       isConnected: false,
       account: null,
