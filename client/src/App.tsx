@@ -16,6 +16,10 @@ import History from "@/pages/History";
 import WatchLater from "@/pages/WatchLater";
 import LikedVideos from "@/pages/LikedVideos";
 import Watch from "@/pages/Watch";
+import Profile from "@/pages/Profile";
+import Create from "@/pages/Create";
+import Notifications from "@/pages/Notifications";
+import Search from "@/pages/Search";
 
 function Router() {
   return (
@@ -30,6 +34,10 @@ function Router() {
         <Route path="/watch-later" component={WatchLater} />
         <Route path="/liked-videos" component={LikedVideos} />
         <Route path="/watch/:id" component={Watch} />
+        <Route path="/profile" component={Profile} />
+        <Route path="/create" component={Create} />
+        <Route path="/notifications" component={Notifications} />
+        <Route path="/search" component={Search} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

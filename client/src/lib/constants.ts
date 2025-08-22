@@ -2,7 +2,7 @@ export const CATEGORIES = [
   "All",
   "Music",
   "Gaming",
-  "News", 
+  "News",
   "Sports",
   "Technology",
   "Comedy",
@@ -24,14 +24,18 @@ export const MOBILE_BREAKPOINT = 768;
 export const ROUTES = {
   HOME: "/",
   SHORTS: "/shorts",
-  SUBSCRIPTIONS: "/subscriptions", 
+  SUBSCRIPTIONS: "/subscriptions",
   MUSIC: "/music",
   LIBRARY: "/library",
   HISTORY: "/history",
   WATCH_LATER: "/watch-later",
   LIKED_VIDEOS: "/liked-videos",
   WATCH: "/watch",
-} as const;
+  PROFILE: "/profile",
+  CREATE: "/create",
+  NOTIFICATIONS: "/notifications",
+  SEARCH: "/search",
+};
 
 export const formatViewCount = (count: number): string => {
   if (count >= 1000000) {
@@ -55,12 +59,12 @@ export const formatDuration = (seconds: number): string => {
 
 export const formatTimeAgo = (date: Date | string | null): string => {
   if (!date) return "Unknown";
-  
+
   const now = new Date();
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
+
   if (isNaN(dateObj.getTime())) return "Unknown";
-  
+
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
