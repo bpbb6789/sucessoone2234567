@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search as SearchIcon, Filter, Clock, Trending, User } from "lucide-react";
+import { Search as SearchIcon, Filter, Clock, TrendingUp, User } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import { ShortsCard } from "@/components/ShortsCard";
 import { formatDistance } from "date-fns";
@@ -240,7 +240,7 @@ export default function Search() {
           {/* Trending */}
           <div>
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <Trending className="h-5 w-5" />
+              <TrendingUp className="h-5 w-5" />
               Trending searches
             </h2>
             <div className="space-y-2">
@@ -252,7 +252,7 @@ export default function Search() {
                   onClick={() => setSearchQuery(trend)}
                 >
                   <div className="flex items-center gap-3">
-                    <Trending className="h-4 w-4" />
+                    <TrendingUp className="h-4 w-4" />
                     <span>{trend}</span>
                   </div>
                 </Button>
