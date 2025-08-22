@@ -1,5 +1,10 @@
+
+import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react';
+import { WalletConnectModal } from '@walletconnect/modal';
+import { SignClient } from '@walletconnect/sign-client';
+
 // WalletConnect configuration and utilities
-export const WALLETCONNECT_PROJECT_ID = "8b2d0dd39c1cced02ecce163a96a8cb5";
+export const WALLETCONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WC_PROJECT_ID || "8b2d0dd39c1cced02ecce163a96a8cb5";
 
 export interface WalletAccount {
   address: string;
@@ -28,11 +33,11 @@ export const SUPPORTED_CHAINS = {
     rpcUrl: 'https://mainnet.infura.io/v3/',
     blockExplorer: 'https://etherscan.io'
   },
-  POLYGON: {
-    chainId: 137,
-    name: 'Polygon Mainnet',
-    rpcUrl: 'https://polygon-rpc.com',
-    blockExplorer: 'https://polygonscan.com'
+  BASE_SEPOLIA: {
+    chainId: 84532,
+    name: 'Base Sepolia',
+    rpcUrl: 'https://base-sepolia.g.alchemy.com/v2/o3VW3WRXrsXXMRX3l7jZxLUqhWyZzXBy',
+    blockExplorer: 'https://sepolia.basescan.org'
   }
 } as const;
 
@@ -94,38 +99,191 @@ export async function getBalance(address: string): Promise<string> {
   }
 }
 
-// WalletConnect utilities (basic implementation)
+// WalletConnect v2 implementation
 export class WalletConnectManager {
   private projectId: string;
-  
+  private signClient: SignClient | null = null;
+  private modal: WalletConnectModal | null = null;
+  private session: any = null;
+
   constructor(projectId: string) {
     this.projectId = projectId;
+    this.init();
+  }
+
+  private async init() {
+    try {
+      // Initialize WalletConnect Modal
+      this.modal = new WalletConnectModal({
+        projectId: this.projectId,
+        chains: [1, 84532], // Ethereum and Base Sepolia
+        themeMode: 'light'
+      });
+
+      // Initialize Sign Client
+      this.signClient = await SignClient.init({
+        projectId: this.projectId,
+        metadata: {
+          name: 'UniPump',
+          description: 'Decentralized video platform with token creation',
+          url: window.location.origin,
+          icons: ['/logo.svg']
+        }
+      });
+
+      // Set up event listeners
+      this.signClient.on('session_proposal', this.handleSessionProposal.bind(this));
+      this.signClient.on('session_request', this.handleSessionRequest.bind(this));
+      this.signClient.on('session_delete', this.handleSessionDelete.bind(this));
+
+      // Check for existing sessions
+      const sessions = this.signClient.session.getAll();
+      if (sessions.length > 0) {
+        this.session = sessions[0];
+      }
+
+    } catch (error) {
+      console.error('Failed to initialize WalletConnect:', error);
+    }
+  }
+
+  private handleSessionProposal(event: any) {
+    // Auto-approve session proposal
+    const { id, params } = event;
+    const { proposer, requiredNamespaces } = params;
+
+    // Approve the session
+    this.signClient?.approve({
+      id,
+      namespaces: {
+        eip155: {
+          accounts: [
+            "eip155:1:0x0000000000000000000000000000000000000000", // Placeholder
+            "eip155:84532:0x0000000000000000000000000000000000000000"
+          ],
+          methods: [
+            "eth_sendTransaction",
+            "eth_signTransaction",
+            "eth_sign",
+            "personal_sign",
+            "eth_signTypedData"
+          ],
+          events: ["chainChanged", "accountsChanged"]
+        }
+      }
+    });
+  }
+
+  private handleSessionRequest(event: any) {
+    console.log('Session request:', event);
+  }
+
+  private handleSessionDelete() {
+    this.session = null;
   }
 
   async connect(): Promise<WalletAccount | null> {
-    // Basic WalletConnect implementation
-    // In a real app, you'd use @walletconnect/web3wallet
     try {
-      // Placeholder for WalletConnect logic
-      console.log('WalletConnect with project ID:', this.projectId);
-      
-      // For now, fallback to MetaMask if available
-      if (window.ethereum) {
-        return connectMetaMask();
+      if (!this.signClient) {
+        await this.init();
       }
+
+      // Check for existing session
+      if (this.session) {
+        const accounts = this.session.namespaces.eip155?.accounts || [];
+        if (accounts.length > 0) {
+          const account = accounts[0].split(':')[2];
+          return {
+            address: account,
+            chainId: parseInt(accounts[0].split(':')[1])
+          };
+        }
+      }
+
+      // Create new connection
+      const { uri, approval } = await this.signClient!.connect({
+        requiredNamespaces: {
+          eip155: {
+            methods: [
+              "eth_sendTransaction",
+              "eth_signTransaction", 
+              "eth_sign",
+              "personal_sign",
+              "eth_signTypedData"
+            ],
+            chains: ["eip155:1", "eip155:84532"],
+            events: ["chainChanged", "accountsChanged"]
+          }
+        }
+      });
+
+      // Open modal with URI
+      if (uri && this.modal) {
+        this.modal.openModal({ uri });
+      }
+
+      // Wait for session approval
+      this.session = await approval();
       
-      // Show WalletConnect QR code modal (placeholder)
-      alert('WalletConnect integration requires additional setup. Using MetaMask fallback.');
+      if (this.modal) {
+        this.modal.closeModal();
+      }
+
+      const accounts = this.session.namespaces.eip155?.accounts || [];
+      if (accounts.length > 0) {
+        const account = accounts[0].split(':')[2];
+        return {
+          address: account,
+          chainId: parseInt(accounts[0].split(':')[1])
+        };
+      }
+
       return null;
     } catch (error) {
-      console.error('WalletConnect failed:', error);
+      console.error('WalletConnect connection failed:', error);
+      if (this.modal) {
+        this.modal.closeModal();
+      }
       return null;
     }
   }
 
-  disconnect(): void {
-    // Disconnect logic
-    console.log('Disconnecting WalletConnect');
+  async disconnect(): Promise<void> {
+    try {
+      if (this.session && this.signClient) {
+        await this.signClient.disconnect({
+          topic: this.session.topic,
+          reason: {
+            code: 6000,
+            message: "User disconnected"
+          }
+        });
+      }
+      this.session = null;
+    } catch (error) {
+      console.error('Failed to disconnect WalletConnect:', error);
+    }
+  }
+
+  async sendTransaction(transaction: any): Promise<string> {
+    if (!this.session || !this.signClient) {
+      throw new Error('No active WalletConnect session');
+    }
+
+    const result = await this.signClient.request({
+      topic: this.session.topic,
+      chainId: "eip155:1",
+      request: {
+        method: "eth_sendTransaction",
+        params: [transaction]
+      }
+    });
+
+    return result;
+  }
+
+  isConnected(): boolean {
+    return !!this.session;
   }
 }
 

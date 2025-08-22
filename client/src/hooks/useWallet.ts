@@ -114,6 +114,9 @@ export function useWallet() {
           break;
         case WALLET_CONNECTORS.WALLETCONNECT:
           account = await walletConnectManager.connect();
+          if (!account) {
+            throw new Error('WalletConnect connection was cancelled or failed');
+          }
           break;
         default:
           throw new Error(`Unsupported connector: ${connector}`);
@@ -159,7 +162,7 @@ export function useWallet() {
     });
 
     if (walletState.connector === WALLET_CONNECTORS.WALLETCONNECT) {
-      walletConnectManager.disconnect();
+      await walletConnectManager.disconnect();
     }
 
     toast({
