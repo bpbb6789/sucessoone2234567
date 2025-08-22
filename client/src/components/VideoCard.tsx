@@ -52,4 +52,4 @@ function VideoCard({ video, onClick }: VideoCardProps) {
   );
 }
 
-export default VideoCard;
+export { VideoCard };

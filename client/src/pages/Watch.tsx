@@ -2,7 +2,7 @@ import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThumbsUp, ThumbsDown, Share, Download, Plus, MoreHorizontal, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import VideoCard from "@/components/VideoCard";
+import { VideoCard } from "@/components/VideoCard";
 import { type VideoWithChannel, type CommentWithChannel } from "@shared/schema";
 import { formatViewCount, formatTimeAgo } from "@/lib/constants";
 import { apiRequest } from "@/lib/queryClient";

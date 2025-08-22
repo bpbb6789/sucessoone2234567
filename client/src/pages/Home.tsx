@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import VideoCard from "@/components/VideoCard";
+import { VideoCard } from "@/components/VideoCard";
 import { CategoryChips } from "@/components/CategoryChips";
 import { type VideoWithChannel } from "@shared/schema";
 
