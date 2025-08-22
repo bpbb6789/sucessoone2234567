@@ -20,6 +20,10 @@ import Profile from "@/pages/Profile";
 import Create from "@/pages/Create";
 import Notifications from "@/pages/Notifications";
 import Search from "@/pages/Search";
+import { WagmiProvider } from 'wagmi';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { config } from './lib/walletConnect';
+import '@rainbow-me/rainbowkit/styles.css';
 
 function Router() {
   return (
@@ -46,16 +50,20 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" storageKey="youtube-theme">
-        <SidebarProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </SidebarProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          <ThemeProvider defaultTheme="system" storageKey="youtube-theme">
+            <SidebarProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Router />
+              </TooltipProvider>
+            </SidebarProvider>
+          </ThemeProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
 

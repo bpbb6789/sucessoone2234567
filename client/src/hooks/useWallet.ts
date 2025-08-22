@@ -1,206 +1,52 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  connectMetaMask, 
-  getBalance, 
-  walletConnectManager,
-  shortenAddress,
-  formatBalance,
-  WALLET_CONNECTORS,
-  type WalletAccount,
-  type WalletState 
-} from '@/lib/walletConnect';
+
+import { useAccount, useConnect, useDisconnect, useSwitchChain, useBalance } from 'wagmi';
+import { useCallback } from 'react';
+import { useToast } from './use-toast';
+import { shortenAddress, formatBalance } from '@/lib/walletConnect';
 
 export function useWallet() {
   const { toast } = useToast();
-  const [walletState, setWalletState] = useState<WalletState>({
-    isConnected: false,
-    account: null,
-    connector: null
+  const { address, isConnected, connector } = useAccount();
+  const { connect, connectors, isPending: isConnecting } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { switchChain } = useSwitchChain();
+  
+  const { data: balance } = useBalance({
+    address: address,
   });
-  const [isConnecting, setIsConnecting] = useState(false);
 
-  // Check for existing connection on mount
-  useEffect(() => {
-    checkConnection();
-    
-    // Listen for account changes
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (accounts.length === 0) {
-          disconnect();
-        } else {
-          updateAccount(accounts[0]);
-        }
-      };
-
-      const handleChainChanged = (chainId: string) => {
-        // Reload page on chain change
-        window.location.reload();
-      };
-
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
-
-      return () => {
-        if (window.ethereum) {
-          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-          window.ethereum.removeListener('chainChanged', handleChainChanged);
-        }
-      };
-    }
+  const connectWallet = useCallback((connectorType?: string) => {
+    // RainbowKit handles connection through ConnectButton
+    // This function is kept for compatibility but not used
+    console.log('Use ConnectButton for wallet connection');
   }, []);
 
-  const checkConnection = async () => {
-    try {
-      if (window.ethereum) {
-        const accounts = await window.ethereum.request({
-          method: 'eth_accounts'
-        });
-
-        if (accounts.length > 0) {
-          const chainId = await window.ethereum.request({
-            method: 'eth_chainId'
-          });
-          
-          const balance = await getBalance(accounts[0]);
-
-          setWalletState({
-            isConnected: true,
-            account: {
-              address: accounts[0],
-              chainId: parseInt(chainId, 16),
-              balance
-            },
-            connector: WALLET_CONNECTORS.METAMASK
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to check connection:', error);
-    }
-  };
-
-  const updateAccount = async (address: string) => {
-    try {
-      const chainId = await window.ethereum!.request({
-        method: 'eth_chainId'
-      });
-      
-      const balance = await getBalance(address);
-
-      setWalletState(prev => ({
-        ...prev,
-        account: {
-          address,
-          chainId: parseInt(chainId, 16),
-          balance
-        }
-      }));
-    } catch (error) {
-      console.error('Failed to update account:', error);
-    }
-  };
-
-  const connectWallet = useCallback(async (connector: string = WALLET_CONNECTORS.METAMASK) => {
-    setIsConnecting(true);
-
-    try {
-      let account: WalletAccount | null = null;
-
-      switch (connector) {
-        case WALLET_CONNECTORS.METAMASK:
-          account = await connectMetaMask();
-          break;
-        case WALLET_CONNECTORS.WALLETCONNECT:
-          account = await walletConnectManager.connect();
-          if (!account) {
-            throw new Error('WalletConnect connection was cancelled or failed');
-          }
-          break;
-        default:
-          throw new Error(`Unsupported connector: ${connector}`);
-      }
-
-      if (account) {
-        const balance = await getBalance(account.address);
-        account.balance = balance;
-
-        setWalletState({
-          isConnected: true,
-          account,
-          connector
-        });
-
-        toast({
-          title: "Wallet Connected",
-          description: `Connected to ${shortenAddress(account.address)}`,
-          duration: 3000
-        });
-      } else {
-        throw new Error('Failed to connect wallet');
-      }
-    } catch (error: any) {
-      console.error('Wallet connection failed:', error);
-      
-      toast({
-        title: "Connection Failed",
-        description: error.message || "Failed to connect wallet",
-        variant: "destructive",
-        duration: 5000
-      });
-    } finally {
-      setIsConnecting(false);
-    }
-  }, [toast]);
-
-  const disconnect = useCallback(async () => {
-    setWalletState({
-      isConnected: false,
-      account: null,
-      connector: null
-    });
-
-    if (walletState.connector === WALLET_CONNECTORS.WALLETCONNECT) {
-      await walletConnectManager.disconnect();
-    }
-
+  const handleDisconnect = useCallback(() => {
+    disconnect();
     toast({
       title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected",
+      description: "Your wallet has been disconnected successfully.",
       duration: 3000
     });
-  }, [walletState.connector, toast]);
+  }, [disconnect, toast]);
 
-  const switchChain = useCallback(async (chainId: number) => {
-    try {
-      if (!window.ethereum) {
-        throw new Error('No ethereum provider');
-      }
-
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: `0x${chainId.toString(16)}` }]
-      });
-    } catch (error: any) {
-      console.error('Failed to switch chain:', error);
-      
-      toast({
-        title: "Chain Switch Failed",
-        description: error.message || "Failed to switch network",
-        variant: "destructive"
-      });
-    }
-  }, [toast]);
+  const switchNetwork = useCallback((chainId: number) => {
+    switchChain({ chainId });
+  }, [switchChain]);
 
   return {
-    ...walletState,
+    isConnected,
+    account: address ? {
+      address,
+      chainId: 1, // This would come from useAccount chain info
+      balance: balance?.formatted || '0'
+    } : null,
+    connector: connector?.name || null,
     isConnecting,
     connectWallet,
-    disconnect,
-    switchChain,
-    // Utility functions
+    disconnect: handleDisconnect,
+    switchChain: switchNetwork,
     shortenAddress,
-    formatBalance: (balance?: string) => formatBalance(balance || '0')
+    formatBalance: (bal?: string) => formatBalance(bal || '0')
   };
 }
