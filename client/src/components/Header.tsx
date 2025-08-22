@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "wouter";
 import { ROUTES } from "@/lib/constants";
+import { WalletConnectButton } from "@/components/WalletConnectButton";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -145,6 +146,13 @@ export function Header() {
               </div>
             </Link>
           </Button>
+
+          {/* Wallet Connect Button */}
+          <WalletConnectButton 
+            variant="ghost"
+            size="sm"
+            className="hidden md:flex"
+          />
 
           <Link href={ROUTES.PROFILE}>
             <img
