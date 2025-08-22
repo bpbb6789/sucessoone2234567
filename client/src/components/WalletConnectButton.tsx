@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -36,6 +36,23 @@ export function WalletConnectButton({
 }: WalletConnectButtonProps) {
   const { toast } = useToast();
   const [showConnectors, setShowConnectors] = useState(false);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowConnectors(false);
+      }
+    };
+
+    if (showConnectors) {
+      document.addEventListener('keydown', handleEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [showConnectors]);
   
   const {
     isConnected,
@@ -80,8 +97,8 @@ export function WalletConnectButton({
   // Not connected - show connect button or connector selection
   if (!isConnected) {
     return (
-      <div className={cn("relative", className)}>
-        {!showConnectors ? (
+      <>
+        <div className={cn("relative", className)}>
           <Button
             onClick={() => setShowConnectors(true)}
             disabled={isConnecting}
@@ -93,66 +110,79 @@ export function WalletConnectButton({
             <Wallet className="w-4 h-4" />
             {isConnecting ? "Connecting..." : "Connect Wallet"}
           </Button>
-        ) : (
-          <Card className="absolute top-0 left-0 z-50 min-w-64" data-testid="wallet-connectors">
-            <CardContent className="p-4 space-y-2">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium">Connect Wallet</h3>
-                <Button
-                  onClick={() => setShowConnectors(false)}
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-              
-              <Button
-                onClick={() => {
-                  connectWallet(WALLET_CONNECTORS.METAMASK);
-                  setShowConnectors(false);
-                }}
-                disabled={isConnecting}
-                variant="outline"
-                className="w-full justify-start"
-                data-testid="connect-metamask"
-              >
-                🦊 MetaMask
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  connectWallet(WALLET_CONNECTORS.WALLETCONNECT);
-                  setShowConnectors(false);
-                }}
-                disabled={isConnecting}
-                variant="outline"
-                className="w-full justify-start"
-                data-testid="connect-walletconnect"
-              >
-                🔗 WalletConnect
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  toast({
-                    title: "Coming Soon",
-                    description: "Coinbase Wallet support coming soon!",
-                    duration: 3000
-                  });
-                }}
-                disabled={true}
-                variant="outline"
-                className="w-full justify-start opacity-50"
-                data-testid="connect-coinbase"
-              >
-                🟦 Coinbase Wallet
-              </Button>
-            </CardContent>
-          </Card>
+        </div>
+        
+        {showConnectors && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 z-40 bg-black/20" 
+              onClick={() => setShowConnectors(false)}
+            />
+            
+            {/* Modal */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <Card className="w-full max-w-sm" data-testid="wallet-connectors">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Connect Wallet</h3>
+                    <Button
+                      onClick={() => setShowConnectors(false)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                    >
+                      ×
+                    </Button>
+                  </div>
+                  
+                  <Button
+                    onClick={() => {
+                      connectWallet(WALLET_CONNECTORS.METAMASK);
+                      setShowConnectors(false);
+                    }}
+                    disabled={isConnecting}
+                    variant="outline"
+                    className="w-full justify-start h-12"
+                    data-testid="connect-metamask"
+                  >
+                    🦊 MetaMask
+                  </Button>
+                  
+                  <Button
+                    onClick={() => {
+                      connectWallet(WALLET_CONNECTORS.WALLETCONNECT);
+                      setShowConnectors(false);
+                    }}
+                    disabled={isConnecting}
+                    variant="outline"
+                    className="w-full justify-start h-12"
+                    data-testid="connect-walletconnect"
+                  >
+                    🔗 WalletConnect
+                  </Button>
+                  
+                  <Button
+                    onClick={() => {
+                      toast({
+                        title: "Coming Soon",
+                        description: "Coinbase Wallet support coming soon!",
+                        duration: 3000
+                      });
+                    }}
+                    disabled={true}
+                    variant="outline"
+                    className="w-full justify-start h-12 opacity-50"
+                    data-testid="connect-coinbase"
+                  >
+                    🟦 Coinbase Wallet
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </>
         )}
-      </div>
+      </>
     );
   }
 
