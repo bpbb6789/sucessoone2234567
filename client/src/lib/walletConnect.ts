@@ -4,7 +4,7 @@ import { WalletConnectModal } from '@walletconnect/modal';
 import { SignClient } from '@walletconnect/sign-client';
 
 // WalletConnect configuration and utilities
-export const WALLETCONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WC_PROJECT_ID || "8b2d0dd39c1cced02ecce163a96a8cb5";
+export const WALLETCONNECT_PROJECT_ID = import.meta.env.VITE_WC_PROJECT_ID || "8b2d0dd39c1cced02ecce163a96a8cb5";
 
 export interface WalletAccount {
   address: string;
