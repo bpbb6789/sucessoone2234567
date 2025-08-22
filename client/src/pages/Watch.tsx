@@ -9,7 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 
 export default function Watch() {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +17,7 @@ export default function Watch() {
   const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState("");
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   const { data: video, isLoading: videoLoading, error: videoError } = useQuery<VideoWithChannel>({
     queryKey: ["/api/videos", id],
@@ -136,7 +136,7 @@ export default function Watch() {
 
   const handleAvatarClick = (channelId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/profile/${channelId}`);
+    setLocation(`/profile/${channelId}`);
   };
 
   return (
