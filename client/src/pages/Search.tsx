@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search as SearchIcon, Filter, Clock, TrendingUp, User } from "lucide-react";
-import VideoCard from "@/components/VideoCard";
-import ShortsCard from "@/components/ShortsCard";
+import { VideoCard } from "@/components/VideoCard";
+import { ShortsCard } from "@/components/ShortsCard";
 import { formatDistance } from "date-fns";
 
 interface SearchResult {

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import VideoCard from "@/components/VideoCard";
+import { VideoCard } from "@/components/VideoCard";
 import { type VideoWithChannel } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Play, Shuffle } from "lucide-react";
