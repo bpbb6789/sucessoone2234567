@@ -5,18 +5,18 @@ import { type ShortsWithChannel } from "@shared/schema";
 import { formatViewCount } from "@/lib/constants";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 
 export default function Shorts() {
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const { data: shorts = [], isLoading, error } = useQuery<ShortsWithChannel[]>({
     queryKey: ["/api/shorts"],
   });
 
   const handleAvatarClick = (e: React.MouseEvent, channelId: string) => {
     e.stopPropagation();
-    navigate(`/profile/${channelId}`);
+    setLocation(`/profile/${channelId}`);
   };
 
   if (error) {
@@ -158,7 +158,7 @@ export default function Shorts() {
                 // TODO: Navigate to shorts player
                 console.log("Shorts clicked:", short.id);
               }}
-              onAvatarClick={() => handleAvatarClick(null, short.channel.id)}
+              onAvatarClick={() => setLocation(`/profile/${short.channel.id}`)}
             />
           ))}
         </div>
