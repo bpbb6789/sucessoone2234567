@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Edit, Share2, Bell, Shield } from "lucide-react";
-import VideoCard from "@/components/VideoCard";
+import { VideoCard } from "@/components/VideoCard";
 import { ShortsCard } from "@/components/ShortsCard";
 
 interface ProfileData {
@@ -120,7 +119,7 @@ export default function Profile() {
             </div>
 
             <p className="text-gray-600 dark:text-gray-400 mb-2">{profileData.handle}</p>
-            
+
             <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
               <span>{formatCount(profileData.subscriberCount)} subscribers</span>
               <span>{profileData.videoCount} videos</span>

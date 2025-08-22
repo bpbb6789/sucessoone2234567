@@ -44,7 +44,7 @@ export function VideoCard({ video, onClick }: VideoCardProps) {
             )}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400" data-testid={`video-stats-${video.id}`}>
-            {formatViewCount(video.viewCount || 0)} views • {formatTimeAgo(video.publishedAt || new Date())}
+            {formatViewCount(video.viewCount || 0)} views • {formatTimeAgo(video.publishedAt ? new Date(video.publishedAt) : new Date())}
           </p>
         </div>
       </div>
