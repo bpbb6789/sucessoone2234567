@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(240, 10%, 3.9%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(240, 10%, 3.9%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(240, 10%, 3.9%);
+  --primary: hsl(240, 9%, 89%);
+  --primary-foreground: hsl(240, 5.9%, 10%);
+  --secondary: hsl(240, 4.8%, 95.9%);
+  --secondary-foreground: hsl(240, 5.9%, 10%);
+  --muted: hsl(240, 4.8%, 95.9%);
+  --muted-foreground: hsl(240, 3.8%, 46.1%);
+  --accent: hsl(240, 4.8%, 95.9%);
+  --accent-foreground: hsl(240, 5.9%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 5.9%, 90%);
+  --input: hsl(240, 5.9%, 90%);
+  --ring: hsl(240, 10%, 3.9%);
+  --chart-1: hsl(12, 76%, 61%);
+  --chart-2: hsl(173, 58%, 39%);
+  --chart-3: hsl(197, 37%, 24%);
+  --chart-4: hsl(43, 74%, 66%);
+  --chart-5: hsl(27, 87%, 67%);
+  --radius: 0.5rem;
+  --header-height: 56px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 72px;
+  
+  /* YouTube specific colors */
+  --youtube-red: hsl(0, 100%, 50%);
+  --youtube-dark: hsl(0, 0%, 5.9%);
+  --youtube-dark-secondary: hsl(0, 0%, 12.9%);
+  --youtube-dark-hover: hsl(0, 0%, 24.7%);
+  --youtube-gray: hsl(0, 0%, 56.9%);
+  --youtube-light-gray: hsl(0, 0%, 97.6%);
+}
+
+.dark {
+  --background: hsl(0, 0%, 5.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --card: hsl(0, 0%, 12.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --popover: hsl(0, 0%, 5.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --primary: hsl(0, 0%, 98%);
+  --primary-foreground: hsl(240, 5.9%, 10%);
+  --secondary: hsl(0, 0%, 12.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --muted: hsl(0, 0%, 12.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --accent: hsl(0, 0%, 12.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --border: hsl(0, 0%, 12.9%);
+  --input: hsl(0, 0%, 12.9%);
+  --ring: hsl(212.7, 26.8%, 83.9%);
+  --chart-1: hsl(220, 70%, 50%);
+  --chart-2: hsl(160, 60%, 45%);
+  --chart-3: hsl(30, 80%, 55%);
+  --chart-4: hsl(280, 65%, 60%);
+  --chart-5: hsl(340, 75%, 55%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-roboto antialiased;
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  /* YouTube-specific styling */
+  .youtube-red {
+    color: var(--youtube-red);
+  }
+  
+  .bg-youtube-red {
+    background-color: var(--youtube-red);
+  }
+  
+  .bg-youtube-dark {
+    background-color: var(--youtube-dark);
+  }
+  
+  .bg-youtube-dark-secondary {
+    background-color: var(--youtube-dark-secondary);
+  }
+  
+  .hover\:bg-youtube-dark-hover:hover {
+    background-color: var(--youtube-dark-hover);
+  }
+  
+  .text-youtube-gray {
+    color: var(--youtube-gray);
+  }
+  
+  .bg-youtube-light-gray {
+    background-color: var(--youtube-light-gray);
+  }
+}
+
+@layer components {
+  /* Navigation styles */
+  .nav-item {
+    @apply flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-youtube-dark-hover transition-colors text-sm cursor-pointer;
+  }
+  
+  .nav-item.active {
+    @apply bg-gray-100 dark:bg-youtube-dark-hover font-medium;
+  }
+  
+  .sidebar-text {
+    @apply ml-6;
+  }
+  
+  .sidebar-collapsed .sidebar-text {
+    @apply hidden;
+  }
+  
+  /* Mobile navigation */
+  .mobile-nav-item {
+    @apply flex flex-col items-center py-1 px-2 text-gray-500 dark:text-gray-400 cursor-pointer;
+  }
+  
+  .mobile-nav-item.active {
+    @apply text-youtube-red;
+  }
+  
+  /* Category chips */
+  .category-chip {
+    @apply px-3 py-1 bg-gray-100 dark:bg-youtube-dark-secondary rounded-full text-sm whitespace-nowrap hover:bg-gray-200 dark:hover:bg-youtube-dark-hover transition-colors cursor-pointer;
+  }
+  
+  .category-chip.active {
+    @apply bg-black dark:bg-white text-white dark:text-black;
+  }
+  
+  /* Video cards */
+  .video-card {
+    @apply transition-transform hover:scale-105 cursor-pointer;
+  }
+  
+  .shorts-card {
+    @apply cursor-pointer;
+  }
+  
+  .video-aspect {
+    aspect-ratio: 16/9;
+  }
+  
+  .shorts-aspect {
+    aspect-ratio: 9/16;
+  }
+  
+  /* Text clamp utility */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Scrollbar hiding */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Layout utilities */
+  .sidebar-expanded {
+    width: var(--sidebar-width);
+  }
+  
+  .sidebar-collapsed {
+    width: var(--sidebar-collapsed-width);
+  }
+  
+  .content-expanded {
+    margin-left: var(--sidebar-width);
+  }
+  
+  .content-collapsed {
+    margin-left: var(--sidebar-collapsed-width);
+  }
+  
+  .header-height {
+    height: var(--header-height);
+  }
+  
+  /* Shorts container */
+  .shorts-container {
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    height: 100vh;
+  }
+  
+  .shorts-video {
+    scroll-snap-align: start;
+    height: 100vh;
+  }
+  
+  /* Theme transition */
+  .transition-theme {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .content-expanded, .content-collapsed {
+      margin-left: 0;
+    }
+    
+    .page-content {
+      padding-bottom: 4rem;
+    }
+  }
+}
+
+@layer utilities {
+  /* Custom spacing */
+  .space-x-18 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 0;
+    margin-right: calc(4.5rem * var(--tw-space-x-reverse));
+    margin-left: calc(4.5rem * calc(1 - var(--tw-space-x-reverse)));
+  }
+  
+  .w-88 {
+    width: 22rem;
+  }
+  
+  .h-88 {
+    height: 22rem;
+  }
+  
+  /* Focus visible utilities */
+  .focus-visible\:ring-youtube-red:focus-visible {
+    --tw-ring-color: var(--youtube-red);
+  }
+}
