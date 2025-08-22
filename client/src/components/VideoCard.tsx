@@ -2,6 +2,8 @@ import { type VideoWithChannel } from "@shared/schema";
 import { formatViewCount, formatTimeAgo } from "@/lib/constants";
 import { SubscribeButton } from "./SubscribeButton";
 import { LikeDislikeButtons } from "./LikeDislikeButtons";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface VideoCardProps {
   video: VideoWithChannel;
@@ -11,6 +13,18 @@ interface VideoCardProps {
 }
 
 function VideoCard({ video, onClick, currentChannelId, showInteractions = false }: VideoCardProps) {
+  const navigate = useNavigate();
+
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/profile`);
+  };
+
+  const handleBuyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Navigate to token page or implement buy functionality
+    navigate(`/token`);
+  };
   return (
     <div 
       className="video-card cursor-pointer"
@@ -29,13 +43,21 @@ function VideoCard({ video, onClick, currentChannelId, showInteractions = false 
             {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
           </div>
         )}
+        <Button
+          onClick={handleBuyClick}
+          className="absolute top-2 right-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1 h-auto"
+          size="sm"
+        >
+          BUY
+        </Button>
       </div>
       
       <div className="flex mt-3 space-x-3">
         <img
           src={video.channel.avatarUrl}
           alt={video.channel.name}
-          className="w-9 h-9 rounded-full flex-shrink-0"
+          className="w-9 h-9 rounded-full flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={handleAvatarClick}
         />
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-medium line-clamp-2 mb-1" data-testid={`video-title-${video.id}`}>

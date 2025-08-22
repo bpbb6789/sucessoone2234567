@@ -5,12 +5,19 @@ import { type ShortsWithChannel } from "@shared/schema";
 import { formatViewCount } from "@/lib/constants";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function Shorts() {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { data: shorts = [], isLoading, error } = useQuery<ShortsWithChannel[]>({
     queryKey: ["/api/shorts"],
   });
+
+  const handleAvatarClick = (e: React.MouseEvent, channelId: string) => {
+    e.stopPropagation();
+    navigate(`/profile/${channelId}`);
+  };
 
   if (error) {
     return (
@@ -35,17 +42,34 @@ export default function Shorts() {
               className="w-full h-full object-cover"
               data-testid={`shorts-video-${short.id}`}
             />
-            
+
+            {/* BUY Button */}
+            <div className="absolute top-4 right-4">
+              <Button
+                size="sm"
+                className="bg-white text-black px-4 py-1 rounded-full text-sm font-medium hover:bg-gray-200"
+                data-testid={`button-buy-${short.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // TODO: Implement buy functionality
+                  console.log("Buy button clicked for:", short.id);
+                }}
+              >
+                BUY
+              </Button>
+            </div>
+
             {/* Video Info Overlay */}
             <div className="absolute bottom-20 left-4 right-20 text-white">
               <div className="flex items-center space-x-2 mb-2">
                 <img
                   src={short.channel.avatarUrl}
                   alt={short.channel.name}
-                  className="w-8 h-8 rounded-full"
+                  className="w-8 h-8 rounded-full cursor-pointer"
+                  onClick={(e) => handleAvatarClick(e, short.channel.id)}
                 />
                 <span className="text-sm font-medium">@{short.channel.handle}</span>
-                <Button 
+                <Button
                   size="sm"
                   className="bg-white text-black px-4 py-1 rounded-full text-sm font-medium hover:bg-gray-200"
                   data-testid={`button-subscribe-${short.id}`}
@@ -60,38 +84,38 @@ export default function Shorts() {
                 {formatViewCount(short.viewCount || 0)} views
               </p>
             </div>
-            
+
             {/* Engagement Buttons */}
             <div className="absolute right-4 bottom-20 flex flex-col space-y-6">
-              <button 
+              <button
                 className="flex flex-col items-center space-y-1 text-white"
                 data-testid={`button-like-${short.id}`}
               >
                 <ThumbsUp className="h-6 w-6" />
                 <span className="text-xs">{formatViewCount(short.likeCount || 0)}</span>
               </button>
-              <button 
+              <button
                 className="flex flex-col items-center space-y-1 text-white"
                 data-testid={`button-dislike-${short.id}`}
               >
                 <ThumbsDown className="h-6 w-6" />
                 <span className="text-xs">Dislike</span>
               </button>
-              <button 
+              <button
                 className="flex flex-col items-center space-y-1 text-white"
                 data-testid={`button-comment-${short.id}`}
               >
                 <MessageCircle className="h-6 w-6" />
                 <span className="text-xs">{formatViewCount(short.commentCount || 0)}</span>
               </button>
-              <button 
+              <button
                 className="flex flex-col items-center space-y-1 text-white"
                 data-testid={`button-share-${short.id}`}
               >
                 <Share className="h-6 w-6" />
                 <span className="text-xs">Share</span>
               </button>
-              <button 
+              <button
                 className="flex flex-col items-center space-y-1 text-white"
                 data-testid={`button-more-${short.id}`}
               >
@@ -108,7 +132,7 @@ export default function Shorts() {
   return (
     <div className="p-4" data-testid="page-shorts">
       <h1 className="text-2xl font-bold mb-6">Shorts</h1>
-      
+
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {Array.from({ length: 12 }).map((_, i) => (
@@ -134,6 +158,7 @@ export default function Shorts() {
                 // TODO: Navigate to shorts player
                 console.log("Shorts clicked:", short.id);
               }}
+              onAvatarClick={() => handleAvatarClick(null, short.channel.id)}
             />
           ))}
         </div>

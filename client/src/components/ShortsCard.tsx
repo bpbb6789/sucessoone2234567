@@ -1,5 +1,7 @@
 import { type ShortsWithChannel } from "@shared/schema";
 import { formatViewCount } from "@/lib/constants";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface ShortsCardProps {
   shorts: ShortsWithChannel;
@@ -7,18 +9,33 @@ interface ShortsCardProps {
 }
 
 function ShortsCard({ shorts, onClick }: ShortsCardProps) {
+  const navigate = useNavigate();
+
+  const handleBuyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/token`);
+  };
   return (
     <div 
-      className="shorts-card cursor-pointer group"
+      className="shorts-card cursor-pointer group relative"
       onClick={onClick}
       data-testid={`shorts-card-${shorts.id}`}
     >
-      <img
-        src={shorts.thumbnailUrl}
-        alt={shorts.title}
-        className="w-full shorts-aspect object-cover rounded-xl"
-        loading="lazy"
-      />
+      <div className="relative">
+        <img
+          src={shorts.thumbnailUrl}
+          alt={shorts.title}
+          className="w-full shorts-aspect object-cover rounded-xl"
+          loading="lazy"
+        />
+        <Button
+          onClick={handleBuyClick}
+          className="absolute top-2 right-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 py-1 h-auto"
+          size="sm"
+        >
+          BUY
+        </Button>
+      </div>
       <div className="mt-2">
         <h3 className="text-sm font-medium line-clamp-2" data-testid={`shorts-title-${shorts.id}`}>
           {shorts.title}

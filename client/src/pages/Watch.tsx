@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function Watch() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,7 @@ export default function Watch() {
   const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState("");
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const navigate = useNavigate();
 
   const { data: video, isLoading: videoLoading, error: videoError } = useQuery<VideoWithChannel>({
     queryKey: ["/api/videos", id],
@@ -107,7 +109,7 @@ export default function Watch() {
               </div>
             </div>
           </div>
-          
+
           {/* Sidebar Skeleton */}
           <div className="space-y-4">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -130,6 +132,11 @@ export default function Watch() {
     if (commentText.trim()) {
       addCommentMutation.mutate(commentText.trim());
     }
+  };
+
+  const handleAvatarClick = (channelId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/profile/${channelId}`);
   };
 
   return (
@@ -162,7 +169,8 @@ export default function Watch() {
                 <img
                   src={video.channel.avatarUrl}
                   alt={video.channel.name}
-                  className="w-10 h-10 rounded-full"
+                  className="w-10 h-10 rounded-full cursor-pointer"
+                  onClick={(e) => handleAvatarClick(video.channel.id, e)}
                 />
                 <div>
                   <h3 className="font-medium flex items-center" data-testid="channel-name">
@@ -245,7 +253,7 @@ export default function Watch() {
                   </div>
                 )}
               </div>
-              
+
               {video.description && (
                 <div className="text-sm">
                   <p className={`${!isDescriptionExpanded ? 'line-clamp-3' : ''}`} data-testid="video-description">
@@ -333,7 +341,8 @@ export default function Watch() {
                       <img
                         src={comment.channel.avatarUrl}
                         alt={comment.channel.name}
-                        className="w-10 h-10 rounded-full flex-shrink-0"
+                        className="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer"
+                        onClick={(e) => handleAvatarClick(comment.channel.id, e)}
                       />
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
@@ -372,7 +381,7 @@ export default function Watch() {
         {/* Recommended Videos Sidebar */}
         <div className="space-y-4">
           <h2 className="font-semibold">Recommended</h2>
-          
+
           {recommendedLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 10 }).map((_, i) => (
