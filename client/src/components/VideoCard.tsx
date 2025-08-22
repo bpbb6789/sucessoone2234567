@@ -1,12 +1,16 @@
 import { type VideoWithChannel } from "@shared/schema";
 import { formatViewCount, formatTimeAgo } from "@/lib/constants";
+import { SubscribeButton } from "./SubscribeButton";
+import { LikeDislikeButtons } from "./LikeDislikeButtons";
 
 interface VideoCardProps {
   video: VideoWithChannel;
   onClick?: () => void;
+  currentChannelId?: string;
+  showInteractions?: boolean;
 }
 
-function VideoCard({ video, onClick }: VideoCardProps) {
+function VideoCard({ video, onClick, currentChannelId, showInteractions = false }: VideoCardProps) {
   return (
     <div 
       className="video-card cursor-pointer"
@@ -46,6 +50,30 @@ function VideoCard({ video, onClick }: VideoCardProps) {
           <p className="text-xs text-gray-500 dark:text-gray-400" data-testid={`video-stats-${video.id}`}>
             {formatViewCount(video.viewCount || 0)} views • {formatTimeAgo(video.publishedAt ? new Date(video.publishedAt) : new Date())}
           </p>
+          
+          {/* Interactive elements */}
+          {showInteractions && currentChannelId && (
+            <div className="mt-2 space-y-1">
+              {/* Subscribe button for other channels */}
+              {currentChannelId !== video.channelId && (
+                <SubscribeButton
+                  subscriberChannelId={currentChannelId}
+                  subscribedToChannelId={video.channelId}
+                  subscriberCount={video.channel.subscriberCount}
+                  className="text-xs"
+                />
+              )}
+              
+              {/* Like/dislike buttons */}
+              <LikeDislikeButtons
+                videoId={video.id}
+                channelId={currentChannelId}
+                likeCount={video.likeCount}
+                dislikeCount={video.dislikeCount}
+                className="scale-75 origin-left"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

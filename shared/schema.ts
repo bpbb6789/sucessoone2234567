@@ -90,6 +90,64 @@ export const subscriptions = pgTable("subscriptions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const videoLikes = pgTable("video_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  videoId: varchar("video_id").references(() => videos.id).notNull(),
+  channelId: varchar("channel_id").references(() => channels.id).notNull(),
+  isLike: boolean("is_like").notNull(), // true for like, false for dislike
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const shortsLikes = pgTable("shorts_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  shortsId: varchar("shorts_id").references(() => shorts.id).notNull(),
+  channelId: varchar("channel_id").references(() => channels.id).notNull(),
+  isLike: boolean("is_like").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const commentLikes = pgTable("comment_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  commentId: varchar("comment_id").references(() => comments.id).notNull(),
+  channelId: varchar("channel_id").references(() => channels.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const shares = pgTable("shares", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  videoId: varchar("video_id").references(() => videos.id),
+  shortsId: varchar("shorts_id").references(() => shorts.id),
+  channelId: varchar("channel_id").references(() => channels.id).notNull(),
+  shareType: text("share_type").notNull(), // 'link', 'embed', 'social'
+  platform: text("platform"), // 'twitter', 'facebook', 'email', etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const musicTracks = pgTable("music_tracks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  artist: text("artist").notNull(),
+  albumId: varchar("album_id").references(() => musicAlbums.id),
+  audioUrl: text("audio_url").notNull(),
+  duration: integer("duration"), // in seconds
+  trackNumber: integer("track_number"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userProfiles = pgTable("user_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  channelId: varchar("channel_id").references(() => channels.id).notNull().unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  email: text("email"),
+  bio: text("bio"),
+  website: text("website"),
+  location: text("location"),
+  preferences: jsonb("preferences"), // theme, language, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertChannelSchema = createInsertSchema(channels).omit({
   id: true,
@@ -126,6 +184,37 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   createdAt: true,
 });
 
+export const insertVideoLikeSchema = createInsertSchema(videoLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertShortsLikeSchema = createInsertSchema(shortsLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCommentLikeSchema = createInsertSchema(commentLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertShareSchema = createInsertSchema(shares).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMusicTrackSchema = createInsertSchema(musicTracks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Channel = typeof channels.$inferSelect;
 export type InsertChannel = z.infer<typeof insertChannelSchema>;
@@ -147,6 +236,24 @@ export type InsertComment = z.infer<typeof insertCommentSchema>;
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+export type VideoLike = typeof videoLikes.$inferSelect;
+export type InsertVideoLike = z.infer<typeof insertVideoLikeSchema>;
+
+export type ShortsLike = typeof shortsLikes.$inferSelect;
+export type InsertShortsLike = z.infer<typeof insertShortsLikeSchema>;
+
+export type CommentLike = typeof commentLikes.$inferSelect;
+export type InsertCommentLike = z.infer<typeof insertCommentLikeSchema>;
+
+export type Share = typeof shares.$inferSelect;
+export type InsertShare = z.infer<typeof insertShareSchema>;
+
+export type MusicTrack = typeof musicTracks.$inferSelect;
+export type InsertMusicTrack = z.infer<typeof insertMusicTrackSchema>;
+
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 
 // Extended types with relations
 export type VideoWithChannel = Video & {

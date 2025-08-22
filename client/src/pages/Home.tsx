@@ -62,6 +62,8 @@ export default function Home() {
               <VideoCard
                 key={video.id}
                 video={video}
+                currentChannelId="channel-1" // TODO: Get from auth context
+                showInteractions={true}
                 onClick={() => {
                   // TODO: Navigate to watch page
                   console.log("Video clicked:", video.id);

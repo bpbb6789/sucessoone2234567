@@ -1,7 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema, insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema } from "@shared/schema";
+import { 
+  insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema, 
+  insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
+  insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
+  insertMusicTrackSchema, insertUserProfileSchema
+} from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Channels
@@ -275,6 +280,276 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Subscription deleted" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete subscription" });
+    }
+  });
+
+  // Subscription routes
+  app.post("/api/subscriptions", async (req, res) => {
+    try {
+      const validatedData = insertSubscriptionSchema.parse(req.body);
+      const subscription = await storage.createSubscription(validatedData);
+      res.status(201).json(subscription);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid subscription data" });
+    }
+  });
+
+  app.delete("/api/subscriptions/:subscriberChannelId/:subscribedToChannelId", async (req, res) => {
+    try {
+      await storage.deleteSubscription(req.params.subscriberChannelId, req.params.subscribedToChannelId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete subscription" });
+    }
+  });
+
+  app.get("/api/subscriptions/check/:subscriberChannelId/:subscribedToChannelId", async (req, res) => {
+    try {
+      const isSubscribed = await storage.isSubscribed(req.params.subscriberChannelId, req.params.subscribedToChannelId);
+      res.json({ isSubscribed });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check subscription" });
+    }
+  });
+
+  // Like routes
+  app.post("/api/videos/:id/like", async (req, res) => {
+    try {
+      const { channelId, isLike } = req.body;
+      await storage.likeVideo(req.params.id, channelId, isLike);
+      res.status(200).json({ message: "Like updated" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to like video" });
+    }
+  });
+
+  app.delete("/api/videos/:id/like/:channelId", async (req, res) => {
+    try {
+      await storage.unlikeVideo(req.params.id, req.params.channelId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to unlike video" });
+    }
+  });
+
+  app.get("/api/videos/:id/like/:channelId", async (req, res) => {
+    try {
+      const like = await storage.getUserVideoLike(req.params.id, req.params.channelId);
+      res.json(like || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get like status" });
+    }
+  });
+
+  app.post("/api/shorts/:id/like", async (req, res) => {
+    try {
+      const { channelId, isLike } = req.body;
+      await storage.likeShorts(req.params.id, channelId, isLike);
+      res.status(200).json({ message: "Like updated" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to like shorts" });
+    }
+  });
+
+  app.delete("/api/shorts/:id/like/:channelId", async (req, res) => {
+    try {
+      await storage.unlikeShorts(req.params.id, req.params.channelId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to unlike shorts" });
+    }
+  });
+
+  app.get("/api/shorts/:id/like/:channelId", async (req, res) => {
+    try {
+      const like = await storage.getUserShortsLike(req.params.id, req.params.channelId);
+      res.json(like || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get like status" });
+    }
+  });
+
+  // Comment routes
+  app.get("/api/videos/:id/comments", async (req, res) => {
+    try {
+      const comments = await storage.getCommentsByVideo(req.params.id);
+      res.json(comments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  app.get("/api/shorts/:id/comments", async (req, res) => {
+    try {
+      const comments = await storage.getCommentsByShorts(req.params.id);
+      res.json(comments);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  app.post("/api/comments", async (req, res) => {
+    try {
+      const validatedData = insertCommentSchema.parse(req.body);
+      const comment = await storage.createComment(validatedData);
+      res.status(201).json(comment);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid comment data" });
+    }
+  });
+
+  app.post("/api/comments/:id/like", async (req, res) => {
+    try {
+      const { channelId } = req.body;
+      await storage.likeComment(req.params.id, channelId);
+      res.status(200).json({ message: "Comment liked" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to like comment" });
+    }
+  });
+
+  app.delete("/api/comments/:id/like/:channelId", async (req, res) => {
+    try {
+      await storage.unlikeComment(req.params.id, req.params.channelId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to unlike comment" });
+    }
+  });
+
+  // Share routes
+  app.post("/api/share", async (req, res) => {
+    try {
+      const validatedData = insertShareSchema.parse(req.body);
+      const share = await storage.shareContent(validatedData);
+      res.status(201).json(share);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid share data" });
+    }
+  });
+
+  app.get("/api/share/count", async (req, res) => {
+    try {
+      const { videoId, shortsId } = req.query;
+      const count = await storage.getShareCount(videoId as string, shortsId as string);
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get share count" });
+    }
+  });
+
+  // Search routes
+  app.get("/api/search", async (req, res) => {
+    try {
+      const { q: query, type } = req.query;
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ message: "Query parameter is required" });
+      }
+
+      let results;
+      switch (type) {
+        case 'videos':
+          results = { videos: await storage.searchVideos(query) };
+          break;
+        case 'shorts':
+          results = { shorts: await storage.searchShorts(query) };
+          break;
+        case 'channels':
+          const channels = await storage.searchAll(query);
+          results = { channels: channels.channels };
+          break;
+        default:
+          results = await storage.searchAll(query);
+      }
+      
+      res.json(results);
+    } catch (error) {
+      res.status(500).json({ message: "Search failed" });
+    }
+  });
+
+  // Music routes
+  app.get("/api/music/tracks", async (req, res) => {
+    try {
+      const { albumId } = req.query;
+      let tracks;
+      if (albumId && typeof albumId === 'string') {
+        tracks = await storage.getTracksByAlbum(albumId);
+      } else {
+        tracks = [];
+      }
+      res.json(tracks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch tracks" });
+    }
+  });
+
+  app.get("/api/music/tracks/:id", async (req, res) => {
+    try {
+      const track = await storage.getMusicTrack(req.params.id);
+      if (!track) {
+        return res.status(404).json({ message: "Track not found" });
+      }
+      res.json(track);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch track" });
+    }
+  });
+
+  app.post("/api/music/tracks", async (req, res) => {
+    try {
+      const validatedData = insertMusicTrackSchema.parse(req.body);
+      const track = await storage.createMusicTrack(validatedData);
+      res.status(201).json(track);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid track data" });
+    }
+  });
+
+  // User Profile routes
+  app.get("/api/profiles/:channelId", async (req, res) => {
+    try {
+      const profile = await storage.getUserProfile(req.params.channelId);
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  app.post("/api/profiles", async (req, res) => {
+    try {
+      const validatedData = insertUserProfileSchema.parse(req.body);
+      const profile = await storage.createUserProfile(validatedData);
+      res.status(201).json(profile);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid profile data" });
+    }
+  });
+
+  app.put("/api/profiles/:channelId", async (req, res) => {
+    try {
+      const profile = await storage.updateUserProfile(req.params.channelId, req.body);
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found" });
+      }
+      res.json(profile);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.put("/api/channels/:id", async (req, res) => {
+    try {
+      const channel = await storage.updateChannel(req.params.id, req.body);
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
+      }
+      res.json(channel);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update channel" });
     }
   });
 

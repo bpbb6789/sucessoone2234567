@@ -1,5 +1,24 @@
-import { type Channel, type InsertChannel, type Video, type InsertVideo, type Shorts, type InsertShorts, type Playlist, type InsertPlaylist, type MusicAlbum, type InsertMusicAlbum, type Comment, type InsertComment, type Subscription, type InsertSubscription, type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel } from "@shared/schema";
+import { 
+  type Channel, type InsertChannel, 
+  type Video, type InsertVideo, 
+  type Shorts, type InsertShorts, 
+  type Playlist, type InsertPlaylist, 
+  type MusicAlbum, type InsertMusicAlbum, 
+  type Comment, type InsertComment, 
+  type Subscription, type InsertSubscription,
+  type VideoLike, type InsertVideoLike,
+  type ShortsLike, type InsertShortsLike,
+  type CommentLike, type InsertCommentLike,
+  type Share, type InsertShare,
+  type MusicTrack, type InsertMusicTrack,
+  type UserProfile, type InsertUserProfile,
+  type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel,
+  channels, videos, shorts, playlists, musicAlbums, comments, subscriptions,
+  videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles
+} from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, and, desc, or, ilike, isNull, count } from "drizzle-orm";
 
 export interface IStorage {
   // Channels
@@ -7,6 +26,7 @@ export interface IStorage {
   getChannelByHandle(handle: string): Promise<Channel | undefined>;
   createChannel(channel: InsertChannel): Promise<Channel>;
   getAllChannels(): Promise<Channel[]>;
+  updateChannel(id: string, updates: Partial<InsertChannel>): Promise<Channel | undefined>;
 
   // Videos
   getVideo(id: string): Promise<VideoWithChannel | undefined>;
@@ -15,6 +35,7 @@ export interface IStorage {
   getVideosByChannel(channelId: string): Promise<VideoWithChannel[]>;
   createVideo(video: InsertVideo): Promise<Video>;
   updateVideoViews(id: string): Promise<void>;
+  searchVideos(query: string): Promise<VideoWithChannel[]>;
 
   // Shorts
   getShorts(id: string): Promise<ShortsWithChannel | undefined>;
@@ -22,6 +43,7 @@ export interface IStorage {
   getShortsByChannel(channelId: string): Promise<ShortsWithChannel[]>;
   createShorts(shorts: InsertShorts): Promise<Shorts>;
   updateShortsViews(id: string): Promise<void>;
+  searchShorts(query: string): Promise<ShortsWithChannel[]>;
 
   // Playlists
   getPlaylist(id: string): Promise<Playlist | undefined>;
@@ -33,17 +55,45 @@ export interface IStorage {
   getAllMusicAlbums(): Promise<MusicAlbum[]>;
   createMusicAlbum(album: InsertMusicAlbum): Promise<MusicAlbum>;
 
+  // Music Tracks
+  getMusicTrack(id: string): Promise<MusicTrack | undefined>;
+  getTracksByAlbum(albumId: string): Promise<MusicTrack[]>;
+  createMusicTrack(track: InsertMusicTrack): Promise<MusicTrack>;
+
   // Comments
   getComment(id: string): Promise<CommentWithChannel | undefined>;
   getCommentsByVideo(videoId: string): Promise<CommentWithChannel[]>;
   getCommentsByShorts(shortsId: string): Promise<CommentWithChannel[]>;
   createComment(comment: InsertComment): Promise<Comment>;
+  likeComment(commentId: string, channelId: string): Promise<void>;
+  unlikeComment(commentId: string, channelId: string): Promise<void>;
 
   // Subscriptions
   getSubscription(subscriberChannelId: string, subscribedToChannelId: string): Promise<Subscription | undefined>;
   getSubscriptionsByChannel(channelId: string): Promise<Subscription[]>;
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   deleteSubscription(subscriberChannelId: string, subscribedToChannelId: string): Promise<void>;
+  isSubscribed(subscriberChannelId: string, subscribedToChannelId: string): Promise<boolean>;
+
+  // Likes
+  likeVideo(videoId: string, channelId: string, isLike: boolean): Promise<void>;
+  unlikeVideo(videoId: string, channelId: string): Promise<void>;
+  likeShorts(shortsId: string, channelId: string, isLike: boolean): Promise<void>;
+  unlikeShorts(shortsId: string, channelId: string): Promise<void>;
+  getUserVideoLike(videoId: string, channelId: string): Promise<VideoLike | undefined>;
+  getUserShortsLike(shortsId: string, channelId: string): Promise<ShortsLike | undefined>;
+
+  // Shares
+  shareContent(share: InsertShare): Promise<Share>;
+  getShareCount(videoId?: string, shortsId?: string): Promise<number>;
+
+  // User Profiles
+  getUserProfile(channelId: string): Promise<UserProfile | undefined>;
+  createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+  updateUserProfile(channelId: string, updates: Partial<InsertUserProfile>): Promise<UserProfile | undefined>;
+
+  // Search
+  searchAll(query: string): Promise<{videos: VideoWithChannel[], shorts: ShortsWithChannel[], channels: Channel[]}>;
 }
 
 export class MemStorage implements IStorage {
@@ -519,6 +569,469 @@ export class MemStorage implements IStorage {
       this.subscriptions.delete(subscription.id);
     }
   }
+
+  // Stub implementations for new methods (not implemented in MemStorage)
+  async updateChannel(): Promise<Channel | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async searchVideos(): Promise<VideoWithChannel[]> { throw new Error('Not implemented in MemStorage'); }
+  async searchShorts(): Promise<ShortsWithChannel[]> { throw new Error('Not implemented in MemStorage'); }
+  async getMusicTrack(): Promise<MusicTrack | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async getTracksByAlbum(): Promise<MusicTrack[]> { throw new Error('Not implemented in MemStorage'); }
+  async createMusicTrack(): Promise<MusicTrack> { throw new Error('Not implemented in MemStorage'); }
+  async likeComment(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
+  async unlikeComment(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
+  async isSubscribed(): Promise<boolean> { throw new Error('Not implemented in MemStorage'); }
+  async likeVideo(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
+  async unlikeVideo(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
+  async likeShorts(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
+  async unlikeShorts(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
+  async getUserVideoLike(): Promise<VideoLike | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async getUserShortsLike(): Promise<ShortsLike | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async shareContent(): Promise<Share> { throw new Error('Not implemented in MemStorage'); }
+  async getShareCount(): Promise<number> { throw new Error('Not implemented in MemStorage'); }
+  async getUserProfile(): Promise<UserProfile | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async createUserProfile(): Promise<UserProfile> { throw new Error('Not implemented in MemStorage'); }
+  async updateUserProfile(): Promise<UserProfile | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async searchAll(): Promise<{videos: VideoWithChannel[], shorts: ShortsWithChannel[], channels: Channel[]}> { throw new Error('Not implemented in MemStorage'); }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  // Channel methods
+  async getChannel(id: string): Promise<Channel | undefined> {
+    const [channel] = await db.select().from(channels).where(eq(channels.id, id));
+    return channel || undefined;
+  }
+
+  async getChannelByHandle(handle: string): Promise<Channel | undefined> {
+    const [channel] = await db.select().from(channels).where(eq(channels.handle, handle));
+    return channel || undefined;
+  }
+
+  async createChannel(insertChannel: InsertChannel): Promise<Channel> {
+    const [channel] = await db.insert(channels).values(insertChannel).returning();
+    return channel;
+  }
+
+  async getAllChannels(): Promise<Channel[]> {
+    return await db.select().from(channels).orderBy(desc(channels.subscriberCount));
+  }
+
+  async updateChannel(id: string, updates: Partial<InsertChannel>): Promise<Channel | undefined> {
+    const [channel] = await db.update(channels).set(updates).where(eq(channels.id, id)).returning();
+    return channel || undefined;
+  }
+
+  // Video methods
+  async getVideo(id: string): Promise<VideoWithChannel | undefined> {
+    const result = await db
+      .select()
+      .from(videos)
+      .innerJoin(channels, eq(videos.channelId, channels.id))
+      .where(eq(videos.id, id));
+    
+    if (!result[0]) return undefined;
+    return {
+      ...result[0].videos,
+      channel: result[0].channels
+    };
+  }
+
+  async getAllVideos(): Promise<VideoWithChannel[]> {
+    const result = await db
+      .select()
+      .from(videos)
+      .innerJoin(channels, eq(videos.channelId, channels.id))
+      .orderBy(desc(videos.publishedAt));
+    
+    return result.map(row => ({
+      ...row.videos,
+      channel: row.channels
+    }));
+  }
+
+  async getVideosByCategory(category: string): Promise<VideoWithChannel[]> {
+    const result = await db
+      .select()
+      .from(videos)
+      .innerJoin(channels, eq(videos.channelId, channels.id))
+      .where(eq(videos.category, category))
+      .orderBy(desc(videos.publishedAt));
+    
+    return result.map(row => ({
+      ...row.videos,
+      channel: row.channels
+    }));
+  }
+
+  async getVideosByChannel(channelId: string): Promise<VideoWithChannel[]> {
+    const result = await db
+      .select()
+      .from(videos)
+      .innerJoin(channels, eq(videos.channelId, channels.id))
+      .where(eq(videos.channelId, channelId))
+      .orderBy(desc(videos.publishedAt));
+    
+    return result.map(row => ({
+      ...row.videos,
+      channel: row.channels
+    }));
+  }
+
+  async createVideo(insertVideo: InsertVideo): Promise<Video> {
+    const [video] = await db.insert(videos).values(insertVideo).returning();
+    return video;
+  }
+
+  async updateVideoViews(id: string): Promise<void> {
+    const video = await this.getVideo(id);
+    if (video) {
+      await db.update(videos).set({ viewCount: (video.viewCount || 0) + 1 }).where(eq(videos.id, id));
+    }
+  }
+
+  async searchVideos(query: string): Promise<VideoWithChannel[]> {
+    const result = await db
+      .select()
+      .from(videos)
+      .innerJoin(channels, eq(videos.channelId, channels.id))
+      .where(or(
+        ilike(videos.title, `%${query}%`),
+        ilike(videos.description, `%${query}%`)
+      ))
+      .orderBy(desc(videos.viewCount));
+    
+    return result.map(row => ({
+      ...row.videos,
+      channel: row.channels
+    }));
+  }
+
+  // Shorts methods
+  async getShorts(id: string): Promise<ShortsWithChannel | undefined> {
+    const result = await db
+      .select()
+      .from(shorts)
+      .innerJoin(channels, eq(shorts.channelId, channels.id))
+      .where(eq(shorts.id, id));
+    
+    if (!result[0]) return undefined;
+    return {
+      ...result[0].shorts,
+      channel: result[0].channels
+    };
+  }
+
+  async getAllShorts(): Promise<ShortsWithChannel[]> {
+    const result = await db
+      .select()
+      .from(shorts)
+      .innerJoin(channels, eq(shorts.channelId, channels.id))
+      .orderBy(desc(shorts.publishedAt));
+    
+    return result.map(row => ({
+      ...row.shorts,
+      channel: row.channels
+    }));
+  }
+
+  async getShortsByChannel(channelId: string): Promise<ShortsWithChannel[]> {
+    const result = await db
+      .select()
+      .from(shorts)
+      .innerJoin(channels, eq(shorts.channelId, channels.id))
+      .where(eq(shorts.channelId, channelId))
+      .orderBy(desc(shorts.publishedAt));
+    
+    return result.map(row => ({
+      ...row.shorts,
+      channel: row.channels
+    }));
+  }
+
+  async createShorts(insertShorts: InsertShorts): Promise<Shorts> {
+    const [shortsRecord] = await db.insert(shorts).values(insertShorts).returning();
+    return shortsRecord;
+  }
+
+  async updateShortsViews(id: string): Promise<void> {
+    const shortsItem = await this.getShorts(id);
+    if (shortsItem) {
+      await db.update(shorts).set({ viewCount: (shortsItem.viewCount || 0) + 1 }).where(eq(shorts.id, id));
+    }
+  }
+
+  async searchShorts(query: string): Promise<ShortsWithChannel[]> {
+    const result = await db
+      .select()
+      .from(shorts)
+      .innerJoin(channels, eq(shorts.channelId, channels.id))
+      .where(or(
+        ilike(shorts.title, `%${query}%`),
+        ilike(shorts.description, `%${query}%`)
+      ))
+      .orderBy(desc(shorts.viewCount));
+    
+    return result.map(row => ({
+      ...row.shorts,
+      channel: row.channels
+    }));
+  }
+
+  // Playlist methods
+  async getPlaylist(id: string): Promise<Playlist | undefined> {
+    const [playlist] = await db.select().from(playlists).where(eq(playlists.id, id));
+    return playlist || undefined;
+  }
+
+  async getPlaylistsByChannel(channelId: string): Promise<Playlist[]> {
+    return await db.select().from(playlists).where(eq(playlists.channelId, channelId));
+  }
+
+  async createPlaylist(insertPlaylist: InsertPlaylist): Promise<Playlist> {
+    const [playlist] = await db.insert(playlists).values(insertPlaylist).returning();
+    return playlist;
+  }
+
+  // Music Album methods
+  async getMusicAlbum(id: string): Promise<MusicAlbum | undefined> {
+    const [album] = await db.select().from(musicAlbums).where(eq(musicAlbums.id, id));
+    return album || undefined;
+  }
+
+  async getAllMusicAlbums(): Promise<MusicAlbum[]> {
+    return await db.select().from(musicAlbums).orderBy(desc(musicAlbums.createdAt));
+  }
+
+  async createMusicAlbum(insertAlbum: InsertMusicAlbum): Promise<MusicAlbum> {
+    const [album] = await db.insert(musicAlbums).values(insertAlbum).returning();
+    return album;
+  }
+
+  // Music Track methods
+  async getMusicTrack(id: string): Promise<MusicTrack | undefined> {
+    const [track] = await db.select().from(musicTracks).where(eq(musicTracks.id, id));
+    return track || undefined;
+  }
+
+  async getTracksByAlbum(albumId: string): Promise<MusicTrack[]> {
+    return await db.select().from(musicTracks)
+      .where(eq(musicTracks.albumId, albumId))
+      .orderBy(musicTracks.trackNumber);
+  }
+
+  async createMusicTrack(insertTrack: InsertMusicTrack): Promise<MusicTrack> {
+    const [track] = await db.insert(musicTracks).values(insertTrack).returning();
+    return track;
+  }
+
+  // Comment methods
+  async getComment(id: string): Promise<CommentWithChannel | undefined> {
+    const result = await db
+      .select()
+      .from(comments)
+      .innerJoin(channels, eq(comments.channelId, channels.id))
+      .where(eq(comments.id, id));
+    
+    if (!result[0]) return undefined;
+    return {
+      ...result[0].comments,
+      channel: result[0].channels
+    };
+  }
+
+  async getCommentsByVideo(videoId: string): Promise<CommentWithChannel[]> {
+    const result = await db
+      .select()
+      .from(comments)
+      .innerJoin(channels, eq(comments.channelId, channels.id))
+      .where(and(eq(comments.videoId, videoId), isNull(comments.parentId)))
+      .orderBy(desc(comments.createdAt));
+    
+    return result.map(row => ({
+      ...row.comments,
+      channel: row.channels
+    }));
+  }
+
+  async getCommentsByShorts(shortsId: string): Promise<CommentWithChannel[]> {
+    const result = await db
+      .select()
+      .from(comments)
+      .innerJoin(channels, eq(comments.channelId, channels.id))
+      .where(and(eq(comments.shortsId, shortsId), isNull(comments.parentId)))
+      .orderBy(desc(comments.createdAt));
+    
+    return result.map(row => ({
+      ...row.comments,
+      channel: row.channels
+    }));
+  }
+
+  async createComment(insertComment: InsertComment): Promise<Comment> {
+    const [comment] = await db.insert(comments).values(insertComment).returning();
+    return comment;
+  }
+
+  async likeComment(commentId: string, channelId: string): Promise<void> {
+    await db.insert(commentLikes).values({ commentId, channelId }).onConflictDoNothing();
+  }
+
+  async unlikeComment(commentId: string, channelId: string): Promise<void> {
+    await db.delete(commentLikes)
+      .where(and(eq(commentLikes.commentId, commentId), eq(commentLikes.channelId, channelId)));
+  }
+
+  // Subscription methods
+  async getSubscription(subscriberChannelId: string, subscribedToChannelId: string): Promise<Subscription | undefined> {
+    const [subscription] = await db.select().from(subscriptions)
+      .where(and(
+        eq(subscriptions.subscriberChannelId, subscriberChannelId),
+        eq(subscriptions.subscribedToChannelId, subscribedToChannelId)
+      ));
+    return subscription || undefined;
+  }
+
+  async getSubscriptionsByChannel(channelId: string): Promise<Subscription[]> {
+    return await db.select().from(subscriptions)
+      .where(eq(subscriptions.subscriberChannelId, channelId));
+  }
+
+  async createSubscription(insertSubscription: InsertSubscription): Promise<Subscription> {
+    const [subscription] = await db.insert(subscriptions).values(insertSubscription).returning();
+    
+    // Update subscriber count
+    const channel = await this.getChannel(insertSubscription.subscribedToChannelId);
+    if (channel) {
+      await db.update(channels)
+        .set({ subscriberCount: (channel.subscriberCount || 0) + 1 })
+        .where(eq(channels.id, insertSubscription.subscribedToChannelId));
+    }
+    
+    return subscription;
+  }
+
+  async deleteSubscription(subscriberChannelId: string, subscribedToChannelId: string): Promise<void> {
+    await db.delete(subscriptions)
+      .where(and(
+        eq(subscriptions.subscriberChannelId, subscriberChannelId),
+        eq(subscriptions.subscribedToChannelId, subscribedToChannelId)
+      ));
+    
+    // Update subscriber count
+    const channel = await this.getChannel(subscribedToChannelId);
+    if (channel) {
+      await db.update(channels)
+        .set({ subscriberCount: Math.max(0, (channel.subscriberCount || 0) - 1) })
+        .where(eq(channels.id, subscribedToChannelId));
+    }
+  }
+
+  async isSubscribed(subscriberChannelId: string, subscribedToChannelId: string): Promise<boolean> {
+    const subscription = await this.getSubscription(subscriberChannelId, subscribedToChannelId);
+    return !!subscription;
+  }
+
+  // Like methods
+  async likeVideo(videoId: string, channelId: string, isLike: boolean): Promise<void> {
+    await db.insert(videoLikes)
+      .values({ videoId, channelId, isLike })
+      .onConflictDoUpdate({
+        target: [videoLikes.videoId, videoLikes.channelId],
+        set: { isLike }
+      });
+  }
+
+  async unlikeVideo(videoId: string, channelId: string): Promise<void> {
+    await db.delete(videoLikes)
+      .where(and(eq(videoLikes.videoId, videoId), eq(videoLikes.channelId, channelId)));
+  }
+
+  async likeShorts(shortsId: string, channelId: string, isLike: boolean): Promise<void> {
+    await db.insert(shortsLikes)
+      .values({ shortsId, channelId, isLike })
+      .onConflictDoUpdate({
+        target: [shortsLikes.shortsId, shortsLikes.channelId],
+        set: { isLike }
+      });
+  }
+
+  async unlikeShorts(shortsId: string, channelId: string): Promise<void> {
+    await db.delete(shortsLikes)
+      .where(and(eq(shortsLikes.shortsId, shortsId), eq(shortsLikes.channelId, channelId)));
+  }
+
+  async getUserVideoLike(videoId: string, channelId: string): Promise<VideoLike | undefined> {
+    const [like] = await db.select().from(videoLikes)
+      .where(and(eq(videoLikes.videoId, videoId), eq(videoLikes.channelId, channelId)));
+    return like || undefined;
+  }
+
+  async getUserShortsLike(shortsId: string, channelId: string): Promise<ShortsLike | undefined> {
+    const [like] = await db.select().from(shortsLikes)
+      .where(and(eq(shortsLikes.shortsId, shortsId), eq(shortsLikes.channelId, channelId)));
+    return like || undefined;
+  }
+
+  // Share methods
+  async shareContent(insertShare: InsertShare): Promise<Share> {
+    const [share] = await db.insert(shares).values(insertShare).returning();
+    return share;
+  }
+
+  async getShareCount(videoId?: string, shortsId?: string): Promise<number> {
+    const conditions = [];
+    if (videoId) conditions.push(eq(shares.videoId, videoId));
+    if (shortsId) conditions.push(eq(shares.shortsId, shortsId));
+    
+    const result = await db.select().from(shares)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+    return result.length;
+  }
+
+  // User Profile methods
+  async getUserProfile(channelId: string): Promise<UserProfile | undefined> {
+    const [profile] = await db.select().from(userProfiles)
+      .where(eq(userProfiles.channelId, channelId));
+    return profile || undefined;
+  }
+
+  async createUserProfile(insertProfile: InsertUserProfile): Promise<UserProfile> {
+    const [profile] = await db.insert(userProfiles).values(insertProfile).returning();
+    return profile;
+  }
+
+  async updateUserProfile(channelId: string, updates: Partial<InsertUserProfile>): Promise<UserProfile | undefined> {
+    const [profile] = await db.update(userProfiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(userProfiles.channelId, channelId))
+      .returning();
+    return profile || undefined;
+  }
+
+  // Search methods
+  async searchAll(query: string): Promise<{videos: VideoWithChannel[], shorts: ShortsWithChannel[], channels: Channel[]}> {
+    const [videosResult, shortsResult, channelsResult] = await Promise.all([
+      this.searchVideos(query),
+      this.searchShorts(query),
+      db.select().from(channels)
+        .where(or(
+          ilike(channels.name, `%${query}%`),
+          ilike(channels.description, `%${query}%`),
+          ilike(channels.handle, `%${query}%`)
+        ))
+        .orderBy(desc(channels.subscriberCount))
+    ]);
+
+    return {
+      videos: videosResult,
+      shorts: shortsResult,
+      channels: channelsResult
+    };
+  }
+}
+
+// Use database storage instead of memory storage
+export const storage = new DatabaseStorage();
+
+// Keep MemStorage for reference but don't export as default
+// export { MemStorage };
