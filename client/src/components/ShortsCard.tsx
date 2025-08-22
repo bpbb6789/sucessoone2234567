@@ -1,7 +1,7 @@
 import { type ShortsWithChannel } from "@shared/schema";
 import { formatViewCount } from "@/lib/constants";
 import { Button } from "./ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 
 interface ShortsCardProps {
   shorts: ShortsWithChannel;
@@ -9,11 +9,11 @@ interface ShortsCardProps {
 }
 
 function ShortsCard({ shorts, onClick }: ShortsCardProps) {
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   const handleBuyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/token`);
+    setLocation(`/token`);
   };
   return (
     <div 

@@ -3,7 +3,7 @@ import { formatViewCount, formatTimeAgo } from "@/lib/constants";
 import { SubscribeButton } from "./SubscribeButton";
 import { LikeDislikeButtons } from "./LikeDislikeButtons";
 import { Button } from "./ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 
 interface VideoCardProps {
   video: VideoWithChannel;
@@ -13,17 +13,17 @@ interface VideoCardProps {
 }
 
 function VideoCard({ video, onClick, currentChannelId, showInteractions = false }: VideoCardProps) {
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
 
   const handleAvatarClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/profile`);
+    setLocation(`/profile`);
   };
 
   const handleBuyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     // Navigate to token page or implement buy functionality
-    navigate(`/token`);
+    setLocation(`/token`);
   };
   return (
     <div 
