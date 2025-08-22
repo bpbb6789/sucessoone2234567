@@ -24,7 +24,7 @@ export default function History() {
           </Button>
         </div>
       </div>
-      
+
       {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 10 }).map((_, i) => (
