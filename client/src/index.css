@@ -78,6 +78,35 @@
   --chart-5: hsl(340, 75%, 55%);
 }
 
+/* Ensure dark mode text colors are properly applied */
+.dark * {
+  color: hsl(var(--foreground));
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: hsl(var(--foreground));
+}
+
+.dark p, .dark span, .dark div {
+  color: hsl(var(--foreground));
+}
+
+.dark .text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .text-gray-600 {
+  color: hsl(240, 5%, 64.9%);
+}
+
+.dark .text-gray-500 {
+  color: hsl(240, 3.8%, 46.1%);
+}
+
+.dark .text-gray-400 {
+  color: hsl(240, 5%, 64.9%);
+}
+
 @layer base {
   * {
     @apply border-border;
