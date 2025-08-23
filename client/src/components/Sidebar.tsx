@@ -29,11 +29,11 @@ const mainNavItems = [
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
 ];
 
-const libraryItems = [
-  { icon: Folder, label: "Library", href: ROUTES.LIBRARY },
-  { icon: History, label: "History", href: ROUTES.HISTORY },
-  { icon: Clock, label: "Watch later", href: ROUTES.WATCH_LATER },
-  { icon: ThumbsUp, label: "Liked videos", href: ROUTES.LIKED_VIDEOS },
+const trendingChannels = [
+  { icon: TrendingUp, label: "Tech Explorer", href: "/channel/tech-explorer", subscribers: "125K", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32" },
+  { icon: TrendingUp, label: "Cooking Master", href: "/channel/cooking-master", subscribers: "89K", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32" },
+  { icon: TrendingUp, label: "Music World", href: "/channel/music-world", subscribers: "250K", avatar: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32" },
+  { icon: TrendingUp, label: "Gaming Pro", href: "/channel/gaming-pro", subscribers: "180K", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32" },
 ];
 
 const additionalItems = [
@@ -104,23 +104,29 @@ export function Sidebar() {
           <>
             <hr className="border-gray-200 dark:border-youtube-dark-secondary mx-3 mb-4" />
 
-            {/* You Section */}
+            {/* Top Trending Channels Section */}
             <div className="px-3 mb-4">
               <h3 className="sidebar-text text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 px-3">
-                Resources
+                Top Trending Channels
               </h3>
-              {libraryItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location === item.href;
+              {trendingChannels.map((channel) => {
+                const isActive = location === channel.href;
 
                 return (
-                  <Link key={item.href} href={item.href}>
+                  <Link key={channel.href} href={channel.href}>
                     <div
                       className={cn("nav-item", isActive && "active")}
-                      data-testid={`nav-item-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+                      data-testid={`nav-item-${channel.label.toLowerCase().replace(/\s+/g, "-")}`}
                     >
-                      <Icon className="w-6 h-6 flex-shrink-0" />
-                      <span className="sidebar-text">{item.label}</span>
+                      <img
+                        src={channel.avatar}
+                        alt={channel.label}
+                        className="w-6 h-6 rounded-full flex-shrink-0"
+                      />
+                      <div className="sidebar-text flex flex-col flex-1 min-w-0">
+                        <span className="text-sm truncate">{channel.label}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{channel.subscribers}</span>
+                      </div>
                     </div>
                   </Link>
                 );
