@@ -347,7 +347,7 @@ export default function Tokens() {
                 </CardContent>
               </Card>
             ) : (
-              {/* Binance-style Dark Grid Layout */}
+              // Binance-style Dark Grid Layout
               <div className="space-y-1">
                 {filteredTokens.map((token) => (
                   <div key={token.id} className="bg-gray-900/50 border border-gray-800/60 rounded-sm hover:bg-gray-800/40 transition-colors cursor-pointer">
