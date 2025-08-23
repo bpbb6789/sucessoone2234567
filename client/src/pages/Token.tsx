@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-// import { useAccount } from 'wagmi';
+// import { useAccount } from 'wagmi';  // Temporarily commented out
 import { parseEther, formatEther } from 'viem';
 import { uniPumpCreatorConfig } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +22,7 @@ interface TokenFormData {
 }
 
 export default function Token() {
-  // Mock wallet connection for now
+  // Mock wallet connection for now - will be working once wagmi is properly configured
   const isConnected = false;
   const address = null;
   const { toast } = useToast();

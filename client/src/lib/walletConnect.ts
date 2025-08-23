@@ -5,11 +5,11 @@ import { QueryClient } from '@tanstack/react-query';
 // Create a client
 export const queryClient = new QueryClient();
 
-// RainbowKit configuration
+// RainbowKit configuration with wagmi provider
 export const config = getDefaultConfig({
   appName: 'UniPump',
   projectId: import.meta.env.VITE_WC_PROJECT_ID || "8b2d0dd39c1cced02ecce163a96a8cb5",
-  chains: [mainnet, base, baseSepolia],
+  chains: [baseSepolia], // Focus on Base Sepolia for testing
   ssr: false,
 });
 
