@@ -138,7 +138,7 @@ export default function Tokens() {
               Browse and trade tokens created on TubeClone
             </p>
           </div>
-          <Link to="/token">
+          <Link to="/create-token">
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Coins className="mr-2 h-4 w-4" />
               Create Token
@@ -208,7 +208,7 @@ export default function Tokens() {
                   <p className="text-muted-foreground text-center mb-4">
                     {searchTerm ? `No tokens match "${searchTerm}"` : 'No tokens have been created yet'}
                   </p>
-                  <Link to="/token">
+                  <Link to="/create-token">
                     <Button>Create the First Token</Button>
                   </Link>
                 </CardContent>

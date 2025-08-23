@@ -38,9 +38,14 @@ export default function Token() {
   // Extract token address from URL path
   const getTokenAddressFromPath = (): string | null => {
     const pathParts = location.pathname.split('/');
-    const tokenIndex = pathParts.indexOf('token');
-    if (tokenIndex !== -1 && pathParts[tokenIndex + 1]) {
-      return pathParts[tokenIndex + 1];
+    // Handle both /token/:address and /token routes
+    const tokenIndex = pathParts.findIndex(part => part === 'token');
+    if (tokenIndex !== -1 && tokenIndex + 1 < pathParts.length && pathParts[tokenIndex + 1]) {
+      const address = pathParts[tokenIndex + 1];
+      // Validate that it looks like an Ethereum address
+      if (address.startsWith('0x') && address.length === 42) {
+        return address;
+      }
     }
     return null;
   };
@@ -48,56 +53,71 @@ export default function Token() {
   const tokenAddress = getTokenAddressFromPath() as `0x${string}` | null;
 
   // Get token data from contract
-  const { data: contractTokenData, isError: tokenDataError } = useReadContract({
+  const { data: contractTokenData, isError: tokenDataError, isLoading: contractLoading } = useReadContract({
     address: CONTRACTS.UNIPUMP,
     abi: UniPumpAbi,
     functionName: 'getTokenData',
     args: tokenAddress ? [tokenAddress] : undefined,
     query: {
       enabled: !!tokenAddress,
+      retry: 2,
     },
   });
 
   // Get market cap data
-  const { data: capData } = useReadContract({
+  const { data: capData, isLoading: capLoading } = useReadContract({
     address: CONTRACTS.UNIPUMP,
     abi: UniPumpAbi,
     functionName: 'cap',
     args: tokenAddress ? [tokenAddress] : undefined,
     query: {
-      enabled: !!tokenAddress,
+      enabled: !!tokenAddress && !!contractTokenData,
+      retry: 2,
     },
   });
 
   // Get current price (reserves for bonding curve)
-  const { data: reserveData } = useReadContract({
+  const { data: reserveData, isLoading: reserveLoading } = useReadContract({
     address: CONTRACTS.UNIPUMP,
     abi: UniPumpAbi,
     functionName: 'getReserve',
     args: tokenAddress ? [tokenAddress] : undefined,
     query: {
-      enabled: !!tokenAddress,
+      enabled: !!tokenAddress && !!contractTokenData,
+      retry: 2,
     },
   });
 
   useEffect(() => {
     const fetchTokenData = async () => {
+      // Check if we have a valid token address
       if (!tokenAddress) {
+        console.log("No token address found in URL");
+        setIsLoading(false);
+        return;
+      }
+
+      // Wait for contract data to load
+      if (contractLoading || capLoading || reserveLoading) {
+        setIsLoading(true);
+        return;
+      }
+
+      // Handle contract errors
+      if (tokenDataError) {
+        console.error("Contract data error:", tokenDataError);
         toast({
-          title: "Invalid token address",
-          description: "No token address provided in the URL",
+          title: "Error loading token",
+          description: "Failed to load token data from contract. The token may not exist.",
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
 
-      if (tokenDataError || !contractTokenData) {
-        toast({
-          title: "Error loading token",
-          description: "Failed to load token data from contract",
-          variant: "destructive"
-        });
+      // Check if we have contract data
+      if (!contractTokenData) {
+        console.log("No contract data available");
         setIsLoading(false);
         return;
       }
@@ -125,18 +145,19 @@ export default function Token() {
 
         const processedTokenData: TokenData = {
           address: tokenAddress,
-          name: contractTokenData.name,
-          symbol: contractTokenData.symbol,
+          name: contractTokenData.name || "Unknown Token",
+          symbol: contractTokenData.symbol || "UNK",
           price: price,
           marketCap: marketCapValue,
           volume24h: "0", // This would need to be calculated from events
           holders: 0, // This would need to be calculated from Transfer events
           supply: formatUnits(contractTokenData.supply, 18),
-          createdBy: contractTokenData.createdBy,
+          createdBy: contractTokenData.createdBy || "0x0000000000000000000000000000000000000000",
           description: contractTokenData.description || 'No description available',
           imageUri: contractTokenData.imageUri || undefined
         };
 
+        console.log("Processed token data:", processedTokenData);
         setTokenData(processedTokenData);
       } catch (error) {
         console.error('Error processing token data:', error);
@@ -150,14 +171,10 @@ export default function Token() {
       }
     };
 
-    if (contractTokenData) {
-      fetchTokenData();
-    } else if (!tokenAddress) {
-      setIsLoading(false);
-    }
-  }, [tokenAddress, contractTokenData, capData, reserveData, tokenDataError, toast]);
+    fetchTokenData();
+  }, [tokenAddress, contractTokenData, capData, reserveData, tokenDataError, contractLoading, capLoading, reserveLoading, toast]);
 
-  if (isLoading) {
+  if (isLoading || contractLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -168,18 +185,30 @@ export default function Token() {
     );
   }
 
-  if (!tokenData) {
+  if (!tokenData && !isLoading && !contractLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Token Not Found</h1>
-          <p className="text-muted-foreground">The requested token could not be found or loaded from the contract.</p>
-          <Link to="/tokens">
-            <Button>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Tokens
-            </Button>
-          </Link>
+          <p className="text-muted-foreground">
+            {!tokenAddress 
+              ? "No token address provided in the URL. Please select a token from the tokens page."
+              : `Token ${tokenAddress} could not be found or loaded from the contract.`
+            }
+          </p>
+          <div className="space-x-2">
+            <Link to="/tokens">
+              <Button>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Tokens
+              </Button>
+            </Link>
+            {tokenAddress && (
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );

@@ -64,10 +64,9 @@ function AppContent() {
             <Route path="/music" element={<Music />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/search" element={<Search />} />
-            <Route path="/create" element={<Create />} />
+            <Route path="/create-token" element={<Create />} />
             <Route path="/watch/:id" element={<Watch />} />
             <Route path="/tokens" element={<Tokens />} />
-            <Route path="/token" element={<Token />} />
             <Route path="/token/:address" element={<Token />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="*" element={<NotFound />} />
