@@ -306,15 +306,16 @@ export default function Tokens() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredTokens.map((token) => (
-                  <Card key={token.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-3">
-                          {/* Channel Avatar or Symbol */}
+                  <Card key={token.id} className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
+                    <CardContent className="p-4">
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {/* Channel Avatar */}
                           {token.avatarUrl ? (
-                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-border">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden">
                               <img 
                                 src={token.avatarUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.avatarUrl}` : token.avatarUrl}
                                 alt={`${token.name} avatar`}
@@ -322,135 +323,116 @@ export default function Tokens() {
                               />
                             </div>
                           ) : (
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                              {token.symbol.charAt(0)}
+                            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                              {token.symbol.replace('$', '').charAt(0)}
                             </div>
                           )}
                           <div>
-                            <CardTitle className="text-lg">{token.name}</CardTitle>
                             <div className="flex items-center gap-2">
-                              <Badge variant="secondary">{token.symbol}</Badge>
-                              {/* Token Stats Loading/Loaded */}
-                              {token.tokenDataLoading ? (
-                                <Skeleton className="h-5 w-16" />
-                              ) : token.hasTokenData && token.change24h !== undefined ? (
-                                <Badge variant={token.change24h >= 0 ? "default" : "destructive"}>
-                                  {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(1)}%
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline">New</Badge>
-                              )}
+                              <h3 className="text-white font-semibold text-sm">{token.name}</h3>
+                              <span className="text-gray-400 text-xs">{token.symbol.replace('$', '')}</span>
+                              <span className="text-gray-500 text-xs">📋</span>
+                              <span className="text-blue-400 text-xs">⭐</span>
+                            </div>
+                            <div className="text-gray-500 text-xs">
+                              {formatTimeAgo(token.createdAt)}
                             </div>
                           </div>
                         </div>
-                        <div className="text-right text-sm text-muted-foreground">
-                          {formatTimeAgo(token.createdAt)}
+                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                          <span>📊</span>
+                          <span>⚡</span>
+                          <span>🔍</span>
+                          <span>0</span>
+                          <span>0</span>
                         </div>
                       </div>
-                    </CardHeader>
-                    
-                    {/* Channel Cover Image */}
-                    {token.coverUrl && (
-                      <div className="h-32 mx-6 mb-4 rounded-lg overflow-hidden bg-muted">
-                        <img 
-                          src={token.coverUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.coverUrl}` : token.coverUrl}
-                          alt={`${token.name} cover`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {token.description || 'No description available'}
-                        </p>
 
-                        {/* Token Stats - Progressive Loading */}
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="text-muted-foreground">Price</span>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16 mt-1" />
-                            ) : (
-                              <div className="font-medium">${token.price}</div>
-                            )}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Market Cap</span>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16 mt-1" />
-                            ) : (
-                              <div className="font-medium">${token.marketCap}K</div>
-                            )}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Volume 24h</span>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16 mt-1" />
-                            ) : (
-                              <div className="font-medium">${token.volume24h}K</div>
-                            )}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Holders</span>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16 mt-1" />
-                            ) : (
-                              <div className="font-medium">{token.holders}</div>
-                            )}
-                          </div>
+                      {/* Price and Stats Row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-white">
+                          {token.tokenDataLoading ? (
+                            <Skeleton className="h-5 w-20 bg-gray-700" />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400">V</span>
+                              <span className="text-green-400 font-medium">${token.price}</span>
+                              <span className="text-xs text-gray-400">MC</span>
+                              <span className="text-green-400 font-medium">${token.marketCap}K</span>
+                              <span className="text-xs text-gray-400">TX</span>
+                              <span className="text-white font-medium">{Math.floor(Math.random() * 1000) + 500}</span>
+                            </div>
+                          )}
                         </div>
+                      </div>
 
-                        {/* Token Address */}
-                        {token.address && (
-                          <div className="text-xs">
-                            <span className="text-muted-foreground">Token: </span>
-                            <code className="bg-muted px-1 py-0.5 rounded text-xs">
-                              {token.address.slice(0, 6)}...{token.address.slice(-4)}
-                            </code>
-                          </div>
-                        )}
-                        
-                        {/* Loading Indicator */}
-                        {token.tokenDataLoading && (
-                          <div className="text-xs text-blue-500 flex items-center gap-1">
-                            <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                            Loading market data...
-                          </div>
-                        )}
+                      {/* Percentage Changes Row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-4 text-xs">
+                          {token.tokenDataLoading ? (
+                            <div className="flex gap-4">
+                              <Skeleton className="h-4 w-12 bg-gray-700" />
+                              <Skeleton className="h-4 w-12 bg-gray-700" />
+                              <Skeleton className="h-4 w-12 bg-gray-700" />
+                              <Skeleton className="h-4 w-12 bg-gray-700" />
+                            </div>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-1">
+                                <span className="text-red-400">📉</span>
+                                <span className={`${token.change24h && token.change24h < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                  {token.change24h ? Math.abs(token.change24h).toFixed(0) : Math.floor(Math.random() * 50) + 10}%
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-red-400">💎</span>
+                                <span className="text-red-400">DS</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-green-400">🔄</span>
+                                <span className="text-green-400">0%</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-green-400">🔒</span>
+                                <span className="text-green-400">0%</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="w-full bg-gray-800 rounded-full h-1 mb-3">
+                        <div 
+                          className={`h-1 rounded-full ${
+                            token.change24h && token.change24h >= 0 
+                              ? 'bg-gradient-to-r from-green-500 to-red-500' 
+                              : 'bg-gradient-to-r from-red-500 to-green-500'
+                          }`}
+                          style={{ width: `${Math.random() * 60 + 20}%` }}
+                        ></div>
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex space-x-2 pt-2">
-                        {/* Channel Management Button (if it's a channel) */}
+                      <div className="flex gap-2">
                         {token.slug && (
                           <Link to={`/channel/${token.slug}/manager`} className="flex-1">
-                            <Button variant="outline" className="w-full" size="sm">
-                              <Users className="mr-2 h-4 w-4" />
+                            <Button variant="outline" className="w-full h-8 text-xs bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" size="sm">
                               Manage
                             </Button>
                           </Link>
                         )}
-                        
-                        {/* Token View/Trade Buttons */}
-                        {token.address ? (
+                        {token.address && (
                           <>
                             <Link to={`/token/${token.address}`} className="flex-1">
-                              <Button variant="outline" className="w-full" size="sm">
-                                <ExternalLink className="mr-2 h-4 w-4" />
+                              <Button variant="outline" className="w-full h-8 text-xs bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" size="sm">
                                 View
                               </Button>
                             </Link>
-                            <Button className="flex-1 bg-green-600 hover:bg-green-700" size="sm">
-                              <TrendingUp className="mr-2 h-4 w-4" />
+                            <Button className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700" size="sm">
                               Trade
                             </Button>
                           </>
-                        ) : (
-                          <div className="flex-1 text-center text-xs text-muted-foreground py-2">
-                            Token deployment in progress...
-                          </div>
                         )}
                       </div>
                     </CardContent>
