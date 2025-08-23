@@ -38,23 +38,7 @@ const additionalItems = [
   { icon: HelpCircle, label: "FAQ", href: "/faq" },
 ];
 
-const subscriptionChannels = [
-  {
-    name: "Tech Explorer",
-    avatar:
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32",
-  },
-  {
-    name: "Gaming Pro",
-    avatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32",
-  },
-  {
-    name: "Cooking Master",
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32",
-  },
-];
+
 
 export function Sidebar() {
   const { isExpanded } = useSidebar();
@@ -152,30 +136,7 @@ export function Sidebar() {
               )}
             </div>
 
-            <hr className="border-gray-200 dark:border-youtube-dark-secondary mx-3 mb-4" />
-
-            {/* Subscriptions */}
-            <div className="px-3 mb-4">
-              <h3 className="sidebar-text text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 px-3">
-                Create a Channel
-              </h3>
-              <div className="space-y-1">
-                {subscriptionChannels.map((channel) => (
-                  <div
-                    key={channel.name}
-                    className="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-youtube-dark-hover transition-colors cursor-pointer"
-                    data-testid={`subscription-${channel.name.toLowerCase().replace(/\s+/g, "-")}`}
-                  >
-                    <img
-                      src={channel.avatar}
-                      alt={channel.name}
-                      className="w-6 h-6 rounded-full mr-4 flex-shrink-0"
-                    />
-                    <span className="sidebar-text text-sm">{channel.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            
           </>
         )}
 
