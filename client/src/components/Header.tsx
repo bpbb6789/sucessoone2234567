@@ -1,4 +1,4 @@
-import { Search, Menu, Mic, Bell, Upload, Sun, Moon } from "lucide-react";
+import { Search, Menu, Bell, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/use-theme";
@@ -76,14 +76,7 @@ export function Header() {
                 </Link>
               </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
-              data-testid="button-voice-search"
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
+            
           </div>
         )}
 
@@ -123,20 +116,6 @@ export function Header() {
             variant="ghost"
             size="icon"
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
-            data-testid="button-upload"
-            asChild
-          >
-            <Link href={ROUTES.CREATE}>
-              <div>
-                <Upload className="h-4 w-4" />
-              </div>
-            </Link>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
             data-testid="button-notifications"
             asChild
           >
@@ -153,15 +132,6 @@ export function Header() {
             size="sm"
             className="hidden md:flex"
           />
-
-          <Link href={ROUTES.PROFILE}>
-            <img
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40"
-              alt="User Avatar"
-              className="w-8 h-8 rounded-full cursor-pointer"
-              data-testid="img-user-avatar"
-            />
-          </Link>
         </div>
       </div>
     </header>
