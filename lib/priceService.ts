@@ -1,4 +1,3 @@
-
 import { gql } from "@apollo/client";
 
 // Enhanced GraphQL queries for real price data
@@ -21,7 +20,7 @@ export const GET_TOKEN_PRICE_DATA = gql`
         timestamp
       }
     }
-    
+
     uniPumpCreatorSaless(
       where: { memeTokenAddress: $tokenAddress }
     ) {
@@ -64,30 +63,35 @@ export const GET_TOKEN_TRANSACTIONS = gql`
 
 // Price calculation service using bonding curve
 export class PriceService {
-  
+  private priceCache = new Map<string, { price: number; timestamp: number }>();
+  private readonly CACHE_DURATION = 30000; // 30 seconds
+
   // Get real-time price using bonding curve calculation
-  static async getTokenPrice(tokenAddress: string): Promise<{
-    price: string;
-    priceChange24h: number;
-    volume24h: string;
-    marketCap: string;
-  }> {
+  async getTokenPrice(tokenAddress: string): Promise<number> {
+    console.log(`Getting price for token: ${tokenAddress}`);
+
+    // Check cache first
+    const cached = this.priceCache.get(tokenAddress);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      return cached.price;
+    }
+
     try {
-      return await this.calculatePriceFromBondingCurve(tokenAddress);
+      // Use bonding curve calculation directly since external APIs don't support Unichain
+      const price = await this.calculatePriceFromBondingCurve(tokenAddress);
+
+      // Cache the result
+      this.priceCache.set(tokenAddress, { price, timestamp: Date.now() });
+
+      return price;
     } catch (error) {
-      console.error('Error calculating price from bonding curve:', error);
-      // Return default values if everything fails
-      return {
-        price: '0.000001',
-        priceChange24h: 0,
-        volume24h: '0',
-        marketCap: '1000'
-      };
+      console.error('Error fetching token price:', error);
+      return 0; // Return 0 instead of throwing
     }
   }
-  
+
   // Calculate price from bonding curve data using GraphQL and contract formula
-  private static async calculatePriceFromBondingCurve(tokenAddress: string): Promise<{
+  private async calculatePriceFromBondingCurve(tokenAddress: string): Promise<{
     price: string;
     priceChange24h: number;
     volume24h: string;
@@ -121,7 +125,7 @@ export class PriceService {
                   timestamp
                 }
               }
-              
+
               uniPumpCreatorSaless(
                 where: { memeTokenAddress: $tokenAddress }
               ) {
@@ -141,30 +145,30 @@ export class PriceService {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       const buckets = data.data?.minBuckets?.items || [];
       const tokenData = data.data?.uniPumpCreatorSaless?.items?.[0];
-      
+
       if (buckets.length > 0) {
         const latest = buckets[0];
         const previous24h = buckets.find(b => 
           (parseInt(latest.id) - parseInt(b.id)) >= 24 * 60 // 24 hours in minutes
         );
-        
+
         const currentPrice = parseFloat(latest.close || latest.average || '0');
         const previousPrice = parseFloat(previous24h?.close || previous24h?.average || currentPrice.toString());
         const priceChange24h = previousPrice > 0 ? ((currentPrice - previousPrice) / previousPrice) * 100 : 0;
-        
+
         // Calculate 24h volume from recent swaps
         const volume24h = buckets
           .filter(b => (parseInt(latest.id) - parseInt(b.id)) <= 24 * 60)
           .reduce((sum, bucket) => sum + (parseFloat(bucket.count || '0') * currentPrice), 0);
-        
+
         // Calculate market cap using bonding curve formula
         const totalSupply = parseFloat(tokenData?.totalSupply || '1000000000');
         const marketCap = this.calculateMarketCapFromBondingCurve(currentPrice, totalSupply);
-        
+
         return {
           price: currentPrice.toFixed(8),
           priceChange24h,
@@ -172,7 +176,7 @@ export class PriceService {
           marketCap: marketCap.toFixed(2)
         };
       }
-      
+
       // If no historical data, calculate from bonding curve parameters
       return this.calculateFromBaseBondingCurve(tokenAddress);
     } catch (error) {
@@ -191,24 +195,24 @@ export class PriceService {
     // Bonding curve formula from UniPump.sol:
     // curve(x) = 0.6015 * exp(0.00003606 * x)
     // price = curve(cap) / M where M = 1,000,000
-    
+
     // Use a base cap value for new tokens (this would normally come from contract state)
     const baseCap = 1000; // Base cap in ETH equivalent
     const M = 1000000; // 1M tokens as per contract
-    
+
     // Calculate price using the exponential bonding curve
     const expValue = Math.exp(0.00003606 * baseCap);
     const curveValue = 0.6015 * expValue;
     const price = curveValue / M;
-    
+
     // Assume ETH price is $3000 for USD conversion
     const ethPrice = 3000;
     const priceUSD = price * ethPrice;
-    
+
     // Calculate market cap
     const totalSupply = 1000000000; // 1B tokens as per contract
     const marketCap = priceUSD * totalSupply;
-    
+
     return Promise.resolve({
       price: priceUSD.toFixed(8),
       priceChange24h: 0, // No historical data for new calculation
@@ -224,7 +228,7 @@ export class PriceService {
     const circulatingSupply = Math.min(supply, 800000000); // Max 800M before pool creation
     return price * circulatingSupply;
   }
-  
+
   // Get holder count from blockchain
   static async getHolderCount(tokenAddress: string): Promise<number> {
     try {
@@ -234,19 +238,19 @@ export class PriceService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tokenAddress })
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         return data.holderCount || 0;
       }
-      
+
       return 0;
     } catch (error) {
       console.error('Error fetching holder count:', error);
       return 0;
     }
   }
-  
+
   // Get creation time from blockchain
   static async getTokenCreationTime(tokenAddress: string): Promise<Date> {
     try {
@@ -255,12 +259,12 @@ export class PriceService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tokenAddress })
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         return new Date(data.creationTime);
       }
-      
+
       return new Date();
     } catch (error) {
       console.error('Error fetching creation time:', error);
@@ -273,15 +277,15 @@ export class PriceService {
     // Convert bigint to numbers for calculation
     const capEth = Number(cap) / 1e18; // Convert from wei to ETH
     const supplyTokens = Number(supply) / 1e18; // Convert from wei to tokens
-    
+
     // UniPump bonding curve formula: curve(x) = 0.6015 * exp(0.00003606 * x)
     const expValue = Math.exp(0.00003606 * capEth);
     const curveValue = 0.6015 * expValue;
     const M = 1000000; // 1M as per contract
-    
+
     // Price per token = curve(cap) / M
     const pricePerToken = curveValue / M;
-    
+
     // Convert to USD (assuming ETH = $3000)
     return pricePerToken * 3000;
   }
