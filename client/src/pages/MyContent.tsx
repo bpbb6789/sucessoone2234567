@@ -246,15 +246,36 @@ export default function MyContent() {
                         </Button>
                       </Link>
                       
-                      <Button 
-                        size="sm" 
-                        variant="destructive" 
-                        onClick={() => handleDelete(content.id)}
-                        className="text-xs"
-                        data-testid={`delete-${content.id}`}
-                      >
-                        Delete
-                      </Button>
+                      {content.status === 'tokenized' ? (
+                        <Button 
+                          size="sm" 
+                          className="text-xs bg-green-600 hover:bg-green-700"
+                          data-testid={`buy-${content.id}`}
+                        >
+                          Buy ${content.price || '0.001'} ETH
+                        </Button>
+                      ) : content.status === 'tokenizing' ? (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          disabled 
+                          className="text-xs"
+                          data-testid={`minting-${content.id}`}
+                        >
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                          Minting...
+                        </Button>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => handleDelete(content.id)}
+                          className="text-xs"
+                          data-testid={`delete-${content.id}`}
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

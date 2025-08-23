@@ -970,6 +970,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Marketplace endpoint - get all tokenized content
+  app.get("/api/marketplace", async (req, res) => {
+    try {
+      const tokenizedContent = await db.select().from(contentImports)
+        .where(eq(contentImports.status, 'tokenized'))
+        .orderBy(desc(contentImports.tokenizedAt));
+      res.json(tokenizedContent);
+    } catch (error) {
+      console.error("Error fetching marketplace content:", error);
+      res.status(500).json({ message: "Failed to fetch marketplace content" });
+    }
+  });
+
   // IPFS Upload endpoint for file uploads
   app.post("/api/content-imports/upload", upload.single('file'), async (req, res) => {
     try {
@@ -1016,7 +1029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             mediaCid,
             ipfsCid: metadataCid,
             metadata,
-            status: 'ready',
+            status: 'tokenizing',
             createdAt: new Date()
           },
           mediaCid,
@@ -1040,10 +1053,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mediaCid,
         ipfsCid: metadataCid,
         metadata,
-        status: 'ready' as const
+        status: 'tokenizing' as const
       };
 
       const content = await storage.createContentImport(contentData);
+      
+      // Auto-tokenize content after creation
+      setTimeout(async () => {
+        try {
+          await storage.updateContentImport(content.id, { 
+            status: 'tokenized',
+            tokenizedAt: new Date()
+          });
+        } catch (error) {
+          console.error("Auto-tokenization error:", error);
+          await storage.updateContentImport(content.id, { status: 'failed' });
+        }
+      }, 2000);
       
       res.json({
         success: true,
@@ -1090,7 +1116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             originalUrl: url,
             ipfsCid: metadataCid,
             metadata,
-            status: 'ready',
+            status: 'tokenizing',
             createdAt: new Date()
           },
           metadataCid
@@ -1107,10 +1133,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalUrl: url,
         ipfsCid: metadataCid,
         metadata,
-        status: 'ready' as const
+        status: 'tokenizing' as const
       };
 
       const content = await storage.createContentImport(contentData);
+      
+      // Auto-tokenize content after creation
+      setTimeout(async () => {
+        try {
+          await storage.updateContentImport(content.id, { 
+            status: 'tokenized',
+            tokenizedAt: new Date()
+          });
+        } catch (error) {
+          console.error("Auto-tokenization error:", error);
+          await storage.updateContentImport(content.id, { status: 'failed' });
+        }
+      }, 2000);
       
       res.json({
         success: true,

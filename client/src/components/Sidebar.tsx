@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useGetAllChannels } from "@/hooks/useGetAllChannels";
 
 const mainNavItems = [
-  { icon: Home, label: "Explore", href: "/tokens" },
+  { icon: Home, label: "Marketplace", href: "/marketplace" },
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
   { icon: Radio, label: "Podcasts", href: ROUTES.SUBSCRIPTIONS },
   { icon: Music, label: "Music", href: ROUTES.MUSIC },
@@ -32,7 +32,6 @@ const mainNavItems = [
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
   { icon: Upload, label: "Import Content", href: "/dashboard/import" },
   { icon: FileImage, label: "My Content", href: "/my-content" },
-  { icon: Upload, label: "Tokenize", href: "/tokenize" },
 ];
 
 

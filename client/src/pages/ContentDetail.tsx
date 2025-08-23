@@ -163,24 +163,33 @@ export default function ContentDetail() {
                 Share
               </Button>
               
-              {content.status === 'ready' && (
+              {content.status === 'tokenized' ? (
                 <Button 
                   size="sm" 
-                  onClick={handleTokenize}
-                  disabled={tokenizeMutation.isPending}
-                  data-testid="tokenize-button"
+                  className="bg-green-600 hover:bg-green-700"
+                  data-testid="buy-button"
                 >
-                  {tokenizeMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Tokenizing...
-                    </>
-                  ) : (
-                    <>
-                      <Tag className="w-4 h-4 mr-2" />
-                      Tokenize
-                    </>
-                  )}
+                  <Heart className="w-4 h-4 mr-2" />
+                  Buy for {content.price || '0.001'} ETH
+                </Button>
+              ) : content.status === 'tokenizing' ? (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  disabled
+                  data-testid="minting-button"
+                >
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Minting NFT...
+                </Button>
+              ) : (
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  data-testid="failed-button"
+                  disabled
+                >
+                  Minting Failed
                 </Button>
               )}
             </div>
@@ -392,23 +401,13 @@ export default function ContentDetail() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {content.status === 'ready' && (
+                {content.status === 'tokenized' && (
                   <Button 
-                    onClick={handleTokenize}
-                    disabled={tokenizeMutation.isPending}
-                    data-testid="detail-tokenize-button"
+                    className="bg-green-600 hover:bg-green-700"
+                    data-testid="detail-buy-button"
                   >
-                    {tokenizeMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Tokenizing...
-                      </>
-                    ) : (
-                      <>
-                        <Tag className="w-4 h-4 mr-2" />
-                        Tokenize Content
-                      </>
-                    )}
+                    <Heart className="w-4 h-4 mr-2" />
+                    Buy for {content.price || '0.001'} ETH
                   </Button>
                 )}
                 

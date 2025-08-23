@@ -159,7 +159,10 @@ export const contentImports = pgTable("content_imports", {
   mediaCid: text("media_cid"), // Media file CID
   thumbnailCid: text("thumbnail_cid"), // Thumbnail CID
   metadata: jsonb("metadata"), // Additional metadata
-  status: text("status").notNull().default("ready"), // 'ready', 'tokenizing', 'tokenized', 'failed'
+  status: text("status").notNull().default("tokenizing"), // 'tokenizing', 'tokenized', 'failed'
+  price: text("price").default("0.001"), // Price in ETH
+  contractAddress: text("contract_address"), // NFT contract address
+  tokenId: text("token_id"), // NFT token ID
   tokenizedAt: timestamp("tokenized_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
