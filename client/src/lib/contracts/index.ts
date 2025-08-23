@@ -1,4 +1,4 @@
-import { UniPumpAbi } from './UniPumpAbi';
+import { UniPumpAbi } from '../../../../abi/UniPumpAbi.s';
 import { UniPumpCreatorAbi } from './UniPumpCreatorAbi';
 
 // Contract addresses on Base Sepolia
