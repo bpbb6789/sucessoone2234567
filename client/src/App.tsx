@@ -32,6 +32,7 @@ import Notifications from '@/pages/Notifications'
 import Activities from "@/pages/Activities";
 import Doc from "@/pages/Doc";
 import FAQ from "@/pages/FAQ";
+import ContentImport from '@/pages/ContentImport';
 import NotFound from '@/pages/not-found'
 
 import '@rainbow-me/rainbowkit/styles.css'
@@ -79,6 +80,7 @@ function AppContent() {
               <Route path="/token/:address" element={<Token />} />
               <Route path="/create-channel" element={<CreateChannel />} />
               <Route path="/channel/:slug/manager" element={<ChannelManager />} />
+              <Route path="/dashboard/import" element={<ContentImport />} />
               <Route path="/doc" element={<Doc />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="*" element={<NotFound />} />

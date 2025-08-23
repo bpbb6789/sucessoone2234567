@@ -148,6 +148,23 @@ export const userProfiles = pgTable("user_profiles", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const contentImports = pgTable("content_imports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  channelId: varchar("channel_id").references(() => channels.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  contentType: text("content_type").notNull(), // 'reel', 'podcast', 'image', 'post', 'event'
+  originalUrl: text("original_url"), // YouTube, TikTok, Spotify URL if imported
+  ipfsCid: text("ipfs_cid"), // Main content CID
+  mediaCid: text("media_cid"), // Media file CID
+  thumbnailCid: text("thumbnail_cid"), // Thumbnail CID
+  metadata: jsonb("metadata"), // Additional metadata
+  status: text("status").notNull().default("ready"), // 'ready', 'tokenizing', 'tokenized', 'failed'
+  tokenizedAt: timestamp("tokenized_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertChannelSchema = createInsertSchema(channels).omit({
   id: true,
@@ -215,6 +232,12 @@ export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
   updatedAt: true,
 });
 
+export const insertContentImportSchema = createInsertSchema(contentImports).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Channel = typeof channels.$inferSelect;
 export type InsertChannel = z.infer<typeof insertChannelSchema>;
@@ -254,6 +277,9 @@ export type InsertMusicTrack = z.infer<typeof insertMusicTrackSchema>;
 
 export type UserProfile = typeof userProfiles.$inferSelect;
 export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
+
+export type ContentImport = typeof contentImports.$inferSelect;
+export type InsertContentImport = z.infer<typeof insertContentImportSchema>;
 
 // Extended types with relations
 export type VideoWithChannel = Video & {

@@ -15,10 +15,11 @@ import {
   type Token, type InsertToken,
   type TokenSale, type InsertTokenSale,
   type Web3Channel, type InsertWeb3Channel,
+  type ContentImport, type InsertContentImport,
   type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel,
   channels, videos, shorts, playlists, musicAlbums, comments, subscriptions,
   videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles,
-  tokens, tokenSales, web3Channels
+  tokens, tokenSales, web3Channels, contentImports
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -111,6 +112,13 @@ export interface IStorage {
   getWeb3ChannelByCoinAddress(coinAddress: string): Promise<Web3Channel | undefined>;
   createWeb3Channel(channel: InsertWeb3Channel): Promise<Web3Channel>;
   getAllWeb3Channels(): Promise<Web3Channel[]>;
+
+  // Content Imports
+  getContentImport(id: string): Promise<ContentImport | undefined>;
+  getContentImportsByChannel(channelId: string): Promise<ContentImport[]>;
+  createContentImport(content: InsertContentImport): Promise<ContentImport>;
+  updateContentImport(id: string, updates: Partial<InsertContentImport>): Promise<ContentImport | undefined>;
+  deleteContentImport(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1112,6 +1120,35 @@ export class DatabaseStorage implements IStorage {
 
   async getAllWeb3Channels(): Promise<Web3Channel[]> {
     return await db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
+  }
+
+  // Content Import methods
+  async getContentImport(id: string): Promise<ContentImport | undefined> {
+    const [content] = await db.select().from(contentImports).where(eq(contentImports.id, id));
+    return content || undefined;
+  }
+
+  async getContentImportsByChannel(channelId: string): Promise<ContentImport[]> {
+    return await db.select().from(contentImports)
+      .where(eq(contentImports.channelId, channelId))
+      .orderBy(desc(contentImports.createdAt));
+  }
+
+  async createContentImport(insertContent: InsertContentImport): Promise<ContentImport> {
+    const [content] = await db.insert(contentImports).values(insertContent).returning();
+    return content;
+  }
+
+  async updateContentImport(id: string, updates: Partial<InsertContentImport>): Promise<ContentImport | undefined> {
+    const [content] = await db.update(contentImports)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(contentImports.id, id))
+      .returning();
+    return content || undefined;
+  }
+
+  async deleteContentImport(id: string): Promise<void> {
+    await db.delete(contentImports).where(eq(contentImports.id, id));
   }
 }
 

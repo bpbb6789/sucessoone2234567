@@ -7,7 +7,8 @@ import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema, 
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
   insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
-  insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema, insertWeb3ChannelSchema
+  insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema, insertWeb3ChannelSchema,
+  insertContentImportSchema
 } from "@shared/schema";
 import { db } from "./db";
 
@@ -903,6 +904,201 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       res.status(500).json(handleDatabaseError(error, "getUserProfile"));
+    }
+  });
+
+  // Content Import API endpoints
+  app.get("/api/content-imports", async (req, res) => {
+    try {
+      const channelId = req.query.channelId as string;
+      if (!channelId) {
+        return res.status(400).json({ message: "Channel ID is required" });
+      }
+      
+      const contents = await storage.getContentImportsByChannel(channelId);
+      res.json(contents);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getContentImportsByChannel"));
+    }
+  });
+
+  app.get("/api/content-imports/:id", async (req, res) => {
+    try {
+      const content = await storage.getContentImport(req.params.id);
+      if (!content) {
+        return res.status(404).json({ message: "Content import not found" });
+      }
+      res.json(content);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getContentImport"));
+    }
+  });
+
+  app.post("/api/content-imports", async (req, res) => {
+    try {
+      const validatedData = insertContentImportSchema.parse(req.body);
+      const content = await storage.createContentImport(validatedData);
+      res.status(201).json(content);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid content data", errors: error.errors });
+      } else {
+        res.status(500).json(handleDatabaseError(error, "createContentImport"));
+      }
+    }
+  });
+
+  app.patch("/api/content-imports/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const content = await storage.updateContentImport(req.params.id, updates);
+      if (!content) {
+        return res.status(404).json({ message: "Content import not found" });
+      }
+      res.json(content);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "updateContentImport"));
+    }
+  });
+
+  app.delete("/api/content-imports/:id", async (req, res) => {
+    try {
+      await storage.deleteContentImport(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "deleteContentImport"));
+    }
+  });
+
+  // IPFS Upload endpoint for file uploads
+  app.post("/api/content-imports/upload", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file provided" });
+      }
+
+      const { channelId, contentType, title, description } = req.body;
+      
+      if (!channelId || !contentType || !title) {
+        return res.status(400).json({ message: "Missing required fields: channelId, contentType, title" });
+      }
+
+      // Upload file to IPFS
+      const file = new File([req.file.buffer], req.file.originalname, {
+        type: req.file.mimetype,
+      });
+      
+      const mediaCid = await uploadFileToIPFS(file);
+      
+      // Create metadata JSON
+      const metadata = {
+        title,
+        description: description || '',
+        contentType,
+        originalFileName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        fileSize: req.file.size,
+        uploadedAt: new Date().toISOString()
+      };
+
+      // Upload metadata to IPFS
+      const metadataCid = await uploadJSONToIPFS(metadata);
+
+      // Save content import record
+      const contentData = {
+        channelId,
+        title,
+        description,
+        contentType,
+        mediaCid,
+        ipfsCid: metadataCid,
+        metadata,
+        status: 'ready' as const
+      };
+
+      const content = await storage.createContentImport(contentData);
+      
+      res.json({
+        success: true,
+        content,
+        mediaCid,
+        metadataCid
+      });
+    } catch (error) {
+      console.error("Content upload error:", error);
+      res.status(500).json({ message: "Failed to upload content to IPFS" });
+    }
+  });
+
+  // URL Import endpoint
+  app.post("/api/content-imports/import-url", async (req, res) => {
+    try {
+      const { url, channelId, contentType, title, description } = req.body;
+      
+      if (!url || !channelId || !contentType || !title) {
+        return res.status(400).json({ message: "Missing required fields: url, channelId, contentType, title" });
+      }
+
+      // Create metadata for URL import
+      const metadata = {
+        title,
+        description: description || '',
+        contentType,
+        originalUrl: url,
+        importedAt: new Date().toISOString()
+      };
+
+      // Upload metadata to IPFS
+      const metadataCid = await uploadJSONToIPFS(metadata);
+
+      // Save content import record
+      const contentData = {
+        channelId,
+        title,
+        description,
+        contentType,
+        originalUrl: url,
+        ipfsCid: metadataCid,
+        metadata,
+        status: 'ready' as const
+      };
+
+      const content = await storage.createContentImport(contentData);
+      
+      res.json({
+        success: true,
+        content,
+        metadataCid
+      });
+    } catch (error) {
+      console.error("URL import error:", error);
+      res.status(500).json({ message: "Failed to import content from URL" });
+    }
+  });
+
+  // Tokenize content endpoint
+  app.post("/api/content-imports/:id/tokenize", async (req, res) => {
+    try {
+      // Update status to tokenizing
+      await storage.updateContentImport(req.params.id, { status: 'tokenizing' });
+
+      // Simulate tokenization process (replace with actual Zora SDK integration)
+      setTimeout(async () => {
+        try {
+          await storage.updateContentImport(req.params.id, { 
+            status: 'tokenized',
+            tokenizedAt: new Date()
+          });
+        } catch (error) {
+          console.error("Tokenization completion error:", error);
+          await storage.updateContentImport(req.params.id, { status: 'failed' });
+        }
+      }, 3000);
+
+      res.json({ message: "Tokenization started" });
+    } catch (error) {
+      console.error("Tokenization error:", error);
+      res.status(500).json({ message: "Failed to start tokenization" });
     }
   });
 
