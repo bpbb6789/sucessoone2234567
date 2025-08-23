@@ -36,19 +36,19 @@ export const useGetAllSales = () => {
 
         try {
             // Fetch basic token data from GraphQL
-            const { data: graphqlData, error: graphqlError } = await client.query({
+            const result = await client.query({
                 query: GetAllSales,
                 fetchPolicy: 'network-only', // Ensure we get fresh data from the server
             });
 
-            if (graphqlError) {
-                console.error("GraphQL Error fetching tokens:", graphqlError);
+            if (result.errors) {
+                console.error("GraphQL Error fetching tokens:", result.errors);
                 setError('Failed to fetch token data');
                 setIsLoading(false);
                 return;
             }
 
-            const tokens = graphqlData?.uniPumpCreatorSaless?.items || [];
+            const tokens = result.data?.uniPumpCreatorSaless?.items || [];
             console.log("Fetched tokens from GraphQL:", tokens);
 
             if (tokens.length === 0) {

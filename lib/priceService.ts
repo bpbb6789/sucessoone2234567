@@ -91,8 +91,19 @@ export class PriceService {
     }
   }
 
+  // Static method for easy access without creating instance
+  static async getTokenPrice(tokenAddress: string): Promise<{
+    price: string;
+    priceChange24h: number;
+    volume24h: string;
+    marketCap: string;
+  }> {
+    const instance = new PriceService();
+    return instance.calculatePriceFromBondingCurve(tokenAddress);
+  }
+
   // Calculate price from bonding curve data using GraphQL and contract formula
-  private async calculatePriceFromBondingCurve(tokenAddress: string): Promise<{
+  public async calculatePriceFromBondingCurve(tokenAddress: string): Promise<{
     price: string;
     priceChange24h: number;
     volume24h: string;
