@@ -7,6 +7,17 @@ import {
   insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
   insertMusicTrackSchema, insertUserProfileSchema
 } from "@shared/schema";
+import { db } from "./db";
+
+// Helper function to handle database errors gracefully
+function handleDatabaseError(error: any, operation: string) {
+  console.error(`Database error in ${operation}:`, error);
+  return {
+    error: true,
+    message: "Database temporarily unavailable",
+    operation
+  };
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Channels
@@ -15,7 +26,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const channels = await storage.getAllChannels();
       res.json(channels);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch channels" });
+      // res.status(500).json({ message: "Failed to fetch channels" });
+      res.status(500).json(handleDatabaseError(error, "getAllChannels"));
     }
   });
 
@@ -27,7 +39,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(channel);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch channel" });
+      // res.status(500).json({ message: "Failed to fetch channel" });
+      res.status(500).json(handleDatabaseError(error, "getChannel"));
     }
   });
 
@@ -37,7 +50,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const channel = await storage.createChannel(validatedData);
       res.status(201).json(channel);
     } catch (error) {
-      res.status(400).json({ message: "Invalid channel data" });
+      // res.status(400).json({ message: "Invalid channel data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid channel data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createChannel"));
+      }
     }
   });
 
@@ -58,7 +76,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(videos);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch videos" });
+      // res.status(500).json({ message: "Failed to fetch videos" });
+      res.status(500).json(handleDatabaseError(error, "getVideos"));
     }
   });
 
@@ -70,7 +89,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(video);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch video" });
+      // res.status(500).json({ message: "Failed to fetch video" });
+      res.status(500).json(handleDatabaseError(error, "getVideo"));
     }
   });
 
@@ -80,7 +100,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const video = await storage.createVideo(validatedData);
       res.status(201).json(video);
     } catch (error) {
-      res.status(400).json({ message: "Invalid video data" });
+      // res.status(400).json({ message: "Invalid video data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid video data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createVideo"));
+      }
     }
   });
 
@@ -89,7 +114,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateVideoViews(req.params.id);
       res.json({ message: "Views updated" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update views" });
+      // res.status(500).json({ message: "Failed to update views" });
+      res.status(500).json(handleDatabaseError(error, "updateVideoViews"));
     }
   });
 
@@ -107,7 +133,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(shorts);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch shorts" });
+      // res.status(500).json({ message: "Failed to fetch shorts" });
+      res.status(500).json(handleDatabaseError(error, "getShorts"));
     }
   });
 
@@ -119,7 +146,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(shorts);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch shorts" });
+      // res.status(500).json({ message: "Failed to fetch shorts" });
+      res.status(500).json(handleDatabaseError(error, "getShorts"));
     }
   });
 
@@ -129,7 +157,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const shorts = await storage.createShorts(validatedData);
       res.status(201).json(shorts);
     } catch (error) {
-      res.status(400).json({ message: "Invalid shorts data" });
+      // res.status(400).json({ message: "Invalid shorts data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid shorts data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createShorts"));
+      }
     }
   });
 
@@ -138,7 +171,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateShortsViews(req.params.id);
       res.json({ message: "Views updated" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update views" });
+      // res.status(500).json({ message: "Failed to update views" });
+      res.status(500).json(handleDatabaseError(error, "updateShortsViews"));
     }
   });
 
@@ -154,7 +188,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(playlists);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch playlists" });
+      // res.status(500).json({ message: "Failed to fetch playlists" });
+      res.status(500).json(handleDatabaseError(error, "getPlaylists"));
     }
   });
 
@@ -166,7 +201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(playlist);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch playlist" });
+      // res.status(500).json({ message: "Failed to fetch playlist" });
+      res.status(500).json(handleDatabaseError(error, "getPlaylist"));
     }
   });
 
@@ -176,7 +212,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const playlist = await storage.createPlaylist(validatedData);
       res.status(201).json(playlist);
     } catch (error) {
-      res.status(400).json({ message: "Invalid playlist data" });
+      // res.status(400).json({ message: "Invalid playlist data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid playlist data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createPlaylist"));
+      }
     }
   });
 
@@ -186,7 +227,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const albums = await storage.getAllMusicAlbums();
       res.json(albums);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch music albums" });
+      // res.status(500).json({ message: "Failed to fetch music albums" });
+      res.status(500).json(handleDatabaseError(error, "getAllMusicAlbums"));
     }
   });
 
@@ -198,7 +240,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(album);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch music album" });
+      // res.status(500).json({ message: "Failed to fetch music album" });
+      res.status(500).json(handleDatabaseError(error, "getMusicAlbum"));
     }
   });
 
@@ -208,7 +251,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const album = await storage.createMusicAlbum(validatedData);
       res.status(201).json(album);
     } catch (error) {
-      res.status(400).json({ message: "Invalid music album data" });
+      // res.status(400).json({ message: "Invalid music album data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid music album data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createMusicAlbum"));
+      }
     }
   });
 
@@ -227,7 +275,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(comments);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch comments" });
+      // res.status(500).json({ message: "Failed to fetch comments" });
+      res.status(500).json(handleDatabaseError(error, "getComments"));
     }
   });
 
@@ -239,7 +288,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(comment);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch comment" });
+      // res.status(500).json({ message: "Failed to fetch comment" });
+      res.status(500).json(handleDatabaseError(error, "getComment"));
     }
   });
 
@@ -249,7 +299,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comment = await storage.createComment(validatedData);
       res.status(201).json(comment);
     } catch (error) {
-      res.status(400).json({ message: "Invalid comment data" });
+      // res.status(400).json({ message: "Invalid comment data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid comment data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createComment"));
+      }
     }
   });
 
@@ -259,7 +314,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscriptions = await storage.getSubscriptionsByChannel(req.params.channelId);
       res.json(subscriptions);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch subscriptions" });
+      // res.status(500).json({ message: "Failed to fetch subscriptions" });
+      res.status(500).json(handleDatabaseError(error, "getSubscriptionsByChannel"));
     }
   });
 
@@ -269,7 +325,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await storage.createSubscription(validatedData);
       res.status(201).json(subscription);
     } catch (error) {
-      res.status(400).json({ message: "Invalid subscription data" });
+      // res.status(400).json({ message: "Invalid subscription data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid subscription data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createSubscription"));
+      }
     }
   });
 
@@ -279,27 +340,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteSubscription(subscriberChannelId, subscribedToChannelId);
       res.json({ message: "Subscription deleted" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete subscription" });
+      // res.status(500).json({ message: "Failed to delete subscription" });
+      res.status(500).json(handleDatabaseError(error, "deleteSubscription"));
     }
   });
 
-  // Subscription routes
-  app.post("/api/subscriptions", async (req, res) => {
-    try {
-      const validatedData = insertSubscriptionSchema.parse(req.body);
-      const subscription = await storage.createSubscription(validatedData);
-      res.status(201).json(subscription);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid subscription data" });
-    }
-  });
+  // Subscription routes (Duplicate, keeping the first one for now)
+  // app.post("/api/subscriptions", async (req, res) => {
+  //   try {
+  //     const validatedData = insertSubscriptionSchema.parse(req.body);
+  //     const subscription = await storage.createSubscription(validatedData);
+  //     res.status(201).json(subscription);
+  //   } catch (error) {
+  //     res.status(400).json({ message: "Invalid subscription data" });
+  //   }
+  // });
 
   app.delete("/api/subscriptions/:subscriberChannelId/:subscribedToChannelId", async (req, res) => {
     try {
       await storage.deleteSubscription(req.params.subscriberChannelId, req.params.subscribedToChannelId);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete subscription" });
+      // res.status(500).json({ message: "Failed to delete subscription" });
+      res.status(500).json(handleDatabaseError(error, "deleteSubscription"));
     }
   });
 
@@ -308,7 +371,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isSubscribed = await storage.isSubscribed(req.params.subscriberChannelId, req.params.subscribedToChannelId);
       res.json({ isSubscribed });
     } catch (error) {
-      res.status(500).json({ message: "Failed to check subscription" });
+      // res.status(500).json({ message: "Failed to check subscription" });
+      res.status(500).json(handleDatabaseError(error, "isSubscribed"));
     }
   });
 
@@ -319,7 +383,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.likeVideo(req.params.id, channelId, isLike);
       res.status(200).json({ message: "Like updated" });
     } catch (error) {
-      res.status(400).json({ message: "Failed to like video" });
+      // res.status(400).json({ message: "Failed to like video" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Failed to like video", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "likeVideo"));
+      }
     }
   });
 
@@ -328,7 +397,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.unlikeVideo(req.params.id, req.params.channelId);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to unlike video" });
+      // res.status(500).json({ message: "Failed to unlike video" });
+      res.status(500).json(handleDatabaseError(error, "unlikeVideo"));
     }
   });
 
@@ -337,7 +407,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const like = await storage.getUserVideoLike(req.params.id, req.params.channelId);
       res.json(like || null);
     } catch (error) {
-      res.status(500).json({ message: "Failed to get like status" });
+      // res.status(500).json({ message: "Failed to get like status" });
+      res.status(500).json(handleDatabaseError(error, "getUserVideoLike"));
     }
   });
 
@@ -347,7 +418,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.likeShorts(req.params.id, channelId, isLike);
       res.status(200).json({ message: "Like updated" });
     } catch (error) {
-      res.status(400).json({ message: "Failed to like shorts" });
+      // res.status(400).json({ message: "Failed to like shorts" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Failed to like shorts", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "likeShorts"));
+      }
     }
   });
 
@@ -356,7 +432,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.unlikeShorts(req.params.id, req.params.channelId);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to unlike shorts" });
+      // res.status(500).json({ message: "Failed to unlike shorts" });
+      res.status(500).json(handleDatabaseError(error, "unlikeShorts"));
     }
   });
 
@@ -365,7 +442,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const like = await storage.getUserShortsLike(req.params.id, req.params.channelId);
       res.json(like || null);
     } catch (error) {
-      res.status(500).json({ message: "Failed to get like status" });
+      // res.status(500).json({ message: "Failed to get like status" });
+      res.status(500).json(handleDatabaseError(error, "getUserShortsLike"));
     }
   });
 
@@ -375,7 +453,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comments = await storage.getCommentsByVideo(req.params.id);
       res.json(comments);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch comments" });
+      // res.status(500).json({ message: "Failed to fetch comments" });
+      res.status(500).json(handleDatabaseError(error, "getCommentsByVideo"));
     }
   });
 
@@ -384,7 +463,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comments = await storage.getCommentsByShorts(req.params.id);
       res.json(comments);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch comments" });
+      // res.status(500).json({ message: "Failed to fetch comments" });
+      res.status(500).json(handleDatabaseError(error, "getCommentsByShorts"));
     }
   });
 
@@ -394,7 +474,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comment = await storage.createComment(validatedData);
       res.status(201).json(comment);
     } catch (error) {
-      res.status(400).json({ message: "Invalid comment data" });
+      // res.status(400).json({ message: "Invalid comment data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid comment data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createComment"));
+      }
     }
   });
 
@@ -404,7 +489,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.likeComment(req.params.id, channelId);
       res.status(200).json({ message: "Comment liked" });
     } catch (error) {
-      res.status(400).json({ message: "Failed to like comment" });
+      // res.status(400).json({ message: "Failed to like comment" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Failed to like comment", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "likeComment"));
+      }
     }
   });
 
@@ -413,7 +503,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.unlikeComment(req.params.id, req.params.channelId);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to unlike comment" });
+      // res.status(500).json({ message: "Failed to unlike comment" });
+      res.status(500).json(handleDatabaseError(error, "unlikeComment"));
     }
   });
 
@@ -424,7 +515,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const share = await storage.shareContent(validatedData);
       res.status(201).json(share);
     } catch (error) {
-      res.status(400).json({ message: "Invalid share data" });
+      // res.status(400).json({ message: "Invalid share data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid share data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "shareContent"));
+      }
     }
   });
 
@@ -434,7 +530,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const count = await storage.getShareCount(videoId as string, shortsId as string);
       res.json({ count });
     } catch (error) {
-      res.status(500).json({ message: "Failed to get share count" });
+      // res.status(500).json({ message: "Failed to get share count" });
+      res.status(500).json(handleDatabaseError(error, "getShareCount"));
     }
   });
 
@@ -461,10 +558,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         default:
           results = await storage.searchAll(query);
       }
-      
+
       res.json(results);
     } catch (error) {
-      res.status(500).json({ message: "Search failed" });
+      // res.status(500).json({ message: "Search failed" });
+      res.status(500).json(handleDatabaseError(error, "search"));
     }
   });
 
@@ -480,7 +578,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(tracks);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch tracks" });
+      // res.status(500).json({ message: "Failed to fetch tracks" });
+      res.status(500).json(handleDatabaseError(error, "getTracksByAlbum"));
     }
   });
 
@@ -492,7 +591,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(track);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch track" });
+      // res.status(500).json({ message: "Failed to fetch track" });
+      res.status(500).json(handleDatabaseError(error, "getMusicTrack"));
     }
   });
 
@@ -502,7 +602,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const track = await storage.createMusicTrack(validatedData);
       res.status(201).json(track);
     } catch (error) {
-      res.status(400).json({ message: "Invalid track data" });
+      // res.status(400).json({ message: "Invalid track data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid track data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createMusicTrack"));
+      }
     }
   });
 
@@ -515,7 +620,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(profile);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch profile" });
+      // res.status(500).json({ message: "Failed to fetch profile" });
+      res.status(500).json(handleDatabaseError(error, "getUserProfile"));
     }
   });
 
@@ -525,7 +631,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profile = await storage.createUserProfile(validatedData);
       res.status(201).json(profile);
     } catch (error) {
-      res.status(400).json({ message: "Invalid profile data" });
+      // res.status(400).json({ message: "Invalid profile data" });
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid profile data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createUserProfile"));
+      }
     }
   });
 
@@ -537,7 +648,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(profile);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update profile" });
+      // res.status(500).json({ message: "Failed to update profile" });
+      res.status(500).json(handleDatabaseError(error, "updateUserProfile"));
     }
   });
 
@@ -549,7 +661,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(channel);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update channel" });
+      // res.status(500).json({ message: "Failed to update channel" });
+      res.status(500).json(handleDatabaseError(error, "updateChannel"));
     }
   });
 
