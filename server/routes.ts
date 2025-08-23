@@ -1025,6 +1025,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return;
       }
 
+      // Verify channel exists before trying to save content import
+      const existingChannel = await storage.getChannel(channelId);
+      if (!existingChannel) {
+        return res.status(400).json({ message: "Channel not found" });
+      }
+
       // Save content import record only if valid channelId provided
       const contentData = {
         channelId,

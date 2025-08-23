@@ -44,15 +44,24 @@ export function useFileUpload() {
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Upload failed')
+        const errorText = await response.text()
+        let errorMessage = 'Upload failed'
+        try {
+          const errorJson = JSON.parse(errorText)
+          errorMessage = errorJson.message || errorMessage
+        } catch {
+          errorMessage = errorText || errorMessage
+        }
+        throw new Error(errorMessage)
       }
 
       return response.json()
     },
     onSuccess: (data) => {
-      // Invalidate content imports query to refresh the list
-      queryClient.invalidateQueries({ queryKey: ['/api/content-imports'] })
+      // Only invalidate queries for non-public uploads
+      if (data.content && !data.content.id.startsWith('public-')) {
+        queryClient.invalidateQueries({ queryKey: ['/api/content-imports'] })
+      }
     }
   })
 }
