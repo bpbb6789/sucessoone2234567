@@ -25,24 +25,7 @@ export default function Profile() {
     description: ""
   });
 
-  const displayName = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "");
-  const handle = address ? `@${address.slice(0, 6)}...${address.slice(-4)}` : "";
-
-  // If no wallet connected, show connect prompt
-  if (!address) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="page-profile">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
-            <Wallet className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold mb-2">Connect Your Wallet</h3>
-            <p className="text-gray-400 mb-4">Please connect your wallet to view your profile</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  // Move all hooks before any conditional returns
   const { data: videos = [], isLoading: videosLoading } = useQuery({
     queryKey: ["profile-videos", address],
     queryFn: async () => {
@@ -64,6 +47,24 @@ export default function Profile() {
     },
     enabled: !!address,
   });
+
+  const displayName = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "");
+  const handle = address ? `@${address.slice(0, 6)}...${address.slice(-4)}` : "";
+
+  // If no wallet connected, show connect prompt
+  if (!address) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="page-profile">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Wallet className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-semibold mb-2">Connect Your Wallet</h3>
+            <p className="text-gray-400 mb-4">Please connect your wallet to view your profile</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background" data-testid="page-profile">
