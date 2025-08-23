@@ -401,38 +401,12 @@ export default function Tokens() {
                         </div>
                       </div>
 
-                      {/* Progress Bar */}
-                      <div className="w-full bg-gray-800 rounded-full h-1 mb-3">
-                        <div 
-                          className={`h-1 rounded-full ${
-                            token.change24h && token.change24h >= 0 
-                              ? 'bg-gradient-to-r from-green-500 to-red-500' 
-                              : 'bg-gradient-to-r from-red-500 to-green-500'
-                          }`}
-                          style={{ width: `${Math.random() * 60 + 20}%` }}
-                        ></div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2">
-                        {token.slug && (
-                          <Link to={`/channel/${token.slug}/manager`} className="flex-1">
-                            <Button variant="outline" className="w-full h-8 text-xs bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" size="sm">
-                              Manage
-                            </Button>
-                          </Link>
-                        )}
+                      {/* Trade Button integrated into card */}
+                      <div className="flex justify-end">
                         {token.address && (
-                          <>
-                            <Link to={`/token/${token.address}`} className="flex-1">
-                              <Button variant="outline" className="w-full h-8 text-xs bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" size="sm">
-                                View
-                              </Button>
-                            </Link>
-                            <Button className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700" size="sm">
-                              Trade
-                            </Button>
-                          </>
+                          <Button className="px-3 py-1 h-6 text-xs bg-green-600 hover:bg-green-700 text-white" size="sm">
+                            Trade
+                          </Button>
                         )}
                       </div>
                     </CardContent>
