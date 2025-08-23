@@ -83,55 +83,68 @@ export function Header() {
         {/* Right Section */}
         <div className="flex items-center space-x-2">
           {isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
-              data-testid="button-search-mobile"
-              asChild
-            >
-              <Link href={ROUTES.SEARCH}>
-                <div>
-                  <Search className="h-4 w-4" />
-                </div>
-              </Link>
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
+                data-testid="button-search-mobile"
+                asChild
+              >
+                <Link href={ROUTES.SEARCH}>
+                  <div>
+                    <Search className="h-4 w-4" />
+                  </div>
+                </Link>
+              </Button>
+              
+              {/* Mobile Wallet Connect Button */}
+              <WalletConnectButton 
+                variant="ghost"
+                size="sm"
+                className="flex"
+              />
+            </>
           )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
-            data-testid="button-theme-toggle"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </Button>
+          {!isMobile && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
+                data-testid="button-theme-toggle"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
-            data-testid="button-notifications"
-            asChild
-          >
-            <Link href={ROUTES.NOTIFICATIONS}>
-              <div>
-                <Bell className="h-4 w-4" />
-              </div>
-            </Link>
-          </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
+                data-testid="button-notifications"
+                asChild
+              >
+                <Link href={ROUTES.NOTIFICATIONS}>
+                  <div>
+                    <Bell className="h-4 w-4" />
+                  </div>
+                </Link>
+              </Button>
 
-          {/* Wallet Connect Button */}
-          <WalletConnectButton 
-            variant="ghost"
-            size="sm"
-            className="hidden md:flex"
-          />
+              {/* Desktop Wallet Connect Button */}
+              <WalletConnectButton 
+                variant="ghost"
+                size="sm"
+                className="flex"
+              />
+            </>
+          )}
         </div>
       </div>
     </header>

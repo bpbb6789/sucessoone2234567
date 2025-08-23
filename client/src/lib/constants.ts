@@ -26,6 +26,7 @@ export const ROUTES = {
   SHORTS: "/shorts",
   CREATE: "/create-token",
   SUBSCRIPTIONS: "/subscriptions",
+  ACTIVITIES: "/activities",
   MUSIC: "/music",
   LIBRARY: "/library",
   HISTORY: "/history",

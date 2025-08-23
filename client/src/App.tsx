@@ -28,6 +28,7 @@ import Watch from '@/pages/Watch'
 import Token from '@/pages/Token'
 import Tokens from '@/pages/Tokens'
 import Notifications from '@/pages/Notifications'
+import Activities from "@/pages/Activities";
 import NotFound from '@/pages/not-found'
 
 import '@rainbow-me/rainbowkit/styles.css'
@@ -66,12 +67,13 @@ function AppContent() {
               <Route path="/watchlater" element={<WatchLater />} />
               <Route path="/music" element={<Music />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/activities" element={<Activities />} />
+              <Route path="/notifications" element={<Notifications />} />
               <Route path="/search" element={<Search />} />
               <Route path="/create-token" element={<CreateTokenPage />} />
               <Route path="/watch/:id" element={<Watch />} />
               <Route path="/tokens" element={<Tokens />} />
               <Route path="/token/:address" element={<Token />} />
-              <Route path="/notifications" element={<Notifications />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Layout>
