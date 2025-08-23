@@ -189,8 +189,35 @@ export default function CreateTokenPage() {
                                     contractAbi={UniPumpCreatorAbi}
                                     cta="Launch Token"
                                     functionName="createTokenSale"
-                                    handleOnStatus2={() => {
+                                    handleOnStatus2={async () => {
                                         queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
+                                        
+                                        // Save token to database after successful blockchain transaction
+                                        try {
+                                            const tokenData = {
+                                                name: form.getValues('name'),
+                                                symbol: form.getValues('ticker'),
+                                                bio: form.getValues('description'),
+                                                imageUri: form.getValues('imageUri') || '',
+                                                memeTokenAddress: '', // This would be set from the transaction receipt
+                                                createdBy: '', // This would be set from the connected wallet
+                                                twitter: form.getValues('twitter') || '',
+                                                discord: form.getValues('discord') || '',
+                                                isUSDCToken0: false, // Default value
+                                                marketCap: '0',
+                                                price: '0',
+                                                volume24h: '0',
+                                                holders: 0
+                                            };
+                                            
+                                            await fetch('/api/tokens', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify(tokenData)
+                                            });
+                                        } catch (error) {
+                                            console.error('Failed to save token to database:', error);
+                                        }
                                     }}
                                     args={args}
                                 />

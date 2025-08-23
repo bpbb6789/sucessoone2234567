@@ -1037,6 +1037,26 @@ export class DatabaseStorage implements IStorage {
       channels: channelsResult
     };
   }
+
+  // Token methods
+  async getToken(id: string): Promise<Token | undefined> {
+    const [token] = await db.select().from(tokens).where(eq(tokens.id, id));
+    return token || undefined;
+  }
+
+  async getTokenByAddress(address: string): Promise<Token | undefined> {
+    const [token] = await db.select().from(tokens).where(eq(tokens.memeTokenAddress, address));
+    return token || undefined;
+  }
+
+  async getAllTokens(): Promise<Token[]> {
+    return await db.select().from(tokens).orderBy(desc(tokens.createdAt));
+  }
+
+  async createToken(insertToken: InsertToken): Promise<Token> {
+    const [token] = await db.insert(tokens).values(insertToken).returning();
+    return token;
+  }
 }
 
 // Use database storage instead of memory storage
