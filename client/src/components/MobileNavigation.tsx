@@ -1,4 +1,4 @@
-import { Home, Play, PlusCircle, Radio, Folder } from "lucide-react";
+import { Home, Play, PlusCircle, Radio, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ROUTES } from "@/lib/constants";
@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { icon: Home, label: "Home", href: ROUTES.HOME },
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
-  { icon: PlusCircle, label: "Create", href: ROUTES.CREATE },
+  { icon: PlusCircle, label: "Create", href: "/create-token" },
   { icon: Radio, label: "Subscriptions", href: ROUTES.SUBSCRIPTIONS },
-  { icon: Folder, label: "Library", href: ROUTES.LIBRARY },
+  { icon: User, label: "Profile", href: ROUTES.PROFILE },
 ];
 
 export function MobileNavigation() {

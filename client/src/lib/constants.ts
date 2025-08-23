@@ -24,20 +24,20 @@ export const MOBILE_BREAKPOINT = 768;
 export const ROUTES = {
   HOME: "/",
   SHORTS: "/shorts",
+  CREATE: "/create-token",
   SUBSCRIPTIONS: "/subscriptions",
   MUSIC: "/music",
   LIBRARY: "/library",
   HISTORY: "/history",
   WATCH_LATER: "/watch-later",
   LIKED_VIDEOS: "/liked-videos",
-  WATCH: "/watch",
+  TOKENS: "/tokens",
   PROFILE: "/profile",
-  CREATE: "/create",
+  WATCH: "/watch",
   NOTIFICATIONS: "/notifications",
   SEARCH: "/search",
-  TOKENS: "/tokens",
   TOKEN: "/token",
-};
+} as const;
 
 export const formatViewCount = (count: number): string => {
   if (count >= 1000000) {
