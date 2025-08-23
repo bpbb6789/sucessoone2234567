@@ -10,10 +10,10 @@ import { createConfig, http } from "wagmi";
 import { baseSepolia } from "wagmi/chains";
 
 export function useWagmiConfig() {
-  const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID ?? "";
+  const projectId = import.meta.env.VITE_WC_PROJECT_ID ?? "8b2d0dd39c1cced02ecce163a96a8cb5";
   if (!projectId) {
     const providerErrMessage =
-      "To connect to all Wallets you need to provide a NEXT_PUBLIC_WC_PROJECT_ID env variable";
+      "To connect to all Wallets you need to provide a VITE_WC_PROJECT_ID env variable";
     throw new Error(providerErrMessage);
   }
 
