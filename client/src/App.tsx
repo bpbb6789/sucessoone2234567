@@ -34,6 +34,7 @@ import Doc from "@/pages/Doc";
 import FAQ from "@/pages/FAQ";
 import ContentImport from '@/pages/ContentImport';
 import NotFound from '@/pages/not-found'
+import Tokenize from '@/pages/Tokenize'
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -77,7 +78,9 @@ function AppContent() {
               <Route path="/create-token" element={<CreateChannel />} />
               <Route path="/watch/:id" element={<Watch />} />
               <Route path="/tokens" element={<Tokens />} />
-              <Route path="/token/:address" element={<Token />} />
+              <Route path="/tokenize" element={<Tokenize />} />
+              <Route path="/create" element={<Create />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/create-channel" element={<CreateChannel />} />
               <Route path="/channel/:slug/manager" element={<ChannelManager />} />
               <Route path="/dashboard/import" element={<ContentImport />} />

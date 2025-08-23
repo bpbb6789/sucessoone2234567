@@ -13,6 +13,7 @@ import {
   FileText,
   Activity,
   HelpCircle,
+  Upload,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -28,6 +29,7 @@ const mainNavItems = [
   { icon: Music, label: "Music", href: ROUTES.MUSIC },
   { icon: TrendingUp, label: "Home", href: ROUTES.HOME },
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
+  { icon: Upload, label: "Tokenize", href: "/tokenize" },
 ];
 
 
@@ -136,7 +138,7 @@ export function Sidebar() {
               )}
             </div>
 
-            
+
           </>
         )}
 
