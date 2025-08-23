@@ -53,7 +53,7 @@ export default function Tokens() {
 
   // Get channels from database (fast)
   const { data: channelsData, isLoading: channelsLoading, error: channelsError } = useGetAllChannels();
-  
+
   // Get token sales data from GraphQL (slower)
   const { data: salesData, loading: salesLoading, error: salesError } = useGetAllSales();
 
@@ -90,7 +90,7 @@ export default function Tokens() {
             const matchingToken = graphQLTokens.find((gqlToken: any) => 
               gqlToken.memeTokenAddress?.toLowerCase() === channelToken.address?.toLowerCase()
             );
-            
+
             if (matchingToken) {
               return {
                 ...channelToken,
@@ -104,19 +104,19 @@ export default function Tokens() {
                 tokenDataLoading: false
               };
             }
-            
+
             return {
               ...channelToken,
               tokenDataLoading: !salesLoading // Stop loading if GraphQL is done
             };
           });
-          
+
           setTokens(mergedTokens);
         } else {
           // Just show channels without token data
           setTokens(channelTokens);
         }
-        
+
         setIsLoading(false);
       } else if (!channelsLoading && (!channelsData || channelsData.length === 0)) {
         // No channels, fall back to GraphQL only if available
@@ -252,30 +252,50 @@ export default function Tokens() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Stats Overview */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{totalTokens}</div>
-              <div className="text-sm text-muted-foreground">Total Tokens</div>
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="h-3 w-3 text-blue-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Tokens</p>
+                  <p className="text-sm font-bold">{totalTokens}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">${totalMarketCap.toFixed(1)}K</div>
-              <div className="text-sm text-muted-foreground">Total Market Cap</div>
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-2">
+                <DollarSign className="h-3 w-3 text-green-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Market Cap</p>
+                  <p className="text-sm font-bold">${totalMarketCap.toFixed(1)}K</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">{totalHolders}</div>
-              <div className="text-sm text-muted-foreground">Total Holders</div>
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-2">
+                <Users className="h-3 w-3 text-purple-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Holders</p>
+                  <p className="text-sm font-bold">{totalHolders}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4">
-              <div className="text-2xl font-bold">${total24hVolume.toFixed(1)}K</div>
-              <div className="text-sm text-muted-foreground">24h Volume</div>
+            <CardContent className="p-3">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="h-3 w-3 text-orange-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">24h Volume</p>
+                  <p className="text-sm font-bold">${total24hVolume.toFixed(1)}K</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
