@@ -146,5 +146,4 @@ const client = {
     }
 };
 
-export { useGetAllSales };
 export default useGetAllSales;

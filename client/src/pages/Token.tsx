@@ -10,6 +10,7 @@ import { Loader2, Coins, TrendingUp, Users, DollarSign, ExternalLink, ArrowLeft 
 import { TokenTrading } from '@/components/TokenTrading';
 import { Link } from 'react-router-dom';
 import { useReadContract } from 'wagmi';
+import { PriceService } from '../../../lib/priceService';
 import { CONTRACTS, UniPumpAbi } from '@/lib/contracts';
 import { formatUnits } from 'viem';
 
@@ -140,42 +141,39 @@ export default function Token() {
         let volume24h = "0";
         let holders = 0;
 
-        try {
-          // Import and use PriceService
-          const { PriceService } = await import('../../../lib/priceService');
-          const priceData = await PriceService.getTokenPrice(tokenAddress);
-          const holderCount = await PriceService.getHolderCount(tokenAddress);
-
-          price = priceData.price;
-          marketCapValue = priceData.marketCap;
-          volume24h = priceData.volume24h;
-          holders = holderCount;
-        } catch (error) {
-          console.error('Error fetching real price data:', error);
-          // Fallback to bonding curve calculation
-          if (reserveData) {
-            const reserveInEth = parseFloat(formatUnits(reserveData, 18));
-            const supply = parseFloat(formatUnits(contractTokenData.supply, 18));
-            if (supply > 0) {
-              price = (reserveInEth * 3000 / supply).toFixed(6); // Assume ETH = $3000
-            }
-          }
-
-          if (capData) {
-            const capInEth = parseFloat(formatUnits(capData, 18));
-            marketCapValue = (capInEth * 3000).toFixed(2); // Assume ETH = $3000
+        // Use bonding curve calculation directly with contract data
+        if (capData && contractTokenData.supply) {
+          try {
+            const bondingCurveData = PriceService.getTokenPriceFromContract(capData, contractTokenData.supply);
+            
+            price = bondingCurveData.price.toFixed(8);
+            marketCapValue = bondingCurveData.marketCap.toFixed(2);
+            // Volume data would need to come from GraphQL or other sources
+            volume24h = "0";
+          } catch (error) {
+            console.error('Error calculating bonding curve price:', error);
+            // Fallback calculation
+            const capInEth = Number(capData) / 1e18;
+            const supplyNumber = Number(contractTokenData.supply) / 1e18;
+            const fallbackPrice = (capInEth * 3000) / Math.max(supplyNumber, 1);
+            price = fallbackPrice.toFixed(8);
+            marketCapValue = (fallbackPrice * supplyNumber).toFixed(2);
           }
         }
 
-        // Get pool state
-        const poolStateData = await getPoolState({
-          args: [tokenAddress],
-        });
+        // Get holder count (this would normally come from indexing service)
+        try {
+          holders = await PriceService.getHolderCount(tokenAddress);
+        } catch (error) {
+          console.warn('Could not fetch holder count:', error);
+          holders = 0;
+        }
+
+        // Skip pool state for now as it's not defined in this context
 
         // Calculate bonding curve progress
         let bondingCurvePercent = "0";
         if (contractTokenData.supply) {
-          const { PriceService } = await import('../../../lib/priceService');
           bondingCurvePercent = PriceService.calculateBondingCurveProgress(contractTokenData.supply).toFixed(1);
         }
 
@@ -342,6 +340,29 @@ export default function Token() {
               </Button>
             )}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Guard against null tokenData
+  if (!tokenData) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="space-y-6">
+          <div className="flex items-center space-x-4">
+            <Link to="/tokens">
+              <Button variant="outline" size="sm">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Tokens
+              </Button>
+            </Link>
+          </div>
+          <Card>
+            <CardContent className="text-center py-8">
+              <p className="text-muted-foreground">Token data not available</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );

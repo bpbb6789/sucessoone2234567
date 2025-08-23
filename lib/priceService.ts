@@ -78,7 +78,8 @@ export class PriceService {
 
     try {
       // Use bonding curve calculation directly since external APIs don't support Unichain
-      const price = await this.calculatePriceFromBondingCurve(tokenAddress);
+      const priceData = await this.calculatePriceFromBondingCurve(tokenAddress);
+      const price = parseFloat(priceData.price);
 
       // Cache the result
       this.priceCache.set(tokenAddress, { price, timestamp: Date.now() });
@@ -152,7 +153,7 @@ export class PriceService {
 
       if (buckets.length > 0) {
         const latest = buckets[0];
-        const previous24h = buckets.find(b => 
+        const previous24h = buckets.find((b: any) => 
           (parseInt(latest.id) - parseInt(b.id)) >= 24 * 60 // 24 hours in minutes
         );
 
@@ -162,12 +163,12 @@ export class PriceService {
 
         // Calculate 24h volume from recent swaps
         const volume24h = buckets
-          .filter(b => (parseInt(latest.id) - parseInt(b.id)) <= 24 * 60)
-          .reduce((sum, bucket) => sum + (parseFloat(bucket.count || '0') * currentPrice), 0);
+          .filter((b: any) => (parseInt(latest.id) - parseInt(b.id)) <= 24 * 60)
+          .reduce((sum: number, bucket: any) => sum + (parseFloat(bucket.count || '0') * currentPrice), 0);
 
         // Calculate market cap using bonding curve formula
         const totalSupply = parseFloat(tokenData?.totalSupply || '1000000000');
-        const marketCap = this.calculateMarketCapFromBondingCurve(currentPrice, totalSupply);
+        const marketCap = PriceService.calculateMarketCapFromBondingCurve(currentPrice, totalSupply);
 
         return {
           price: currentPrice.toFixed(8),
@@ -178,10 +179,10 @@ export class PriceService {
       }
 
       // If no historical data, calculate from bonding curve parameters
-      return this.calculateFromBaseBondingCurve(tokenAddress);
+      return PriceService.calculateFromBaseBondingCurve(tokenAddress);
     } catch (error) {
       console.error('Error calculating price from bonding curve:', error);
-      return this.calculateFromBaseBondingCurve(tokenAddress);
+      return PriceService.calculateFromBaseBondingCurve(tokenAddress);
     }
   }
 
@@ -288,6 +289,24 @@ export class PriceService {
 
     // Convert to USD (assuming ETH = $3000)
     return pricePerToken * 3000;
+  }
+
+  // Static method to get token price using contract data
+  static getTokenPriceFromContract(cap: bigint, supply: bigint): {
+    price: number;
+    marketCap: number;
+    progress: number;
+  } {
+    const price = this.calculateBondingCurvePrice(cap, supply);
+    const progress = this.calculateBondingCurveProgress(supply);
+    const supplyNumber = Number(supply) / 1e18;
+    const marketCap = price * Math.min(supplyNumber, 800000000); // Max 800M circulating
+
+    return {
+      price,
+      marketCap,
+      progress
+    };
   }
 
   // Calculate bonding curve progress percentage
