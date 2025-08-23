@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload, Link, FileImage, Video, Music, Calendar, FileText, Loader2 } from 'lucide-react'
+import { Upload, Link, FileImage, Video, Music, Calendar, FileText, Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
+import { useContentImports, useFileUpload, useUrlImport, useTokenizeContent, useDeleteContentImport } from '@/hooks/useContentImports'
 
 const contentTypes = [
   { id: 'reel', name: 'Reel', icon: Video, description: 'Short-form video content' },
@@ -17,22 +18,21 @@ const contentTypes = [
   { id: 'event', name: 'Event', icon: Calendar, description: 'Event information' },
 ]
 
-interface ImportedContent {
-  id: string
-  title: string
-  type: string
-  status: 'uploading' | 'ready' | 'tokenizing' | 'tokenized' | 'failed'
-  progress: number
-  ipfsCid?: string
-  createdAt: Date
-}
-
 export default function ContentImport() {
   const [selectedType, setSelectedType] = useState<string>('')
-  const [importedFiles, setImportedFiles] = useState<ImportedContent[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [importUrl, setImportUrl] = useState('')
   const { toast } = useToast()
+  
+  // Use a sample channel ID for now - this should come from user auth/context later
+  const channelId = '57b556d8-23ca-4397-81ed-e5ee8afdd' // Sample channel ID
+  
+  // API hooks
+  const { data: contentImports = [], isLoading, refetch } = useContentImports(channelId)
+  const fileUploadMutation = useFileUpload()
+  const urlImportMutation = useUrlImport()
+  const tokenizeMutation = useTokenizeContent()
+  const deleteMutation = useDeleteContentImport()
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -71,41 +71,26 @@ export default function ContentImport() {
     }
 
     for (const file of files) {
-      const newFile: ImportedContent = {
-        id: Math.random().toString(36).substr(2, 9),
-        title: file.name,
-        type: selectedType,
-        status: 'uploading',
-        progress: 0,
-        createdAt: new Date()
+      try {
+        await fileUploadMutation.mutateAsync({
+          file,
+          channelId,
+          contentType: selectedType,
+          title: file.name,
+          description: `Uploaded ${file.name}`
+        })
+        
+        toast({
+          title: "Upload Complete",
+          description: `${file.name} has been uploaded to IPFS successfully.`
+        })
+      } catch (error) {
+        toast({
+          title: "Upload Failed",
+          description: error instanceof Error ? error.message : "Failed to upload file",
+          variant: "destructive"
+        })
       }
-
-      setImportedFiles(prev => [...prev, newFile])
-
-      // Simulate upload progress
-      let progress = 0
-      const interval = setInterval(() => {
-        progress += Math.random() * 30
-        if (progress >= 100) {
-          progress = 100
-          clearInterval(interval)
-          
-          setImportedFiles(prev => prev.map(f => 
-            f.id === newFile.id 
-              ? { ...f, status: 'ready', progress: 100, ipfsCid: `Qm${Math.random().toString(36).substr(2, 44)}` }
-              : f
-          ))
-          
-          toast({
-            title: "Upload Complete",
-            description: `${file.name} has been uploaded to IPFS successfully.`
-          })
-        } else {
-          setImportedFiles(prev => prev.map(f => 
-            f.id === newFile.id ? { ...f, progress } : f
-          ))
-        }
-      }, 500)
     }
   }
 
@@ -119,60 +104,60 @@ export default function ContentImport() {
       return
     }
 
-    const newImport: ImportedContent = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: `Imported from ${new URL(importUrl).hostname}`,
-      type: selectedType,
-      status: 'uploading',
-      progress: 0,
-      createdAt: new Date()
+    try {
+      const hostname = new URL(importUrl).hostname
+      await urlImportMutation.mutateAsync({
+        url: importUrl,
+        channelId,
+        contentType: selectedType,
+        title: `Imported from ${hostname}`,
+        description: `Content imported from ${importUrl}`
+      })
+      
+      setImportUrl('')
+      toast({
+        title: "Import Complete",
+        description: "Content has been imported and uploaded to IPFS successfully."
+      })
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: error instanceof Error ? error.message : "Failed to import content",
+        variant: "destructive"
+      })
     }
-
-    setImportedFiles(prev => [...prev, newImport])
-    setImportUrl('')
-
-    // Simulate import process
-    let progress = 0
-    const interval = setInterval(() => {
-      progress += Math.random() * 25
-      if (progress >= 100) {
-        progress = 100
-        clearInterval(interval)
-        
-        setImportedFiles(prev => prev.map(f => 
-          f.id === newImport.id 
-            ? { ...f, status: 'ready', progress: 100, ipfsCid: `Qm${Math.random().toString(36).substr(2, 44)}` }
-            : f
-        ))
-        
-        toast({
-          title: "Import Complete",
-          description: "Content has been imported and uploaded to IPFS successfully."
-        })
-      } else {
-        setImportedFiles(prev => prev.map(f => 
-          f.id === newImport.id ? { ...f, progress } : f
-        ))
-      }
-    }, 600)
   }
 
-  const handleTokenize = (id: string) => {
-    setImportedFiles(prev => prev.map(f => 
-      f.id === id ? { ...f, status: 'tokenizing' } : f
-    ))
-
-    // Simulate tokenization
-    setTimeout(() => {
-      setImportedFiles(prev => prev.map(f => 
-        f.id === id ? { ...f, status: 'tokenized' } : f
-      ))
-      
+  const handleTokenize = async (id: string) => {
+    try {
+      await tokenizeMutation.mutateAsync(id)
       toast({
-        title: "Tokenization Complete",
-        description: "Content has been minted as an NFT successfully."
+        title: "Tokenization Started",
+        description: "Content tokenization has begun. This may take a few moments."
       })
-    }, 3000)
+    } catch (error) {
+      toast({
+        title: "Tokenization Failed",
+        description: error instanceof Error ? error.message : "Failed to start tokenization",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteMutation.mutateAsync(id)
+      toast({
+        title: "Content Deleted",
+        description: "Content has been removed from your imports."
+      })
+    } catch (error) {
+      toast({
+        title: "Delete Failed",
+        description: error instanceof Error ? error.message : "Failed to delete content",
+        variant: "destructive"
+      })
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -208,9 +193,9 @@ export default function ContentImport() {
               <p className="text-xs text-muted-foreground">Transform content into tokenizable IPFS assets</p>
             </div>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span>Ready: {importedFiles.filter(f => f.status === 'ready').length}</span>
-              <span>Tokenized: {importedFiles.filter(f => f.status === 'tokenized').length}</span>
-              <span>Total: {importedFiles.length}</span>
+              <span>Ready: {contentImports.filter(f => f.status === 'ready').length}</span>
+              <span>Tokenized: {contentImports.filter(f => f.status === 'tokenized').length}</span>
+              <span>Total: {contentImports.length}</span>
             </div>
           </div>
         </div>
@@ -360,20 +345,20 @@ export default function ContentImport() {
                 <CardTitle className="text-base">Import Manager</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {importedFiles.length === 0 ? (
+                {contentImports.length === 0 ? (
                   <div className="text-center py-4 text-muted-foreground">
                     <FileImage className="w-8 h-8 mx-auto mb-1 opacity-50" />
                     <p className="text-xs">No content imported yet</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-80 overflow-y-auto">
-                    {importedFiles.map((file) => (
+                    {contentImports.map((file) => (
                       <Card key={file.id} className="p-2">
                         <div className="space-y-1">
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <h4 className="text-xs font-medium truncate">{file.title}</h4>
-                              <p className="text-xs text-muted-foreground capitalize">{file.type}</p>
+                              <p className="text-xs text-muted-foreground capitalize">{file.contentType}</p>
                             </div>
                             <Badge 
                               className={`text-xs ${getStatusColor(file.status)} text-white ml-1 px-1 py-0`}
@@ -383,8 +368,8 @@ export default function ContentImport() {
                             </Badge>
                           </div>
                           
-                          {file.status === 'uploading' && (
-                            <Progress value={file.progress} className="h-1" />
+                          {(fileUploadMutation.isPending || urlImportMutation.isPending) && (
+                            <Progress value={50} className="h-1" />
                           )}
                           
                           {file.ipfsCid && (
