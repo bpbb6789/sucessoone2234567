@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
@@ -8,6 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Coins, TrendingUp, Users, DollarSign, ExternalLink, ArrowLeft } from 'lucide-react';
 import { TokenTrading } from '@/components/TokenTrading';
 import { Link } from 'react-router-dom';
+import { useReadContract } from 'wagmi';
+import { CONTRACTS, UniPumpAbi } from '@/lib/contracts';
+import { formatUnits } from 'viem';
 
 interface TokenData {
   address: string;
@@ -41,7 +45,40 @@ export default function Token() {
     return null;
   };
 
-  const tokenAddress = getTokenAddressFromPath();
+  const tokenAddress = getTokenAddressFromPath() as `0x${string}` | null;
+
+  // Get token data from contract
+  const { data: contractTokenData, isError: tokenDataError } = useReadContract({
+    address: CONTRACTS.UNIPUMP,
+    abi: UniPumpAbi,
+    functionName: 'getTokenData',
+    args: tokenAddress ? [tokenAddress] : undefined,
+    query: {
+      enabled: !!tokenAddress,
+    },
+  });
+
+  // Get market cap data
+  const { data: capData } = useReadContract({
+    address: CONTRACTS.UNIPUMP,
+    abi: UniPumpAbi,
+    functionName: 'cap',
+    args: tokenAddress ? [tokenAddress] : undefined,
+    query: {
+      enabled: !!tokenAddress,
+    },
+  });
+
+  // Get current price (reserves for bonding curve)
+  const { data: reserveData } = useReadContract({
+    address: CONTRACTS.UNIPUMP,
+    abi: UniPumpAbi,
+    functionName: 'getReserve',
+    args: tokenAddress ? [tokenAddress] : undefined,
+    query: {
+      enabled: !!tokenAddress,
+    },
+  });
 
   useEffect(() => {
     const fetchTokenData = async () => {
@@ -55,32 +92,57 @@ export default function Token() {
         return;
       }
 
+      if (tokenDataError || !contractTokenData) {
+        toast({
+          title: "Error loading token",
+          description: "Failed to load token data from contract",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
 
-        // Mock data for now - replace with actual API call
-        const mockTokenData: TokenData = {
+        // Calculate price based on bonding curve
+        let price = "0.0000";
+        if (reserveData) {
+          const reserveInEth = parseFloat(formatUnits(reserveData, 18));
+          const supply = parseFloat(formatUnits(contractTokenData.supply, 18));
+          if (supply > 0) {
+            // Simplified pricing calculation - in reality this would use the bonding curve formula
+            price = (reserveInEth * 3000 / supply).toFixed(6); // Assume ETH = $3000
+          }
+        }
+
+        // Calculate market cap
+        let marketCapValue = "0";
+        if (capData) {
+          const capInEth = parseFloat(formatUnits(capData, 18));
+          marketCapValue = (capInEth * 3000).toFixed(2); // Assume ETH = $3000
+        }
+
+        const processedTokenData: TokenData = {
           address: tokenAddress,
-          name: tokenAddress === '0x0f1aa5058a58e56d99365fbab232bef578a0ad2d' ? 'TubeClone TV' : 'Sample Token',
-          symbol: tokenAddress === '0x0f1aa5058a58e56d99365fbab232bef578a0ad2d' ? 'TUBE' : 'SAMPLE',
-          price: '0.0023',
-          marketCap: '45.6',
-          volume24h: '12.3',
-          holders: 156,
-          supply: '1000000',
-          createdBy: '0x742d35Cc6635C0532925a3b8D',
-          description: 'A revolutionary token for the TubeClone ecosystem.',
-          twitter: '@tubeclone',
-          discord: 'https://discord.gg/tubeclone',
-          imageUri: '/images/tv.jpeg'
+          name: contractTokenData.name,
+          symbol: contractTokenData.symbol,
+          price: price,
+          marketCap: marketCapValue,
+          volume24h: "0", // This would need to be calculated from events
+          holders: 0, // This would need to be calculated from Transfer events
+          supply: formatUnits(contractTokenData.supply, 18),
+          createdBy: contractTokenData.createdBy,
+          description: contractTokenData.description || 'No description available',
+          imageUri: contractTokenData.imageUri || undefined
         };
 
-        setTokenData(mockTokenData);
+        setTokenData(processedTokenData);
       } catch (error) {
-        console.error('Error fetching token data:', error);
+        console.error('Error processing token data:', error);
         toast({
           title: "Error loading token",
-          description: "Failed to load token data. Please try again.",
+          description: "Failed to process token data. Please try again.",
           variant: "destructive"
         });
       } finally {
@@ -88,8 +150,12 @@ export default function Token() {
       }
     };
 
-    fetchTokenData();
-  }, [tokenAddress, toast]);
+    if (contractTokenData) {
+      fetchTokenData();
+    } else if (!tokenAddress) {
+      setIsLoading(false);
+    }
+  }, [tokenAddress, contractTokenData, capData, reserveData, tokenDataError, toast]);
 
   if (isLoading) {
     return (
@@ -107,7 +173,7 @@ export default function Token() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Token Not Found</h1>
-          <p className="text-muted-foreground">The requested token could not be found.</p>
+          <p className="text-muted-foreground">The requested token could not be found or loaded from the contract.</p>
           <Link to="/tokens">
             <Button>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -137,7 +203,7 @@ export default function Token() {
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center space-x-4">
-                {tokenData.imageUri && (
+                {tokenData.imageUri ? (
                   <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                     <img 
                       src={tokenData.imageUri} 
@@ -147,6 +213,10 @@ export default function Token() {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                    {tokenData.symbol.charAt(0)}
                   </div>
                 )}
                 <div>
@@ -173,6 +243,12 @@ export default function Token() {
                     </a>
                   </Button>
                 )}
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`https://basescan.org/address/${tokenData.address}`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Contract
+                  </a>
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -185,6 +261,9 @@ export default function Token() {
                 </Badge>
                 <Badge variant="outline">
                   Contract: {tokenData.address.slice(0, 10)}...{tokenData.address.slice(-6)}
+                </Badge>
+                <Badge variant="outline">
+                  Base Sepolia
                 </Badge>
               </div>
             </div>
@@ -208,7 +287,7 @@ export default function Token() {
               <TrendingUp className="h-6 w-6 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
-                <p className="text-lg font-bold">${tokenData.marketCap}K</p>
+                <p className="text-lg font-bold">${tokenData.marketCap}</p>
               </div>
             </CardContent>
           </Card>
@@ -228,7 +307,7 @@ export default function Token() {
               <Coins className="h-6 w-6 text-orange-600" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Supply</p>
-                <p className="text-lg font-bold">{parseInt(tokenData.supply).toLocaleString()}</p>
+                <p className="text-lg font-bold">{parseFloat(tokenData.supply).toLocaleString()}</p>
               </div>
             </CardContent>
           </Card>
@@ -255,11 +334,11 @@ export default function Token() {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Contract Address</p>
-                  <p className="font-mono text-sm">{tokenData.address}</p>
+                  <p className="font-mono text-sm break-all">{tokenData.address}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Supply</p>
-                  <p className="text-sm">{parseInt(tokenData.supply).toLocaleString()} {tokenData.symbol}</p>
+                  <p className="text-sm">{parseFloat(tokenData.supply).toLocaleString()} {tokenData.symbol}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">24h Volume</p>
@@ -269,7 +348,7 @@ export default function Token() {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Creator</p>
-                  <p className="font-mono text-sm">{tokenData.createdBy}</p>
+                  <p className="font-mono text-sm break-all">{tokenData.createdBy}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Holders</p>

@@ -1,84 +1,125 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, ExternalLink, TrendingUp, Coins } from 'lucide-react';
+import { Search, TrendingUp, Clock, DollarSign, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import useGetAllSales from '@/hooks/useGetAllSales';
+import { useGetAllSales } from '../hooks/useGetAllSales';
 
-interface TokenInfo {
-  address: string;
+interface Token {
+  id: string;
   name: string;
   symbol: string;
-  price?: string;
-  marketCap?: string;
+  price: string;
+  marketCap: string;
+  volume24h: string;
+  holders: number;
   change24h?: number;
-  volume24h?: string;
-  holders?: number;
-  description: string;
-  creator: string;
-  imageUri?: string;
-  twitter?: string;
-  discord?: string;
-  createdAt: string;
+  createdAt: Date;
+  description?: string;
+  address: string;
 }
 
-export default function Tokens() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'marketCap' | 'volume' | 'gainers' | 'losers'>('newest');
-  const { data: tokensData, isLoading } = useGetAllSales();
+const formatTimeAgo = (date: Date): string => {
+  const now = new Date();
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
-  // Transform the token data from your API to match the TokenInfo interface
-  const tokens: TokenInfo[] = tokensData?.map((token: any) => ({
-    address: token.memeTokenAddress || token.address,
-    name: token.name,
-    symbol: token.symbol,
-    price: '0.00001', // You'll need to get actual price data
-    marketCap: '0', // Calculate based on supply and price
-    change24h: 0, // You'll need to track price changes
-    volume24h: '0', // You'll need to track trading volume
-    holders: 0, // You'll need to get holder count
-    description: token.bio || token.description || '',
-    creator: token.createdBy || token.creator,
-    imageUri: token.imageUri,
-    twitter: token.twitter,
-    discord: token.discord,
-    createdAt: token.timestamp ? new Date(Number(token.timestamp) * 1000).toISOString() : new Date().toISOString()
-  })) || [];
+  if (diffInHours < 1) {
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    return `${diffInMinutes}m ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}h ago`;
+  } else {
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays}d ago`;
+  }
+};
+
+export default function Tokens() {
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Get token sales data from GraphQL
+  const { data: salesData, loading, error } = useGetAllSales();
+
+  useEffect(() => {
+    const processTokensData = () => {
+      if (!salesData?.tokenSales) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        const processedTokens: Token[] = salesData.tokenSales.map((sale: any) => ({
+          id: sale.tokenAddress,
+          address: sale.tokenAddress,
+          name: sale.name || `Token ${sale.tokenAddress.slice(0, 8)}`,
+          symbol: sale.symbol || 'TKN',
+          price: sale.currentPrice || '0.0000',
+          marketCap: sale.marketCap || '0',
+          volume24h: sale.volume24h || '0',
+          holders: sale.holderCount || 0,
+          change24h: sale.priceChange24h,
+          createdAt: new Date(parseInt(sale.createdAt) * 1000),
+          description: sale.description || 'No description available'
+        }));
+
+        setTokens(processedTokens);
+      } catch (error) {
+        console.error('Error processing tokens data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!loading) {
+      processTokensData();
+    }
+  }, [salesData, loading]);
+
+  if (isLoading || loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+            <p>Loading tokens from blockchain...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Error loading tokens: {error.message}</p>
+            <Button onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const filteredTokens = tokens
     .filter(token => 
-      token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+      token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
-      switch (sortBy) {
-        case 'marketCap':
-          return parseFloat(b.marketCap || '0') - parseFloat(a.marketCap || '0');
-        case 'volume':
-          return parseFloat(b.volume24h || '0') - parseFloat(a.volume24h || '0');
-        case 'gainers':
-          return (b.change24h || 0) - (a.change24h || 0);
-        case 'losers':
-          return (a.change24h || 0) - (b.change24h || 0);
-        case 'newest':
-        default:
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
+      // Placeholder for sorting logic, currently defaulting to newest
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-
-  const formatTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const created = new Date(dateString);
-    const diffInHours = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    return `${Math.floor(diffInHours / 24)}d ago`;
-  };
 
   // Calculate totals
   const totalTokens = filteredTokens.length;
@@ -111,8 +152,8 @@ export default function Tokens() {
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search tokens by name or symbol..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
               data-testid="input-search-tokens"
             />
@@ -148,8 +189,9 @@ export default function Tokens() {
         </div>
 
         {/* Tokens List */}
-        <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
+        <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="newest">Newest</TabsTrigger>
             <TabsTrigger value="marketCap">Market Cap</TabsTrigger>
             <TabsTrigger value="volume">Volume</TabsTrigger>
@@ -157,18 +199,14 @@ export default function Tokens() {
             <TabsTrigger value="losers">Top Losers</TabsTrigger>
           </TabsList>
 
-          <TabsContent value={sortBy} className="space-y-4">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-              </div>
-            ) : filteredTokens.length === 0 ? (
+          <TabsContent value={selectedCategory} className="space-y-4">
+            {filteredTokens.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Coins className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No tokens found</h3>
                   <p className="text-muted-foreground text-center mb-4">
-                    {searchQuery ? `No tokens match "${searchQuery}"` : 'No tokens have been created yet'}
+                    {searchTerm ? `No tokens match "${searchTerm}"` : 'No tokens have been created yet'}
                   </p>
                   <Link to="/token">
                     <Button>Create the First Token</Button>
@@ -178,7 +216,7 @@ export default function Tokens() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTokens.map((token) => (
-                  <Card key={token.address} className="hover:shadow-lg transition-shadow">
+                  <Card key={token.id} className="hover:shadow-lg transition-shadow">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
@@ -207,7 +245,7 @@ export default function Tokens() {
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {token.description || 'No description available'}
                         </p>
-                        
+
                         {/* Token Stats */}
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
@@ -232,35 +270,11 @@ export default function Tokens() {
                         <div className="text-xs">
                           <span className="text-muted-foreground">Creator: </span>
                           <code className="bg-muted px-1 py-0.5 rounded text-xs">
-                            {token.creator?.slice(0, 6)}...{token.creator?.slice(-4)}
+                            {token.address?.slice(0, 6)}...{token.address?.slice(-4)}
                           </code>
                         </div>
 
-                        {/* Social Links */}
-                        {(token.twitter || token.discord) && (
-                          <div className="flex gap-2 pt-1">
-                            {token.twitter && (
-                              <a
-                                href={token.twitter}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:text-blue-600"
-                              >
-                                Twitter
-                              </a>
-                            )}
-                            {token.discord && (
-                              <a
-                                href={token.discord}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-indigo-500 hover:text-indigo-600"
-                              >
-                                Discord
-                              </a>
-                            )}
-                          </div>
-                        )}
+                        {/* Social Links - Removed placeholder for creator, using address for consistency */}
                       </div>
 
                       {/* Action Buttons */}

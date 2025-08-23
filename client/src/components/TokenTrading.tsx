@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { formatEther, parseEther, type Address } from 'viem';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { uniPumpConfig } from '@/lib/contracts';
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { uniPumpConfig, CONTRACTS, UniPumpAbi } from '@/lib/contracts';
+import { formatUnits, parseUnits } from 'viem';
+import { useWallet } from '@/hooks/useWallet';
 
 interface TokenTradingProps {
   tokenAddress: Address;
@@ -35,16 +37,44 @@ export function TokenTrading({
   const [buyAmount, setBuyAmount] = useState('');
   const [sellAmount, setSellAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Smart contract interaction hooks
   const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
   const [currentTxHash, setCurrentTxHash] = useState<`0x${string}` | undefined>();
-  
+
   const { isLoading: isTxLoading, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
     hash: currentTxHash,
   });
 
+  // Get user's token balance
+  const { isConnected, account } = useWallet();
+  const { data: userBalance } = useReadContract({
+    address: tokenAddress as `0x${string}`,
+    abi: [
+      {
+        name: 'balanceOf',
+        type: 'function',
+        stateMutability: 'view',
+        inputs: [{ name: 'account', type: 'address' }],
+        outputs: [{ name: '', type: 'uint256' }],
+      },
+    ],
+    functionName: 'balanceOf',
+    args: isConnected && account?.address ? [account.address] : undefined,
+    query: {
+      enabled: isConnected && !!account?.address,
+    },
+  });
+
   const handleBuy = async () => {
+    if (!isConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to trade",
+        variant: "destructive"
+      });
+      return;
+    }
     if (!buyAmount || parseFloat(buyAmount) <= 0) {
       toast({
         title: "Invalid amount",
@@ -55,29 +85,31 @@ export function TokenTrading({
     }
 
     setIsLoading(true);
-    
+
     try {
       // Call the smart contract to buy tokens
       const hash = await writeContract({
         ...uniPumpConfig,
-        functionName: 'buyTokenFromSale',
-        args: [tokenAddress, parseEther(buyAmount)],
+        address: CONTRACTS.UNIPUMP,
+        abi: UniPumpAbi,
+        functionName: 'buy',
+        args: [tokenAddress as `0x${string}`, 0n], // minTokensOut = 0 for now
         value: parseEther(buyAmount), // Send ETH with the transaction
       });
 
       setCurrentTxHash(hash);
-      
+
       toast({
         title: "Buy transaction submitted",
         description: `Buying ${buyAmount} ETH worth of ${tokenSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
       });
 
       setBuyAmount('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Buy failed:', error);
       toast({
         title: "Buy failed",
-        description: error instanceof Error ? error.message : "Failed to place buy order",
+        description: error.shortMessage || "Failed to place buy order",
         variant: "destructive"
       });
     } finally {
@@ -86,6 +118,14 @@ export function TokenTrading({
   };
 
   const handleSell = async () => {
+    if (!isConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to trade",
+        variant: "destructive"
+      });
+      return;
+    }
     if (!sellAmount || parseFloat(sellAmount) <= 0) {
       toast({
         title: "Invalid amount",
@@ -96,28 +136,30 @@ export function TokenTrading({
     }
 
     setIsLoading(true);
-    
+
     try {
       // Call the smart contract to sell tokens
       const hash = await writeContract({
         ...uniPumpConfig,
-        functionName: 'sellTokenFromSale',
-        args: [tokenAddress, parseEther(sellAmount)],
+        address: CONTRACTS.UNIPUMP,
+        abi: UniPumpAbi,
+        functionName: 'sell',
+        args: [tokenAddress as `0x${string}`, parseEther(sellAmount), 0n], // minEthOut = 0 for now
       });
 
       setCurrentTxHash(hash);
-      
+
       toast({
         title: "Sell transaction submitted",
         description: `Selling ${sellAmount} ${tokenSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
       });
 
       setSellAmount('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sell failed:', error);
       toast({
         title: "Sell failed",
-        description: error instanceof Error ? error.message : "Failed to place sell order",
+        description: error.shortMessage || "Failed to place sell order",
         variant: "destructive"
       });
     } finally {
@@ -138,7 +180,7 @@ export function TokenTrading({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="flex items-center space-x-2 p-4">
             <TrendingUp className="h-6 w-6 text-blue-600" />
@@ -148,7 +190,7 @@ export function TokenTrading({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="flex items-center space-x-2 p-4">
             <Users className="h-6 w-6 text-purple-600" />
@@ -158,7 +200,7 @@ export function TokenTrading({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="flex items-center space-x-2 p-4">
             <TrendingDown className="h-6 w-6 text-orange-600" />
@@ -191,7 +233,7 @@ export function TokenTrading({
                 Sell
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="buy" className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="buy-amount">Amount (ETH)</Label>
@@ -203,7 +245,7 @@ export function TokenTrading({
                   data-testid="input-buy-amount"
                 />
               </div>
-              
+
               {buyAmount && (
                 <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
                   <p className="text-sm text-green-700 dark:text-green-400">
@@ -211,10 +253,10 @@ export function TokenTrading({
                   </p>
                 </div>
               )}
-              
+
               <Button 
                 onClick={handleBuy}
-                disabled={(isLoading || isWritePending || isTxLoading) || !buyAmount}
+                disabled={(isLoading || isWritePending || isTxLoading) || !buyAmount || !isConnected}
                 className="w-full bg-green-600 hover:bg-green-700"
                 data-testid="button-buy-token"
               >
@@ -231,7 +273,7 @@ export function TokenTrading({
                 )}
               </Button>
             </TabsContent>
-            
+
             <TabsContent value="sell" className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="sell-amount">Amount ({tokenSymbol})</Label>
@@ -243,7 +285,7 @@ export function TokenTrading({
                   data-testid="input-sell-amount"
                 />
               </div>
-              
+
               {sellAmount && (
                 <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg">
                   <p className="text-sm text-red-700 dark:text-red-400">
@@ -251,10 +293,10 @@ export function TokenTrading({
                   </p>
                 </div>
               )}
-              
+
               <Button 
                 onClick={handleSell}
-                disabled={(isLoading || isWritePending || isTxLoading) || !sellAmount}
+                disabled={(isLoading || isWritePending || isTxLoading) || !sellAmount || !isConnected || (userBalance !== undefined && BigInt(sellAmount) > userBalance)}
                 className="w-full bg-red-600 hover:bg-red-700"
                 data-testid="button-sell-token"
               >
