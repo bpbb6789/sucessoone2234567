@@ -78,33 +78,68 @@
   --chart-5: hsl(340, 75%, 55%);
 }
 
-/* Ensure dark mode text colors are properly applied */
-.dark * {
-  color: hsl(var(--foreground));
+/* Ensure dark mode text colors are properly applied with high specificity */
+html.dark,
+html.dark body,
+.dark {
+  color: hsl(var(--foreground)) !important;
 }
 
+html.dark *:not(.text-primary):not(.text-secondary):not(.text-muted):not(.text-accent):not(.text-destructive):not([class*="text-"]),
+.dark *:not(.text-primary):not(.text-secondary):not(.text-muted):not(.text-accent):not(.text-destructive):not([class*="text-"]) {
+  color: hsl(var(--foreground)) !important;
+}
+
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6,
 .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  color: hsl(var(--foreground));
+  color: hsl(var(--foreground)) !important;
 }
 
-.dark p, .dark span, .dark div {
-  color: hsl(var(--foreground));
+html.dark p, html.dark span, html.dark div, html.dark button, html.dark label,
+.dark p, .dark span, .dark div, .dark button, .dark label {
+  color: hsl(var(--foreground)) !important;
 }
 
-.dark .text-muted-foreground {
-  color: hsl(var(--muted-foreground));
+/* Override specific text color classes in dark mode */
+html.dark .text-gray-900,
+.dark .text-gray-900 {
+  color: hsl(var(--foreground)) !important;
 }
 
+html.dark .text-gray-800,
+.dark .text-gray-800 {
+  color: hsl(var(--foreground)) !important;
+}
+
+html.dark .text-gray-700,
+.dark .text-gray-700 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+html.dark .text-gray-600,
 .dark .text-gray-600 {
-  color: hsl(240, 5%, 64.9%);
+  color: hsl(var(--muted-foreground)) !important;
 }
 
+html.dark .text-gray-500,
 .dark .text-gray-500 {
-  color: hsl(240, 3.8%, 46.1%);
+  color: hsl(var(--muted-foreground)) !important;
 }
 
+html.dark .text-gray-400,
 .dark .text-gray-400 {
-  color: hsl(240, 5%, 64.9%);
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+html.dark .text-black,
+.dark .text-black {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Ensure muted text shows properly */
+html.dark .text-muted-foreground,
+.dark .text-muted-foreground {
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 @layer base {
