@@ -1,0 +1,55 @@
+chunk-UJDPMVL2.js?v=70516786:16245 Error sending analytics: Error: ClientMetaManager not initialized
+    at ClientMetaManager.getClientMeta (chunk-UJDPMVL2.js?v=70516786:16167:34)
+    at handleSendAnalytics (chunk-UJDPMVL2.js?v=70516786:16232:48)
+    at sendAnalyticsPayload (chunk-UJDPMVL2.js?v=70516786:16249:45)
+    at chunk-UJDPMVL2.js?v=70516786:16719:7
+    at chunk-UJDPMVL2.js?v=70516786:16902:7
+    at commitHookEffectListMount (chunk-J4NESBNT.js?v=70516786:16915:34)
+    at commitPassiveMountOnFiber (chunk-J4NESBNT.js?v=70516786:18156:19)
+    at commitPassiveMountEffects_complete (chunk-J4NESBNT.js?v=70516786:18129:17)
+    at commitPassiveMountEffects_begin (chunk-J4NESBNT.js?v=70516786:18119:15)
+    at commitPassiveMountEffects (chunk-J4NESBNT.js?v=70516786:18109:11)
+handleSendAnalytics	@	chunk-UJDPMVL2.js?v=70516786:16245
+await in handleSendAnalytics		
+sendAnalyticsPayload	@	chunk-UJDPMVL2.js?v=70516786:16249
+(anonymous)	@	chunk-UJDPMVL2.js?v=70516786:16719
+(anonymous)	@	chunk-UJDPMVL2.js?v=70516786:16902
+commitHookEffectListMount	@	chunk-J4NESBNT.js?v=70516786:16915
+commitPassiveMountOnFiber	@	chunk-J4NESBNT.js?v=70516786:18156
+commitPassiveMountEffects_complete	@	chunk-J4NESBNT.js?v=70516786:18129
+commitPassiveMountEffects_begin	@	chunk-J4NESBNT.js?v=70516786:18119
+commitPassiveMountEffects	@	chunk-J4NESBNT.js?v=70516786:18109
+flushPassiveEffectsImpl	@	chunk-J4NESBNT.js?v=70516786:19490
+flushPassiveEffects	@	chunk-J4NESBNT.js?v=70516786:19447
+commitRootImpl	@	chunk-J4NESBNT.js?v=70516786:19416
+commitRoot	@	chunk-J4NESBNT.js?v=70516786:19277
+performSyncWorkOnRoot	@	chunk-J4NESBNT.js?v=70516786:18895
+flushSyncCallbacks	@	chunk-J4NESBNT.js?v=70516786:9119
+(anonymous)	@	chunk-J4NESBNT.js?v=70516786:18627
+setTimeout		
+defaultScheduler	@	chunk-A67CSFD6.js?v=70516786:560
+flush	@	chunk-A67CSFD6.js?v=70516786:584
+batch	@	chunk-A67CSFD6.js?v=70516786:602
+dispatch_fn	@	chunk-A67CSFD6.js?v=70516786:1038
+setData	@	chunk-A67CSFD6.js?v=70516786:713
+fetch	@	chunk-A67CSFD6.js?v=70516786:927
+await in fetch		
+executeFetch_fn	@	chunk-A67CSFD6.js?v=70516786:2280
+setOptions	@	chunk-A67CSFD6.js?v=70516786:2033
+(anonymous)	@	chunk-A67CSFD6.js?v=70516786:3157
+commitHookEffectListMount	@	chunk-J4NESBNT.js?v=70516786:16915
+commitPassiveMountOnFiber	@	chunk-J4NESBNT.js?v=70516786:18156
+commitPassiveMountEffects_complete	@	chunk-J4NESBNT.js?v=70516786:18129
+commitPassiveMountEffects_begin	@	chunk-J4NESBNT.js?v=70516786:18119
+commitPassiveMountEffects	@	chunk-J4NESBNT.js?v=70516786:18109
+flushPassiveEffectsImpl	@	chunk-J4NESBNT.js?v=70516786:19490
+flushPassiveEffects	@	chunk-J4NESBNT.js?v=70516786:19447
+(anonymous)	@	chunk-J4NESBNT.js?v=70516786:19328
+workLoop	@	chunk-J4NESBNT.js?v=70516786:197
+flushWork	@	chunk-J4NESBNT.js?v=70516786:176
+performWorkUntilDeadline	@	chunk-J4NESBNT.js?v=70516786:384
+
+queryClient.ts:15 
+ POST https://295ad289-8d66-4d11-b523-13b5625e28a2-00-1v0vn005q4v3v.janeway.replit.dev:3000/api/web3-channels 500 (Internal Server Error)
+﻿
+

@@ -826,9 +826,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Web3 Channels API
   app.post("/api/web3-channels", async (req, res) => {
     try {
+      // Generate unique slug with counter if needed
+      let baseSlug = req.body.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      let slug = baseSlug;
+      let counter = 1;
+      
+      // Check if slug exists and increment until unique
+      while (true) {
+        try {
+          const existing = await storage.getAllWeb3Channels();
+          const slugExists = existing.some(channel => channel.slug === slug);
+          if (!slugExists) break;
+          slug = `${baseSlug}-${counter}`;
+          counter++;
+        } catch (error) {
+          break; // If we can't check, proceed with original slug
+        }
+      }
+
       const bodyWithSlug = {
         ...req.body,
-        slug: req.body.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+        slug: slug
       };
       const validatedData = insertWeb3ChannelSchema.parse(bodyWithSlug);
       const channel = await storage.createWeb3Channel(validatedData);
