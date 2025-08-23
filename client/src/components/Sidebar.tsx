@@ -10,6 +10,9 @@ import {
   ChevronDown,
   Coins,
   TrendingUp,
+  FileText,
+  Activity,
+  HelpCircle,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -31,6 +34,12 @@ const libraryItems = [
   { icon: History, label: "History", href: ROUTES.HISTORY },
   { icon: Clock, label: "Watch later", href: ROUTES.WATCH_LATER },
   { icon: ThumbsUp, label: "Liked videos", href: ROUTES.LIKED_VIDEOS },
+];
+
+const additionalItems = [
+  { icon: FileText, label: "Doc", href: "/doc" },
+  { icon: Activity, label: "Activities", href: "/activities" },
+  { icon: HelpCircle, label: "FAQ", href: "/faq" },
 ];
 
 const subscriptionChannels = [
@@ -144,6 +153,36 @@ export function Sidebar() {
             </div>
           </>
         )}
+
+        {/* Additional Items */}
+        <div className={cn("space-y-1", isExpanded ? "px-3" : "px-2")}>
+          <h3 className={cn(
+            "mb-2 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider",
+            !isExpanded && "hidden"
+          )}>
+            More
+          </h3>
+          {additionalItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location === item.href;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "nav-item",
+                  isActive && "active"
+                )}
+              >
+                <Icon className="w-6 h-6 flex-shrink-0" />
+                {isExpanded && (
+                  <span className="sidebar-text">{item.label}</span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

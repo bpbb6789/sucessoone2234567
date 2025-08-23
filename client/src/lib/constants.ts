@@ -24,20 +24,20 @@ export const MOBILE_BREAKPOINT = 768;
 export const ROUTES = {
   HOME: "/",
   SHORTS: "/shorts",
-  CREATE: "/create-token",
   SUBSCRIPTIONS: "/subscriptions",
-  ACTIVITIES: "/activities",
   MUSIC: "/music",
   LIBRARY: "/library",
   HISTORY: "/history",
   WATCH_LATER: "/watch-later",
   LIKED_VIDEOS: "/liked-videos",
-  TOKENS: "/tokens",
-  PROFILE: "/profile",
   WATCH: "/watch",
-  NOTIFICATIONS: "/notifications",
   SEARCH: "/search",
-  TOKEN: "/token",
+  PROFILE: "/profile",
+  NOTIFICATIONS: "/notifications",
+  CREATE: "/create",
+  DOC: "/doc",
+  ACTIVITIES: "/activities",
+  FAQ: "/faq"
 } as const;
 
 export const formatViewCount = (count: number): string => {
