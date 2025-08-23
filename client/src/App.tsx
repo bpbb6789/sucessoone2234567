@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import { WagmiProvider } from 'wagmi'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Layout } from '@/components/Layout'
 import { SidebarProvider } from '@/hooks/use-sidebar'
+import { queryClient } from '@/lib/queryClient'
 import { useWagmiConfig } from '../../wagmi'
 
 // Pages
@@ -29,8 +30,7 @@ import NotFound from '@/pages/not-found'
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
 
-// Create a client
-const queryClient = new QueryClient()
+// Use existing query client from lib
 
 function WagmiApp() {
   const config = useWagmiConfig()
@@ -65,6 +65,7 @@ function AppContent() {
             <Route path="/search" element={<Search />} />
             <Route path="/create" element={<Create />} />
             <Route path="/watch/:id" element={<Watch />} />
+            <Route path="/token" element={<Token />} />
             <Route path="/token/:address" element={<Token />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="*" element={<NotFound />} />
