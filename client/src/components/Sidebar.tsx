@@ -6,11 +6,11 @@ import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const mainNavItems = [
-  { icon: Home, label: "Home", href: ROUTES.HOME },
+  { icon: Home, label: "Channels", href: "/tokens" },
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
   { icon: Radio, label: "Subscriptions", href: ROUTES.SUBSCRIPTIONS },
   { icon: Music, label: "YouTube Music", href: ROUTES.MUSIC },
-  { icon: TrendingUp, label: "Discover Tokens", href: ROUTES.TOKENS },
+  { icon: TrendingUp, label: "Home", href: ROUTES.HOME },
   { icon: Coins, label: "Launch Token", href: "/create-token" },
 ];
 
