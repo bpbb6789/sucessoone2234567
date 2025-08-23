@@ -19,6 +19,7 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useGetAllChannels } from "@/hooks/useGetAllChannels";
 
 const mainNavItems = [
   { icon: Home, label: "Explore", href: "/tokens" },
@@ -29,12 +30,7 @@ const mainNavItems = [
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
 ];
 
-const trendingChannels = [
-  { icon: TrendingUp, label: "Tech Explorer", href: "/channel/tech-explorer", subscribers: "125K", avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32" },
-  { icon: TrendingUp, label: "Cooking Master", href: "/channel/cooking-master", subscribers: "89K", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32" },
-  { icon: TrendingUp, label: "Music World", href: "/channel/music-world", subscribers: "250K", avatar: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32" },
-  { icon: TrendingUp, label: "Gaming Pro", href: "/channel/gaming-pro", subscribers: "180K", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32" },
-];
+
 
 const additionalItems = [
   { icon: FileText, label: "Doc", href: "/doc" },
@@ -64,6 +60,7 @@ export function Sidebar() {
   const { isExpanded } = useSidebar();
   const [location] = useLocation();
   const isMobile = useIsMobile();
+  const { data: channels, isLoading: channelsLoading } = useGetAllChannels();
 
   if (isMobile) {
     return null; // Mobile uses bottom navigation
@@ -109,28 +106,50 @@ export function Sidebar() {
               <h3 className="sidebar-text text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 px-3">
                 Top Trending Channels
               </h3>
-              {trendingChannels.map((channel) => {
-                const isActive = location === channel.href;
-
-                return (
-                  <Link key={channel.href} href={channel.href}>
-                    <div
-                      className={cn("nav-item", isActive && "active")}
-                      data-testid={`nav-item-${channel.label.toLowerCase().replace(/\s+/g, "-")}`}
-                    >
-                      <img
-                        src={channel.avatar}
-                        alt={channel.label}
-                        className="w-6 h-6 rounded-full flex-shrink-0"
-                      />
+              {channelsLoading ? (
+                <div className="space-y-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="nav-item">
+                      <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse flex-shrink-0" />
                       <div className="sidebar-text flex flex-col flex-1 min-w-0">
-                        <span className="text-sm truncate">{channel.label}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{channel.subscribers}</span>
+                        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse mb-1" />
+                        <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded animate-pulse w-12" />
                       </div>
                     </div>
-                  </Link>
-                );
-              })}
+                  ))}
+                </div>
+              ) : channels && channels.length > 0 ? (
+                channels.slice(0, 4).map((channel) => {
+                  const channelHref = `/channel/${channel.slug}`;
+                  const isActive = location === channelHref;
+
+                  return (
+                    <Link key={channel.id} href={channelHref}>
+                      <div
+                        className={cn("nav-item", isActive && "active")}
+                        data-testid={`nav-item-${channel.name.toLowerCase().replace(/\s+/g, "-")}`}
+                      >
+                        <img
+                          src={channel.avatarUrl?.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}` : channel.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`}
+                          alt={channel.name}
+                          className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`;
+                          }}
+                        />
+                        <div className="sidebar-text flex flex-col flex-1 min-w-0">
+                          <span className="text-sm truncate">{channel.name}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Channel</span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })
+              ) : (
+                <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+                  No channels available
+                </div>
+              )}
             </div>
 
             <hr className="border-gray-200 dark:border-youtube-dark-secondary mx-3 mb-4" />
