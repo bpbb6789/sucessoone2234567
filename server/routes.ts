@@ -691,6 +691,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Token holder count endpoint
+  app.post('/api/token-holders', async (req, res) => {
+    try {
+      const { tokenAddress } = req.body;
+      
+      if (!tokenAddress) {
+        return res.status(400).json({ error: true, message: 'Token address is required' });
+      }
+      
+      // Use GraphQL to get transaction data and count unique holders
+      const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `
+            query GetTokenTransfers($tokenAddress: String!) {
+              transfers(
+                where: { tokenAddress: $tokenAddress }
+                first: 10000
+              ) {
+                items {
+                  to
+                  from
+                  tokenAddress
+                }
+              }
+            }
+          `,
+          variables: { tokenAddress }
+        })
+      });
+      
+      const data = await response.json();
+      const transfers = data.data?.transfers?.items || [];
+      
+      // Count unique holders (exclude zero address)
+      const holders = new Set();
+      transfers.forEach((transfer: any) => {
+        if (transfer.to && transfer.to !== '0x0000000000000000000000000000000000000000') {
+          holders.add(transfer.to.toLowerCase());
+        }
+      });
+      
+      res.json({ holderCount: holders.size });
+    } catch (error) {
+      console.error('Error fetching holder count:', error);
+      res.status(500).json({ error: true, message: 'Failed to fetch holder count' });
+    }
+  });
+
+  // Token creation time endpoint
+  app.post('/api/token-creation-time', async (req, res) => {
+    try {
+      const { tokenAddress } = req.body;
+      
+      if (!tokenAddress) {
+        return res.status(400).json({ error: true, message: 'Token address is required' });
+      }
+      
+      // Get creation time from GraphQL
+      const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `
+            query GetTokenCreation($tokenAddress: String!) {
+              uniPumpCreatorSaless(
+                where: { memeTokenAddress: $tokenAddress }
+              ) {
+                items {
+                  blockTimestamp
+                  blockNumber
+                }
+              }
+            }
+          `,
+          variables: { tokenAddress }
+        })
+      });
+      
+      const data = await response.json();
+      const tokenData = data.data?.uniPumpCreatorSaless?.items?.[0];
+      
+      if (tokenData?.blockTimestamp) {
+        res.json({ creationTime: new Date(parseInt(tokenData.blockTimestamp) * 1000).toISOString() });
+      } else {
+        res.json({ creationTime: new Date().toISOString() });
+      }
+    } catch (error) {
+      console.error('Error fetching creation time:', error);
+      res.status(500).json({ error: true, message: 'Failed to fetch creation time' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

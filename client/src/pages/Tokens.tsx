@@ -62,12 +62,12 @@ export default function Tokens() {
           address: token.memeTokenAddress,
           name: token.name || `Token ${token.memeTokenAddress?.slice(0, 8)}`,
           symbol: token.symbol || 'TKN',
-          price: '0.0000', // Will be fetched separately or calculated
-          marketCap: '0', // Will be calculated from price and supply
-          volume24h: '0', // Will be fetched from trading data
-          holders: 0, // Will be calculated from blockchain data
-          change24h: 0,
-          createdAt: new Date(), // Could be derived from blockchain creation time
+          price: token.price || '0.000001',
+          marketCap: token.marketCap || '0',
+          volume24h: token.volume24h || '0',
+          holders: token.holders || 0,
+          change24h: token.priceChange24h || 0,
+          createdAt: token.createdAt || new Date(),
           description: token.bio || 'No description available'
         }));
 

@@ -126,22 +126,37 @@ export default function Token() {
       try {
         setIsLoading(true);
 
-        // Calculate price based on bonding curve
-        let price = "0.0000";
-        if (reserveData) {
-          const reserveInEth = parseFloat(formatUnits(reserveData, 18));
-          const supply = parseFloat(formatUnits(contractTokenData.supply, 18));
-          if (supply > 0) {
-            // Simplified pricing calculation - in reality this would use the bonding curve formula
-            price = (reserveInEth * 3000 / supply).toFixed(6); // Assume ETH = $3000
-          }
-        }
-
-        // Calculate market cap
+        // Get real price data from PriceService
+        let price = "0.000001";
         let marketCapValue = "0";
-        if (capData) {
-          const capInEth = parseFloat(formatUnits(capData, 18));
-          marketCapValue = (capInEth * 3000).toFixed(2); // Assume ETH = $3000
+        let volume24h = "0";
+        let holders = 0;
+        
+        try {
+          // Import and use PriceService
+          const { PriceService } = await import('../../../lib/priceService');
+          const priceData = await PriceService.getTokenPrice(tokenAddress);
+          const holderCount = await PriceService.getHolderCount(tokenAddress);
+          
+          price = priceData.price;
+          marketCapValue = priceData.marketCap;
+          volume24h = priceData.volume24h;
+          holders = holderCount;
+        } catch (error) {
+          console.error('Error fetching real price data:', error);
+          // Fallback to bonding curve calculation
+          if (reserveData) {
+            const reserveInEth = parseFloat(formatUnits(reserveData, 18));
+            const supply = parseFloat(formatUnits(contractTokenData.supply, 18));
+            if (supply > 0) {
+              price = (reserveInEth * 3000 / supply).toFixed(6); // Assume ETH = $3000
+            }
+          }
+          
+          if (capData) {
+            const capInEth = parseFloat(formatUnits(capData, 18));
+            marketCapValue = (capInEth * 3000).toFixed(2); // Assume ETH = $3000
+          }
         }
 
         const processedTokenData: TokenData = {
@@ -150,8 +165,8 @@ export default function Token() {
           symbol: contractTokenData.symbol || "UNK",
           price: price,
           marketCap: marketCapValue,
-          volume24h: "0", // This would need to be calculated from events
-          holders: 0, // This would need to be calculated from Transfer events
+          volume24h: volume24h,
+          holders: holders,
           supply: formatUnits(contractTokenData.supply, 18),
           createdBy: contractTokenData.createdBy || "0x0000000000000000000000000000000000000000",
           description: contractTokenData.description || 'No description available',
