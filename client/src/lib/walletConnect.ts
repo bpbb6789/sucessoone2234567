@@ -1,12 +1,16 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { mainnet, base, baseSepolia } from 'wagmi/chains';
+import { QueryClient } from '@tanstack/react-query';
+
+// Create a client
+export const queryClient = new QueryClient();
 
 // RainbowKit configuration
 export const config = getDefaultConfig({
   appName: 'UniPump',
   projectId: import.meta.env.VITE_WC_PROJECT_ID || "8b2d0dd39c1cced02ecce163a96a8cb5",
   chains: [mainnet, base, baseSepolia],
-  ssr: true,
+  ssr: false,
 });
 
 export interface WalletAccount {
