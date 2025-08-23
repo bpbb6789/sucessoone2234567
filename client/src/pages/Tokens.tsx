@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, TrendingUp, DollarSign, Users, BarChart3, Coins, ExternalLink } from "lucide-react";
 import { useGetAllSales } from '@/hooks/useGetAllSales';
+import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'react-router-dom';
 
@@ -21,6 +22,12 @@ interface Token {
   createdAt: Date;
   description?: string;
   address: string;
+  // Channel-specific data
+  slug?: string;
+  avatarUrl?: string;
+  coverUrl?: string;
+  hasTokenData?: boolean;
+  tokenDataLoading?: boolean;
 }
 
 const formatTimeAgo = (date: Date): string => {
@@ -44,48 +51,102 @@ export default function Tokens() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get token sales data from GraphQL
-  const { data: salesData, loading, error } = useGetAllSales();
+  // Get channels from database (fast)
+  const { data: channelsData, isLoading: channelsLoading, error: channelsError } = useGetAllChannels();
+  
+  // Get token sales data from GraphQL (slower)
+  const { data: salesData, loading: salesLoading, error: salesError } = useGetAllSales();
 
   useEffect(() => {
-    const processTokensData = () => {
-      if (!salesData?.uniPumpCreatorSaless?.items) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-
-        const processedTokens: Token[] = salesData.uniPumpCreatorSaless.items.map((token: any) => ({
-          id: token.memeTokenAddress,
-          address: token.memeTokenAddress,
-          name: token.name || `Token ${token.memeTokenAddress?.slice(0, 8)}`,
-          symbol: token.symbol || 'TKN',
-          price: token.price || '0.000001',
-          marketCap: token.marketCap || '0',
-          volume24h: token.volume24h || '0',
-          holders: token.holders || 0,
-          change24h: token.priceChange24h || 0,
-          createdAt: token.createdAt || new Date(),
-          description: token.bio || 'No description available'
+    const processData = () => {
+      // Start with channels data (fast, always show these)
+      if (channelsData && channelsData.length > 0) {
+        const channelTokens: Token[] = channelsData.map((channel) => ({
+          id: channel.coinAddress || channel.id,
+          address: channel.coinAddress,
+          name: channel.name,
+          symbol: `$${channel.name.toUpperCase()}`, // Default symbol from name
+          description: channel.description,
+          createdAt: new Date(channel.createdAt),
+          // Channel-specific data
+          slug: channel.slug,
+          avatarUrl: channel.avatarUrl,
+          coverUrl: channel.coverUrl,
+          // Default token data (will be updated when GraphQL loads)
+          price: '0.000001',
+          marketCap: '0',
+          volume24h: '0',
+          holders: 0,
+          change24h: 0,
+          hasTokenData: false,
+          tokenDataLoading: true
         }));
 
-        setTokens(processedTokens);
-      } catch (error) {
-        console.error('Error processing tokens data:', error);
-      } finally {
+        // If we have GraphQL data, merge it with channel data
+        if (salesData?.uniPumpCreatorSaless?.items) {
+          const graphQLTokens = salesData.uniPumpCreatorSaless.items;
+          const mergedTokens = channelTokens.map((channelToken) => {
+            // Find matching token in GraphQL data by address
+            const matchingToken = graphQLTokens.find((gqlToken: any) => 
+              gqlToken.memeTokenAddress?.toLowerCase() === channelToken.address?.toLowerCase()
+            );
+            
+            if (matchingToken) {
+              return {
+                ...channelToken,
+                symbol: matchingToken.symbol || channelToken.symbol,
+                price: matchingToken.price || '0.000001',
+                marketCap: matchingToken.marketCap || '0',
+                volume24h: matchingToken.volume24h || '0',
+                holders: matchingToken.holders || 0,
+                change24h: matchingToken.priceChange24h || 0,
+                hasTokenData: true,
+                tokenDataLoading: false
+              };
+            }
+            
+            return {
+              ...channelToken,
+              tokenDataLoading: !salesLoading // Stop loading if GraphQL is done
+            };
+          });
+          
+          setTokens(mergedTokens);
+        } else {
+          // Just show channels without token data
+          setTokens(channelTokens);
+        }
+        
+        setIsLoading(false);
+      } else if (!channelsLoading && (!channelsData || channelsData.length === 0)) {
+        // No channels, fall back to GraphQL only if available
+        if (salesData?.uniPumpCreatorSaless?.items && !salesLoading) {
+          const graphQLTokens: Token[] = salesData.uniPumpCreatorSaless.items.map((token: any) => ({
+            id: token.memeTokenAddress,
+            address: token.memeTokenAddress,
+            name: token.name || `Token ${token.memeTokenAddress?.slice(0, 8)}`,
+            symbol: token.symbol || 'TKN',
+            price: token.price || '0.000001',
+            marketCap: token.marketCap || '0',
+            volume24h: token.volume24h || '0',
+            holders: token.holders || 0,
+            change24h: token.priceChange24h || 0,
+            createdAt: token.createdAt || new Date(),
+            description: token.bio || 'No description available',
+            hasTokenData: true,
+            tokenDataLoading: false
+          }));
+          setTokens(graphQLTokens);
+        }
         setIsLoading(false);
       }
     };
 
-    if (!loading) {
-      processTokensData();
-    }
-  }, [salesData, loading]);
+    processData();
+  }, [channelsData, channelsLoading, salesData, salesLoading]);
 
-  // If initial loading and no sales data, show skeleton
-  if (isLoading && (!salesData || salesData.uniPumpCreatorSaless?.items.length === 0)) {
+  // If initial loading and no data, show skeleton
+  if (isLoading && channelsLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="space-y-6">
@@ -123,12 +184,16 @@ export default function Tokens() {
     );
   }
 
-  if (error) {
+  // Show error only if channels failed (GraphQL errors are less critical)
+  if (channelsError && !channelsData) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-red-500 mb-4">Error loading tokens: {error.message}</p>
+            <p className="text-red-500 mb-4">Error loading channels: {channelsError.message}</p>
+            {salesError && (
+              <p className="text-orange-500 mb-4">Token data also unavailable: {salesError.message}</p>
+            )}
             <Button onClick={() => window.location.reload()}>
               Retry
             </Button>
@@ -247,17 +312,33 @@ export default function Tokens() {
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                            {token.symbol.charAt(0)}
-                          </div>
+                          {/* Channel Avatar or Symbol */}
+                          {token.avatarUrl ? (
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-border">
+                              <img 
+                                src={token.avatarUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.avatarUrl}` : token.avatarUrl}
+                                alt={`${token.name} avatar`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                              {token.symbol.charAt(0)}
+                            </div>
+                          )}
                           <div>
                             <CardTitle className="text-lg">{token.name}</CardTitle>
                             <div className="flex items-center gap-2">
-                              <Badge variant="secondary">${token.symbol}</Badge>
-                              {token.change24h !== undefined && (
+                              <Badge variant="secondary">{token.symbol}</Badge>
+                              {/* Token Stats Loading/Loaded */}
+                              {token.tokenDataLoading ? (
+                                <Skeleton className="h-5 w-16" />
+                              ) : token.hasTokenData && token.change24h !== undefined ? (
                                 <Badge variant={token.change24h >= 0 ? "default" : "destructive"}>
                                   {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(1)}%
                                 </Badge>
+                              ) : (
+                                <Badge variant="outline">New</Badge>
                               )}
                             </div>
                           </div>
@@ -267,55 +348,110 @@ export default function Tokens() {
                         </div>
                       </div>
                     </CardHeader>
+                    
+                    {/* Channel Cover Image */}
+                    {token.coverUrl && (
+                      <div className="h-32 mx-6 mb-4 rounded-lg overflow-hidden bg-muted">
+                        <img 
+                          src={token.coverUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.coverUrl}` : token.coverUrl}
+                          alt={`${token.name} cover`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    
                     <CardContent className="pt-0">
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground line-clamp-2">
                           {token.description || 'No description available'}
                         </p>
 
-                        {/* Token Stats */}
+                        {/* Token Stats - Progressive Loading */}
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
                             <span className="text-muted-foreground">Price</span>
-                            <div className="font-medium">${token.price}</div>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-16 mt-1" />
+                            ) : (
+                              <div className="font-medium">${token.price}</div>
+                            )}
                           </div>
                           <div>
                             <span className="text-muted-foreground">Market Cap</span>
-                            <div className="font-medium">${token.marketCap}K</div>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-16 mt-1" />
+                            ) : (
+                              <div className="font-medium">${token.marketCap}K</div>
+                            )}
                           </div>
                           <div>
                             <span className="text-muted-foreground">Volume 24h</span>
-                            <div className="font-medium">${token.volume24h}K</div>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-16 mt-1" />
+                            ) : (
+                              <div className="font-medium">${token.volume24h}K</div>
+                            )}
                           </div>
                           <div>
                             <span className="text-muted-foreground">Holders</span>
-                            <div className="font-medium">{token.holders}</div>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-16 mt-1" />
+                            ) : (
+                              <div className="font-medium">{token.holders}</div>
+                            )}
                           </div>
                         </div>
 
-                        {/* Creator */}
-                        <div className="text-xs">
-                          <span className="text-muted-foreground">Creator: </span>
-                          <code className="bg-muted px-1 py-0.5 rounded text-xs">
-                            {token.address?.slice(0, 6)}...{token.address?.slice(-4)}
-                          </code>
-                        </div>
-
-                        {/* Social Links - Removed placeholder for creator, using address for consistency */}
+                        {/* Token Address */}
+                        {token.address && (
+                          <div className="text-xs">
+                            <span className="text-muted-foreground">Token: </span>
+                            <code className="bg-muted px-1 py-0.5 rounded text-xs">
+                              {token.address.slice(0, 6)}...{token.address.slice(-4)}
+                            </code>
+                          </div>
+                        )}
+                        
+                        {/* Loading Indicator */}
+                        {token.tokenDataLoading && (
+                          <div className="text-xs text-blue-500 flex items-center gap-1">
+                            <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            Loading market data...
+                          </div>
+                        )}
                       </div>
 
                       {/* Action Buttons */}
                       <div className="flex space-x-2 pt-2">
-                        <Link to={`/token/${token.address}`} className="flex-1">
-                          <Button variant="outline" className="w-full" size="sm">
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            View
-                          </Button>
-                        </Link>
-                        <Button className="flex-1 bg-green-600 hover:bg-green-700" size="sm">
-                          <TrendingUp className="mr-2 h-4 w-4" />
-                          Trade
-                        </Button>
+                        {/* Channel Management Button (if it's a channel) */}
+                        {token.slug && (
+                          <Link to={`/channel/${token.slug}/manager`} className="flex-1">
+                            <Button variant="outline" className="w-full" size="sm">
+                              <Users className="mr-2 h-4 w-4" />
+                              Manage
+                            </Button>
+                          </Link>
+                        )}
+                        
+                        {/* Token View/Trade Buttons */}
+                        {token.address ? (
+                          <>
+                            <Link to={`/token/${token.address}`} className="flex-1">
+                              <Button variant="outline" className="w-full" size="sm">
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                View
+                              </Button>
+                            </Link>
+                            <Button className="flex-1 bg-green-600 hover:bg-green-700" size="sm">
+                              <TrendingUp className="mr-2 h-4 w-4" />
+                              Trade
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="flex-1 text-center text-xs text-muted-foreground py-2">
+                            Token deployment in progress...
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
