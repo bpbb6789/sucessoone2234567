@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, TrendingUp, DollarSign, Users, BarChart3 } from "lucide-react";
+import { Search, TrendingUp, DollarSign, Users, BarChart3, Coins, ExternalLink } from "lucide-react";
 import { useGetAllSales } from '@/hooks/useGetAllSales';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'react-router-dom';
