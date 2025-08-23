@@ -1,335 +1,284 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-// import { useAccount } from 'wagmi'; // Temporarily disabled due to import issues
-import { parseEther, formatEther } from 'viem';
-import { uniPumpCreatorConfig, type TokenCreationParams } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { Loader2, Coins, TrendingUp, Users, DollarSign } from 'lucide-react';
+import { Loader2, Coins, TrendingUp, Users, DollarSign, ExternalLink, ArrowLeft } from 'lucide-react';
 import { TokenTrading } from '@/components/TokenTrading';
+import { Link } from 'react-router-dom';
 
-interface TokenFormData {
+interface TokenData {
+  address: string;
   name: string;
   symbol: string;
-  twitter: string;
-  discord: string;
-  bio: string;
-  imageUri: string;
+  price: string;
+  marketCap: string;
+  volume24h: string;
+  holders: number;
+  supply: string;
+  createdBy: string;
+  description: string;
+  twitter?: string;
+  discord?: string;
+  imageUri?: string;
 }
 
 export default function Token() {
-  // Temporarily mock wallet connection until wagmi imports are fixed
-  // TODO: Replace with real useAccount hook once wagmi is properly configured
-  const isConnected = true; // Set to true for testing
-  const address = '0x1234567890123456789012345678901234567890'; // Mock address
-  
-  // Smart contract interaction hooks
-  const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
-  const [currentTxHash, setCurrentTxHash] = useState<`0x${string}` | undefined>();
-  
-  const { isLoading: isTxLoading, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
-    hash: currentTxHash,
-  });
+  const location = useLocation();
   const { toast } = useToast();
-  const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState<TokenFormData>({
-    name: '',
-    symbol: '',
-    twitter: '',
-    discord: '',
-    bio: '',
-    imageUri: ''
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [tokenData, setTokenData] = useState<TokenData | null>(null);
 
-  // const { writeContract } = useWriteContract();
-
-  const handleInputChange = (field: keyof TokenFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  // Extract token address from URL path
+  const getTokenAddressFromPath = (): string | null => {
+    const pathParts = location.pathname.split('/');
+    const tokenIndex = pathParts.indexOf('token');
+    if (tokenIndex !== -1 && pathParts[tokenIndex + 1]) {
+      return pathParts[tokenIndex + 1];
+    }
+    return null;
   };
 
-  const handleCreateToken = async () => {
-    if (!isConnected) {
-      toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to create a token",
-        variant: "destructive"
-      });
-      return;
-    }
+  const tokenAddress = getTokenAddressFromPath();
 
-    if (!formData.name || !formData.symbol) {
-      toast({
-        title: "Missing required fields",
-        description: "Please fill in at least the token name and symbol",
-        variant: "destructive"
-      });
-      return;
-    }
+  useEffect(() => {
+    const fetchTokenData = async () => {
+      if (!tokenAddress) {
+        toast({
+          title: "Invalid token address",
+          description: "No token address provided in the URL",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
 
-    setIsCreating(true);
-    
-    try {
-      // ✅ Contracts are now deployed! Real blockchain transactions will work
+      try {
+        setIsLoading(true);
 
-      // Call the smart contract to create token (when real contracts are deployed)
-      const hash = await writeContract({
-        ...uniPumpCreatorConfig,
-        functionName: 'createTokenSale',
-        args: [
-          formData.name,
-          formData.symbol,
-          formData.twitter || '',
-          formData.discord || '',
-          formData.bio || '',
-          formData.imageUri || ''
-        ],
-      });
+        // Mock data for now - replace with actual API call
+        const mockTokenData: TokenData = {
+          address: tokenAddress,
+          name: tokenAddress === '0x0f1aa5058a58e56d99365fbab232bef578a0ad2d' ? 'TubeClone TV' : 'Sample Token',
+          symbol: tokenAddress === '0x0f1aa5058a58e56d99365fbab232bef578a0ad2d' ? 'TUBE' : 'SAMPLE',
+          price: '0.0023',
+          marketCap: '45.6',
+          volume24h: '12.3',
+          holders: 156,
+          supply: '1000000',
+          createdBy: '0x742d35Cc6635C0532925a3b8D',
+          description: 'A revolutionary token for the TubeClone ecosystem.',
+          twitter: '@tubeclone',
+          discord: 'https://discord.gg/tubeclone',
+          imageUri: '/images/tv.jpeg'
+        };
 
-      setCurrentTxHash(hash);
-      
-      toast({
-        title: "Transaction submitted",
-        description: `Creating ${formData.name} (${formData.symbol})... ${hash ? `Transaction: ${hash.slice(0, 10)}...` : 'Processing...'}`,
-      });
+        setTokenData(mockTokenData);
+      } catch (error) {
+        console.error('Error fetching token data:', error);
+        toast({
+          title: "Error loading token",
+          description: "Failed to load token data. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    } catch (error) {
-      console.error('Token creation failed:', error);
-      toast({
-        title: "Token creation failed",
-        description: error instanceof Error ? error.message : "There was an error creating your token. Please try again.",
-        variant: "destructive"
-      });
-      setIsCreating(false);
-    }
-  };
+    fetchTokenData();
+  }, [tokenAddress, toast]);
 
-  // Handle transaction completion
-  React.useEffect(() => {
-    if (isTxSuccess) {
-      toast({
-        title: "Token created successfully!",
-        description: `${formData.name} (${formData.symbol}) has been deployed to the blockchain.`,
-      });
-      
-      // Reset form
-      setFormData({
-        name: '',
-        symbol: '',
-        twitter: '',
-        discord: '',
-        bio: '',
-        imageUri: ''
-      });
-      
-      setIsCreating(false);
-      setCurrentTxHash(undefined);
-    }
-  }, [isTxSuccess, formData.name, formData.symbol, toast]);
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading token data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tokenData) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Token Not Found</h1>
+          <p className="text-muted-foreground">The requested token could not be found.</p>
+          <Link to="/tokens">
+            <Button>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Tokens
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold flex items-center justify-center gap-3">
-            <Coins className="h-10 w-10 text-emerald-600" />
-            Launch Your Token
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Create your own meme token on Base network with UniPump's bonding curve mechanism
-          </p>
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="space-y-6">
+        {/* Navigation */}
+        <div className="flex items-center space-x-4">
+          <Link to="/tokens">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Tokens
+            </Button>
+          </Link>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="flex items-center space-x-2 p-6">
-              <TrendingUp className="h-8 w-8 text-emerald-600" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Tokens</p>
-                <p className="text-2xl font-bold">1,234</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center space-x-2 p-6">
-              <Users className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Traders</p>
-                <p className="text-2xl font-bold">56.7K</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center space-x-2 p-6">
-              <DollarSign className="h-8 w-8 text-purple-600" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Volume 24h</p>
-                <p className="text-2xl font-bold">$2.1M</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Token Creation Form */}
+        {/* Token Header */}
         <Card>
           <CardHeader>
-            <CardTitle>Create New Token</CardTitle>
-            <CardDescription>
-              Fill in the details below to launch your token on the UniPump platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="token-name">Token Name *</Label>
-                <Input
-                  id="token-name"
-                  placeholder="My Awesome Token"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  data-testid="input-token-name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="token-symbol">Token Symbol *</Label>
-                <Input
-                  id="token-symbol"
-                  placeholder="MAT"
-                  value={formData.symbol}
-                  onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
-                  data-testid="input-token-symbol"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="token-bio">Description</Label>
-              <Textarea
-                id="token-bio"
-                placeholder="Tell people about your token..."
-                value={formData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                rows={4}
-                data-testid="textarea-token-bio"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="token-image">Image URL</Label>
-              <Input
-                id="token-image"
-                placeholder="https://example.com/my-token-image.png"
-                value={formData.imageUri}
-                onChange={(e) => handleInputChange('imageUri', e.target.value)}
-                data-testid="input-token-image"
-              />
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="token-twitter">Twitter (Optional)</Label>
-                <Input
-                  id="token-twitter"
-                  placeholder="@mytoken"
-                  value={formData.twitter}
-                  onChange={(e) => handleInputChange('twitter', e.target.value)}
-                  data-testid="input-token-twitter"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="token-discord">Discord (Optional)</Label>
-                <Input
-                  id="token-discord"
-                  placeholder="https://discord.gg/mytoken"
-                  value={formData.discord}
-                  onChange={(e) => handleInputChange('discord', e.target.value)}
-                  data-testid="input-token-discord"
-                />
-              </div>
-            </div>
-
-            {!isConnected ? (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground mb-4">Connect your wallet to create a token</p>
-                {/* WalletConnectButton will be shown in header */}
-              </div>
-            ) : (
-              <Button
-                onClick={handleCreateToken}
-                disabled={(isCreating || isWritePending || isTxLoading) || !formData.name || !formData.symbol}
-                className="w-full"
-                size="lg"
-                data-testid="button-create-token"
-              >
-                {(isCreating || isWritePending) ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Preparing Transaction...
-                  </>
-                ) : isTxLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Confirming Transaction...
-                  </>
-                ) : (
-                  <>
-                    <Coins className="mr-2 h-4 w-4" />
-                    Create Token
-                  </>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                {tokenData.imageUri && (
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                    <img 
+                      src={tokenData.imageUri} 
+                      alt={tokenData.name}
+                      className="w-14 h-14 rounded-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
                 )}
-              </Button>
-            )}
+                <div>
+                  <CardTitle className="text-3xl">{tokenData.name}</CardTitle>
+                  <CardDescription className="text-lg">
+                    {tokenData.symbol} • {tokenData.address.slice(0, 6)}...{tokenData.address.slice(-4)}
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                {tokenData.twitter && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`https://twitter.com/${tokenData.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Twitter
+                    </a>
+                  </Button>
+                )}
+                {tokenData.discord && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={tokenData.discord} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Discord
+                    </a>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-muted-foreground">{tokenData.description}</p>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">
+                  Created by: {tokenData.createdBy.slice(0, 6)}...{tokenData.createdBy.slice(-4)}
+                </Badge>
+                <Badge variant="outline">
+                  Contract: {tokenData.address.slice(0, 10)}...{tokenData.address.slice(-6)}
+                </Badge>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Demo Trading Interface - Would normally show for existing tokens */}
+        {/* Token Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="flex items-center space-x-2 p-4">
+              <DollarSign className="h-6 w-6 text-green-600" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Price</p>
+                <p className="text-lg font-bold">${tokenData.price}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="flex items-center space-x-2 p-4">
+              <TrendingUp className="h-6 w-6 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
+                <p className="text-lg font-bold">${tokenData.marketCap}K</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="flex items-center space-x-2 p-4">
+              <Users className="h-6 w-6 text-purple-600" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Holders</p>
+                <p className="text-lg font-bold">{tokenData.holders}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="flex items-center space-x-2 p-4">
+              <Coins className="h-6 w-6 text-orange-600" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Supply</p>
+                <p className="text-lg font-bold">{parseInt(tokenData.supply).toLocaleString()}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Trading Interface */}
         <TokenTrading 
-          tokenAddress="0x0000000000000000000000000000000000000000"
-          tokenName="Demo Token"
-          tokenSymbol="DEMO"
-          currentPrice="0.0001"
-          supply="1000000"
-          marketCap="100"
-          holders={42}
+          tokenAddress={tokenData.address}
+          tokenName={tokenData.name}
+          tokenSymbol={tokenData.symbol}
+          currentPrice={tokenData.price}
+          supply={tokenData.supply}
+          marketCap={tokenData.marketCap}
+          holders={tokenData.holders}
         />
 
-        {/* How it Works */}
+        {/* Token Information */}
         <Card>
           <CardHeader>
-            <CardTitle>How Token Launch Works</CardTitle>
+            <CardTitle>Token Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center space-y-2">
-                <Badge variant="secondary" className="text-lg px-3 py-1">1</Badge>
-                <h3 className="font-semibold">Create</h3>
-                <p className="text-sm text-muted-foreground">
-                  Launch your token with initial metadata and social links
-                </p>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Contract Address</p>
+                  <p className="font-mono text-sm">{tokenData.address}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Supply</p>
+                  <p className="text-sm">{parseInt(tokenData.supply).toLocaleString()} {tokenData.symbol}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">24h Volume</p>
+                  <p className="text-sm">${tokenData.volume24h}K</p>
+                </div>
               </div>
-              <div className="text-center space-y-2">
-                <Badge variant="secondary" className="text-lg px-3 py-1">2</Badge>
-                <h3 className="font-semibold">Bonding Curve</h3>
-                <p className="text-sm text-muted-foreground">
-                  Price increases automatically as more tokens are bought
-                </p>
-              </div>
-              <div className="text-center space-y-2">
-                <Badge variant="secondary" className="text-lg px-3 py-1">3</Badge>
-                <h3 className="font-semibold">Uniswap</h3>
-                <p className="text-sm text-muted-foreground">
-                  At market cap target, liquidity moves to Uniswap V4
-                </p>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Creator</p>
+                  <p className="font-mono text-sm">{tokenData.createdBy}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Holders</p>
+                  <p className="text-sm">{tokenData.holders} addresses</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Network</p>
+                  <p className="text-sm">Base Sepolia</p>
+                </div>
               </div>
             </div>
           </CardContent>
