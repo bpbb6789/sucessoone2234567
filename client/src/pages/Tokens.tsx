@@ -173,11 +173,52 @@ export default function Tokens() {
           {/* Tabs List */}
           <Skeleton className="h-12 w-full" />
 
-          {/* Tokens List Skeletons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Skeleton className="h-80 w-full" />
-            <Skeleton className="h-80 w-full" />
-            <Skeleton className="h-80 w-full" />
+          {/* Tokens Grid Skeletons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="border border-border/50">
+                <CardContent className="p-4">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <Skeleton className="w-10 h-10 rounded-lg" />
+                      <div>
+                        <Skeleton className="h-4 w-20 mb-1" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    </div>
+                    <Skeleton className="w-4 h-4" />
+                  </div>
+                  
+                  {/* Price */}
+                  <div className="flex justify-between mb-3">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <Skeleton className="h-3 w-16 mb-1" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                    <div>
+                      <Skeleton className="h-3 w-16 mb-1" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </div>
+                  
+                  {/* Progress */}
+                  <Skeleton className="h-2 w-full mb-4" />
+                  
+                  {/* Buttons */}
+                  <div className="flex space-x-2">
+                    <Skeleton className="h-8 flex-1" />
+                    <Skeleton className="h-8 flex-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
@@ -306,17 +347,17 @@ export default function Tokens() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredTokens.map((token) => (
-                  <Card key={token.id} className="hover:bg-muted/50 transition-colors border border-border/50">
+                  <Card key={token.id} className="hover:bg-muted/50 transition-colors border border-border/50 bg-card">
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        {/* Left side - Token info */}
-                        <div className="flex items-center space-x-4">
+                      {/* Token Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
                           {/* Token Avatar */}
                           <div className="flex-shrink-0">
                             {token.avatarUrl ? (
-                              <div className="w-10 h-10 rounded-full overflow-hidden border border-border">
+                              <div className="w-10 h-10 rounded-lg overflow-hidden border border-border">
                                 <img 
                                   src={token.avatarUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.avatarUrl}` : token.avatarUrl}
                                   alt={`${token.name} avatar`}
@@ -324,151 +365,136 @@ export default function Tokens() {
                                 />
                               </div>
                             ) : (
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
                                 {token.symbol.charAt(1) || token.name.charAt(0)}
                               </div>
                             )}
                           </div>
 
                           {/* Token Name and Symbol */}
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
                               <h3 className="font-semibold text-sm truncate">{token.name}</h3>
-                              <Badge variant="secondary" className="text-xs px-2 py-0.5">{token.symbol}</Badge>
+                              <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-muted/50">
+                                {token.symbol}
+                              </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                              {token.description || 'No description available'}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Center - Token Stats */}
-                        <div className="hidden md:flex items-center space-x-8">
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">Price</div>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16" />
-                            ) : (
-                              <div className="font-semibold text-sm">${token.price}</div>
-                            )}
-                          </div>
-                          
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">24h Change</div>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16" />
-                            ) : token.hasTokenData && token.change24h !== undefined ? (
-                              <div className={`font-semibold text-sm ${token.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
-                              </div>
-                            ) : (
-                              <div className="text-xs text-muted-foreground">New</div>
-                            )}
-                          </div>
-
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">Market Cap</div>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16" />
-                            ) : (
-                              <div className="font-semibold text-sm">${token.marketCap}K</div>
-                            )}
-                          </div>
-
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">Volume</div>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16" />
-                            ) : (
-                              <div className="font-semibold text-sm">${token.volume24h}K</div>
-                            )}
-                          </div>
-
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">Holders</div>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-16" />
-                            ) : (
-                              <div className="font-semibold text-sm">{token.holders}</div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Right side - Actions and Time */}
-                        <div className="flex items-center space-x-3">
-                          <div className="text-right hidden sm:block">
                             <div className="text-xs text-muted-foreground">
                               {formatTimeAgo(token.createdAt)}
                             </div>
-                            {token.tokenDataLoading && (
-                              <div className="text-xs text-blue-500 mt-1">Loading...</div>
+                          </div>
+                        </div>
+                        
+                        {/* Favorite/Star Icon */}
+                        <div className="text-muted-foreground">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Price and Change */}
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-5 w-16" />
+                            ) : (
+                              <div className="text-lg font-bold">${token.price}</div>
                             )}
                           </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex space-x-2">
-                            {/* Channel Management Button (if it's a channel) */}
-                            {token.slug && (
-                              <Link to={`/channel/${token.slug}/manager`}>
-                                <Button variant="outline" size="sm" className="text-xs px-3">
-                                  Manage
-                                </Button>
-                              </Link>
-                            )}
-                            
-                            {/* Token View/Trade Buttons */}
-                            {token.address ? (
-                              <>
-                                <Link to={`/token/${token.address}`}>
-                                  <Button variant="outline" size="sm" className="text-xs px-3">
-                                    View
-                                  </Button>
-                                </Link>
-                                <Button className="bg-green-600 hover:bg-green-700 text-white" size="sm">
-                                  Trade
-                                </Button>
-                              </>
-                            ) : (
-                              <div className="text-xs text-muted-foreground px-3 py-2">
-                                Deploying...
+                          <div>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-12" />
+                            ) : token.hasTokenData && token.change24h !== undefined ? (
+                              <div className={`text-sm font-medium ${token.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
                               </div>
+                            ) : (
+                              <div className="text-sm text-muted-foreground">New</div>
                             )}
                           </div>
                         </div>
                       </div>
 
-                      {/* Mobile Stats - Show on smaller screens */}
-                      <div className="md:hidden mt-3 pt-3 border-t border-border/50">
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div>
-                            <div className="text-xs text-muted-foreground mb-1">Price</div>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-full" />
-                            ) : (
-                              <div className="font-semibold text-sm">${token.price}</div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground mb-1">Change</div>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-full" />
-                            ) : token.hasTokenData && token.change24h !== undefined ? (
-                              <div className={`font-semibold text-sm ${token.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
-                              </div>
-                            ) : (
-                              <div className="text-xs text-muted-foreground">New</div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-xs text-muted-foreground mb-1">Market Cap</div>
-                            {token.tokenDataLoading ? (
-                              <Skeleton className="h-4 w-full" />
-                            ) : (
-                              <div className="font-semibold text-sm">${token.marketCap}K</div>
-                            )}
-                          </div>
+                      {/* Market Cap and Volume */}
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">Market Cap</div>
+                          {token.tokenDataLoading ? (
+                            <Skeleton className="h-4 w-full" />
+                          ) : (
+                            <div className="text-sm font-medium">${token.marketCap}K</div>
+                          )}
                         </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground mb-1">24h Volume</div>
+                          {token.tokenDataLoading ? (
+                            <Skeleton className="h-4 w-full" />
+                          ) : (
+                            <div className="text-sm font-medium">${token.volume24h}K</div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Additional Stats */}
+                      <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Holders:</span>
+                          {token.tokenDataLoading ? (
+                            <Skeleton className="h-3 w-8" />
+                          ) : (
+                            <span className="font-medium">{token.holders}</span>
+                          )}
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Age:</span>
+                          <span className="font-medium">{formatTimeAgo(token.createdAt)}</span>
+                        </div>
+                      </div>
+
+                      {/* Progress Bar (placeholder for token progress) */}
+                      <div className="mb-4">
+                        <div className="w-full bg-muted rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full" 
+                            style={{ width: '65%' }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>Progress</span>
+                          <span>65%</span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex space-x-2">
+                        {/* Channel Management Button (if it's a channel) */}
+                        {token.slug && (
+                          <Link to={`/channel/${token.slug}/manager`} className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full text-xs">
+                              Manage
+                            </Button>
+                          </Link>
+                        )}
+                        
+                        {/* Token View/Trade Buttons */}
+                        {token.address ? (
+                          <>
+                            <Link to={`/token/${token.address}`} className="flex-1">
+                              <Button variant="outline" size="sm" className="w-full text-xs">
+                                View
+                              </Button>
+                            </Link>
+                            <Button className="bg-green-600 hover:bg-green-700 text-white flex-1" size="sm">
+                              Trade
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="w-full text-center text-xs text-muted-foreground py-2 bg-muted rounded">
+                            Deploying...
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
