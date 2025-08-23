@@ -1,0 +1,33 @@
+ET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/lib/queryClient.ts net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+client:536 WebSocket connection to 'wss://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/?token=G_v4Z65pyXI1' failed: 
+setupWebSocket @ client:536
+(anonymous) @ client:531Understand this error
+client:536 Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=G_v4Z65pyXI1' is invalid.
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+setupWebSocket @ client:536
+fallback @ client:509
+(anonymous) @ client:555Understand this error
+App.tsx:27  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/@fs/home/runner/workspace/wagmi/index.ts net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:29  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Home.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:28  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/@fs/home/runner/workspace/lib/apollo-provider.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:32  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Library.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:31  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Subscriptions.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:30  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Shorts.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:34  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/LikedVideos.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:33  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/History.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:35  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/WatchLater.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:37  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Profile.tsx?t=1755953469039 net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:36  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Music.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:39  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/CreateToken.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:38  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Search.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:40  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Watch.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:42  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Tokens.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:43  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Notifications.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:41  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Token.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:46  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/@fs/home/runner/workspace/node_modules/@rainbow-me/rainbowkit/dist/index.css net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:45  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/not-found.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:44  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/pages/Activities.tsx net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+App.tsx:47  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/src/index.css?t=1755953469039 net::ERR_ABORTED 502 (Bad Gateway)Understand this error
+favicon.ico:1  GET https://25ec9e47-84b3-41d3-b2d5-fab9daf33acd-00-1ziznxotxy0xt.spock.replit.dev:3000/favicon.ico 502 (Bad Gateway)Understand this error
