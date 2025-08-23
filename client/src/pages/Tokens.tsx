@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, TrendingUp, Clock, DollarSign, Loader2, Coins, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import useGetAllSales from '../hooks/useGetAllSales';
+import { useGetAllSales } from '../hooks/useGetAllSales';
 
 interface Token {
   id: string;
@@ -43,8 +43,8 @@ export default function Tokens() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get token sales data from GraphQL
-  const { data: salesData, loading, error } = useGetAllSales();
+  // Get token sales data from API
+  const { data: salesData, isLoading: loading, error } = useGetAllSales();
 
   useEffect(() => {
     const processTokensData = () => {
@@ -56,18 +56,18 @@ export default function Tokens() {
       try {
         setIsLoading(true);
 
-        const processedTokens: Token[] = salesData.tokenSales.map((sale: any) => ({
-          id: sale.tokenAddress,
-          address: sale.tokenAddress,
-          name: sale.name || `Token ${sale.tokenAddress.slice(0, 8)}`,
-          symbol: sale.symbol || 'TKN',
-          price: sale.currentPrice || '0.0000',
-          marketCap: sale.marketCap || '0',
-          volume24h: sale.volume24h || '0',
-          holders: sale.holderCount || 0,
-          change24h: sale.priceChange24h,
-          createdAt: new Date(parseInt(sale.createdAt) * 1000),
-          description: sale.description || 'No description available'
+        const processedTokens: Token[] = salesData.tokenSales.map((token: any) => ({
+          id: token.id || token.memeTokenAddress,
+          address: token.memeTokenAddress || token.address || token.id,
+          name: token.name || `Token ${(token.memeTokenAddress || token.id)?.slice(0, 8)}`,
+          symbol: token.symbol || 'TKN',
+          price: token.price || '0.0000',
+          marketCap: token.marketCap || '0',
+          volume24h: token.volume24h || '0',
+          holders: token.holders || 0,
+          change24h: token.change24h,
+          createdAt: new Date(token.createdAt || Date.now()),
+          description: token.bio || token.description || 'No description available'
         }));
 
         setTokens(processedTokens);
