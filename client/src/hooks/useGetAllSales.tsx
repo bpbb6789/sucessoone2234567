@@ -134,7 +134,7 @@ const client = {
                 body: JSON.stringify({
                     query: `
                         query GetAllSales {
-                            uniPumpCreatorSaless(orderBy: { id: desc }, first: 100) {
+                            uniPumpCreatorSaless {
                                 items {
                                     memeTokenAddress
                                     name
@@ -160,6 +160,7 @@ const client = {
             const result = await response.json();
             
             if (result.errors) {
+                console.error('GraphQL query errors:', result.errors);
                 return { data: {}, loading: false, errors: result.errors };
             }
 
