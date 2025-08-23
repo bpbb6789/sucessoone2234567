@@ -61,7 +61,7 @@ export function Header() {
 
         {/* Search Section */}
         {!isMobile && (
-          <div className="flex-1 max-w-2xl mx-4 flex">
+          <div className="flex-1 max-w-lg mx-4 flex">
             <div className="flex items-center w-full">
               <div className="flex-1 relative">
                 <Input
@@ -138,6 +138,24 @@ export function Header() {
                 <Link href={ROUTES.NOTIFICATIONS}>
                   <div>
                     <Bell className="h-4 w-4" />
+                  </div>
+                </Link>
+              </Button>
+
+              {/* Create Channel Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+                data-testid="button-create-channel"
+                asChild
+              >
+                <Link href="/create">
+                  <div className="flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className="hidden sm:inline">Create</span>
                   </div>
                 </Link>
               </Button>
