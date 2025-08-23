@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 
-export const useGetAllSales = () => {
+import { useQuery } from "@tanstack/react-query";
+
+const useGetAllSales = () => {
     return useQuery({
         queryKey: ["getAllTokens"],
         queryFn: async () => {
@@ -21,4 +23,5 @@ export const useGetAllSales = () => {
     });
 };
 
+export { useGetAllSales };
 export default useGetAllSales;
