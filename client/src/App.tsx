@@ -5,7 +5,7 @@ import { WagmiProvider } from 'wagmi'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/ThemeProvider'
-import Layout from '@/components/Layout'
+import { Layout } from '@/components/Layout'
 import { useWagmiConfig } from '../../wagmi'
 
 // Pages
