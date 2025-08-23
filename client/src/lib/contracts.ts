@@ -2,11 +2,13 @@ import { Address } from 'viem'
 import { UniPumpCreatorAbi } from '../../../abi/UniPumpCreatorAbi'
 import { UniPumpAbi } from '../../../abi/UniPumpAbi.s'
 
-// Contract addresses on Base Sepolia network
-// TODO: Replace with actual deployed addresses when contracts are deployed
+// Contract addresses on Base Sepolia network - DEPLOYED!
 export const CONTRACTS = {
-  UNIPUMP_CREATOR: '0x0000000000000000000000000000000000000000' as Address, // Placeholder - needs real deployment
-  UNIPUMP: '0x0000000000000000000000000000000000000000' as Address, // Placeholder - needs real deployment
+  UNIPUMP_CREATOR: '0xada0ff7c8f108e311ca7c82845a1b8ef26e90e11' as Address, // UniPumpCreator - token factory
+  UNIPUMP: '0xe7f06cc969f37958bcaf6af7c9f93b251338ea80' as Address, // UniPump - main bonding curve contract
+  WETH: '0x4267d742e4fd1c03805083b087deb575203e9b19' as Address, // WETH token for Base Sepolia
+  POOL_MANAGER: '0x7Da1D65F8B249183667cdE74C5CBD46dD38AA829' as Address, // Uniswap V4 Pool Manager
+  FEE_HOOK: '0xb65b299f330bbf4c0d4115737388dd3b61cc50c0' as Address, // Dynamic Fee Hook
 } as const
 
 // Contract configurations for wagmi

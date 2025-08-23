@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { formatEther, parseEther, type Address } from 'viem';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { uniPumpConfig } from '@/lib/contracts';
 
 interface TokenTradingProps {
   tokenAddress: Address;
@@ -33,6 +35,14 @@ export function TokenTrading({
   const [buyAmount, setBuyAmount] = useState('');
   const [sellAmount, setSellAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Smart contract interaction hooks
+  const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
+  const [currentTxHash, setCurrentTxHash] = useState<`0x${string}` | undefined>();
+  
+  const { isLoading: isTxLoading, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
+    hash: currentTxHash,
+  });
 
   const handleBuy = async () => {
     if (!buyAmount || parseFloat(buyAmount) <= 0) {
@@ -47,19 +57,27 @@ export function TokenTrading({
     setIsLoading(true);
     
     try {
-      // TODO: Implement actual buy transaction
-      console.log('Buy transaction:', { tokenAddress, amount: buyAmount });
+      // Call the smart contract to buy tokens
+      const hash = await writeContract({
+        ...uniPumpConfig,
+        functionName: 'buyTokenFromSale',
+        args: [tokenAddress, parseEther(buyAmount)],
+        value: parseEther(buyAmount), // Send ETH with the transaction
+      });
+
+      setCurrentTxHash(hash);
       
       toast({
-        title: "Buy order placed",
-        description: `Buying ${buyAmount} ETH worth of ${tokenSymbol}`,
+        title: "Buy transaction submitted",
+        description: `Buying ${buyAmount} ETH worth of ${tokenSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
       });
 
       setBuyAmount('');
     } catch (error) {
+      console.error('Buy failed:', error);
       toast({
         title: "Buy failed",
-        description: "Failed to place buy order",
+        description: error instanceof Error ? error.message : "Failed to place buy order",
         variant: "destructive"
       });
     } finally {
@@ -80,19 +98,26 @@ export function TokenTrading({
     setIsLoading(true);
     
     try {
-      // TODO: Implement actual sell transaction
-      console.log('Sell transaction:', { tokenAddress, amount: sellAmount });
+      // Call the smart contract to sell tokens
+      const hash = await writeContract({
+        ...uniPumpConfig,
+        functionName: 'sellTokenFromSale',
+        args: [tokenAddress, parseEther(sellAmount)],
+      });
+
+      setCurrentTxHash(hash);
       
       toast({
-        title: "Sell order placed",
-        description: `Selling ${sellAmount} ${tokenSymbol}`,
+        title: "Sell transaction submitted",
+        description: `Selling ${sellAmount} ${tokenSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
       });
 
       setSellAmount('');
     } catch (error) {
+      console.error('Sell failed:', error);
       toast({
         title: "Sell failed",
-        description: "Failed to place sell order",
+        description: error instanceof Error ? error.message : "Failed to place sell order",
         variant: "destructive"
       });
     } finally {
@@ -189,12 +214,21 @@ export function TokenTrading({
               
               <Button 
                 onClick={handleBuy}
-                disabled={isLoading || !buyAmount}
+                disabled={(isLoading || isWritePending || isTxLoading) || !buyAmount}
                 className="w-full bg-green-600 hover:bg-green-700"
                 data-testid="button-buy-token"
               >
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Buy {tokenSymbol}
+                {(isLoading || isWritePending || isTxLoading) ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {isWritePending ? 'Preparing...' : isTxLoading ? 'Confirming...' : 'Processing...'}
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Buy {tokenSymbol}
+                  </>
+                )}
               </Button>
             </TabsContent>
             
@@ -220,12 +254,21 @@ export function TokenTrading({
               
               <Button 
                 onClick={handleSell}
-                disabled={isLoading || !sellAmount}
+                disabled={(isLoading || isWritePending || isTxLoading) || !sellAmount}
                 className="w-full bg-red-600 hover:bg-red-700"
                 data-testid="button-sell-token"
               >
-                <TrendingDown className="mr-2 h-4 w-4" />
-                Sell {tokenSymbol}
+                {(isLoading || isWritePending || isTxLoading) ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {isWritePending ? 'Preparing...' : isTxLoading ? 'Confirming...' : 'Processing...'}
+                  </>
+                ) : (
+                  <>
+                    <TrendingDown className="mr-2 h-4 w-4" />
+                    Sell {tokenSymbol}
+                  </>
+                )}
               </Button>
             </TabsContent>
           </Tabs>
