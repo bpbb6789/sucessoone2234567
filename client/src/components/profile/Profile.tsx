@@ -47,12 +47,12 @@ const Profile = () => {
     const { formatBalance, shortenAddress } = useWallet()
     const { toast } = useToast()
     
-    // Mock channel data - in a real app, this would come from your API
+    // Real channel data - remove mock stats  
     const [channelStats] = useState<ChannelStats>({
-        subscriberCount: 12500,
-        videoCount: 45,
-        totalViews: "1.2M",
-        joinDate: "Jan 15, 2020"
+        subscriberCount: 0,
+        videoCount: 0,
+        totalViews: "0",
+        joinDate: "Recently"
     })
     
     const [isEditing, setIsEditing] = useState(false)
@@ -61,7 +61,7 @@ const Profile = () => {
         resolver: zodResolver(formSchema),
         defaultValues: {
             username: ensName || shortenAddress(address || ""),
-            bio: "Welcome to my channel! I create content about technology, gaming, and more.",
+            bio: "",
             website: "",
             location: "",
         },

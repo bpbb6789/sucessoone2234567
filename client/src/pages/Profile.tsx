@@ -5,79 +5,70 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Edit, Share2, Bell, Shield } from "lucide-react";
+import { Settings, Edit, Share2, Wallet } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import ShortsCard from "@/components/ShortsCard";
+import { useAccount, useBalance, useEnsName } from "wagmi";
 
 interface ProfileData {
-  id: string;
   name: string;
-  handle: string;
-  avatar: string;
-  banner: string;
   description: string;
-  subscriberCount: number;
-  videoCount: number;
-  isVerified: boolean;
-  joinedDate: string;
 }
 
 export default function Profile() {
+  const { address } = useAccount();
+  const { data: balance } = useBalance({ address });
+  const { data: ensName } = useEnsName({ address });
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
-    id: "1",
-    name: "Your Channel",
-    handle: "@yourchannel",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150",
-    banner: "https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=300",
-    description: "Welcome to my channel! I create content about technology, gaming, and more.",
-    subscriberCount: 12500,
-    videoCount: 45,
-    isVerified: true,
-    joinedDate: "Jan 15, 2020"
+    name: "",
+    description: ""
   });
 
+  const displayName = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "");
+  const handle = address ? `@${address.slice(0, 6)}...${address.slice(-4)}` : "";
+
+  // If no wallet connected, show connect prompt
+  if (!address) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="page-profile">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Wallet className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-semibold mb-2">Connect Your Wallet</h3>
+            <p className="text-gray-400 mb-4">Please connect your wallet to view your profile</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const { data: videos = [], isLoading: videosLoading } = useQuery({
-    queryKey: ["profile-videos"],
+    queryKey: ["profile-videos", address],
     queryFn: async () => {
-      const response = await fetch("/api/videos?channelId=1");
+      if (!address) return [];
+      const response = await fetch(`/api/videos?address=${address}`);
+      if (!response.ok) return [];
       return response.json();
     },
+    enabled: !!address,
   });
 
   const { data: shorts = [], isLoading: shortsLoading } = useQuery({
-    queryKey: ["profile-shorts"],
+    queryKey: ["profile-shorts", address],
     queryFn: async () => {
-      const response = await fetch("/api/shorts?channelId=1");
+      if (!address) return [];
+      const response = await fetch(`/api/shorts?address=${address}`);
+      if (!response.ok) return [];
       return response.json();
     },
+    enabled: !!address,
   });
-
-  const formatCount = (count: number) => {
-    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-    return count.toString();
-  };
 
   return (
     <div className="min-h-screen bg-background" data-testid="page-profile">
       {/* Banner */}
       <div className="relative h-48 md:h-64 bg-gradient-to-r from-blue-500 to-purple-600">
-        <img
-          src={profileData.banner}
-          alt="Channel Banner"
-          className="w-full h-full object-cover"
-        />
-        {isEditing && (
-          <Button
-            variant="secondary"
-            size="sm"
-            className="absolute bottom-4 right-4"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Banner
-          </Button>
-        )}
       </div>
 
       {/* Profile Info */}
@@ -85,19 +76,10 @@ export default function Profile() {
         <div className="flex flex-col md:flex-row gap-6">
           <div className="relative">
             <img
-              src={profileData.avatar}
-              alt={profileData.name}
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${address}`}
+              alt="Profile Avatar"
               className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-gray-800"
             />
-            {isEditing && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="absolute bottom-0 right-0 rounded-full p-2"
-              >
-                <Edit className="h-3 w-3" />
-              </Button>
-            )}
           </div>
 
           <div className="flex-1">
@@ -106,35 +88,34 @@ export default function Profile() {
                 <Input
                   value={profileData.name}
                   onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder={displayName}
                   className="text-2xl font-bold max-w-md"
                 />
               ) : (
-                <h1 className="text-2xl md:text-3xl font-bold">{profileData.name}</h1>
-              )}
-              {profileData.isVerified && (
-                <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">✓</span>
-                </div>
+                <h1 className="text-2xl md:text-3xl font-bold">{profileData.name || displayName}</h1>
               )}
             </div>
 
-            <p className="text-gray-600 dark:text-gray-400 mb-2">{profileData.handle}</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-2">{handle}</p>
 
             <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
-              <span>{formatCount(profileData.subscriberCount)} subscribers</span>
-              <span>{profileData.videoCount} videos</span>
-              <span>Joined {profileData.joinedDate}</span>
+              <span>{videos.length} videos</span>
+              <span>{shorts.length} shorts</span>
+              {balance && (
+                <span>{parseFloat(balance.formatted).toFixed(4)} {balance.symbol}</span>
+              )}
             </div>
 
             {isEditing ? (
               <Textarea
                 value={profileData.description}
                 onChange={(e) => setProfileData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Tell viewers about your channel..."
                 className="mb-4"
                 rows={3}
               />
             ) : (
-              <p className="text-sm mb-4">{profileData.description}</p>
+              <p className="text-sm mb-4">{profileData.description || "No description yet."}</p>
             )}
 
             <div className="flex gap-2">
@@ -153,7 +134,7 @@ export default function Profile() {
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>
-                  <Button variant="outline">
+                  <Button variant="outline" onClick={() => navigator.clipboard.writeText(window.location.href)}>
                     <Share2 className="h-4 w-4 mr-2" />
                     Share
                   </Button>
@@ -181,7 +162,7 @@ export default function Profile() {
           <TabsContent value="videos" className="mt-6">
             {videosLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="space-y-2 animate-pulse">
                     <div className="bg-gray-200 dark:bg-gray-700 rounded-lg aspect-video"></div>
                     <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -189,7 +170,7 @@ export default function Profile() {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : videos.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {videos.map((video) => (
                   <VideoCard
@@ -198,6 +179,13 @@ export default function Profile() {
                     onClick={(id) => console.log("Video clicked:", id)}
                   />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">No videos yet</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  Upload your first video to get started
+                </p>
               </div>
             )}
           </TabsContent>
@@ -212,7 +200,7 @@ export default function Profile() {
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : shorts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {shorts.map((short) => (
                   <ShortsCard
@@ -221,6 +209,13 @@ export default function Profile() {
                     onClick={(id) => console.log("Short clicked:", id)}
                   />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-semibold mb-2">No shorts yet</h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  Create your first short video
+                </p>
               </div>
             )}
           </TabsContent>
@@ -243,19 +238,31 @@ export default function Profile() {
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-semibold mb-2">Description</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{profileData.description}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {profileData.description || "No description provided."}
+                  </p>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2">Stats</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <h4 className="font-semibold mb-2">Wallet Information</h4>
+                  <div className="grid grid-cols-1 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-600 dark:text-gray-400">Joined:</span>
-                      <div className="font-medium">{profileData.joinedDate}</div>
+                      <span className="text-gray-600 dark:text-gray-400">Address:</span>
+                      <div className="font-mono text-xs mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded">
+                        {address}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-600 dark:text-gray-400">Total views:</span>
-                      <div className="font-medium">1.2M views</div>
-                    </div>
+                    {balance && (
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">Balance:</span>
+                        <div className="font-medium">{parseFloat(balance.formatted).toFixed(4)} {balance.symbol}</div>
+                      </div>
+                    )}
+                    {ensName && (
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">ENS:</span>
+                        <div className="font-medium">{ensName}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
