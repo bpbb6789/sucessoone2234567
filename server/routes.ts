@@ -5,7 +5,7 @@ import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema, 
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
   insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
-  insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema
+  insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema, insertWeb3ChannelSchema
 } from "@shared/schema";
 import { db } from "./db";
 
@@ -786,5 +786,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  // Web3 Channels API
+  app.post("/api/web3-channels", async (req, res) => {
+    try {
+      const validatedData = insertWeb3ChannelSchema.parse(req.body);
+      const channel = await storage.createWeb3Channel(validatedData);
+      res.status(201).json(channel);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid channel data", errors: error.errors });
+      } else {
+        res.status(500).json(handleDatabaseError(error, "createWeb3Channel"));
+      }
+    }
+  });
+
+  app.get("/api/web3-channels", async (req, res) => {
+    try {
+      const channels = await storage.getAllWeb3Channels();
+      res.json(channels);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getAllWeb3Channels"));
+    }
+  });
+
+  app.get("/api/web3-channels/owner/:owner", async (req, res) => {
+    try {
+      const channel = await storage.getWeb3ChannelByOwner(req.params.owner);
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
+      }
+      res.json(channel);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getWeb3ChannelByOwner"));
+    }
+  });
+
+  app.get("/api/me", async (req, res) => {
+    try {
+      // Get wallet address from request headers or auth
+      const walletAddress = req.headers['x-wallet-address'] as string;
+      
+      if (!walletAddress) {
+        return res.status(401).json({ message: "Wallet address required" });
+      }
+
+      const channel = await storage.getWeb3ChannelByOwner(walletAddress);
+      
+      if (channel) {
+        res.json({ 
+          hasChannel: true, 
+          managerPath: `/channel/${channel.slug}/manager`,
+          channel 
+        });
+      } else {
+        res.json({ hasChannel: false });
+      }
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getUserProfile"));
+    }
+  });
+
   return httpServer;
 }

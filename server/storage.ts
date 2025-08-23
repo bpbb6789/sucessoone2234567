@@ -14,10 +14,11 @@ import {
   type UserProfile, type InsertUserProfile,
   type Token, type InsertToken,
   type TokenSale, type InsertTokenSale,
+  type Web3Channel, type InsertWeb3Channel,
   type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel,
   channels, videos, shorts, playlists, musicAlbums, comments, subscriptions,
   videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles,
-  tokens, tokenSales
+  tokens, tokenSales, web3Channels
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -103,6 +104,13 @@ export interface IStorage {
   getTokenByAddress(address: string): Promise<Token | undefined>;
   getAllTokens(): Promise<Token[]>;
   createToken(token: InsertToken): Promise<Token>;
+
+  // Web3 Channels
+  getWeb3Channel(id: string): Promise<Web3Channel | undefined>;
+  getWeb3ChannelByOwner(owner: string): Promise<Web3Channel | undefined>;
+  getWeb3ChannelByCoinAddress(coinAddress: string): Promise<Web3Channel | undefined>;
+  createWeb3Channel(channel: InsertWeb3Channel): Promise<Web3Channel>;
+  getAllWeb3Channels(): Promise<Web3Channel[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -591,6 +599,13 @@ export class MemStorage implements IStorage {
   async getTokenByAddress(): Promise<Token | undefined> { throw new Error('Not implemented in MemStorage'); }
   async getAllTokens(): Promise<Token[]> { throw new Error('Not implemented in MemStorage'); }
   async createToken(): Promise<Token> { throw new Error('Not implemented in MemStorage'); }
+
+  // Web3 Channel methods (not implemented in MemStorage)
+  async getWeb3Channel(): Promise<Web3Channel | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async getWeb3ChannelByOwner(): Promise<Web3Channel | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async getWeb3ChannelByCoinAddress(): Promise<Web3Channel | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async createWeb3Channel(): Promise<Web3Channel> { throw new Error('Not implemented in MemStorage'); }
+  async getAllWeb3Channels(): Promise<Web3Channel[]> { throw new Error('Not implemented in MemStorage'); }
   async createMusicTrack(): Promise<MusicTrack> { throw new Error('Not implemented in MemStorage'); }
   async likeComment(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
   async unlikeComment(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
@@ -1062,6 +1077,41 @@ export class DatabaseStorage implements IStorage {
   async createToken(insertToken: InsertToken): Promise<Token> {
     const [token] = await db.insert(tokens).values(insertToken).returning();
     return token;
+  }
+
+  // Web3 Channel methods
+  async getWeb3Channel(id: string): Promise<Web3Channel | undefined> {
+    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.id, id));
+    return channel || undefined;
+  }
+
+  async getWeb3ChannelByOwner(owner: string): Promise<Web3Channel | undefined> {
+    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.owner, owner.toLowerCase()));
+    return channel || undefined;
+  }
+
+  async getWeb3ChannelByCoinAddress(coinAddress: string): Promise<Web3Channel | undefined> {
+    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.coinAddress, coinAddress.toLowerCase()));
+    return channel || undefined;
+  }
+
+  async createWeb3Channel(insertWeb3Channel: InsertWeb3Channel): Promise<Web3Channel> {
+    // Generate slug from name
+    const slug = insertWeb3Channel.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    
+    const channelData = {
+      ...insertWeb3Channel,
+      slug,
+      owner: insertWeb3Channel.owner.toLowerCase(), // normalize address
+      coinAddress: insertWeb3Channel.coinAddress.toLowerCase(),
+    };
+
+    const [channel] = await db.insert(web3Channels).values(channelData).returning();
+    return channel;
+  }
+
+  async getAllWeb3Channels(): Promise<Web3Channel[]> {
+    return await db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
   }
 }
 

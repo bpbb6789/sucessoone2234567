@@ -299,6 +299,24 @@ export const tokenSales = pgTable("token_sales", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Web3 Channels (Channel Coins)
+export const web3Channels = pgTable("web3_channels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  owner: text("owner").notNull(), // wallet address (checksum normalized)
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  ticker: text("ticker").notNull().unique(),
+  coinAddress: text("coin_address").notNull().unique(),
+  chainId: integer("chain_id").notNull(),
+  avatarCid: text("avatar_cid"),
+  coverCid: text("cover_cid"),
+  category: text("category").notNull(), // 'Reels' | 'Podcasts' | 'Events' | 'Art' | 'Music'
+  status: text("status").notNull().default("active"),
+  txHash: text("tx_hash"), // transaction hash from coin deployment
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Token types
 export type Token = typeof tokens.$inferSelect;
 export type InsertToken = typeof tokens.$inferInsert;
@@ -306,6 +324,15 @@ export type InsertToken = typeof tokens.$inferInsert;
 export type TokenSale = typeof tokenSales.$inferSelect;
 export type InsertTokenSale = typeof tokenSales.$inferInsert;
 
+export type Web3Channel = typeof web3Channels.$inferSelect;
+export type InsertWeb3Channel = typeof web3Channels.$inferInsert;
+
 // Insert schemas for tokens
 export const insertTokenSchema = createInsertSchema(tokens);
 export const insertTokenSaleSchema = createInsertSchema(tokenSales);
+export const insertWeb3ChannelSchema = createInsertSchema(web3Channels).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  slug: true, // auto-generated
+});

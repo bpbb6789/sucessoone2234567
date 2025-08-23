@@ -48,6 +48,20 @@ export default function Profile() {
     enabled: !!address,
   });
 
+  // Check if user has a Web3 channel
+  const { data: channelData } = useQuery({
+    queryKey: ["user-channel", address],
+    queryFn: async () => {
+      if (!address) return null;
+      const response = await fetch(`/api/me`, {
+        headers: { 'x-wallet-address': address }
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!address,
+  });
+
   const displayName = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "");
   const handle = address ? `@${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
@@ -131,7 +145,16 @@ export default function Profile() {
                 </>
               ) : (
                 <>
-                  <Button onClick={() => setIsEditing(true)}>
+                  {channelData?.hasChannel ? (
+                    <Button onClick={() => window.location.href = channelData.managerPath}>
+                      Channel Manager
+                    </Button>
+                  ) : (
+                    <Button onClick={() => window.location.href = '/create-channel'}>
+                      Create Channel
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => setIsEditing(true)}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>

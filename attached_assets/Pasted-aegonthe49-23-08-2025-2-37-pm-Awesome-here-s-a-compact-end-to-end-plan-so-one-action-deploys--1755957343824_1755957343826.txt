@@ -1,0 +1,144 @@
+aegonthe49, [23/08/2025 2:37 pm]
+Awesome—here’s a compact, end-to-end plan so one action = deploys the coin (on-chain) + creates the channel (off-chain), and the Channel Manager appears on the profile right after.
+
+What the user sees (copy & UX)
+
+Create Channel (this is the form title—even though it deploys a coin under the hood)
+
+Required
+ • Channel name → “This will also be your on-chain token name.”
+ • Ticker (3–8 chars) → “Your on-chain token symbol, e.g. @alex → ALEX.”
+ • Category (Reels, Podcasts, Events, Art, Music…)
+ • Cover media (image/video poster) + Avatar (image)
+
+Advanced (accordion)
+ • Payout address (defaults to connected wallet)
+ • Chain (Base / Base Sepolia)
+ • Trading engine (Zora default; Doppler later toggle)
+ • Royalties / splits (optional)
+
+CTA: Create Channel
+Subtext: “This will deploy your Channel Coin on-chain and create your channel.”
+
+Progress steps (inline, no page change)
+ 1. Uploading media to IPFS
+ 2. Preparing metadata
+ 3. Deploying Channel Coin (wallet pop-up)
+ 4. Confirming transaction
+ 5. Creating channel…
+
+On success: toast + “Open Channel Manager” button (and it appears on the profile sidebar).
+
+⸻
+
+Field → parameter mapping
+ • Channel name → token.name
+ • Ticker → token.symbol
+ • Cover/Avatar + metadata JSON → token.uri (ipfs://…)
+ • Payout address → payoutRecipient
+ • Chain → chainId
+
+⸻
+
+Sequence (clean & reliable)
+
+Front-end (user wallet signs tx)
+ 1. Upload avatar/cover → IPFS (Pinata).
+ 2. Build metadata JSON → IPFS (Pinata) → get ipfs://CID.
+ 3. Call Zora Coins SDK createCoin({ name, symbol, uri, payoutRecipient, ... }).
+ 4. Wait for receipt → get coinAddress, txHash.
+ 5. POST to backend /api/channels with:
+
+{
+  "coinAddress": "0x…",
+  "chainId": 8453,
+  "name": "Channel name",
+  "ticker": "TICK",
+  "avatarCid": "Qm…",
+  "coverCid": "Qm…",
+  "category": "Reels",
+  "txHash": "0x…"
+}
+
+
+ 6. Redirect to /channel/[slug]/manager.
+
+Backend (trust but verify)
+ • Verify txHash & coinAddress on chainId:
+ • getTransactionReceipt(txHash) success & to = factory (if you track it) OR
+ • getCode(coinAddress) returns bytecode (non-empty).
+ • Enforce one channel per owner (or allow many—your call).
+ • Insert channel + link to user.
+
+⸻
+
+Minimal data model (Prisma-style, compact)
+
+model Channel {
+  id            String   @id @default(cuid())
+  owner         String   // wallet address (checksum normalized)
+  name          String
+  slug          String   @unique
+  ticker        String   @unique
+  coinAddress   String   @unique
+  chainId       Int
+  avatarCid     String?
+  coverCid      String?
+  category      String   // 'Reels' | 'Podcasts' | 'Events' | ...
+  status        String   @default("active")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([owner]) // if you want 1 channel per user; remove if multi-channel
+}
+
+
+⸻
+
+API (thin & explicit)
+
+POST /api/channels
+ • Auth: connected wallet must match msg.sender that deployed the coin (verify via receipt from).
+ • Body: as above.
+ • Side effects:
+ • Create row in Channel.
+ • Create default permissions: owner = admin/poster.
+ • Emit app event channel.created.
+
+GET /api/me (profile sidebar)
+ • If Channel exists for owner, return { hasChannel: true, managerPath: "/channel/[slug]/manager" }.
+ • UI shows Channel Manager button when hasChannel.
+
+⸻
+
+Guardrails & validation
+ • Ticker: A–Z, 3–8 chars, unique.
+ • Name: 3–32 chars, unique slug.
+ • Reject if tx not mined or address has no code.
+ • Idempotent create: if a channel already exists for owner, return it (don’t duplicate).
+ • Rollback on failures (e.g., if coin deploy fails, never create channel).
+
+⸻
+
+Channel Manager (what appears after)
+
+Tabs (compact):
+ • Overview (price, holders, market cap, top reels)
+ • Reels (upload/manage, status)
+ • Community (members/roles)
+ • Earnings (creator cut, withdrawals)
+ • Settings (name/avatar/cover; cannot change ticker/symbol)
+
+Button appears on profile as soon as backend confirms /api/channels and returns the manager path.
+
+⸻
+
+Why this matches your requirement
+ • Labels are “Channel” everywhere (no token jargon).
+
+aegonthe49, [23/08/2025 2:37 pm]
+• One click performs both: on-chain coin + off-chain channel.
+ • Channel Manager visibility is data-driven (channel exists in DB).
+ • On explorers, the token name/symbol match the channel name/ticker, keeping terminology consistent.
+
+If you want, I can supply a compact React form + API handler that follows this exact flow.

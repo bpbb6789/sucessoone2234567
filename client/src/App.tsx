@@ -27,6 +27,8 @@ import CreateTokenPage from '@/pages/CreateToken'
 import Watch from '@/pages/Watch'
 import Token from '@/pages/Token'
 import Tokens from '@/pages/Tokens'
+import CreateChannel from '@/components/CreateChannel'
+import ChannelManager from '@/components/ChannelManager'
 import Notifications from '@/pages/Notifications'
 import Activities from "@/pages/Activities";
 import NotFound from '@/pages/not-found'
@@ -74,6 +76,8 @@ function AppContent() {
               <Route path="/watch/:id" element={<Watch />} />
               <Route path="/tokens" element={<Tokens />} />
               <Route path="/token/:address" element={<Token />} />
+              <Route path="/create-channel" element={<CreateChannel />} />
+              <Route path="/channel/:slug/manager" element={<ChannelManager />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Layout>
