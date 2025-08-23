@@ -331,8 +331,6 @@ export default function Tokens() {
                             <div className="flex items-center gap-2">
                               <h3 className="text-white font-semibold text-sm">{token.name}</h3>
                               <span className="text-gray-400 text-xs">{token.symbol.replace('$', '')}</span>
-                              <span className="text-gray-500 text-xs">📋</span>
-                              <span className="text-blue-400 text-xs">⭐</span>
                             </div>
                             <div className="text-gray-500 text-xs">
                               {formatTimeAgo(token.createdAt)}
@@ -341,8 +339,6 @@ export default function Tokens() {
                         </div>
                         <div className="flex items-center gap-1 text-xs text-gray-400">
                           <span>📊</span>
-                          <span>⚡</span>
-                          <span>🔍</span>
                           <span>0</span>
                           <span>0</span>
                         </div>
