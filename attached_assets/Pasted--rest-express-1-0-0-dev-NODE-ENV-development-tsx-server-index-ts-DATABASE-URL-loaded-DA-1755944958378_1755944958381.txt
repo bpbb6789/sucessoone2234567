@@ -1,0 +1,144 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+DATABASE_URL loaded: ✓
+DATABASE_URL starts with: postgresql://neondb_...
+✓ Database connection successful
+10:24:49 AM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Database error in getVideos: error: relation "videos" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getAllVideos (/home/runner/workspace/server/storage.ts:649:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:74:18) {
+  length: 106,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '557',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+10:25:03 AM [express] GET /api/videos 500 in 36ms :: {"error":true,"message":"Database temporarily un…
+Database error in getVideos: error: relation "videos" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getAllVideos (/home/runner/workspace/server/storage.ts:649:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:74:18) {
+  length: 106,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '557',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+10:25:11 AM [express] GET /api/videos 500 in 104ms :: {"error":true,"message":"Database temporarily u…
+Database error in getVideos: error: relation "videos" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getAllVideos (/home/runner/workspace/server/storage.ts:649:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:74:18) {
+  length: 106,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '557',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+10:25:12 AM [express] GET /api/videos 500 in 114ms :: {"error":true,"message":"Database temporarily u…
+Database error in getVideos: error: relation "videos" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getAllVideos (/home/runner/workspace/server/storage.ts:649:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:74:18) {
+  length: 106,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '557',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+10:25:21 AM [express] GET /api/videos 500 in 111ms :: {"error":true,"message":"Database temporarily u…
+Database error in getVideos: error: relation "videos" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getAllVideos (/home/runner/workspace/server/storage.ts:649:20)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:74:18) {
+  length: 106,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '557',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1449',
+  routine: 'parserOpenTable'
+}
+10:25:21 AM [express] GET /api/videos 500 in 96ms :: {"error":true,"message":"Database temporarily un…
+10:25:53 AM [express] GET /api/tokens 200 in 1ms :: [{"id":"1","name":"DOGE CLASSIC","symbol":"DOGC",…
+10:26:09 AM [express] GET /api/tokens 200 in 0ms :: [{"id":"1","name":"DOGE CLASSIC","symbol":"DOGC",…
+10:27:12 AM [express] GET /api/tokens 200 in 1ms :: [{"id":"1","name":"DOGE CLASSIC","symbol":"DOGC",…
+10:28:41 AM [vite] hmr update /src/pages/Token.tsx, /src/index.css?v=Nsyhwqrs27lBerOPF5CjH, /src/components/TokenTrading.tsx
+10:28:41 AM [vite] hmr update /src/hooks/useGetAllSales.tsx, /src/index.css?v=Nsyhwqrs27lBerOPF5CjH
+10:28:41 AM [vite] hmr update /src/pages/Tokens.tsx, /src/index.css?v=Nsyhwqrs27lBerOPF5CjH
+10:28:42 AM [vite] Pre-transform error: Transform failed with 1 error:
+/home/runner/workspace/client/src/lib/contracts.ts:53:9: ERROR: Multiple exports with the same name "UniPumpAbi"

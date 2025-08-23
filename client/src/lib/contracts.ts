@@ -2,12 +2,6 @@ import { Address } from 'viem'
 import { UniPumpCreatorAbi } from '../../../abi/UniPumpCreatorAbi'
 import { UniPumpAbi } from '../../../abi/UniPumpAbi.s'
 
-// Contract addresses and configurations
-export const UNIPUMP_ADDRESS = "0x1234567890123456789012345678901234567890"; // Replace with actual address
-
-// Export UniPumpAbi - you'll need to import this from the actual ABI file
-export { default as UniPumpAbi } from '../../abi/UniPumpAbi.s';
-
 // Contract addresses on Base Sepolia network - DEPLOYED!
 export const CONTRACTS = {
   UNIPUMP_CREATOR: '0xada0ff7c8f108e311ca7c82845a1b8ef26e90e11' as Address, // UniPumpCreator - token factory
