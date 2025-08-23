@@ -1,5 +1,6 @@
 import React from "react";
-import { ApolloClient, InMemoryCache, ApolloProvider, HttpLink } from "@apollo/client";
+import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
+import { ApolloProvider } from "@apollo/client/react";
 
 const httpLink = new HttpLink({
   uri: "https://unipump-contracts.onrender.com/graphql"
