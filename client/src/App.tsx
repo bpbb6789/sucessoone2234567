@@ -23,7 +23,6 @@ import Music from '@/pages/Music'
 import Profile from '@/pages/Profile'
 import Search from '@/pages/Search'
 import Create from '@/pages/Create'
-import CreateTokenPage from '@/pages/CreateToken'
 import Watch from '@/pages/Watch'
 import Token from '@/pages/Token'
 import Tokens from '@/pages/Tokens'
@@ -72,7 +71,7 @@ function AppContent() {
               <Route path="/activities" element={<Activities />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/search" element={<Search />} />
-              <Route path="/create-token" element={<CreateTokenPage />} />
+              <Route path="/create-token" element={<CreateChannel />} />
               <Route path="/watch/:id" element={<Watch />} />
               <Route path="/tokens" element={<Tokens />} />
               <Route path="/token/:address" element={<Token />} />

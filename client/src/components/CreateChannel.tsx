@@ -109,14 +109,8 @@ export default function CreateChannel() {
         txHash: deployResult.txHash,
       };
 
-      return apiRequest("/api/web3-channels", {
-        method: "POST",
-        body: JSON.stringify(channelData),
-        headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": address,
-        },
-      });
+      const response = await apiRequest("POST", "/api/web3-channels", channelData);
+      return await response.json();
     },
     onSuccess: (channel) => {
       setStep("success");
