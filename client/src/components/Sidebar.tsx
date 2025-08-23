@@ -1,4 +1,4 @@
-import { Home, Play, Radio, Music, Folder, History, Clock, ThumbsUp, ChevronDown, Coins } from "lucide-react";
+import { Home, Play, Radio, Music, Folder, History, Clock, ThumbsUp, ChevronDown, Coins, TrendingUp } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -10,6 +10,7 @@ const mainNavItems = [
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
   { icon: Radio, label: "Subscriptions", href: ROUTES.SUBSCRIPTIONS },
   { icon: Music, label: "YouTube Music", href: ROUTES.MUSIC },
+  { icon: TrendingUp, label: "Discover Tokens", href: ROUTES.TOKENS },
   { icon: Coins, label: "Launch Token", href: ROUTES.TOKEN },
 ];
 

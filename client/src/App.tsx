@@ -24,6 +24,7 @@ import Search from '@/pages/Search'
 import Create from '@/pages/Create'
 import Watch from '@/pages/Watch'
 import Token from '@/pages/Token'
+import Tokens from '@/pages/Tokens'
 import Notifications from '@/pages/Notifications'
 import NotFound from '@/pages/not-found'
 
@@ -65,6 +66,7 @@ function AppContent() {
             <Route path="/search" element={<Search />} />
             <Route path="/create" element={<Create />} />
             <Route path="/watch/:id" element={<Watch />} />
+            <Route path="/tokens" element={<Tokens />} />
             <Route path="/token" element={<Token />} />
             <Route path="/token/:address" element={<Token />} />
             <Route path="/notifications" element={<Notifications />} />

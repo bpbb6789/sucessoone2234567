@@ -35,6 +35,7 @@ export const ROUTES = {
   CREATE: "/create",
   NOTIFICATIONS: "/notifications",
   SEARCH: "/search",
+  TOKENS: "/tokens",
   TOKEN: "/token",
 };
 
