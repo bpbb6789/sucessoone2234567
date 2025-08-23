@@ -173,52 +173,11 @@ export default function Tokens() {
           {/* Tabs List */}
           <Skeleton className="h-12 w-full" />
 
-          {/* Tokens Grid Skeletons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i} className="border border-border/50">
-                <CardContent className="p-4">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <Skeleton className="w-10 h-10 rounded-lg" />
-                      <div>
-                        <Skeleton className="h-4 w-20 mb-1" />
-                        <Skeleton className="h-3 w-16" />
-                      </div>
-                    </div>
-                    <Skeleton className="w-4 h-4" />
-                  </div>
-                  
-                  {/* Price */}
-                  <div className="flex justify-between mb-3">
-                    <Skeleton className="h-6 w-16" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                  
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <Skeleton className="h-3 w-16 mb-1" />
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                    <div>
-                      <Skeleton className="h-3 w-16 mb-1" />
-                      <Skeleton className="h-4 w-full" />
-                    </div>
-                  </div>
-                  
-                  {/* Progress */}
-                  <Skeleton className="h-2 w-full mb-4" />
-                  
-                  {/* Buttons */}
-                  <div className="flex space-x-2">
-                    <Skeleton className="h-8 flex-1" />
-                    <Skeleton className="h-8 flex-1" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {/* Tokens List Skeletons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Skeleton className="h-80 w-full" />
+            <Skeleton className="h-80 w-full" />
+            <Skeleton className="h-80 w-full" />
           </div>
         </div>
       </div>
@@ -347,129 +306,155 @@ export default function Tokens() {
                 </CardContent>
               </Card>
             ) : (
-              // Binance-style Dark Grid Layout
-              <div className="space-y-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTokens.map((token) => (
-                  <div key={token.id} className="bg-gray-900/50 border border-gray-800/60 rounded-sm hover:bg-gray-800/40 transition-colors cursor-pointer">
-                    <div className="p-3">
-                      {/* Header Row */}
-                      <div className="flex items-center justify-between mb-2">
+                  <Card key={token.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-3">
-                          {/* Token Avatar */}
-                          <div className="flex-shrink-0">
-                            {token.avatarUrl ? (
-                              <div className="w-8 h-8 rounded-sm overflow-hidden border border-gray-700">
-                                <img 
-                                  src={token.avatarUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.avatarUrl}` : token.avatarUrl}
-                                  alt={`${token.name} avatar`}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
+                          {/* Channel Avatar or Symbol */}
+                          {token.avatarUrl ? (
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-border">
+                              <img 
+                                src={token.avatarUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.avatarUrl}` : token.avatarUrl}
+                                alt={`${token.name} avatar`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                              {token.symbol.charAt(0)}
+                            </div>
+                          )}
+                          <div>
+                            <CardTitle className="text-lg">{token.name}</CardTitle>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">{token.symbol}</Badge>
+                              {/* Token Stats Loading/Loaded */}
+                              {token.tokenDataLoading ? (
+                                <Skeleton className="h-5 w-16" />
+                              ) : token.hasTokenData && token.change24h !== undefined ? (
+                                <Badge variant={token.change24h >= 0 ? "default" : "destructive"}>
+                                  {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(1)}%
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline">New</Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right text-sm text-muted-foreground">
+                          {formatTimeAgo(token.createdAt)}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    
+                    {/* Channel Cover Image */}
+                    {token.coverUrl && (
+                      <div className="h-32 mx-6 mb-4 rounded-lg overflow-hidden bg-muted">
+                        <img 
+                          src={token.coverUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.coverUrl}` : token.coverUrl}
+                          alt={`${token.name} cover`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    
+                    <CardContent className="pt-0">
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {token.description || 'No description available'}
+                        </p>
+
+                        {/* Token Stats - Progressive Loading */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-muted-foreground">Price</span>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-16 mt-1" />
                             ) : (
-                              <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-sm flex items-center justify-center text-white font-bold text-xs">
-                                {token.symbol.charAt(1) || token.name.charAt(0)}
-                              </div>
+                              <div className="font-medium">${token.price}</div>
                             )}
                           </div>
-
-                          {/* Token Name and Symbol */}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1">
-                              <span className="font-semibold text-white text-sm truncate">{token.name}</span>
-                              <span className="text-gray-400 text-xs">/</span>
-                              <span className="text-gray-300 text-xs font-medium">{token.symbol}</span>
-                            </div>
+                          <div>
+                            <span className="text-muted-foreground">Market Cap</span>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-16 mt-1" />
+                            ) : (
+                              <div className="font-medium">${token.marketCap}K</div>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Volume 24h</span>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-16 mt-1" />
+                            ) : (
+                              <div className="font-medium">${token.volume24h}K</div>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Holders</span>
+                            {token.tokenDataLoading ? (
+                              <Skeleton className="h-4 w-16 mt-1" />
+                            ) : (
+                              <div className="font-medium">{token.holders}</div>
+                            )}
                           </div>
                         </div>
+
+                        {/* Token Address */}
+                        {token.address && (
+                          <div className="text-xs">
+                            <span className="text-muted-foreground">Token: </span>
+                            <code className="bg-muted px-1 py-0.5 rounded text-xs">
+                              {token.address.slice(0, 6)}...{token.address.slice(-4)}
+                            </code>
+                          </div>
+                        )}
                         
-                        {/* Price */}
-                        <div className="text-right">
-                          {token.tokenDataLoading ? (
-                            <Skeleton className="h-4 w-16 bg-gray-700" />
-                          ) : (
-                            <div className="text-white font-semibold text-sm">${token.price}</div>
-                          )}
-                        </div>
+                        {/* Loading Indicator */}
+                        {token.tokenDataLoading && (
+                          <div className="text-xs text-blue-500 flex items-center gap-1">
+                            <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            Loading market data...
+                          </div>
+                        )}
                       </div>
 
-                      {/* Stats Row */}
-                      <div className="grid grid-cols-5 gap-3 text-xs">
-                        {/* Market Cap */}
-                        <div>
-                          <div className="text-gray-500 mb-1">Market Cap</div>
-                          {token.tokenDataLoading ? (
-                            <Skeleton className="h-3 w-full bg-gray-700" />
-                          ) : (
-                            <div className="text-gray-300 font-medium">${token.marketCap}K</div>
-                          )}
-                        </div>
-
-                        {/* 24h Volume */}
-                        <div>
-                          <div className="text-gray-500 mb-1">24h Volume</div>
-                          {token.tokenDataLoading ? (
-                            <Skeleton className="h-3 w-full bg-gray-700" />
-                          ) : (
-                            <div className="text-gray-300 font-medium">${token.volume24h}K</div>
-                          )}
-                        </div>
-
-                        {/* 24h Change */}
-                        <div>
-                          <div className="text-gray-500 mb-1">24h Change</div>
-                          {token.tokenDataLoading ? (
-                            <Skeleton className="h-3 w-full bg-gray-700" />
-                          ) : token.hasTokenData && token.change24h !== undefined ? (
-                            <div className={`font-medium ${token.change24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(2)}%
-                            </div>
-                          ) : (
-                            <div className="text-yellow-400 font-medium">New</div>
-                          )}
-                        </div>
-
-                        {/* Holders */}
-                        <div>
-                          <div className="text-gray-500 mb-1">Holders</div>
-                          {token.tokenDataLoading ? (
-                            <Skeleton className="h-3 w-full bg-gray-700" />
-                          ) : (
-                            <div className="text-gray-300 font-medium">{token.holders}</div>
-                          )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex justify-end space-x-1">
-                          {/* Channel Management Button (if it's a channel) */}
-                          {token.slug && (
-                            <Link to={`/channel/${token.slug}/manager`}>
-                              <Button variant="outline" size="sm" className="text-xs px-2 py-1 h-6 bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700">
-                                Manage
+                      {/* Action Buttons */}
+                      <div className="flex space-x-2 pt-2">
+                        {/* Channel Management Button (if it's a channel) */}
+                        {token.slug && (
+                          <Link to={`/channel/${token.slug}/manager`} className="flex-1">
+                            <Button variant="outline" className="w-full" size="sm">
+                              <Users className="mr-2 h-4 w-4" />
+                              Manage
+                            </Button>
+                          </Link>
+                        )}
+                        
+                        {/* Token View/Trade Buttons */}
+                        {token.address ? (
+                          <>
+                            <Link to={`/token/${token.address}`} className="flex-1">
+                              <Button variant="outline" className="w-full" size="sm">
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                View
                               </Button>
                             </Link>
-                          )}
-                          
-                          {/* Token View/Trade Buttons */}
-                          {token.address ? (
-                            <>
-                              <Link to={`/token/${token.address}`}>
-                                <Button variant="outline" size="sm" className="text-xs px-2 py-1 h-6 bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700">
-                                  View
-                                </Button>
-                              </Link>
-                              <Button className="bg-yellow-600 hover:bg-yellow-700 text-black text-xs px-2 py-1 h-6 font-medium">
-                                Trade
-                              </Button>
-                            </>
-                          ) : (
-                            <div className="text-xs text-gray-500 py-1 px-2 bg-gray-800 rounded text-center">
-                              Deploying...
-                            </div>
-                          )}
-                        </div>
+                            <Button className="flex-1 bg-green-600 hover:bg-green-700" size="sm">
+                              <TrendingUp className="mr-2 h-4 w-4" />
+                              Trade
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="flex-1 text-center text-xs text-muted-foreground py-2">
+                            Token deployment in progress...
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
