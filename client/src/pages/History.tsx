@@ -3,11 +3,32 @@ import { type VideoWithChannel } from "@shared/schema";
 import { formatTimeAgo } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Trash2, Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function History() {
   const { data: videos = [], isLoading } = useQuery<VideoWithChannel[]>({
     queryKey: ["/api/videos"],
   });
+
+  if (isLoading) {
+    return (
+      <div className="p-4" data-testid="page-history-loading">
+        <Skeleton className="h-8 w-48 mb-6" />
+        <div className="space-y-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex space-x-3 p-2 animate-pulse" data-testid={`history-video-skeleton-${i}`}>
+              <Skeleton className="w-42 h-24 rounded" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4" data-testid="page-history">
@@ -25,20 +46,7 @@ export default function History() {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="flex space-x-4 animate-pulse" data-testid={`history-skeleton-${i}`}>
-              <div className="w-48 h-28 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="flex-1 space-y-2">
-                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : videos.length === 0 ? (
+      {videos.length === 0 ? (
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-2">Your watch history is empty</h2>
           <p className="text-gray-500 dark:text-gray-400">

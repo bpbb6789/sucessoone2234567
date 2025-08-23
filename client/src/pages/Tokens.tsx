@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, TrendingUp, Clock, DollarSign, Loader2, Coins, ExternalLink } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, TrendingUp, DollarSign, Users, BarChart3 } from "lucide-react";
+import { useGetAllSales } from '@/hooks/useGetAllSales';
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'react-router-dom';
-import { useGetAllSales } from '../hooks/useGetAllSales';
 
 interface Token {
   id: string;

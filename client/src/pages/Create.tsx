@@ -1,16 +1,15 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Video, Camera, Mic, Image, FileText } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Create() {
   const [uploadType, setUploadType] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Added isLoading state
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -63,7 +62,10 @@ export default function Create() {
               <Card
                 key={option.type}
                 className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setUploadType(option.type)}
+                onClick={() => {
+                  setIsLoading(true); // Set loading true before changing type
+                  setUploadType(option.type);
+                }}
               >
                 <CardContent className="p-6 text-center">
                   <Icon className="h-12 w-12 mx-auto mb-4 text-blue-500" />
@@ -74,6 +76,35 @@ export default function Create() {
             );
           })}
         </div>
+      ) : isLoading ? ( // Show skeleton when isLoading is true
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Skeleton className="h-8 w-32" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Skeleton className="h-48 w-full rounded-lg" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4 border-t">
+              <Skeleton className="h-10 w-24" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <Card>
           <CardHeader>
@@ -81,7 +112,10 @@ export default function Create() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setUploadType("")}
+                onClick={() => {
+                  setUploadType("");
+                  setIsLoading(false); // Reset loading when going back
+                }}
                 className="mr-2"
               >
                 ← Back
@@ -237,10 +271,24 @@ export default function Create() {
             )}
 
             <div className="flex gap-2 pt-4 border-t">
-              <Button variant="outline" onClick={() => setUploadType("")}>
+              <Button variant="outline" onClick={() => {
+                setUploadType("");
+                setIsLoading(false); // Reset loading when canceling
+              }}>
                 Cancel
               </Button>
-              <Button>
+              <Button
+                onClick={() => {
+                  // This is where you would handle the actual submission
+                  // For now, we'll just simulate it and set loading to true
+                  setIsLoading(true);
+                  setTimeout(() => {
+                    setIsLoading(false);
+                    // Reset state or navigate after successful submission
+                    setUploadType("");
+                  }, 1500);
+                }}
+              >
                 {uploadType === "video" && "Upload Video"}
                 {uploadType === "short" && "Create Short"}
                 {uploadType === "live" && "Go Live"}
