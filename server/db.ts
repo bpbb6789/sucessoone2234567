@@ -11,7 +11,20 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Debug: Log the first part of the DATABASE_URL to verify it's loaded
+console.log("DATABASE_URL loaded:", process.env.DATABASE_URL ? "✓" : "✗");
+console.log("DATABASE_URL starts with:", process.env.DATABASE_URL?.substring(0, 20) + "...");
+
+// Use connection pooling for better stability with Neon
+const databaseUrl = process.env.DATABASE_URL;
+const poolUrl = databaseUrl?.replace('.us-east-2', '-pooler.us-east-2') || databaseUrl;
+
+export const pool = new Pool({ 
+  connectionString: poolUrl,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
 export const db = drizzle({ client: pool, schema });
 
 export async function testDatabaseConnection(): Promise<boolean> {
@@ -19,9 +32,11 @@ export async function testDatabaseConnection(): Promise<boolean> {
     const client = await pool.connect();
     await client.query('SELECT 1');
     client.release();
+    console.log('✓ Database connection successful');
     return true;
   } catch (error) {
-    console.error('Database connection failed:', error);
+    console.error('✗ Database connection failed:', error);
+    console.error('Check your DATABASE_URL in Secrets and ensure it includes the correct password');
     return false;
   }
 }
