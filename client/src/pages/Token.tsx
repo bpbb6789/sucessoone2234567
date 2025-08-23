@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,9 +9,11 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 // import { useAccount } from 'wagmi'; // Temporarily disabled due to import issues
 import { parseEther, formatEther } from 'viem';
-import { uniPumpCreatorConfig } from '@/lib/contracts';
+import { uniPumpCreatorConfig, type TokenCreationParams } from '@/lib/contracts';
 import { useToast } from '@/hooks/use-toast';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { Loader2, Coins, TrendingUp, Users, DollarSign } from 'lucide-react';
+import { TokenTrading } from '@/components/TokenTrading';
 
 interface TokenFormData {
   name: string;
@@ -26,6 +29,14 @@ export default function Token() {
   // TODO: Replace with real useAccount hook once wagmi is properly configured
   const isConnected = true; // Set to true for testing
   const address = '0x1234567890123456789012345678901234567890'; // Mock address
+  
+  // Smart contract interaction hooks
+  const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
+  const [currentTxHash, setCurrentTxHash] = useState<`0x${string}` | undefined>();
+  
+  const { isLoading: isTxLoading, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
+    hash: currentTxHash,
+  });
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState<TokenFormData>({
@@ -65,14 +76,46 @@ export default function Token() {
     setIsCreating(true);
     
     try {
-      // TODO: Implement contract interaction
-      console.log('Token creation:', formData);
-
-      toast({
-        title: "Token creation initiated",
-        description: `Creating ${formData.name} (${formData.symbol})...`,
+      // Call the smart contract to create token
+      const hash = await writeContract({
+        ...uniPumpCreatorConfig,
+        functionName: 'createTokenSale',
+        args: [
+          formData.name,
+          formData.symbol,
+          formData.twitter || '',
+          formData.discord || '',
+          formData.bio || '',
+          formData.imageUri || ''
+        ],
       });
 
+      setCurrentTxHash(hash);
+      
+      toast({
+        title: "Transaction submitted",
+        description: `Creating ${formData.name} (${formData.symbol})... Transaction: ${hash.slice(0, 10)}...`,
+      });
+
+    } catch (error) {
+      console.error('Token creation failed:', error);
+      toast({
+        title: "Token creation failed",
+        description: error instanceof Error ? error.message : "There was an error creating your token. Please try again.",
+        variant: "destructive"
+      });
+      setIsCreating(false);
+    }
+  };
+
+  // Handle transaction completion
+  React.useEffect(() => {
+    if (isTxSuccess) {
+      toast({
+        title: "Token created successfully!",
+        description: `${formData.name} (${formData.symbol}) has been deployed to the blockchain.`,
+      });
+      
       // Reset form
       setFormData({
         name: '',
@@ -82,17 +125,11 @@ export default function Token() {
         bio: '',
         imageUri: ''
       });
-    } catch (error) {
-      console.error('Token creation failed:', error);
-      toast({
-        title: "Token creation failed",
-        description: "There was an error creating your token. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
+      
       setIsCreating(false);
+      setCurrentTxHash(undefined);
     }
-  };
+  }, [isTxSuccess, formData.name, formData.symbol, toast]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -227,15 +264,20 @@ export default function Token() {
             ) : (
               <Button
                 onClick={handleCreateToken}
-                disabled={isCreating || !formData.name || !formData.symbol}
+                disabled={(isCreating || isWritePending || isTxLoading) || !formData.name || !formData.symbol}
                 className="w-full"
                 size="lg"
                 data-testid="button-create-token"
               >
-                {isCreating ? (
+                {(isCreating || isWritePending) ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Token...
+                    Preparing Transaction...
+                  </>
+                ) : isTxLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Confirming Transaction...
                   </>
                 ) : (
                   <>
@@ -247,6 +289,17 @@ export default function Token() {
             )}
           </CardContent>
         </Card>
+
+        {/* Demo Trading Interface - Would normally show for existing tokens */}
+        <TokenTrading 
+          tokenAddress="0x0000000000000000000000000000000000000000"
+          tokenName="Demo Token"
+          tokenSymbol="DEMO"
+          currentPrice="0.0001"
+          supply="1000000"
+          marketCap="100"
+          holders={42}
+        />
 
         {/* How it Works */}
         <Card>
