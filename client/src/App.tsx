@@ -22,6 +22,7 @@ import Music from '@/pages/Music'
 import Profile from '@/pages/Profile'
 import Search from '@/pages/Search'
 import Create from '@/pages/Create'
+import CreateTokenPage from '@/pages/CreateToken'
 import Watch from '@/pages/Watch'
 import Token from '@/pages/Token'
 import Tokens from '@/pages/Tokens'
@@ -64,7 +65,7 @@ function AppContent() {
             <Route path="/music" element={<Music />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/search" element={<Search />} />
-            <Route path="/create-token" element={<Create />} />
+            <Route path="/create-token" element={<CreateTokenPage />} />
             <Route path="/watch/:id" element={<Watch />} />
             <Route path="/tokens" element={<Tokens />} />
             <Route path="/token/:address" element={<Token />} />
