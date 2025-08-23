@@ -1,21 +1,23 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, Search, Filter, Coins, Users, DollarSign, ExternalLink } from 'lucide-react';
+import { Search, ExternalLink, TrendingUp, Coins } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import useGetAllSales from '@/hooks/useGetAllSales';
 
 interface TokenInfo {
   address: string;
   name: string;
   symbol: string;
-  price: string;
-  marketCap: string;
-  change24h: number;
-  volume24h: string;
-  holders: number;
+  price?: string;
+  marketCap?: string;
+  change24h?: number;
+  volume24h?: string;
+  holders?: number;
   description: string;
   creator: string;
   imageUri?: string;
@@ -24,57 +26,30 @@ interface TokenInfo {
   createdAt: string;
 }
 
-// Mock data - in a real app this would come from the indexer API
-const mockTokens: TokenInfo[] = [
-  {
-    address: '0x1234567890123456789012345678901234567890',
-    name: 'PumpCat',
-    symbol: 'PCAT',
-    price: '0.00012',
-    marketCap: '120.5K',
-    change24h: 45.2,
-    volume24h: '8.7K',
-    holders: 156,
-    description: 'The cutest pump token on Base',
-    creator: '0xabcd...1234',
-    imageUri: '',
-    twitter: 'https://twitter.com/pumpcat',
-    createdAt: '2024-08-23T10:30:00Z'
-  },
-  {
-    address: '0x2345678901234567890123456789012345678901',
-    name: 'MoonDoge',
-    symbol: 'MDOGE',
-    price: '0.00089',
-    marketCap: '89.2K',
-    change24h: -12.3,
-    volume24h: '12.1K',
-    holders: 203,
-    description: 'Taking doge to the moon via bonding curves',
-    creator: '0xefgh...5678',
-    discord: 'https://discord.gg/moondoge',
-    createdAt: '2024-08-23T09:15:00Z'
-  },
-  {
-    address: '0x3456789012345678901234567890123456789012',
-    name: 'BaseApe',
-    symbol: 'BAPE',
-    price: '0.00034',
-    marketCap: '67.8K',
-    change24h: 23.1,
-    volume24h: '5.4K',
-    holders: 89,
-    description: 'Apes together strong on Base network',
-    creator: '0xijkl...9012',
-    createdAt: '2024-08-23T08:45:00Z'
-  }
-];
-
 export default function Tokens() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'marketCap' | 'volume' | 'gainers' | 'losers'>('newest');
+  const { data: tokensData, isLoading } = useGetAllSales();
 
-  const filteredTokens = mockTokens
+  // Transform the token data from your API to match the TokenInfo interface
+  const tokens: TokenInfo[] = tokensData?.map((token: any) => ({
+    address: token.memeTokenAddress || token.address,
+    name: token.name,
+    symbol: token.symbol,
+    price: '0.00001', // You'll need to get actual price data
+    marketCap: '0', // Calculate based on supply and price
+    change24h: 0, // You'll need to track price changes
+    volume24h: '0', // You'll need to track trading volume
+    holders: 0, // You'll need to get holder count
+    description: token.bio || token.description || '',
+    creator: token.createdBy || token.creator,
+    imageUri: token.imageUri,
+    twitter: token.twitter,
+    discord: token.discord,
+    createdAt: token.timestamp ? new Date(Number(token.timestamp) * 1000).toISOString() : new Date().toISOString()
+  })) || [];
+
+  const filteredTokens = tokens
     .filter(token => 
       token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       token.symbol.toLowerCase().includes(searchQuery.toLowerCase())
@@ -82,13 +57,13 @@ export default function Tokens() {
     .sort((a, b) => {
       switch (sortBy) {
         case 'marketCap':
-          return parseFloat(b.marketCap) - parseFloat(a.marketCap);
+          return parseFloat(b.marketCap || '0') - parseFloat(a.marketCap || '0');
         case 'volume':
-          return parseFloat(b.volume24h) - parseFloat(a.volume24h);
+          return parseFloat(b.volume24h || '0') - parseFloat(a.volume24h || '0');
         case 'gainers':
-          return b.change24h - a.change24h;
+          return (b.change24h || 0) - (a.change24h || 0);
         case 'losers':
-          return a.change24h - b.change24h;
+          return (a.change24h || 0) - (b.change24h || 0);
         case 'newest':
         default:
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -104,6 +79,12 @@ export default function Tokens() {
     if (diffInHours < 24) return `${diffInHours}h ago`;
     return `${Math.floor(diffInHours / 24)}d ago`;
   };
+
+  // Calculate totals
+  const totalTokens = filteredTokens.length;
+  const totalMarketCap = filteredTokens.reduce((sum, token) => sum + parseFloat(token.marketCap || '0'), 0);
+  const totalHolders = filteredTokens.reduce((sum, token) => sum + (token.holders || 0), 0);
+  const total24hVolume = filteredTokens.reduce((sum, token) => sum + parseFloat(token.volume24h || '0'), 0);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -138,8 +119,36 @@ export default function Tokens() {
           </div>
         </div>
 
-        {/* Sort Tabs */}
-        <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold">{totalTokens}</div>
+              <div className="text-sm text-muted-foreground">Total Tokens</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold">${totalMarketCap.toFixed(1)}K</div>
+              <div className="text-sm text-muted-foreground">Total Market Cap</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold">{totalHolders}</div>
+              <div className="text-sm text-muted-foreground">Total Holders</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="text-2xl font-bold">${total24hVolume.toFixed(1)}K</div>
+              <div className="text-sm text-muted-foreground">24h Volume</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tokens List */}
+        <Tabs value={sortBy} onValueChange={(value) => setSortBy(value as any)} className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="newest">Newest</TabsTrigger>
             <TabsTrigger value="marketCap">Market Cap</TabsTrigger>
@@ -149,7 +158,11 @@ export default function Tokens() {
           </TabsList>
 
           <TabsContent value={sortBy} className="space-y-4">
-            {filteredTokens.length === 0 ? (
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+              </div>
+            ) : filteredTokens.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Coins className="h-12 w-12 text-muted-foreground mb-4" />
@@ -174,64 +187,80 @@ export default function Tokens() {
                           </div>
                           <div>
                             <CardTitle className="text-lg">{token.name}</CardTitle>
-                            <CardDescription className="font-medium">${token.symbol}</CardDescription>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">${token.symbol}</Badge>
+                              {token.change24h !== undefined && (
+                                <Badge variant={token.change24h >= 0 ? "default" : "destructive"}>
+                                  {token.change24h >= 0 ? '+' : ''}{token.change24h.toFixed(1)}%
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <Badge 
-                          variant={token.change24h >= 0 ? "default" : "destructive"}
-                          className={token.change24h >= 0 ? "bg-green-600" : ""}
-                        >
-                          {token.change24h >= 0 ? (
-                            <TrendingUp className="mr-1 h-3 w-3" />
-                          ) : (
-                            <TrendingDown className="mr-1 h-3 w-3" />
-                          )}
-                          {Math.abs(token.change24h).toFixed(1)}%
-                        </Badge>
+                        <div className="text-right text-sm text-muted-foreground">
+                          {formatTimeAgo(token.createdAt)}
+                        </div>
                       </div>
                     </CardHeader>
-                    
-                    <CardContent className="space-y-4">
-                      {/* Price and Market Data */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Price</p>
-                          <p className="font-semibold">${token.price}</p>
+                    <CardContent className="pt-0">
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {token.description || 'No description available'}
+                        </p>
+                        
+                        {/* Token Stats */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-muted-foreground">Price</span>
+                            <div className="font-medium">${token.price}</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Market Cap</span>
+                            <div className="font-medium">${token.marketCap}K</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Volume 24h</span>
+                            <div className="font-medium">${token.volume24h}K</div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Holders</span>
+                            <div className="font-medium">{token.holders}</div>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Market Cap</p>
-                          <p className="font-semibold">${token.marketCap}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Volume 24h</p>
-                          <p className="font-semibold">${token.volume24h}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Holders</p>
-                          <p className="font-semibold">{token.holders}</p>
-                        </div>
-                      </div>
 
-                      {/* Description */}
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {token.description}
-                      </p>
+                        {/* Creator */}
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">Creator: </span>
+                          <code className="bg-muted px-1 py-0.5 rounded text-xs">
+                            {token.creator?.slice(0, 6)}...{token.creator?.slice(-4)}
+                          </code>
+                        </div>
 
-                      {/* Social Links */}
-                      <div className="flex items-center space-x-2">
-                        {token.twitter && (
-                          <Badge variant="outline" className="text-xs">
-                            Twitter
-                          </Badge>
+                        {/* Social Links */}
+                        {(token.twitter || token.discord) && (
+                          <div className="flex gap-2 pt-1">
+                            {token.twitter && (
+                              <a
+                                href={token.twitter}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:text-blue-600"
+                              >
+                                Twitter
+                              </a>
+                            )}
+                            {token.discord && (
+                              <a
+                                href={token.discord}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-indigo-500 hover:text-indigo-600"
+                              >
+                                Discord
+                              </a>
+                            )}
+                          </div>
                         )}
-                        {token.discord && (
-                          <Badge variant="outline" className="text-xs">
-                            Discord
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground ml-auto">
-                          {formatTimeAgo(token.createdAt)}
-                        </span>
                       </div>
 
                       {/* Action Buttons */}
@@ -254,28 +283,6 @@ export default function Tokens() {
             )}
           </TabsContent>
         </Tabs>
-
-        {/* Stats Footer */}
-        <Card>
-          <CardContent className="flex items-center justify-between p-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{mockTokens.length}</p>
-              <p className="text-sm text-muted-foreground">Total Tokens</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">$277K</p>
-              <p className="text-sm text-muted-foreground">Total Market Cap</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">448</p>
-              <p className="text-sm text-muted-foreground">Total Holders</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold">$26.2K</p>
-              <p className="text-sm text-muted-foreground">24h Volume</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
