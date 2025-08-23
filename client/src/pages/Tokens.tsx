@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, TrendingUp, Clock, DollarSign, Loader2 } from 'lucide-react';
+import { Search, TrendingUp, Clock, DollarSign, Loader2, Coins, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useGetAllSales from '../hooks/useGetAllSales';
 
