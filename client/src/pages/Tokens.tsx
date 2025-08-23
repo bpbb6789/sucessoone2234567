@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, TrendingUp, Clock, DollarSign, Loader2, Coins, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -86,10 +85,35 @@ export default function Tokens() {
   if (isLoading || loading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
-            <p>Loading tokens from blockchain...</p>
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-5 w-64" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+
+          {/* Search and Filters */}
+          <Skeleton className="h-12 w-full" />
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+
+          {/* Tabs List */}
+          <Skeleton className="h-12 w-full" />
+
+          {/* Tokens List Skeletons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Skeleton className="h-80 w-full" />
+            <Skeleton className="h-80 w-full" />
+            <Skeleton className="h-80 w-full" />
           </div>
         </div>
       </div>

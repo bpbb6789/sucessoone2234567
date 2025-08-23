@@ -19,6 +19,7 @@ import TransactionComponent from "@/components/Transaction"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from '@/components/ui/skeleton';
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -83,6 +84,41 @@ export default function CreateTokenPage() {
             form.setValue('ticker', searchTicker)
         }
     }, [searchParams, form])
+
+    // Assume isLoading is a boolean that would be true if data is being fetched
+    // For this example, we'll hardcode it to false as there's no actual data fetching in this component.
+    const isLoading = false; 
+
+    if (isLoading) {
+        return (
+            <div className="p-4 max-w-2xl mx-auto">
+                <Skeleton className="h-9 w-48 mb-6" />
+                <Skeleton className="h-5 w-full mb-2" />
+                <Skeleton className="h-5 w-3/4 mb-8" />
+
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-32 mb-2" />
+                        <Skeleton className="h-4 w-full" />
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {/* Form fields skeleton */}
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="space-y-2">
+                                <Skeleton className="h-4 w-20" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        ))}
+
+                        <div className="flex gap-2">
+                            <Skeleton className="h-10 flex-1" />
+                            <Skeleton className="h-10 w-24" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     const args = [form.watch('name'), form.watch('ticker'), form.watch('twitter'), form.watch('discord'), form.watch('description'), form.watch('imageUri')]
 
@@ -191,7 +227,7 @@ export default function CreateTokenPage() {
                                     functionName="createTokenSale"
                                     handleOnStatus2={async () => {
                                         queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
-                                        
+
                                         // Save token to database after successful blockchain transaction
                                         try {
                                             const tokenData = {
@@ -209,7 +245,7 @@ export default function CreateTokenPage() {
                                                 volume24h: '0',
                                                 holders: 0
                                             };
-                                            
+
                                             await fetch('/api/tokens', {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },

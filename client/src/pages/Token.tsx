@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Coins, TrendingUp, Users, DollarSign, ExternalLink, ArrowLeft } from 'lucide-react';
 import { TokenTrading } from '@/components/TokenTrading';
@@ -177,9 +178,96 @@ export default function Token() {
   if (isLoading || contractLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading token data...</span>
+        <div className="space-y-6">
+          {/* Navigation Skeleton */}
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-9 w-32" />
+          </div>
+
+          {/* Token Header Skeleton */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center space-x-4">
+                  <Skeleton className="w-16 h-16 rounded-full" />
+                  <div>
+                    <Skeleton className="h-8 w-48 mb-2" />
+                    <Skeleton className="h-5 w-32" />
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-9 w-20" />
+                  <Skeleton className="h-9 w-24" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <div className="flex flex-wrap gap-2">
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Token Stats Skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="flex items-center space-x-2 p-4">
+                  <Skeleton className="h-6 w-6" />
+                  <div>
+                    <Skeleton className="h-4 w-16 mb-1" />
+                    <Skeleton className="h-6 w-20" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Trading Interface Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Skeleton className="h-64 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Token Information Skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i}>
+                      <Skeleton className="h-4 w-24 mb-1" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i}>
+                      <Skeleton className="h-4 w-24 mb-1" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
