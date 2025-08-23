@@ -1,3 +1,4 @@
+
 import { gql } from "@apollo/client";
 
 // Enhanced GraphQL queries for real price data
@@ -61,12 +62,10 @@ export const GET_TOKEN_TRANSACTIONS = gql`
   }
 `;
 
-// Price calculation service
+// Price calculation service using bonding curve
 export class PriceService {
-  private static COINGECKO_API = 'https://api.coingecko.com/api/v3';
-  private static GECKOTERMINAL_API = 'https://api.geckoterminal.com/api/v2';
   
-  // Get real-time price from DEX
+  // Get real-time price using bonding curve calculation
   static async getTokenPrice(tokenAddress: string): Promise<{
     price: string;
     priceChange24h: number;
@@ -74,37 +73,20 @@ export class PriceService {
     marketCap: string;
   }> {
     try {
-      // Try GeckoTerminal API for Unichain
-      const response = await fetch(
-        `${this.GECKOTERMINAL_API}/networks/unichain/tokens/${tokenAddress}/pools`
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        const pools = data.data;
-        
-        if (pools && pools.length > 0) {
-          const mainPool = pools[0];
-          const attributes = mainPool.attributes;
-          
-          return {
-            price: attributes.base_token_price_usd || '0',
-            priceChange24h: parseFloat(attributes.price_change_percentage?.h24 || '0'),
-            volume24h: attributes.volume_usd?.h24 || '0',
-            marketCap: attributes.market_cap_usd || '0'
-          };
-        }
-      }
-      
-      // Fallback: Use bonding curve data from GraphQL
       return await this.calculatePriceFromBondingCurve(tokenAddress);
     } catch (error) {
-      console.error('Error fetching token price:', error);
-      return await this.calculatePriceFromBondingCurve(tokenAddress);
+      console.error('Error calculating price from bonding curve:', error);
+      // Return default values if everything fails
+      return {
+        price: '0.000001',
+        priceChange24h: 0,
+        volume24h: '0',
+        marketCap: '1000'
+      };
     }
   }
   
-  // Calculate price from bonding curve data
+  // Calculate price from bonding curve data using GraphQL and contract formula
   private static async calculatePriceFromBondingCurve(tokenAddress: string): Promise<{
     price: string;
     priceChange24h: number;
@@ -115,7 +97,10 @@ export class PriceService {
       // Use the correct GraphQL endpoint
       const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({
           query: `
             query GetTokenPriceData($tokenAddress: String!) {
@@ -133,6 +118,7 @@ export class PriceService {
                   average
                   count
                   tokenAddress
+                  timestamp
                 }
               }
               
@@ -151,6 +137,10 @@ export class PriceService {
           variables: { tokenAddress }
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       const data = await response.json();
       const buckets = data.data?.minBuckets?.items || [];
@@ -171,33 +161,68 @@ export class PriceService {
           .filter(b => (parseInt(latest.id) - parseInt(b.id)) <= 24 * 60)
           .reduce((sum, bucket) => sum + (parseFloat(bucket.count || '0') * currentPrice), 0);
         
-        // Calculate market cap
-        const totalSupply = parseFloat(tokenData?.totalSupply || '1000000');
-        const marketCap = currentPrice * totalSupply;
+        // Calculate market cap using bonding curve formula
+        const totalSupply = parseFloat(tokenData?.totalSupply || '1000000000');
+        const marketCap = this.calculateMarketCapFromBondingCurve(currentPrice, totalSupply);
         
         return {
-          price: currentPrice.toFixed(6),
+          price: currentPrice.toFixed(8),
           priceChange24h,
           volume24h: volume24h.toFixed(2),
           marketCap: marketCap.toFixed(2)
         };
       }
       
-      return {
-        price: '0.000001',
-        priceChange24h: 0,
-        volume24h: '0',
-        marketCap: '0'
-      };
+      // If no historical data, calculate from bonding curve parameters
+      return this.calculateFromBaseBondingCurve(tokenAddress);
     } catch (error) {
       console.error('Error calculating price from bonding curve:', error);
-      return {
-        price: '0.000001',
-        priceChange24h: 0,
-        volume24h: '0',
-        marketCap: '0'
-      };
+      return this.calculateFromBaseBondingCurve(tokenAddress);
     }
+  }
+
+  // Calculate price using the bonding curve formula from the contract
+  private static calculateFromBaseBondingCurve(tokenAddress: string): Promise<{
+    price: string;
+    priceChange24h: number;
+    volume24h: string;
+    marketCap: string;
+  }> {
+    // Bonding curve formula from UniPump.sol:
+    // curve(x) = 0.6015 * exp(0.00003606 * x)
+    // price = curve(cap) / M where M = 1,000,000
+    
+    // Use a base cap value for new tokens (this would normally come from contract state)
+    const baseCap = 1000; // Base cap in ETH equivalent
+    const M = 1000000; // 1M tokens as per contract
+    
+    // Calculate price using the exponential bonding curve
+    const expValue = Math.exp(0.00003606 * baseCap);
+    const curveValue = 0.6015 * expValue;
+    const price = curveValue / M;
+    
+    // Assume ETH price is $3000 for USD conversion
+    const ethPrice = 3000;
+    const priceUSD = price * ethPrice;
+    
+    // Calculate market cap
+    const totalSupply = 1000000000; // 1B tokens as per contract
+    const marketCap = priceUSD * totalSupply;
+    
+    return Promise.resolve({
+      price: priceUSD.toFixed(8),
+      priceChange24h: 0, // No historical data for new calculation
+      volume24h: '0',
+      marketCap: marketCap.toFixed(2)
+    });
+  }
+
+  // Calculate market cap using bonding curve mechanics
+  private static calculateMarketCapFromBondingCurve(price: number, supply: number): number {
+    // For bonding curve tokens, market cap = current_price * circulating_supply
+    // The circulating supply grows as more tokens are minted through the bonding curve
+    const circulatingSupply = Math.min(supply, 800000000); // Max 800M before pool creation
+    return price * circulatingSupply;
   }
   
   // Get holder count from blockchain
@@ -241,5 +266,30 @@ export class PriceService {
       console.error('Error fetching creation time:', error);
       return new Date();
     }
+  }
+
+  // Enhanced bonding curve calculation using contract data
+  static calculateBondingCurvePrice(cap: bigint, supply: bigint): number {
+    // Convert bigint to numbers for calculation
+    const capEth = Number(cap) / 1e18; // Convert from wei to ETH
+    const supplyTokens = Number(supply) / 1e18; // Convert from wei to tokens
+    
+    // UniPump bonding curve formula: curve(x) = 0.6015 * exp(0.00003606 * x)
+    const expValue = Math.exp(0.00003606 * capEth);
+    const curveValue = 0.6015 * expValue;
+    const M = 1000000; // 1M as per contract
+    
+    // Price per token = curve(cap) / M
+    const pricePerToken = curveValue / M;
+    
+    // Convert to USD (assuming ETH = $3000)
+    return pricePerToken * 3000;
+  }
+
+  // Calculate bonding curve progress percentage
+  static calculateBondingCurveProgress(supply: bigint): number {
+    const supplyTokens = Number(supply) / 1e18;
+    const maxSupply = 800000000; // 800M tokens before pool creation
+    return Math.min((supplyTokens / maxSupply) * 100, 100);
   }
 }

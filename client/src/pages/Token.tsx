@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
@@ -89,6 +88,15 @@ export default function Token() {
     },
   });
 
+  // Helper function to format numbers for display
+  const formatNumber = (num: number): string => {
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+    if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+    return num.toFixed(2);
+  };
+
+
   useEffect(() => {
     const fetchTokenData = async () => {
       // Check if we have a valid token address
@@ -131,13 +139,13 @@ export default function Token() {
         let marketCapValue = "0";
         let volume24h = "0";
         let holders = 0;
-        
+
         try {
           // Import and use PriceService
           const { PriceService } = await import('../../../lib/priceService');
           const priceData = await PriceService.getTokenPrice(tokenAddress);
           const holderCount = await PriceService.getHolderCount(tokenAddress);
-          
+
           price = priceData.price;
           marketCapValue = priceData.marketCap;
           volume24h = priceData.volume24h;
@@ -152,12 +160,34 @@ export default function Token() {
               price = (reserveInEth * 3000 / supply).toFixed(6); // Assume ETH = $3000
             }
           }
-          
+
           if (capData) {
             const capInEth = parseFloat(formatUnits(capData, 18));
             marketCapValue = (capInEth * 3000).toFixed(2); // Assume ETH = $3000
           }
         }
+
+        // Get pool state
+        const poolStateData = await getPoolState({
+          args: [tokenAddress],
+        });
+
+        // Calculate bonding curve progress
+        let bondingCurvePercent = "0";
+        if (contractTokenData.supply) {
+          const { PriceService } = await import('../../../lib/priceService');
+          bondingCurvePercent = PriceService.calculateBondingCurveProgress(contractTokenData.supply).toFixed(1);
+        }
+
+        // Format the data for display
+        const formattedData = {
+          price: `$${price}`,
+          marketCap: `$${formatNumber(parseFloat(marketCapValue))}`,
+          volume24h: `$${formatNumber(parseFloat(volume24h))}`,
+          holders: holders.toString(),
+          change24h: "+0.0%", // This would need historical data from GraphQL
+          bondingCurvePercent: bondingCurvePercent,
+        };
 
         const processedTokenData: TokenData = {
           address: tokenAddress,
@@ -294,7 +324,7 @@ export default function Token() {
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Token Not Found</h1>
           <p className="text-muted-foreground">
-            {!tokenAddress 
+            {!tokenAddress
               ? "No token address provided in the URL. Please select a token from the tokens page."
               : `Token ${tokenAddress} could not be found or loaded from the contract.`
             }
@@ -337,8 +367,8 @@ export default function Token() {
               <div className="flex items-center space-x-4">
                 {tokenData.imageUri ? (
                   <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                    <img 
-                      src={tokenData.imageUri} 
+                    <img
+                      src={tokenData.imageUri}
                       alt={tokenData.name}
                       className="w-14 h-14 rounded-full object-cover"
                       onError={(e) => {
@@ -409,7 +439,7 @@ export default function Token() {
               <DollarSign className="h-6 w-6 text-green-600" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Price</p>
-                <p className="text-lg font-bold">${tokenData.price}</p>
+                <p className="text-lg font-bold">{tokenData.price}</p>
               </div>
             </CardContent>
           </Card>
@@ -419,7 +449,7 @@ export default function Token() {
               <TrendingUp className="h-6 w-6 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
-                <p className="text-lg font-bold">${tokenData.marketCap}</p>
+                <p className="text-lg font-bold">{tokenData.marketCap}</p>
               </div>
             </CardContent>
           </Card>
@@ -446,7 +476,7 @@ export default function Token() {
         </div>
 
         {/* Trading Interface */}
-        <TokenTrading 
+        <TokenTrading
           tokenAddress={tokenData.address}
           tokenName={tokenData.name}
           tokenSymbol={tokenData.symbol}
@@ -474,7 +504,7 @@ export default function Token() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">24h Volume</p>
-                  <p className="text-sm">${tokenData.volume24h}K</p>
+                  <p className="text-sm">{tokenData.volume24h}K</p>
                 </div>
               </div>
               <div className="space-y-3">
