@@ -7,6 +7,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['PoppinsRounded', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        'poppins-rounded': ['PoppinsRounded', 'system-ui', 'sans-serif'],
       },
       colors: {
         background: "var(--background)",
@@ -70,7 +71,6 @@ export default {
       },
       fontFamily: {
         roboto: ["Roboto", "sans-serif"],
-        sans: ["Roboto", "sans-serif"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
       },
