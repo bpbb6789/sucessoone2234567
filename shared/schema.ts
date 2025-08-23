@@ -268,3 +268,44 @@ export type CommentWithChannel = Comment & {
   channel: Channel;
   replies?: CommentWithChannel[];
 };
+
+// Token tables for Web3 functionality
+export const tokens = pgTable("tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  symbol: text("symbol").notNull(),
+  bio: text("bio"),
+  imageUri: text("image_uri"),
+  memeTokenAddress: text("meme_token_address").notNull().unique(),
+  createdBy: text("created_by").notNull(), // wallet address
+  twitter: text("twitter"),
+  discord: text("discord"), 
+  isUSDCToken0: boolean("is_usdc_token0").default(false),
+  marketCap: text("market_cap"),
+  price: text("price"),
+  volume24h: text("volume_24h"),
+  holders: integer("holders").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const tokenSales = pgTable("token_sales", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  tokenId: varchar("token_id").references(() => tokens.id).notNull(),
+  userAddress: text("user_address").notNull(),
+  amount: text("amount").notNull(),
+  price: text("price").notNull(),
+  saleType: text("sale_type").notNull(), // 'buy' or 'sell'
+  transactionHash: text("transaction_hash"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Token types
+export type Token = typeof tokens.$inferSelect;
+export type InsertToken = typeof tokens.$inferInsert;
+
+export type TokenSale = typeof tokenSales.$inferSelect;
+export type InsertTokenSale = typeof tokenSales.$inferInsert;
+
+// Insert schemas for tokens
+export const insertTokenSchema = createInsertSchema(tokens);
+export const insertTokenSaleSchema = createInsertSchema(tokenSales);

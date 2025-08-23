@@ -5,7 +5,7 @@ import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema, 
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
   insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
-  insertMusicTrackSchema, insertUserProfileSchema
+  insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema
 } from "@shared/schema";
 import { db } from "./db";
 
@@ -663,6 +663,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       // res.status(500).json({ message: "Failed to update channel" });
       res.status(500).json(handleDatabaseError(error, "updateChannel"));
+    }
+  });
+
+  // Tokens API endpoints
+  app.get("/api/tokens", async (req, res) => {
+    try {
+      // For now, return sample token data to get the UI working
+      const sampleTokens = [
+        {
+          id: "1",
+          name: "DOGE CLASSIC",
+          symbol: "DOGC",
+          bio: "The original meme token, bringing back the classic vibes",
+          imageUri: "https://images.unsplash.com/photo-1528472797-01c8bb0c1a36?w=400",
+          memeTokenAddress: "0x1234567890123456789012345678901234567890",
+          createdBy: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+          twitter: "https://twitter.com/dogeclassic",
+          discord: "https://discord.gg/dogeclassic",
+          isUSDCToken0: false,
+          marketCap: "25000",
+          price: "0.00034",
+          volume24h: "1200",
+          holders: 450,
+          createdAt: new Date(Date.now() - 86400000) // 1 day ago
+        },
+        {
+          id: "2", 
+          name: "ROCKET MOON",
+          symbol: "RMOON",
+          bio: "🚀 To the moon and beyond! The ultimate space-themed token",
+          imageUri: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=400",
+          memeTokenAddress: "0x2345678901234567890123456789012345678901",
+          createdBy: "0xbcdefabcdefabcdefabcdefabcdefabcdefabcde",
+          twitter: "https://twitter.com/rocketmoon",
+          discord: "https://discord.gg/rocketmoon",
+          isUSDCToken0: true,
+          marketCap: "52000",
+          price: "0.00087",
+          volume24h: "3400",
+          holders: 1230,
+          createdAt: new Date(Date.now() - 172800000) // 2 days ago
+        },
+        {
+          id: "3",
+          name: "PEPE ARMY", 
+          symbol: "PEPA",
+          bio: "The rarest Pepe army has assembled for maximum gains",
+          imageUri: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400",
+          memeTokenAddress: "0x3456789012345678901234567890123456789012",
+          createdBy: "0xcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+          twitter: "https://twitter.com/pepearmy",
+          discord: "https://discord.gg/pepearmy",
+          isUSDCToken0: false,
+          marketCap: "78000",
+          price: "0.00156",
+          volume24h: "5600",
+          holders: 2100,
+          createdAt: new Date(Date.now() - 259200000) // 3 days ago
+        }
+      ];
+      
+      res.json(sampleTokens);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getAllTokens"));
     }
   });
 

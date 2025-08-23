@@ -1,17 +1,22 @@
-import client from "../../../lib/client";
-import { GetAllSales } from "../../../lib/queries";
 import { useQuery } from "@tanstack/react-query";
 
 const useGetAllSales = () => {
     return useQuery({
-        queryKey: ["getAllSales"],
+        queryKey: ["getAllTokens"],
         queryFn: async () => {
-            const { data } = await client.query({ query: GetAllSales });
-            console.log(
-                "Fetched token sales:",
-                data.uniPumpCreatorSaless.items,
-            );
-            return data.uniPumpCreatorSaless.items;
+            try {
+                const response = await fetch('/api/tokens');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch tokens');
+                }
+                const tokens = await response.json();
+                console.log("Fetched tokens:", tokens);
+                return tokens;
+            } catch (error) {
+                console.error("Error fetching tokens:", error);
+                // Return empty array if API fails
+                return [];
+            }
         },
     });
 };

@@ -12,9 +12,12 @@ import {
   type Share, type InsertShare,
   type MusicTrack, type InsertMusicTrack,
   type UserProfile, type InsertUserProfile,
+  type Token, type InsertToken,
+  type TokenSale, type InsertTokenSale,
   type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel,
   channels, videos, shorts, playlists, musicAlbums, comments, subscriptions,
-  videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles
+  videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles,
+  tokens, tokenSales
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -94,6 +97,12 @@ export interface IStorage {
 
   // Search
   searchAll(query: string): Promise<{videos: VideoWithChannel[], shorts: ShortsWithChannel[], channels: Channel[]}>;
+
+  // Tokens
+  getToken(id: string): Promise<Token | undefined>;
+  getTokenByAddress(address: string): Promise<Token | undefined>;
+  getAllTokens(): Promise<Token[]>;
+  createToken(token: InsertToken): Promise<Token>;
 }
 
 export class MemStorage implements IStorage {
