@@ -337,10 +337,15 @@ export default function Tokens() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
                           <span>📊</span>
                           <span>0</span>
                           <span>0</span>
+                          {token.address && (
+                            <Button className="px-2 py-1 h-5 text-xs bg-green-600 hover:bg-green-700 text-white ml-1" size="sm">
+                              Trade
+                            </Button>
+                          )}
                         </div>
                       </div>
 
@@ -397,14 +402,6 @@ export default function Tokens() {
                         </div>
                       </div>
 
-                      {/* Trade Button integrated into card */}
-                      <div className="flex justify-end">
-                        {token.address && (
-                          <Button className="px-3 py-1 h-6 text-xs bg-green-600 hover:bg-green-700 text-white" size="sm">
-                            Trade
-                          </Button>
-                        )}
-                      </div>
                     </CardContent>
                   </Card>
                 ))}
