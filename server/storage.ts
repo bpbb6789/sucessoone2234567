@@ -585,6 +585,12 @@ export class MemStorage implements IStorage {
   async searchShorts(): Promise<ShortsWithChannel[]> { throw new Error('Not implemented in MemStorage'); }
   async getMusicTrack(): Promise<MusicTrack | undefined> { throw new Error('Not implemented in MemStorage'); }
   async getTracksByAlbum(): Promise<MusicTrack[]> { throw new Error('Not implemented in MemStorage'); }
+  
+  // Token methods (not implemented in MemStorage)
+  async getToken(): Promise<Token | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async getTokenByAddress(): Promise<Token | undefined> { throw new Error('Not implemented in MemStorage'); }
+  async getAllTokens(): Promise<Token[]> { throw new Error('Not implemented in MemStorage'); }
+  async createToken(): Promise<Token> { throw new Error('Not implemented in MemStorage'); }
   async createMusicTrack(): Promise<MusicTrack> { throw new Error('Not implemented in MemStorage'); }
   async likeComment(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
   async unlikeComment(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
