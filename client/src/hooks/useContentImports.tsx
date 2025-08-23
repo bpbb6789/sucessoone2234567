@@ -7,6 +7,10 @@ export function useContentImports(channelId: string) {
   return useQuery({
     queryKey: ['/api/content-imports', channelId],
     queryFn: async () => {
+      // For public users, return empty array since we don't persist their uploads
+      if (!channelId || channelId === 'public') {
+        return []
+      }
       const response = await fetch(`/api/content-imports?channelId=${channelId}`)
       if (!response.ok) throw new Error('Failed to fetch content imports')
       return response.json() as Promise<ContentImport[]>

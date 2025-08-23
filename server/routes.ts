@@ -979,8 +979,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { channelId, contentType, title, description } = req.body;
       
-      if (!channelId || !contentType || !title) {
-        return res.status(400).json({ message: "Missing required fields: channelId, contentType, title" });
+      if (!contentType || !title) {
+        return res.status(400).json({ message: "Missing required fields: contentType, title" });
       }
 
       // Upload file to IPFS
@@ -1004,7 +1004,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload metadata to IPFS
       const metadataCid = await uploadJSONToIPFS(metadata);
 
-      // Save content import record
+      // For public uploads, don't save to database, just return IPFS data
+      if (!channelId || channelId === 'public') {
+        res.json({
+          success: true,
+          content: {
+            id: `public-${Date.now()}`,
+            title,
+            description,
+            contentType,
+            mediaCid,
+            ipfsCid: metadataCid,
+            metadata,
+            status: 'ready',
+            createdAt: new Date()
+          },
+          mediaCid,
+          metadataCid
+        });
+        return;
+      }
+
+      // Save content import record only if valid channelId provided
       const contentData = {
         channelId,
         title,
@@ -1035,8 +1056,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { url, channelId, contentType, title, description } = req.body;
       
-      if (!url || !channelId || !contentType || !title) {
-        return res.status(400).json({ message: "Missing required fields: url, channelId, contentType, title" });
+      if (!url || !contentType || !title) {
+        return res.status(400).json({ message: "Missing required fields: url, contentType, title" });
       }
 
       // Create metadata for URL import
@@ -1051,7 +1072,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload metadata to IPFS
       const metadataCid = await uploadJSONToIPFS(metadata);
 
-      // Save content import record
+      // For public imports, don't save to database, just return IPFS data
+      if (!channelId || channelId === 'public') {
+        res.json({
+          success: true,
+          content: {
+            id: `public-${Date.now()}`,
+            title,
+            description,
+            contentType,
+            originalUrl: url,
+            ipfsCid: metadataCid,
+            metadata,
+            status: 'ready',
+            createdAt: new Date()
+          },
+          metadataCid
+        });
+        return;
+      }
+
+      // Save content import record only if valid channelId provided
       const contentData = {
         channelId,
         title,

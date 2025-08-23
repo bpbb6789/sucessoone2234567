@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Upload, Link, FileImage, Video, Music, Calendar, FileText, Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
+
+// Assume these are imported from your API hooks file
+// import { useContentImports, useFileUpload, useUrlImport, useTokenizeContent, useDeleteContentImport } from '@/hooks/api'
+
+// Placeholder for API hooks since they are not provided
+const useContentImports = (channelId: string) => ({ data: [], isLoading: false, refetch: () => {} })
+const useFileUpload = () => ({ mutate: async () => {} })
+const useUrlImport = () => ({ mutate: async () => {} })
+const useTokenizeContent = () => ({ mutate: async () => {} })
+const useDeleteContentImport = () => ({ mutate: async () => {} })
 
 const contentTypes = [
   { id: 'reel', name: 'Reel', icon: Video, description: 'Short-form video content' },
@@ -35,7 +44,21 @@ export default function Tokenize() {
   const [isDragging, setIsDragging] = useState(false)
   const [importUrl, setImportUrl] = useState('')
   const [importedContent, setImportedContent] = useState<ImportedContent[]>([])
+  const [publicUploads, setPublicUploads] = useState<any[]>([]) // Local state for public uploads
   const { toast } = useToast()
+
+  // For public users, we'll use a special "public" channel ID
+  const channelId = 'public' // Special identifier for public uploads
+
+  // API hooks - disabled for public users
+  const { data: contentImports = [], isLoading, refetch } = useContentImports(channelId)
+  const fileUploadMutation = useFileUpload()
+  const urlImportMutation = useUrlImport()
+  const tokenizeMutation = useTokenizeContent()
+  const deleteMutation = useDeleteContentImport()
+
+  // Combined uploads (local + remote)
+  const allUploads = [...publicUploads, ...contentImports]
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -50,7 +73,7 @@ export default function Tokenize() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
-    
+
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0 && selectedType) {
       handleFileUpload(files)
@@ -108,74 +131,85 @@ export default function Tokenize() {
       return
     }
 
-    for (const file of files) {
-      const newItem: ImportedContent = {
-        id: Math.random().toString(36).substring(2, 15),
-        title: file.name,
-        contentType: selectedType,
-        status: 'uploading',
-        file,
-        progress: 0
-      }
-
-      setImportedContent(prev => [...prev, newItem])
-
+    files.forEach(async (file) => {
       try {
-        await simulateUpload(newItem)
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('channelId', channelId)
+        formData.append('contentType', selectedType)
+        formData.append('title', file.name.split('.')[0])
+        formData.append('description', '')
+
+        const response = await fetch('/api/content-imports/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!response.ok) {
+          throw new Error('Upload failed')
+        }
+
+        const result = await response.json()
+
+        // Add to local state for public users
+        setPublicUploads(prev => [...prev, result.content])
+
         toast({
-          title: "Upload Complete",
+          title: "File Uploaded",
           description: `${file.name} has been uploaded to IPFS successfully.`
         })
       } catch (error) {
-        setImportedContent(prev => 
-          prev.map(content => 
-            content.id === newItem.id 
-              ? { ...content, status: 'failed' }
-              : content
-          )
-        )
         toast({
           title: "Upload Failed",
-          description: "Failed to upload file",
+          description: error instanceof Error ? error.message : "Failed to upload file",
           variant: "destructive"
         })
       }
-    }
+    })
   }
 
   const handleUrlImport = async () => {
-    if (!importUrl || !selectedType) {
+    if (!importUrl.trim() || !selectedType) {
       toast({
         title: "Missing Information",
-        description: "Please select a content type and enter a URL.",
+        description: "Please enter a URL and select a content type.",
         variant: "destructive"
       })
       return
     }
 
     try {
-      const hostname = new URL(importUrl).hostname
-      const newItem: ImportedContent = {
-        id: Math.random().toString(36).substring(2, 15),
-        title: `Imported from ${hostname}`,
-        contentType: selectedType,
-        status: 'uploading',
-        url: importUrl,
-        progress: 0
+      const response = await fetch('/api/content-imports/import-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: importUrl,
+          channelId: channelId,
+          contentType: selectedType,
+          title: `Import from ${new URL(importUrl).hostname}`,
+          description: ''
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Import failed')
       }
 
-      setImportedContent(prev => [...prev, newItem])
-      await simulateUpload(newItem)
-      
-      setImportUrl('')
+      const result = await response.json()
+
+      // Add to local state for public users
+      setPublicUploads(prev => [...prev, result.content])
+
       toast({
-        title: "Import Complete",
-        description: "Content has been imported and uploaded to IPFS successfully."
+        title: "URL Imported",
+        description: `Content from ${new URL(importUrl).hostname} has been imported successfully.`
       })
+
+      setImportUrl('')
     } catch (error) {
       toast({
         title: "Import Failed",
-        description: "Failed to import content",
+        description: error instanceof Error ? error.message : "Failed to import from URL",
         variant: "destructive"
       })
     }
@@ -252,9 +286,9 @@ export default function Tokenize() {
               <p className="text-sm text-muted-foreground">Transform your media into tokenizable IPFS assets and mint as NFTs</p>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>Ready: {importedContent.filter(f => f.status === 'ready').length}</span>
-              <span>Tokenized: {importedContent.filter(f => f.status === 'tokenized').length}</span>
-              <span>Total: {importedContent.length}</span>
+              <span>Ready: {allUploads.filter(f => f.status === 'ready').length}</span>
+              <span>Tokenized: {allUploads.filter(f => f.status === 'tokenized').length}</span>
+              <span>Total: {allUploads.length}</span>
             </div>
           </div>
         </div>
@@ -340,7 +374,7 @@ export default function Tokenize() {
                     <TabsTrigger value="upload">Upload Files</TabsTrigger>
                     <TabsTrigger value="url">Import from URL</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="upload" className="space-y-4">
                     <div
                       className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -380,7 +414,7 @@ export default function Tokenize() {
                       </Button>
                     </div>
                   </TabsContent>
-                  
+
                   <TabsContent value="url" className="space-y-4">
                     <div className="space-y-4">
                       <div>
@@ -402,7 +436,7 @@ export default function Tokenize() {
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div className="flex gap-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 bg-red-500 rounded"></div>
@@ -436,7 +470,7 @@ export default function Tokenize() {
                 <CardDescription>Manage your imported content and tokenize</CardDescription>
               </CardHeader>
               <CardContent>
-                {importedContent.length === 0 ? (
+                {allUploads.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <FileImage className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p className="text-sm">No content imported yet</p>
@@ -444,7 +478,7 @@ export default function Tokenize() {
                   </div>
                 ) : (
                   <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {importedContent.map((item) => (
+                    {allUploads.map((item) => (
                       <Card key={item.id} className="p-3">
                         <div className="space-y-2">
                           <div className="flex items-start justify-between">
@@ -468,17 +502,17 @@ export default function Tokenize() {
                               </Button>
                             </div>
                           </div>
-                          
+
                           {item.status === 'uploading' && (
                             <Progress value={item.progress} className="h-2" />
                           )}
-                          
+
                           {item.ipfsCid && (
                             <p className="text-xs text-muted-foreground font-mono">
                               IPFS: {item.ipfsCid.slice(0, 12)}...
                             </p>
                           )}
-                          
+
                           <div className="flex gap-1">
                             {item.status === 'ready' && (
                               <Button
@@ -489,14 +523,14 @@ export default function Tokenize() {
                                 Tokenize
                               </Button>
                             )}
-                            
+
                             {item.status === 'tokenizing' && (
                               <Button size="sm" disabled className="text-xs h-7 px-3">
                                 <Loader2 className="w-3 h-3 mr-2 animate-spin" />
                                 Minting...
                               </Button>
                             )}
-                            
+
                             {item.status === 'tokenized' && (
                               <Badge variant="secondary" className="text-xs h-7">
                                 ✓ NFT Minted
@@ -520,15 +554,15 @@ export default function Tokenize() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Uploaded:</span>
-                    <span>{importedContent.filter(i => i.status !== 'uploading').length}</span>
+                    <span>{allUploads.filter(i => i.status !== 'uploading').length}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Ready to Tokenize:</span>
-                    <span>{importedContent.filter(i => i.status === 'ready').length}</span>
+                    <span>{allUploads.filter(i => i.status === 'ready').length}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Tokenized:</span>
-                    <span>{importedContent.filter(i => i.status === 'tokenized').length}</span>
+                    <span>{allUploads.filter(i => i.status === 'tokenized').length}</span>
                   </div>
                 </div>
               </CardContent>
