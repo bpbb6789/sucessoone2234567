@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import { WagmiProvider } from 'wagmi'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { WagmiConfig as WagmiProvider } from 'wagmi'
+import { Route, Switch } from 'wouter'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Layout } from '@/components/Layout'
@@ -33,6 +33,8 @@ import Activities from "@/pages/Activities";
 import Doc from "@/pages/Doc";
 import FAQ from "@/pages/FAQ";
 import ContentImport from '@/pages/ContentImport';
+import MyContent from '@/pages/MyContent';
+import ContentDetail from '@/pages/ContentDetail';
 import NotFound from '@/pages/not-found'
 import Tokenize from '@/pages/Tokenize'
 
@@ -60,37 +62,36 @@ function AppContent() {
     <ApolloWrapper>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <SidebarProvider>
-          <Router>
-            <Layout>
-              <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/shorts" element={<Shorts />} />
-              <Route path="/subscriptions" element={<Subscriptions />} />
-              <Route path="/library" element={<Library />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/liked" element={<LikedVideos />} />
-              <Route path="/watchlater" element={<WatchLater />} />
-              <Route path="/music" element={<Music />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/activities" element={<Activities />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/create-token" element={<CreateChannel />} />
-              <Route path="/watch/:id" element={<Watch />} />
-              <Route path="/tokens" element={<Tokens />} />
-              <Route path="/tokenize" element={<Tokenize />} />
-              <Route path="/create" element={<Create />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/create-channel" element={<CreateChannel />} />
-              <Route path="/channel/:slug/manager" element={<ChannelManager />} />
-              <Route path="/dashboard/import" element={<ContentImport />} />
-              <Route path="/doc" element={<Doc />} />
-              <Route path="/faq" element={<FAQ />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            </Layout>
-            <Toaster />
-          </Router>
+          <Layout>
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/shorts" component={Shorts} />
+              <Route path="/subscriptions" component={Subscriptions} />
+              <Route path="/library" component={Library} />
+              <Route path="/history" component={History} />
+              <Route path="/liked" component={LikedVideos} />
+              <Route path="/watchlater" component={WatchLater} />
+              <Route path="/music" component={Music} />
+              <Route path="/profile" component={Profile} />
+              <Route path="/activities" component={Activities} />
+              <Route path="/notifications" component={Notifications} />
+              <Route path="/search" component={Search} />
+              <Route path="/create-token" component={CreateChannel} />
+              <Route path="/watch/:id" component={Watch} />
+              <Route path="/tokens" component={Tokens} />
+              <Route path="/tokenize" component={Tokenize} />
+              <Route path="/create" component={Create} />
+              <Route path="/create-channel" component={CreateChannel} />
+              <Route path="/channel/:slug/manager" component={ChannelManager} />
+              <Route path="/dashboard/import" component={ContentImport} />
+              <Route path="/my-content" component={MyContent} />
+              <Route path="/content/:id" component={ContentDetail} />
+              <Route path="/doc" component={Doc} />
+              <Route path="/faq" component={FAQ} />
+              <Route component={NotFound} />
+            </Switch>
+          </Layout>
+          <Toaster />
         </SidebarProvider>
       </ThemeProvider>
     </ApolloWrapper>

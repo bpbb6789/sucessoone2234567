@@ -14,6 +14,7 @@ import {
   Activity,
   HelpCircle,
   Upload,
+  FileImage,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -29,6 +30,8 @@ const mainNavItems = [
   { icon: Music, label: "Music", href: ROUTES.MUSIC },
   { icon: TrendingUp, label: "Home", href: ROUTES.HOME },
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
+  { icon: Upload, label: "Import Content", href: "/dashboard/import" },
+  { icon: FileImage, label: "My Content", href: "/my-content" },
   { icon: Upload, label: "Tokenize", href: "/tokenize" },
 ];
 
