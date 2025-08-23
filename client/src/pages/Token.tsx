@@ -76,7 +76,31 @@ export default function Token() {
     setIsCreating(true);
     
     try {
-      // Call the smart contract to create token
+      // Check if we have real contract addresses
+      if (uniPumpCreatorConfig.address === '0x0000000000000000000000000000000000000000') {
+        // Show demo success since contracts aren't deployed yet
+        toast({
+          title: "Demo Mode",
+          description: `Token creation simulated for ${formData.name} (${formData.symbol}). Smart contracts need to be deployed first.`,
+        });
+        
+        // Reset form after demo
+        setTimeout(() => {
+          setFormData({
+            name: '',
+            symbol: '',
+            twitter: '',
+            discord: '',
+            bio: '',
+            imageUri: ''
+          });
+          setIsCreating(false);
+        }, 2000);
+        
+        return;
+      }
+
+      // Call the smart contract to create token (when real contracts are deployed)
       const hash = await writeContract({
         ...uniPumpCreatorConfig,
         functionName: 'createTokenSale',
@@ -94,7 +118,7 @@ export default function Token() {
       
       toast({
         title: "Transaction submitted",
-        description: `Creating ${formData.name} (${formData.symbol})... Transaction: ${hash.slice(0, 10)}...`,
+        description: `Creating ${formData.name} (${formData.symbol})... ${hash ? `Transaction: ${hash.slice(0, 10)}...` : 'Processing...'}`,
       });
 
     } catch (error) {

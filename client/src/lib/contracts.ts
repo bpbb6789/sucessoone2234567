@@ -3,10 +3,10 @@ import { UniPumpCreatorAbi } from '../../../abi/UniPumpCreatorAbi'
 import { UniPumpAbi } from '../../../abi/UniPumpAbi.s'
 
 // Contract addresses on Base Sepolia network
-// TODO: Replace with actual deployed addresses
+// TODO: Replace with actual deployed addresses when contracts are deployed
 export const CONTRACTS = {
-  UNIPUMP_CREATOR: '0x0000000000000000000000000000000000000000' as Address, // Replace with real address
-  UNIPUMP: '0x0000000000000000000000000000000000000000' as Address, // Replace with real address
+  UNIPUMP_CREATOR: '0x0000000000000000000000000000000000000000' as Address, // Placeholder - needs real deployment
+  UNIPUMP: '0x0000000000000000000000000000000000000000' as Address, // Placeholder - needs real deployment
 } as const
 
 // Contract configurations for wagmi
