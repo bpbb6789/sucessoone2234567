@@ -15,7 +15,7 @@ import { useSearchParams } from "react-router-dom"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-// import TransactionComponent from "@/components/Transaction"
+import TransactionComponent from "@/components/Transaction"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -184,14 +184,16 @@ export default function CreateTokenPage() {
                             />
 
                             <div className="flex justify-end pt-6 border-t">
-                                <Button 
-                                    type="submit" 
-                                    size="lg"
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                    data-testid="button-launch-token"
-                                >
-                                    Launch Token
-                                </Button>
+                                <TransactionComponent
+                                    contractAddress={UNIPUMP_CREATOR_ADDRESS}
+                                    contractAbi={UniPumpCreatorAbi}
+                                    cta="Launch Token"
+                                    functionName="createTokenSale"
+                                    handleOnStatus2={() => {
+                                        queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
+                                    }}
+                                    args={args}
+                                />
                             </div>
                         </form>
                     </Form>
