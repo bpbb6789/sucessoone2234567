@@ -1,6 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import multer from 'multer';
 import { storage } from "./storage";
+import { uploadFileToIPFS, uploadJSONToIPFS } from './ipfs';
 import { 
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema, 
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
@@ -20,6 +22,41 @@ function handleDatabaseError(error: any, operation: string) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure multer for file uploads
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
+  // IPFS Upload endpoints
+  app.post("/api/upload/file", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file provided" });
+      }
+      
+      const file = new File([req.file.buffer], req.file.originalname, {
+        type: req.file.mimetype,
+      });
+      
+      const cid = await uploadFileToIPFS(file);
+      res.json({ cid });
+    } catch (error) {
+      console.error("File upload error:", error);
+      res.status(500).json({ message: "Failed to upload file to IPFS" });
+    }
+  });
+
+  app.post("/api/upload/json", async (req, res) => {
+    try {
+      const metadata = req.body;
+      const cid = await uploadJSONToIPFS(metadata);
+      res.json({ cid });
+    } catch (error) {
+      console.error("JSON upload error:", error);
+      res.status(500).json({ message: "Failed to upload metadata to IPFS" });
+    }
+  });
   // Channels
   app.get("/api/channels", async (req, res) => {
     try {
@@ -789,7 +826,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Web3 Channels API
   app.post("/api/web3-channels", async (req, res) => {
     try {
-      const validatedData = insertWeb3ChannelSchema.parse(req.body);
+      const bodyWithSlug = {
+        ...req.body,
+        slug: req.body.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+      };
+      const validatedData = insertWeb3ChannelSchema.parse(bodyWithSlug);
       const channel = await storage.createWeb3Channel(validatedData);
       res.status(201).json(channel);
     } catch (error: any) {

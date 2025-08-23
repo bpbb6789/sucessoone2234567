@@ -11,6 +11,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAccount } from "wagmi";
+import { UNIPUMP_CREATOR_ADDRESS } from "@/lib/addresses";
+import { UniPumpCreatorAbi } from "../../../abi/UniPumpCreatorAbi";
+import TransactionComponent from "@/components/Transaction";
+import type { LifecycleStatus } from '@coinbase/onchainkit/transaction';
 import { ChevronDown, Upload, Coins, Zap } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -43,6 +47,11 @@ export default function CreateChannel() {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [step, setStep] = useState<"form" | "uploading" | "deploying" | "creating" | "success">("form");
   const [progress, setProgress] = useState("");
+  const [uploadedData, setUploadedData] = useState<{
+    avatarCid?: string;
+    coverCid?: string;
+    metadataUri: string;
+  } | null>(null);
 
   const form = useForm<CreateChannelForm>({
     resolver: zodResolver(createChannelSchema),
@@ -56,76 +65,90 @@ export default function CreateChannel() {
     },
   });
 
-  const createChannelMutation = useMutation({
-    mutationFn: async (data: CreateChannelForm) => {
-      if (!address) throw new Error("Wallet not connected");
+  // Handle IPFS uploads before blockchain transaction
+  const handleIPFSUploads = async (data: CreateChannelForm) => {
+    if (!address) throw new Error("Wallet not connected");
 
-      setStep("uploading");
-      setProgress("Uploading media to IPFS");
+    setStep("uploading");
+    setProgress("Uploading media to IPFS");
 
-      // Simulate IPFS upload (replace with actual implementation)
-      const avatarCid = data.avatarFile ? await uploadToIPFS(data.avatarFile) : undefined;
-      const coverCid = data.coverFile ? await uploadToIPFS(data.coverFile) : undefined;
-      
-      setProgress("Preparing metadata");
-      const metadataUri = await uploadMetadataToIPFS({
-        name: data.name,
-        description: data.description || `${data.name} Channel Coin`,
-        image: avatarCid ? `ipfs://${avatarCid}` : undefined,
-        external_url: `${window.location.origin}/channel/${data.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-        attributes: [
-          { trait_type: "Category", value: data.category },
-          { trait_type: "Ticker", value: data.ticker },
-        ]
-      });
+    const avatarCid = data.avatarFile ? await uploadToIPFS(data.avatarFile) : undefined;
+    const coverCid = data.coverFile ? await uploadToIPFS(data.coverFile) : undefined;
+    
+    setProgress("Preparing metadata");
+    const metadataUri = await uploadMetadataToIPFS({
+      name: data.name,
+      description: data.description || `${data.name} Channel Coin`,
+      image: avatarCid ? `ipfs://${avatarCid}` : undefined,
+      external_url: `${window.location.origin}/channel/${data.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+      attributes: [
+        { trait_type: "Category", value: data.category },
+        { trait_type: "Ticker", value: data.ticker },
+      ]
+    });
 
-      setStep("deploying");
-      setProgress("Deploying Channel Coin (wallet pop-up)");
+    setUploadedData({ avatarCid, coverCid, metadataUri });
+    setStep("deploying");
+    setProgress("Ready to deploy Channel Coin");
+  };
 
-      // Simulate coin deployment (replace with actual Zora SDK implementation)
-      const deployResult = await deployCoin({
-        name: data.name,
-        symbol: data.ticker,
-        uri: `ipfs://${metadataUri}`,
-        payoutRecipient: data.payoutAddress || address,
-      });
-
-      setProgress("Confirming transaction");
-      await waitForTransaction(deployResult.txHash);
-
+  // Handle successful blockchain transaction
+  const handleTransactionSuccess = async (status: LifecycleStatus) => {
+    if (status.statusName === 'success' && uploadedData && status.statusData) {
       setStep("creating");
       setProgress("Creating channel...");
 
-      // Create channel record in database
-      const channelData = {
-        owner: address,
-        name: data.name,
-        ticker: data.ticker,
-        coinAddress: deployResult.coinAddress,
-        chainId: data.chainId,
-        avatarCid,
-        coverCid,
-        category: data.category,
-        txHash: deployResult.txHash,
-      };
+      try {
+        // Extract token address from transaction receipt
+        const receipt = status.statusData.transactionReceipts?.[0];
+        const tokenAddress = receipt?.logs?.[0]?.address || "0x0000000000000000000000000000000000000000";
 
-      const response = await apiRequest("POST", "/api/web3-channels", channelData);
-      return await response.json();
-    },
-    onSuccess: (channel) => {
-      setStep("success");
-      toast({
-        title: "Channel Created!",
-        description: "Your channel coin has been deployed and channel created successfully.",
-      });
+        const formData = form.getValues();
+        const channelData = {
+          owner: address,
+          name: formData.name,
+          ticker: formData.ticker,
+          coinAddress: tokenAddress,
+          chainId: formData.chainId,
+          avatarCid: uploadedData.avatarCid,
+          coverCid: uploadedData.coverCid,
+          category: formData.category,
+          txHash: receipt?.transactionHash || "",
+        };
+
+        const response = await apiRequest("POST", "/api/web3-channels", channelData);
+        await response.json();
+        
+        setStep("success");
+        toast({
+          title: "Channel Created!",
+          description: "Your channel coin has been deployed and channel created successfully.",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Channel Creation Failed",
+          description: error.message || "Failed to create channel record",
+          variant: "destructive",
+        });
+        setStep("form");
+        setUploadedData(null);
+      }
+    }
+  };
+
+  const createChannelMutation = useMutation({
+    mutationFn: handleIPFSUploads,
+    onSuccess: () => {
+      // IPFS upload complete, ready for blockchain transaction
     },
     onError: (error: any) => {
       toast({
-        title: "Channel Creation Failed",
-        description: error.message || "Something went wrong. Please try again.",
+        title: "Upload Failed",
+        description: error.message || "Failed to upload files. Please try again.",
         variant: "destructive",
       });
       setStep("form");
+      setUploadedData(null);
     },
   });
 
@@ -164,7 +187,7 @@ export default function CreateChannel() {
     );
   }
 
-  if (step !== "form") {
+  if (step === "uploading") {
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardContent className="p-8">
@@ -172,23 +195,73 @@ export default function CreateChannel() {
             <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
               <Zap className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Creating Your Channel</h3>
+            <h3 className="text-lg font-semibold mb-2">Uploading to IPFS</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">{progress}</p>
-            
-            <div className="text-left space-y-2 max-w-md mx-auto">
-              <div className={`flex items-center gap-2 ${step === "uploading" ? "text-blue-500" : step === "deploying" || step === "creating" ? "text-green-500" : "text-gray-400"}`}>
-                <span className="text-xs">1.</span>
-                <span className="text-sm">Uploading media to IPFS</span>
-              </div>
-              <div className={`flex items-center gap-2 ${step === "deploying" ? "text-blue-500" : step === "creating" ? "text-green-500" : "text-gray-400"}`}>
-                <span className="text-xs">2.</span>
-                <span className="text-sm">Deploying Channel Coin</span>
-              </div>
-              <div className={`flex items-center gap-2 ${step === "creating" ? "text-blue-500" : "text-gray-400"}`}>
-                <span className="text-xs">3.</span>
-                <span className="text-sm">Creating channel</span>
-              </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (step === "deploying" && uploadedData) {
+    const formData = form.getValues();
+    const contractArgs = [
+      formData.name,
+      formData.ticker,
+      "", // twitter (optional)
+      "", // discord (optional) 
+      formData.description || `${formData.name} Channel`,
+      `ipfs://${uploadedData.metadataUri}`
+    ];
+
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-8">
+          <div className="text-center mb-6">
+            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Coins className="w-6 h-6 text-white" />
             </div>
+            <h3 className="text-lg font-semibold mb-2">Deploy Your Channel Coin</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Files uploaded successfully! Now deploy your channel coin on-chain.
+            </p>
+          </div>
+          
+          <TransactionComponent
+            contractAddress={UNIPUMP_CREATOR_ADDRESS}
+            contractAbi={UniPumpCreatorAbi}
+            functionName="createTokenSale"
+            cta="Deploy Channel Coin"
+            args={contractArgs}
+            handleOnStatus2={handleTransactionSuccess}
+          />
+          
+          <div className="mt-4 text-center">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setStep("form");
+                setUploadedData(null);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (step === "creating") {
+    return (
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardContent className="p-8">
+          <div className="text-center">
+            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Creating Channel Record</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">{progress}</p>
           </div>
         </CardContent>
       </Card>
@@ -434,29 +507,37 @@ export default function CreateChannel() {
   );
 }
 
-// Mock functions - replace with actual implementations
+// Real IPFS upload functions
 async function uploadToIPFS(file: File): Promise<string> {
-  // Mock implementation - replace with Pinata SDK
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return `Qm${Math.random().toString(36).substring(7)}`;
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await fetch('/api/upload/file', {
+    method: 'POST',
+    body: formData
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to upload file to IPFS');
+  }
+  
+  const data = await response.json();
+  return data.cid;
 }
 
 async function uploadMetadataToIPFS(metadata: any): Promise<string> {
-  // Mock implementation - replace with Pinata SDK  
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return `Qm${Math.random().toString(36).substring(7)}`;
-}
-
-async function deployCoin(params: any): Promise<{ coinAddress: string; txHash: string }> {
-  // Mock implementation - replace with Zora Coins SDK
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  return {
-    coinAddress: `0x${Math.random().toString(16).substring(2, 42).padStart(40, '0')}`,
-    txHash: `0x${Math.random().toString(16).substring(2, 66).padStart(64, '0')}`
-  };
-}
-
-async function waitForTransaction(txHash: string): Promise<void> {
-  // Mock implementation - replace with wagmi/viem
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  const response = await fetch('/api/upload/json', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(metadata)
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to upload metadata to IPFS');
+  }
+  
+  const data = await response.json();
+  return data.cid;
 }
