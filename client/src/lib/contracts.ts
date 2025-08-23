@@ -42,3 +42,6 @@ export interface SellTokenParams {
   tokenAddress: Address
   amount: bigint
 }
+
+// Export the ABIs for direct use
+export { UniPumpAbi, UniPumpCreatorAbi }

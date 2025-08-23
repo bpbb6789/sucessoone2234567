@@ -3,7 +3,7 @@
 import { BuySell } from '@/components/BuySell';
 import { CryptoDashboard } from '@/components/crypto-dashboard';
 import { ThreadUi } from '@/components/thread-ui';
-import { UniPumpAbi } from '@/abi/UniPumpAbi.s';
+import { UniPumpAbi } from '@/lib/contracts';
 import { UNIPUMP_ADDRESS } from '@/lib/addresses';
 import { Address } from '@coinbase/onchainkit/identity';
 import Big from 'big.js';

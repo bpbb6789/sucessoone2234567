@@ -1,6 +1,6 @@
 "'use client'"
 
-import { UniPumpAbi } from "@/abi/UniPumpAbi.s"
+import { UniPumpAbi } from "@/lib/contracts"
 import { Progress } from "@/components/ui/progress"
 import { UNIPUMP_ADDRESS } from "@/lib/addresses"
 import Big from "big.js"

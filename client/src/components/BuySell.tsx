@@ -1,5 +1,5 @@
 "'use client'"
-import { UniPumpAbi } from "@/abi/UniPumpAbi.s";
+import { UniPumpAbi } from "@/lib/contracts";
 import { Button } from "@/components/ui/button";
 import {
   Card,
