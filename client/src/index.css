@@ -2,7 +2,7 @@
 
 @font-face {
   font-family: 'PoppinsRounded';
-  src: url('/fonts/PoppinsRounded-Rounded.ttf') format('truetype');
+  src: url('/fonts/PoppinsRounded-Rounded.ttf?v=3') format('truetype');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -90,6 +90,11 @@
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-weight: 400;
+  }
+  
+  * {
+    font-family: 'PoppinsRounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   }
 
   /* YouTube-specific styling */
