@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Layout } from '@/components/Layout'
+import { SidebarProvider } from '@/hooks/use-sidebar'
 import { useWagmiConfig } from '../../wagmi'
 
 // Pages
@@ -48,9 +49,10 @@ function WagmiApp() {
 function AppContent() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Router>
-        <Layout>
-          <Routes>
+      <SidebarProvider>
+        <Router>
+          <Layout>
+            <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/shorts" element={<Shorts />} />
             <Route path="/subscriptions" element={<Subscriptions />} />
@@ -67,9 +69,10 @@ function AppContent() {
             <Route path="/notifications" element={<Notifications />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </Layout>
-        <Toaster />
-      </Router>
+          </Layout>
+          <Toaster />
+        </Router>
+      </SidebarProvider>
     </ThemeProvider>
   )
 }
