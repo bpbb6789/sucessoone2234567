@@ -43,12 +43,12 @@ export default function Tokens() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get token sales data from API
-  const { data: salesData, isLoading: loading, error } = useGetAllSales();
+  // Get token sales data from GraphQL
+  const { data: salesData, loading, error } = useGetAllSales();
 
   useEffect(() => {
     const processTokensData = () => {
-      if (!salesData?.tokenSales) {
+      if (!salesData?.uniPumpCreatorSaless?.items) {
         setIsLoading(false);
         return;
       }
@@ -56,18 +56,18 @@ export default function Tokens() {
       try {
         setIsLoading(true);
 
-        const processedTokens: Token[] = salesData.tokenSales.map((token: any) => ({
-          id: token.id || token.memeTokenAddress,
-          address: token.memeTokenAddress || token.address || token.id,
-          name: token.name || `Token ${(token.memeTokenAddress || token.id)?.slice(0, 8)}`,
+        const processedTokens: Token[] = salesData.uniPumpCreatorSaless.items.map((token: any) => ({
+          id: token.memeTokenAddress,
+          address: token.memeTokenAddress,
+          name: token.name || `Token ${token.memeTokenAddress?.slice(0, 8)}`,
           symbol: token.symbol || 'TKN',
-          price: token.price || '0.0000',
-          marketCap: token.marketCap || '0',
-          volume24h: token.volume24h || '0',
-          holders: token.holders || 0,
-          change24h: token.change24h,
-          createdAt: new Date(token.createdAt || Date.now()),
-          description: token.bio || token.description || 'No description available'
+          price: '0.0000', // Will be fetched separately or calculated
+          marketCap: '0', // Will be calculated from price and supply
+          volume24h: '0', // Will be fetched from trading data
+          holders: 0, // Will be calculated from blockchain data
+          change24h: 0,
+          createdAt: new Date(), // Could be derived from blockchain creation time
+          description: token.bio || 'No description available'
         }));
 
         setTokens(processedTokens);

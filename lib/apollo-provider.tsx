@@ -1,43 +1,31 @@
-"use client";
+import React from "react";
+import { ApolloClient, InMemoryCache, ApolloProvider, HttpLink } from "@apollo/client";
 
-import { ApolloNextAppProvider, NextSSRInMemoryCache, NextSSRApolloClient, SSRMultipartLink } from "@apollo/experimental-nextjs-app-support/ssr";
-import { ApolloLink, HttpLink } from "@apollo/client";
+const httpLink = new HttpLink({
+  uri: "https://unipump-contracts.onrender.com/graphql"
+});
 
-function makeClient() {
-  const httpLink = new HttpLink({
-    uri: "https://unipump-contracts.onrender.com/graphql"
-  });
-
-  return new NextSSRApolloClient({
-    cache: new NextSSRInMemoryCache({
-      typePolicies: {
-        Query: {
-          fields: {
-            tokens: {
-              merge(existing = [], incoming: any) {
-                return incoming;
-              },
+const client = new ApolloClient({
+  link: httpLink,
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          uniPumpCreatorSaless: {
+            merge(existing = { items: [] }, incoming: any) {
+              return incoming;
             },
           },
         },
       },
-    }),
-    link:
-      typeof window === "undefined"
-        ? ApolloLink.from([
-            new SSRMultipartLink({
-              stripDefer: true,
-            }),
-            httpLink,
-          ])
-        : httpLink,
-  });
-}
+    },
+  }),
+});
 
 export function ApolloWrapper({ children }: React.PropsWithChildren) {
   return (
-    <ApolloNextAppProvider makeClient={makeClient}>
+    <ApolloProvider client={client}>
       {children}
-    </ApolloNextAppProvider>
+    </ApolloProvider>
   );
 }

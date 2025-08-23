@@ -9,6 +9,7 @@ import { Layout } from '@/components/Layout'
 import { SidebarProvider } from '@/hooks/use-sidebar'
 import { queryClient } from '@/lib/queryClient'
 import { useWagmiConfig } from '../../wagmi'
+import { ApolloWrapper } from '../../lib/apollo-provider'
 
 // Pages
 import Home from '@/pages/Home'
@@ -50,33 +51,35 @@ function WagmiApp() {
 
 function AppContent() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <SidebarProvider>
-        <Router>
-          <Layout>
-            <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shorts" element={<Shorts />} />
-            <Route path="/subscriptions" element={<Subscriptions />} />
-            <Route path="/library" element={<Library />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/liked" element={<LikedVideos />} />
-            <Route path="/watchlater" element={<WatchLater />} />
-            <Route path="/music" element={<Music />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/create-token" element={<CreateTokenPage />} />
-            <Route path="/watch/:id" element={<Watch />} />
-            <Route path="/tokens" element={<Tokens />} />
-            <Route path="/token/:address" element={<Token />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </Layout>
-          <Toaster />
-        </Router>
-      </SidebarProvider>
-    </ThemeProvider>
+    <ApolloWrapper>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <SidebarProvider>
+          <Router>
+            <Layout>
+              <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/shorts" element={<Shorts />} />
+              <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/library" element={<Library />} />
+              <Route path="/history" element={<History />} />
+              <Route path="/liked" element={<LikedVideos />} />
+              <Route path="/watchlater" element={<WatchLater />} />
+              <Route path="/music" element={<Music />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/create-token" element={<CreateTokenPage />} />
+              <Route path="/watch/:id" element={<Watch />} />
+              <Route path="/tokens" element={<Tokens />} />
+              <Route path="/token/:address" element={<Token />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            </Layout>
+            <Toaster />
+          </Router>
+        </SidebarProvider>
+      </ThemeProvider>
+    </ApolloWrapper>
   )
 }
 
