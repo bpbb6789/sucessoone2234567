@@ -308,7 +308,7 @@ export default function Tokens() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredTokens.map((token) => (
-                  <Card key={token.id} className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
+                  <Card key={token.id} className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
                     <CardContent className="p-4">
                       {/* Header Row */}
                       <div className="flex items-center justify-between mb-3">
@@ -329,15 +329,15 @@ export default function Tokens() {
                           )}
                           <div>
                             <div className="flex items-center gap-2">
-                              <h3 className="text-white font-semibold text-sm">{token.name}</h3>
-                              <span className="text-gray-400 text-xs">{token.symbol.replace('$', '')}</span>
+                              <h3 className="text-gray-900 dark:text-white font-semibold text-sm">{token.name}</h3>
+                              <span className="text-gray-500 dark:text-gray-400 text-xs">{token.symbol.replace('$', '')}</span>
                             </div>
-                            <div className="text-gray-500 text-xs">
+                            <div className="text-gray-500 dark:text-gray-500 text-xs">
                               {formatTimeAgo(token.createdAt)}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <span>📊</span>
                           <span>0</span>
                           <span>0</span>
@@ -351,17 +351,17 @@ export default function Tokens() {
 
                       {/* Price and Stats Row */}
                       <div className="flex items-center justify-between mb-3">
-                        <div className="text-white">
+                        <div className="text-gray-900 dark:text-white">
                           {token.tokenDataLoading ? (
-                            <Skeleton className="h-5 w-20 bg-gray-700" />
+                            <Skeleton className="h-5 w-20 bg-gray-200 dark:bg-gray-700" />
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-400">V</span>
-                              <span className="text-green-400 font-medium">${token.price}</span>
-                              <span className="text-xs text-gray-400">MC</span>
-                              <span className="text-green-400 font-medium">${token.marketCap}K</span>
-                              <span className="text-xs text-gray-400">TX</span>
-                              <span className="text-white font-medium">{Math.floor(Math.random() * 1000) + 500}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">V</span>
+                              <span className="text-green-500 dark:text-green-400 font-medium">${token.price}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">MC</span>
+                              <span className="text-green-500 dark:text-green-400 font-medium">${token.marketCap}K</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">TX</span>
+                              <span className="text-gray-900 dark:text-white font-medium">{Math.floor(Math.random() * 1000) + 500}</span>
                             </div>
                           )}
                         </div>
@@ -372,30 +372,30 @@ export default function Tokens() {
                         <div className="flex items-center gap-4 text-xs">
                           {token.tokenDataLoading ? (
                             <div className="flex gap-4">
-                              <Skeleton className="h-4 w-12 bg-gray-700" />
-                              <Skeleton className="h-4 w-12 bg-gray-700" />
-                              <Skeleton className="h-4 w-12 bg-gray-700" />
-                              <Skeleton className="h-4 w-12 bg-gray-700" />
+                              <Skeleton className="h-4 w-12 bg-gray-200 dark:bg-gray-700" />
+                              <Skeleton className="h-4 w-12 bg-gray-200 dark:bg-gray-700" />
+                              <Skeleton className="h-4 w-12 bg-gray-200 dark:bg-gray-700" />
+                              <Skeleton className="h-4 w-12 bg-gray-200 dark:bg-gray-700" />
                             </div>
                           ) : (
                             <>
                               <div className="flex items-center gap-1">
-                                <span className="text-red-400">📉</span>
-                                <span className={`${token.change24h && token.change24h < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                <span className="text-red-500 dark:text-red-400">📉</span>
+                                <span className={`${token.change24h && token.change24h < 0 ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>
                                   {token.change24h ? Math.abs(token.change24h).toFixed(0) : Math.floor(Math.random() * 50) + 10}%
                                 </span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <span className="text-red-400">💎</span>
-                                <span className="text-red-400">DS</span>
+                                <span className="text-red-500 dark:text-red-400">💎</span>
+                                <span className="text-red-500 dark:text-red-400">DS</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <span className="text-green-400">🔄</span>
-                                <span className="text-green-400">0%</span>
+                                <span className="text-green-500 dark:text-green-400">🔄</span>
+                                <span className="text-green-500 dark:text-green-400">0%</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <span className="text-green-400">🔒</span>
-                                <span className="text-green-400">0%</span>
+                                <span className="text-green-500 dark:text-green-400">🔒</span>
+                                <span className="text-green-500 dark:text-green-400">0%</span>
                               </div>
                             </>
                           )}
