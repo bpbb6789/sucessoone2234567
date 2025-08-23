@@ -121,28 +121,53 @@ export const useGetAllSales = () => {
     };
 };
 
-// Mock Apollo Client for the sake of this example if not provided elsewhere
-// In a real app, you would import and use your actual Apollo Client instance
+// Real GraphQL client using fetch API
 const client = {
-    query: async ({ query, fetchPolicy }: any) => {
-        // Mocking response for GetAllSales
-        if (query === GetAllSales) {
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 500));
-            return {
-                data: {
-                    uniPumpCreatorSaless: {
-                        items: [
-                            { memeTokenAddress: "0x123", name: "TokenA", symbol: "TKA" },
-                            { memeTokenAddress: "0x456", name: "TokenB", symbol: "TKB" },
-                        ]
-                    }
+    query: async ({ query }: any) => {
+        try {
+            const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
-                loading: false,
-                errors: undefined
-            };
+                body: JSON.stringify({
+                    query: `
+                        query GetAllSales {
+                            uniPumpCreatorSaless(orderBy: { id: desc }, first: 100) {
+                                items {
+                                    memeTokenAddress
+                                    name
+                                    symbol
+                                    bio
+                                    createdBy
+                                    totalSupply
+                                    isUSDCToken0
+                                    imageUri
+                                    twitter
+                                    discord
+                                }
+                            }
+                        }
+                    `
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.errors) {
+                return { data: {}, loading: false, errors: result.errors };
+            }
+
+            return { data: result.data, loading: false, errors: undefined };
+        } catch (error) {
+            console.error('GraphQL fetch error:', error);
+            return { data: {}, loading: false, errors: [error] };
         }
-        return { data: {}, loading: false, errors: undefined };
     }
 };
 
