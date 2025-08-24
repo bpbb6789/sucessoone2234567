@@ -29,12 +29,14 @@ interface WalletConnectButtonProps {
   className?: string;
   variant?: "default" | "outline" | "secondary" | "ghost";
   size?: "default" | "sm" | "lg";
+  iconOnly?: boolean;
 }
 
 export function WalletConnectButton({
   className,
   variant = "default",
   size = "default",
+  iconOnly = false,
 }: WalletConnectButtonProps) {
   const { theme, setTheme } = useTheme();
 
@@ -109,7 +111,7 @@ export function WalletConnectButton({
                           d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
                         />
                       </svg>
-                      Connect Wallet
+                      {!iconOnly && "Connect Wallet"}
                     </button>
                   );
                 }
@@ -188,9 +190,11 @@ export function WalletConnectButton({
                             alt="Profile Avatar"
                             className="w-6 h-6 rounded-full"
                           />
-                          <span className="hidden sm:inline">
-                            {account.displayName}
-                          </span>
+                          {!iconOnly && (
+                            <span className="hidden sm:inline">
+                              {account.displayName}
+                            </span>
+                          )}
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-64 p-4" align="end">

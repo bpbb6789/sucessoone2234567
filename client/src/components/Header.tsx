@@ -108,7 +108,7 @@ export function Header() {
               </Button>
 
               {/* Mobile Wallet Connect Button */}
-              <WalletConnectButton variant="ghost" size="sm" className="flex" />
+              <WalletConnectButton variant="ghost" size="sm" className="flex" iconOnly />
             </>
           )}
 
@@ -161,7 +161,7 @@ export function Header() {
               </Button>
 
               {/* Desktop Wallet Connect Button */}
-              <WalletConnectButton variant="ghost" size="sm" className="flex" />
+              <WalletConnectButton variant="ghost" size="sm" className="flex" iconOnly />
             </>
           )}
         </div>
