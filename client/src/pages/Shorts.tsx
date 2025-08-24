@@ -22,7 +22,8 @@ export default function Shorts() {
   });
 
   const { data: musicVideos = [], isLoading: musicLoading } = useQuery<VideoWithChannel[]>({
-    queryKey: ["/api/videos", "Music"],
+    queryKey: ["/api/videos", { category: "Music" }],
+    queryFn: () => fetch("/api/videos?category=Music").then(res => res.json()),
     enabled: selectedCategory === "Music",
   });
   
