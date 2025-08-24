@@ -33,10 +33,23 @@ export default function ChannelDetail() {
   const [comment, setComment] = useState('')
   const [activeTab, setActiveTab] = useState('comments')
 
-  const { data: channel, isLoading } = useQuery<ChannelDetail>({
-    queryKey: ['/api/web3-channels', id],
+  const { data: channelsData = [], isLoading } = useQuery({
+    queryKey: ['/api/web3-channels'],
+    queryFn: async () => {
+      const response = await fetch('/api/web3-channels')
+      if (!response.ok) throw new Error('Failed to fetch channels')
+      return response.json()
+    },
     enabled: !!id
   })
+
+  // Find the specific channel and transform data
+  const channel = channelsData.find((c: any) => c.id === id)
+  const transformedChannel = channel ? {
+    ...channel,
+    avatarUrl: channel.avatarCid ? `https://ipfs.io/ipfs/${channel.avatarCid}` : '/placeholder-avatar.png',
+    coverUrl: channel.coverCid ? `https://ipfs.io/ipfs/${channel.coverCid}` : undefined
+  } : null
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date()
@@ -67,7 +80,7 @@ export default function ChannelDetail() {
     )
   }
 
-  if (!channel) {
+  if (!transformedChannel) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
@@ -99,8 +112,8 @@ export default function ChannelDetail() {
           <div className="space-y-4">
             <div className="relative">
               <img
-                src={channel.coverUrl || channel.avatarUrl}
-                alt={channel.name}
+                src={transformedChannel.coverUrl || transformedChannel.avatarUrl}
+                alt={transformedChannel.name}
                 className="w-full aspect-square object-cover rounded-lg"
               />
               <div className="absolute bottom-4 left-4 flex space-x-2">
@@ -126,12 +139,12 @@ export default function ChannelDetail() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Avatar className="w-10 h-10">
-                  <AvatarImage src={channel.avatarUrl} />
-                  <AvatarFallback>{channel.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={transformedChannel.avatarUrl} />
+                  <AvatarFallback>{transformedChannel.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}</p>
-                  <p className="text-sm text-gray-400">{formatTimeAgo(new Date(channel.createdAt))}</p>
+                  <p className="font-medium">{transformedChannel.owner.slice(0, 6)}...{transformedChannel.owner.slice(-4)}</p>
+                  <p className="text-sm text-gray-400">{formatTimeAgo(new Date(transformedChannel.createdAt))}</p>
                 </div>
               </div>
               <Button variant="ghost" size="sm">
@@ -140,23 +153,23 @@ export default function ChannelDetail() {
             </div>
 
             {/* Title */}
-            <h2 className="text-2xl font-bold">{channel.name}</h2>
+            <h2 className="text-2xl font-bold">{transformedChannel.name}</h2>
 
             {/* Market Stats */}
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <p className="text-sm text-gray-400">Market Cap</p>
                 <p className="text-lg font-semibold text-green-500">
-                  ${channel.marketCap || '757.53'}
+                  ${transformedChannel.marketCap || '757.53'}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-gray-400">24H Volume</p>
-                <p className="text-lg font-semibold">${channel.volume24h || '2.30'}</p>
+                <p className="text-lg font-semibold">${transformedChannel.volume24h || '2.30'}</p>
               </div>
               <div className="text-center">
                 <p className="text-sm text-gray-400">Creator Earnings</p>
-                <p className="text-lg font-semibold">${channel.creatorEarnings || '0.02'}</p>
+                <p className="text-lg font-semibold">${transformedChannel.creatorEarnings || '0.02'}</p>
               </div>
             </div>
 
@@ -281,23 +294,23 @@ export default function ChannelDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-400">Token Symbol</p>
-                      <p className="font-medium">{channel.ticker}</p>
+                      <p className="font-medium">{transformedChannel.ticker}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-400">Category</p>
-                      <Badge className="bg-green-500 text-black">{channel.category}</Badge>
+                      <Badge className="bg-green-500 text-black">{transformedChannel.category}</Badge>
                     </div>
                     <div>
                       <p className="text-sm text-gray-400">Contract Address</p>
-                      <p className="font-mono text-sm break-all">{channel.coinAddress}</p>
+                      <p className="font-mono text-sm break-all">{transformedChannel.coinAddress}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-400">Network</p>
-                      <p className="font-medium">{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</p>
+                      <p className="font-medium">{transformedChannel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-400">Created</p>
-                      <p className="font-medium">{new Date(channel.createdAt).toLocaleDateString()}</p>
+                      <p className="font-medium">{new Date(transformedChannel.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </CardContent>
