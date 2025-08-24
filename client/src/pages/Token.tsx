@@ -148,16 +148,29 @@ export default function Token() {
             
             price = bondingCurveData.price.toFixed(8);
             marketCapValue = bondingCurveData.marketCap.toFixed(2);
-            // Volume data would need to come from GraphQL or other sources
-            volume24h = "0";
+            
+            // Get real volume from GraphQL
+            try {
+              const volumeData = await PriceService.getTokenPrice(tokenAddress);
+              volume24h = volumeData.volume24h;
+            } catch (volumeError) {
+              console.warn('Could not fetch volume data:', volumeError);
+              volume24h = "0";
+            }
           } catch (error) {
             console.error('Error calculating bonding curve price:', error);
-            // Fallback calculation
+            // Fallback calculation using actual contract data
             const capInEth = Number(capData) / 1e18;
             const supplyNumber = Number(contractTokenData.supply) / 1e18;
-            const fallbackPrice = (capInEth * 3000) / Math.max(supplyNumber, 1);
-            price = fallbackPrice.toFixed(8);
-            marketCapValue = (fallbackPrice * supplyNumber).toFixed(2);
+            
+            // Use proper bonding curve formula from contract
+            const expValue = Math.exp(0.00003606 * capInEth);
+            const curveValue = 0.6015 * expValue;
+            const pricePerToken = curveValue / 1000000; // M = 1,000,000
+            const priceUSD = pricePerToken * 3000; // ETH price approximation
+            
+            price = priceUSD.toFixed(8);
+            marketCapValue = (priceUSD * Math.min(supplyNumber, 800000000)).toFixed(2);
           }
         }
 
@@ -460,7 +473,7 @@ export default function Token() {
               <DollarSign className="h-6 w-6 text-green-600" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Price</p>
-                <p className="text-lg font-bold">{tokenData.price}</p>
+                <p className="text-lg font-bold">${parseFloat(tokenData.price).toFixed(6)}</p>
               </div>
             </CardContent>
           </Card>
@@ -470,7 +483,7 @@ export default function Token() {
               <TrendingUp className="h-6 w-6 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
-                <p className="text-lg font-bold">{tokenData.marketCap}</p>
+                <p className="text-lg font-bold">${formatNumber(parseFloat(tokenData.marketCap))}</p>
               </div>
             </CardContent>
           </Card>
@@ -489,8 +502,8 @@ export default function Token() {
             <CardContent className="flex items-center space-x-2 p-4">
               <Coins className="h-6 w-6 text-orange-600" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Supply</p>
-                <p className="text-lg font-bold">{parseFloat(tokenData.supply).toLocaleString()}</p>
+                <p className="text-sm font-medium text-muted-foreground">24h Volume</p>
+                <p className="text-lg font-bold">${formatNumber(parseFloat(tokenData.volume24h))}</p>
               </div>
             </CardContent>
           </Card>
@@ -525,7 +538,7 @@ export default function Token() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">24h Volume</p>
-                  <p className="text-sm">{tokenData.volume24h}K</p>
+                  <p className="text-sm">${formatNumber(parseFloat(tokenData.volume24h))}</p>
                 </div>
               </div>
               <div className="space-y-3">

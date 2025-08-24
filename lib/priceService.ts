@@ -138,6 +138,23 @@ export class PriceService {
                 }
               }
 
+              swaps(
+                where: { tokenAddress: $tokenAddress }
+                orderBy: { timestamp: desc }
+                first: 1000
+              ) {
+                items {
+                  id
+                  tokenAddress
+                  amountIn
+                  amountOut
+                  tokenIn
+                  tokenOut
+                  timestamp
+                  sender
+                }
+              }
+
               uniPumpCreatorSaless(
                 where: { memeTokenAddress: $tokenAddress }
               ) {
@@ -172,10 +189,20 @@ export class PriceService {
         const previousPrice = parseFloat(previous24h?.close || previous24h?.average || currentPrice.toString());
         const priceChange24h = previousPrice > 0 ? ((currentPrice - previousPrice) / previousPrice) * 100 : 0;
 
-        // Calculate 24h volume from recent swaps
-        const volume24h = buckets
-          .filter((b: any) => (parseInt(latest.id) - parseInt(b.id)) <= 24 * 60)
-          .reduce((sum: number, bucket: any) => sum + (parseFloat(bucket.count || '0') * currentPrice), 0);
+        // Calculate 24h volume from actual swap transactions
+        const swaps = data.data?.swaps?.items || [];
+        const now = Date.now();
+        const oneDayAgo = now - (24 * 60 * 60 * 1000);
+        
+        const volume24h = swaps
+          .filter((swap: any) => {
+            const swapTime = parseInt(swap.timestamp) * 1000;
+            return swapTime >= oneDayAgo;
+          })
+          .reduce((sum: number, swap: any) => {
+            const amountOut = parseFloat(swap.amountOut || '0');
+            return sum + (amountOut * currentPrice);
+          }, 0);
 
         // Calculate market cap using bonding curve formula
         const totalSupply = parseFloat(tokenData?.totalSupply || '1000000000');

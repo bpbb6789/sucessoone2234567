@@ -186,7 +186,7 @@ export function TokenTrading({
             <TrendingUp className="h-6 w-6 text-blue-600" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
-              <p className="text-lg font-bold">${marketCap}K</p>
+              <p className="text-lg font-bold">${formatNumber(parseFloat(marketCap))}</p>
             </div>
           </CardContent>
         </Card>
