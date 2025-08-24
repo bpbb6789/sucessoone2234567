@@ -346,23 +346,7 @@ export default function Music() {
 
       {/* Header */}
       <div className="p-4 md:p-6">
-        <div className="flex items-center space-x-2 md:space-x-4 mb-6 md:mb-8 overflow-x-auto">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={cn(
-                "px-3 md:px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap",
-                selectedCategory === category
-                  ? "bg-green-500 text-black"
-                  : "bg-gray-800 text-white hover:bg-gray-700"
-              )}
-              data-testid={`music-category-${category.toLowerCase()}`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+        
 
         {/* Jump back in section */}
         <div className="mb-6 md:mb-8">

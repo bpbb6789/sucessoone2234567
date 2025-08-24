@@ -171,24 +171,7 @@ export default function Home() {
           {/* Music Tab Content */}
           <TabsContent value="music" className="mt-6">
             <div className="space-y-6 md:space-y-8">
-              {/* Music Categories */}
-              <div className="flex items-center space-x-2 md:space-x-4 overflow-x-auto">
-                {musicCategories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedMusicCategory(category)}
-                    className={cn(
-                      "px-3 md:px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap",
-                      selectedMusicCategory === category
-                        ? "bg-green-500 text-black"
-                        : "bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 bg-gray-200 text-gray-900 hover:bg-gray-300"
-                    )}
-                    data-testid={`music-category-${category.toLowerCase()}`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
+              
 
               {/* Jump back in section */}
               <div>
