@@ -13,7 +13,7 @@ import {
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 import { contentImports } from "@shared/schema";
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../lib/generated/prisma/index.js';
 
 const prisma = new PrismaClient();
 

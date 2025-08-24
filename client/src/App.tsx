@@ -36,6 +36,7 @@ import ContentImport from '@/pages/ContentImport';
 import MyContent from '@/pages/MyContent';
 import ContentDetail from '@/pages/ContentDetail';
 import Tokenize from '@/pages/Tokenize'
+import NotFound from '@/pages/not-found'
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
