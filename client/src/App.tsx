@@ -35,8 +35,6 @@ import FAQ from "@/pages/FAQ";
 import ContentImport from '@/pages/ContentImport';
 import MyContent from '@/pages/MyContent';
 import ContentDetail from '@/pages/ContentDetail';
-import Marketplace from '@/pages/Marketplace';
-import NotFound from '@/pages/not-found'
 import Tokenize from '@/pages/Tokenize'
 
 import '@rainbow-me/rainbowkit/styles.css'
@@ -87,7 +85,6 @@ function AppContent() {
               <Route path="/dashboard/import" component={ContentImport} />
               <Route path="/my-content" component={MyContent} />
               <Route path="/content/:id" component={ContentDetail} />
-              <Route path="/marketplace" component={Marketplace} />
               <Route path="/doc" component={Doc} />
               <Route path="/faq" component={FAQ} />
               <Route component={NotFound} />

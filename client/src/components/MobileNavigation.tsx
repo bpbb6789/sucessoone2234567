@@ -1,4 +1,4 @@
-import { Home, Play, PlusCircle, Radio, User, Activity } from "lucide-react";
+import { Home, Play, PlusCircle, Radio, User, Activity, Coins } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ROUTES } from "@/lib/constants";
@@ -22,7 +22,7 @@ export function MobileNavigation() {
   }
 
   return (
-    <nav 
+    <nav
       className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-youtube-dark border-t border-gray-200 dark:border-youtube-dark-secondary"
       data-testid="mobile-navigation"
     >
@@ -30,7 +30,7 @@ export function MobileNavigation() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href;
-          
+
           return (
             <Link key={item.href} href={item.href}>
               <button
