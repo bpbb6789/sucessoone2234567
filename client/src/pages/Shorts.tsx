@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ShortsCard from "@/components/ShortsCard";
+import { VideoCard } from "@/components/VideoCard";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { type ShortsWithChannel } from "@shared/schema";
+import { type ShortsWithChannel, type VideoWithChannel } from "@shared/schema";
 import { formatViewCount } from "@/lib/constants";
 
 const SHORTS_CATEGORIES = ["For you", "Following", "Channels", "Reels", "Music", "Podcasts"];
@@ -16,8 +17,13 @@ export default function Shorts() {
   const [, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>("For you");
   
-  const { data: allShorts = [], isLoading, error } = useQuery<ShortsWithChannel[]>({
+  const { data: allShorts = [], isLoading: shortsLoading, error: shortsError } = useQuery<ShortsWithChannel[]>({
     queryKey: ["/api/shorts"],
+  });
+
+  const { data: musicVideos = [], isLoading: musicLoading } = useQuery<VideoWithChannel[]>({
+    queryKey: ["/api/videos", "Music"],
+    enabled: selectedCategory === "Music",
   });
   
   // Filter shorts based on selected category
@@ -27,6 +33,9 @@ export default function Shorts() {
         short.category?.toLowerCase() === selectedCategory.toLowerCase() ||
         short.hashtags?.some(tag => tag.toLowerCase().includes(selectedCategory.toLowerCase()))
       );
+
+  const isLoading = selectedCategory === "Music" ? musicLoading : shortsLoading;
+  const error = shortsError;
 
   const handleAvatarClick = (e: React.MouseEvent, channelId: string) => {
     e.stopPropagation();
@@ -69,17 +78,41 @@ export default function Shorts() {
           </div>
         </div>
 
-        {/* Shorts Content - Full Screen */}
+        {/* Content - Full Screen */}
         <div className="relative">
-          {shorts.length === 0 && !isLoading ? (
-            <div className="flex items-center justify-center min-h-screen text-white">
-              <div className="text-center">
-                <h2 className="text-xl font-semibold mb-2">No {selectedCategory.toLowerCase()} shorts</h2>
-                <p className="text-gray-300">Try a different category</p>
+          {selectedCategory === "Music" ? (
+            // Music Videos Grid
+            musicVideos.length === 0 && !isLoading ? (
+              <div className="flex items-center justify-center min-h-screen text-white">
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold mb-2">No music videos</h2>
+                  <p className="text-gray-300">No music content available</p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 pt-20">
+                {musicVideos.map((video) => (
+                  <VideoCard
+                    key={video.id}
+                    video={video}
+                    onClick={() => {
+                      console.log("Music video clicked:", video.id);
+                    }}
+                  />
+                ))}
+              </div>
+            )
           ) : (
-            shorts.map((short, index) => (
+            // Shorts Content
+            shorts.length === 0 && !isLoading ? (
+              <div className="flex items-center justify-center min-h-screen text-white">
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold mb-2">No {selectedCategory.toLowerCase()} shorts</h2>
+                  <p className="text-gray-300">Try a different category</p>
+                </div>
+              </div>
+            ) : (
+              shorts.map((short, index) => (
           <div key={short.id} className="shorts-video relative bg-black flex items-center justify-center">
             <img
               src={short.thumbnailUrl}
@@ -169,6 +202,7 @@ export default function Shorts() {
             </div>
           </div>
             ))
+            )
           )}
         </div>
       </div>
