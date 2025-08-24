@@ -158,7 +158,6 @@ export default function Shorts() {
                 // TODO: Navigate to shorts player
                 console.log("Shorts clicked:", short.id);
               }}
-              onAvatarClick={() => setLocation(`/profile/${short.channel.id}`)}
             />
           ))}
         </div>
