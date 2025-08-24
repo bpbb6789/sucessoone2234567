@@ -62,6 +62,7 @@ export interface IStorage {
 
   // Music Tracks
   getMusicTrack(id: string): Promise<MusicTrack | undefined>;
+  getAllMusicTracks(): Promise<MusicTrack[]>;
   getTracksByAlbum(albumId: string): Promise<MusicTrack[]>;
   createMusicTrack(track: InsertMusicTrack): Promise<MusicTrack>;
 
@@ -127,6 +128,7 @@ export class MemStorage implements IStorage {
   private shorts: Map<string, Shorts> = new Map();
   private playlists: Map<string, Playlist> = new Map();
   private musicAlbums: Map<string, MusicAlbum> = new Map();
+  private musicTracks: Map<string, MusicTrack> = new Map();
   private comments: Map<string, Comment> = new Map();
   private subscriptions: Map<string, Subscription> = new Map();
 
@@ -393,10 +395,182 @@ export class MemStorage implements IStorage {
       },
     ];
 
+    // Initialize sample music albums
+    const sampleMusicAlbums: MusicAlbum[] = [
+      {
+        id: "album1",
+        title: "up:date",
+        artist: "Blaqbonez",
+        coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Afrobeat",
+        releaseYear: 2024,
+        trackCount: 12,
+        createdAt: new Date(),
+      },
+      {
+        id: "album2", 
+        title: "Sizzlers",
+        artist: "Various Artists",
+        coverUrl: "https://images.unsplash.com/photo-1571330735066-03aaa9429d89?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "R&B",
+        releaseYear: 2024,
+        trackCount: 15,
+        createdAt: new Date(),
+      },
+      {
+        id: "album3",
+        title: "Afro Station",
+        artist: "Burna Boy",
+        coverUrl: "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Afrobeat",
+        releaseYear: 2024,
+        trackCount: 14,
+        createdAt: new Date(),
+      },
+      {
+        id: "album4",
+        title: "Fresh Finds Africa",
+        artist: "Various Artists",
+        coverUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Afrobeat",
+        releaseYear: 2024,
+        trackCount: 20,
+        createdAt: new Date(),
+      },
+      {
+        id: "album5",
+        title: "Hot Hits",
+        artist: "Various Artists",
+        coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Pop",
+        releaseYear: 2024,
+        trackCount: 18,
+        createdAt: new Date(),
+      },
+    ];
+
+    // Initialize sample music tracks
+    const sampleMusicTracks: MusicTrack[] = [
+      {
+        id: "track1",
+        title: "I Wanna Be Yours",
+        artist: "Arctic Monkeys",
+        albumId: "album1",
+        duration: 183, // 3:03
+        trackNumber: 1,
+        audioUrl: "https://example.com/audio/track1.mp3",
+        coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Indie Rock",
+        playCount: 2500000,
+        likeCount: 187000,
+        createdAt: new Date(),
+      },
+      {
+        id: "track2",
+        title: "Bounce",
+        artist: "Blaqbonez ft. Amaarae",
+        albumId: "album1",
+        duration: 195, // 3:15
+        trackNumber: 2,
+        audioUrl: "https://example.com/audio/track2.mp3",
+        coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Afrobeat",
+        playCount: 1800000,
+        likeCount: 145000,
+        createdAt: new Date(),
+      },
+      {
+        id: "track3",
+        title: "Sizzle",
+        artist: "Tiwa Savage",
+        albumId: "album2",
+        duration: 210, // 3:30
+        trackNumber: 1,
+        audioUrl: "https://example.com/audio/track3.mp3",
+        coverUrl: "https://images.unsplash.com/photo-1571330735066-03aaa9429d89?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "R&B",
+        playCount: 3200000,
+        likeCount: 298000,
+        createdAt: new Date(),
+      },
+      {
+        id: "track4",
+        title: "Last Last",
+        artist: "Burna Boy",
+        albumId: "album3",
+        duration: 178, // 2:58
+        trackNumber: 1,
+        audioUrl: "https://example.com/audio/track4.mp3",
+        coverUrl: "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Afrobeat",
+        playCount: 5800000,
+        likeCount: 467000,
+        createdAt: new Date(),
+      },
+      {
+        id: "track5",
+        title: "It's Plenty",
+        artist: "Burna Boy",
+        albumId: "album3",
+        duration: 205, // 3:25
+        trackNumber: 2,
+        audioUrl: "https://example.com/audio/track5.mp3",
+        coverUrl: "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Afrobeat",
+        playCount: 2900000,
+        likeCount: 198000,
+        createdAt: new Date(),
+      },
+      {
+        id: "track6",
+        title: "LUDMILLA",
+        artist: "ODUMODUBLVCK ft. Mr Eazi",
+        albumId: "album1",
+        duration: 168, // 2:48
+        trackNumber: 3,
+        audioUrl: "https://example.com/audio/track6.mp3",
+        coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Afrobeat",
+        playCount: 1400000,
+        likeCount: 89000,
+        createdAt: new Date(),
+      },
+      {
+        id: "track7",
+        title: "Flowers",
+        artist: "Miley Cyrus",
+        albumId: "album5",
+        duration: 200, // 3:20
+        trackNumber: 1,
+        audioUrl: "https://example.com/audio/track7.mp3",
+        coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Pop",
+        playCount: 8500000,
+        likeCount: 765000,
+        createdAt: new Date(),
+      },
+      {
+        id: "track8",
+        title: "Unholy",
+        artist: "Sam Smith ft. Kim Petras",
+        albumId: "album5",
+        duration: 156, // 2:36
+        trackNumber: 2,
+        audioUrl: "https://example.com/audio/track8.mp3",
+        coverUrl: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400",
+        genre: "Pop",
+        playCount: 6700000,
+        likeCount: 543000,
+        createdAt: new Date(),
+      },
+    ];
+
     // Store data
     sampleChannels.forEach(channel => this.channels.set(channel.id, channel));
     sampleVideos.forEach(video => this.videos.set(video.id, video));
     sampleShorts.forEach(short => this.shorts.set(short.id, short));
+    sampleMusicAlbums.forEach(album => this.musicAlbums.set(album.id, album));
+    sampleMusicTracks.forEach(track => this.musicTracks.set(track.id, track));
   }
 
   // Channel methods
@@ -586,6 +760,35 @@ export class MemStorage implements IStorage {
     return album;
   }
 
+  // Music Track methods
+  async getMusicTrack(id: string): Promise<MusicTrack | undefined> {
+    return this.musicTracks.get(id);
+  }
+
+  async getAllMusicTracks(): Promise<MusicTrack[]> {
+    return Array.from(this.musicTracks.values());
+  }
+
+  async getTracksByAlbum(albumId: string): Promise<MusicTrack[]> {
+    return Array.from(this.musicTracks.values()).filter(track => track.albumId === albumId);
+  }
+
+  async createMusicTrack(insertMusicTrack: InsertMusicTrack): Promise<MusicTrack> {
+    const id = randomUUID();
+    const track: MusicTrack = { 
+      ...insertMusicTrack, 
+      id, 
+      createdAt: new Date(),
+      albumId: insertMusicTrack.albumId ?? null,
+      trackNumber: insertMusicTrack.trackNumber ?? null,
+      genre: insertMusicTrack.genre ?? null,
+      playCount: insertMusicTrack.playCount ?? 0,
+      likeCount: insertMusicTrack.likeCount ?? 0
+    };
+    this.musicTracks.set(id, track);
+    return track;
+  }
+
   // Comment methods
   async getComment(id: string): Promise<CommentWithChannel | undefined> {
     const comment = this.comments.get(id);
@@ -668,13 +871,11 @@ export class MemStorage implements IStorage {
   async updateChannel(): Promise<Channel | undefined> { throw new Error('Not implemented in MemStorage'); }
   async searchVideos(): Promise<VideoWithChannel[]> { throw new Error('Not implemented in MemStorage'); }
   async searchShorts(): Promise<ShortsWithChannel[]> { throw new Error('Not implemented in MemStorage'); }
-  async getMusicTrack(): Promise<MusicTrack | undefined> { throw new Error('Not implemented in MemStorage'); }
-  async getTracksByAlbum(): Promise<MusicTrack[]> { throw new Error('Not implemented in MemStorage'); }
   
   // Token methods (not implemented in MemStorage)
-  async getToken(): Promise<Token | undefined> { throw new Error('Not implemented in MemStorage'); }
-  async getTokenByAddress(): Promise<Token | undefined> { throw new Error('Not implemented in MemStorage'); }
-  async getAllTokens(): Promise<Token[]> { throw new Error('Not implemented in MemStorage'); }
+  async getToken(): Promise<Token | undefined> { return undefined; }
+  async getTokenByAddress(): Promise<Token | undefined> { return undefined; }
+  async getAllTokens(): Promise<Token[]> { return []; }
   async createToken(): Promise<Token> { throw new Error('Not implemented in MemStorage'); }
 
   // Web3 Channel methods (not implemented in MemStorage)
@@ -682,7 +883,7 @@ export class MemStorage implements IStorage {
   async getWeb3ChannelByOwner(): Promise<Web3Channel | undefined> { throw new Error('Not implemented in MemStorage'); }
   async getWeb3ChannelByCoinAddress(): Promise<Web3Channel | undefined> { throw new Error('Not implemented in MemStorage'); }
   async createWeb3Channel(): Promise<Web3Channel> { throw new Error('Not implemented in MemStorage'); }
-  async getAllWeb3Channels(): Promise<Web3Channel[]> { throw new Error('Not implemented in MemStorage'); }
+  async getAllWeb3Channels(): Promise<Web3Channel[]> { return []; }
   async createMusicTrack(): Promise<MusicTrack> { throw new Error('Not implemented in MemStorage'); }
   async likeComment(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
   async unlikeComment(): Promise<void> { throw new Error('Not implemented in MemStorage'); }
@@ -698,7 +899,7 @@ export class MemStorage implements IStorage {
   async getUserProfile(): Promise<UserProfile | undefined> { throw new Error('Not implemented in MemStorage'); }
   async createUserProfile(): Promise<UserProfile> { throw new Error('Not implemented in MemStorage'); }
   async updateUserProfile(): Promise<UserProfile | undefined> { throw new Error('Not implemented in MemStorage'); }
-  async searchAll(): Promise<{videos: VideoWithChannel[], shorts: ShortsWithChannel[], channels: Channel[]}> { throw new Error('Not implemented in MemStorage'); }
+  async searchAll(): Promise<{videos: VideoWithChannel[], shorts: ShortsWithChannel[], channels: Channel[]}> { return { videos: [], shorts: [], channels: [] }; }
 }
 
 // Database Storage Implementation

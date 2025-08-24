@@ -72,6 +72,21 @@ export const musicAlbums = pgTable("music_albums", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const musicTracks = pgTable("music_tracks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  artist: text("artist").notNull(),
+  albumId: varchar("album_id").references(() => musicAlbums.id),
+  duration: integer("duration").notNull(), // in seconds
+  trackNumber: integer("track_number"),
+  audioUrl: text("audio_url").notNull(),
+  coverUrl: text("cover_url").notNull(),
+  genre: text("genre"),
+  playCount: integer("play_count").default(0),
+  likeCount: integer("like_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const comments = pgTable("comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   content: text("content").notNull(),
@@ -124,16 +139,6 @@ export const shares = pgTable("shares", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const musicTracks = pgTable("music_tracks", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  title: text("title").notNull(),
-  artist: text("artist").notNull(),
-  albumId: varchar("album_id").references(() => musicAlbums.id),
-  audioUrl: text("audio_url").notNull(),
-  duration: integer("duration"), // in seconds
-  trackNumber: integer("track_number"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
 export const userProfiles = pgTable("user_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
