@@ -69,11 +69,6 @@ export default {
           "light-gray": "var(--youtube-light-gray)",
         },
       },
-      fontFamily: {
-        roboto: ["Roboto", "sans-serif"],
-        serif: ["var(--font-serif)"],
-        mono: ["var(--font-mono)"],
-      },
       spacing: {
         "18": "4.5rem",
         "88": "22rem",

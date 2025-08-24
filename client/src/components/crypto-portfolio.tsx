@@ -2,13 +2,13 @@
 import { Button } from "@/components/ui/button";
 import useGetAllSales from "@/hooks/useGetAllSales";
 import { useAccount } from "wagmi";
-import { useRouter } from "next/navigation";
+import { useLocation } from "wouter";
 import TokenCard from "@/components/TokenCard";
 
 export function CryptoPortfolio({ heldOnly, createdOnly }: { heldOnly?: boolean, createdOnly?: boolean }) {
   const { data } = useGetAllSales();
   const { address } = useAccount();
-  const router = useRouter();
+  const [, setLocation] = useLocation();
   // Only show up to 6 tokens (2 rows of 3)
   const visibleTokens = data ? data.slice(0, 6) : [];
   const hasMore = data && data.length > 6;
@@ -25,7 +25,7 @@ export function CryptoPortfolio({ heldOnly, createdOnly }: { heldOnly?: boolean,
             <Button
               variant="default"
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={() => router.push('/listings')}
+              onClick={() => setLocation('/listings')}
             >
               See all
             </Button>

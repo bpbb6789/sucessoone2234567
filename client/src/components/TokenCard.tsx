@@ -1,15 +1,15 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import useGetAllSales from "@/hooks/useGetAllSales";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+// Use regular img tag instead of Next.js Image since we're using Vite
+import { useLocation } from "wouter";
 import { erc20Abi, formatUnits } from "viem";
 import { useAccount, useReadContract } from "wagmi";
 
 export function CryptoPortfolio({ heldOnly, createdOnly }: { heldOnly?: boolean, createdOnly?: boolean }) {
   const { data } = useGetAllSales();
   const { address } = useAccount();
-  const router = useRouter();
+  const [, setLocation] = useLocation();
   // Only show up to 6 tokens (2 rows of 3)
   const visibleTokens = data ? data.slice(0, 6) : [];
   const hasMore = data && data.length > 6;
@@ -26,7 +26,7 @@ export function CryptoPortfolio({ heldOnly, createdOnly }: { heldOnly?: boolean,
             <Button
               variant="default"
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={() => router.push('/listings')}
+              onClick={() => setLocation('/listings')}
             >
               See all
             </Button>
@@ -49,14 +49,14 @@ export const TokenCard = ({ token, userAddress, heldOnly, createdOnly }: { token
       },
     }
   });
-  const router = useRouter();
+  const [, setLocation] = useLocation();
   // Filtering logic
   if (heldOnly && (!data || parseFloat(data) === 0)) return null;
   if (createdOnly && token.createdBy?.toLowerCase() !== userAddress?.toLowerCase()) return null;
   return (
     <div key={token.memeTokenAddress} className="mb-4">
       <div className="rounded-xl border border-stone-800 bg-stone-950 text-stone-50 shadow p-4 flex flex-col items-center gap-4">
-        <Image
+        <img
           src={token.imageUri}
           alt={`${token.name} icon`}
           width={64}
@@ -97,7 +97,7 @@ export const TokenCard = ({ token, userAddress, heldOnly, createdOnly }: { token
           <Button
             variant="default"
             size="sm"
-            onClick={() => router.push(`/token/?address=${token.memeTokenAddress}&tab=buy`)}
+            onClick={() => setLocation(`/token/?address=${token.memeTokenAddress}&tab=buy`)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white w-full"
           >
             BUY
@@ -105,7 +105,7 @@ export const TokenCard = ({ token, userAddress, heldOnly, createdOnly }: { token
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push(`/token/?address=${token.memeTokenAddress}`)}
+            onClick={() => setLocation(`/token/?address=${token.memeTokenAddress}`)}
             className="text-zinc-400 hover:text-white w-full"
           >
             View Coin
