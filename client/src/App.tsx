@@ -26,6 +26,7 @@ import Create from '@/pages/Create'
 import Watch from '@/pages/Watch'
 import Token from '@/pages/Token'
 import Tokens from '@/pages/Tokens'
+import Discovery from '@/pages/Discovery'
 import CreateChannel from '@/components/CreateChannel'
 import ChannelManager from '@/components/ChannelManager'
 import Notifications from '@/pages/Notifications'
@@ -65,7 +66,7 @@ function AppContent() {
           <Layout>
             <Switch>
               <Route path="/" component={Tokens} />
-              <Route path="/discovery" component={Tokens} />
+              <Route path="/discovery" component={Discovery} />
               <Route path="/shorts" component={Shorts} />
               <Route path="/subscriptions" component={Subscriptions} />
               <Route path="/library" component={Library} />
