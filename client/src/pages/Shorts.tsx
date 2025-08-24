@@ -16,6 +16,14 @@ export default function Shorts() {
   const isMobile = useIsMobile();
   const [, setLocation] = useLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>("For you");
+
+  const handleCategorySelect = (category: string) => {
+    if (category === "Music" && isMobile) {
+      setLocation("/music");
+      return;
+    }
+    setSelectedCategory(category);
+  };
   
   const { data: allShorts = [], isLoading: shortsLoading, error: shortsError } = useQuery<ShortsWithChannel[]>({
     queryKey: ["/api/shorts"],
@@ -63,7 +71,7 @@ export default function Shorts() {
             {SHORTS_CATEGORIES.map((category) => (
               <button
                 key={category}
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => handleCategorySelect(category)}
                 className={cn(
                   "flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200",
                   selectedCategory === category
