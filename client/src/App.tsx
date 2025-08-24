@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import { WagmiConfig } from 'wagmi'
+import { WagmiProvider } from 'wagmi'
 import { Route, Switch } from 'wouter'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/ThemeProvider'
@@ -36,6 +36,8 @@ import FAQ from "@/pages/FAQ";
 import ContentImport from '@/pages/ContentImport';
 import MyContent from '@/pages/MyContent';
 import ContentDetail from '@/pages/ContentDetail';
+import ChannelDetail from '@/pages/ChannelDetail';
+import PostDetail from '@/pages/PostDetail';
 import Tokenize from '@/pages/Tokenize'
 import NotFound from '@/pages/not-found'
 
@@ -48,13 +50,13 @@ function WagmiApp() {
   const config = useWagmiConfig()
 
   return (
-    <WagmiConfig config={config}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
           <AppContent />
         </RainbowKitProvider>
       </QueryClientProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   )
 }
 
@@ -88,6 +90,8 @@ function AppContent() {
               <Route path="/dashboard/import" component={ContentImport} />
               <Route path="/my-content" component={MyContent} />
               <Route path="/content/:id" component={ContentDetail} />
+              <Route path="/channel/:id" component={ChannelDetail} />
+              <Route path="/:type/:id" component={PostDetail} />
               <Route path="/doc" component={Doc} />
               <Route path="/faq" component={FAQ} />
               <Route component={NotFound} />

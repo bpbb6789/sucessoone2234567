@@ -388,29 +388,31 @@ export default function Home() {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {channels.map((channel: any) => (
-                    <div key={channel.id} className="group cursor-pointer">
-                      <div className="relative mb-2 md:mb-3">
-                        <img
-                          src={channel.avatarUrl || '/placeholder-avatar.png'}
-                          alt={channel.name}
-                          className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute top-2 right-2">
-                          <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
-                            {channel.category}
-                          </span>
+                    <Link key={channel.id} href={`/channel/${channel.id}`}>
+                      <div className="group cursor-pointer">
+                        <div className="relative mb-2 md:mb-3">
+                          <img
+                            src={channel.avatarUrl || '/placeholder-avatar.png'}
+                            alt={channel.name}
+                            className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute top-2 right-2">
+                            <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
+                              {channel.category}
+                            </span>
+                          </div>
                         </div>
+                        <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
+                        <p className="text-xs md:text-sm text-gray-400 truncate mb-1">{channel.ticker}</p>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
+                          <span>{formatTimeAgo(new Date(channel.createdAt))}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 truncate mt-1">
+                          Owner: {channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}
+                        </p>
                       </div>
-                      <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
-                      <p className="text-xs md:text-sm text-gray-400 truncate mb-1">{channel.ticker}</p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
-                        <span>{formatTimeAgo(new Date(channel.createdAt))}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 truncate mt-1">
-                        Owner: {channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}
-                      </p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -435,10 +437,28 @@ export default function Home() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold mb-2">No reels found</h3>
-                  <p className="text-gray-400">Reels will appear here when available</p>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Link key={i} href={`/reel/${i + 1}`}>
+                      <div className="group cursor-pointer">
+                        <div className="relative mb-2 md:mb-3">
+                          <img
+                            src={`https://picsum.photos/300/400?random=${i}`}
+                            alt={`Reel ${i + 1}`}
+                            className="w-full aspect-[9/16] object-cover rounded-lg group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                            <Play className="w-8 h-8 md:w-12 md:h-12 text-white" fill="currentColor" />
+                          </div>
+                          <div className="absolute bottom-2 left-2 text-white text-xs bg-black/60 px-2 py-1 rounded">
+                            {Math.floor(Math.random() * 60) + 15}s
+                          </div>
+                        </div>
+                        <h3 className="font-medium text-sm md:text-base mb-1 truncate">Amazing Reel #{i + 1}</h3>
+                        <p className="text-xs md:text-sm text-gray-400 truncate">creator{i + 1}</p>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
@@ -465,10 +485,31 @@ export default function Home() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold mb-2">No content found</h3>
-                  <p className="text-gray-400">Content will appear here when available</p>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Link key={i} href={`/content/${i + 1}`}>
+                      <div className="group cursor-pointer">
+                        <div className="relative mb-2 md:mb-3">
+                          <img
+                            src={`https://picsum.photos/400/300?random=${i + 10}`}
+                            alt={`Content ${i + 1}`}
+                            className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute top-2 right-2">
+                            <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                              Article
+                            </span>
+                          </div>
+                        </div>
+                        <h3 className="font-medium text-sm md:text-base mb-1 truncate">Content Piece #{i + 1}</h3>
+                        <p className="text-xs md:text-sm text-gray-400 truncate mb-1">writer{i + 1}</p>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{Math.floor(Math.random() * 1000) + 100} views</span>
+                          <span>{Math.floor(Math.random() * 12) + 1}h ago</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               )}
             </div>
