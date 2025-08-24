@@ -17,7 +17,7 @@ interface ViewState {
 }
 
 export default function Music() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("Music");
   const [viewState, setViewState] = useState<ViewState>({ view: 'home' });
   const [player, setPlayer] = useState<MusicPlayerState>({
     currentTrack: null,
@@ -38,7 +38,7 @@ export default function Music() {
 
   const isLoading = albumsLoading || tracksLoading;
 
-  const categories = ["All", "Music", "Podcasts"];
+  const categories = ["Music", "Podcasts"];
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);

@@ -29,7 +29,7 @@ interface Token {
 }
 
 export default function Discovery() {
-  const [selectedMusicCategory, setSelectedMusicCategory] = useState("All");
+  const [selectedMusicCategory, setSelectedMusicCategory] = useState("Music");
 
   // Music data queries
   const { data: albums = [], isLoading: albumsLoading } = useQuery<MusicAlbum[]>({
@@ -51,7 +51,7 @@ export default function Discovery() {
   });
 
   const isLoading = albumsLoading || tracksLoading || contentImportsLoading;
-  const musicCategories = ["All", "Music", "Podcasts"];
+  const musicCategories = ["Music", "Podcasts"];
 
   // Filter tracks for podcasts
   const podcastTracks = tracks.filter(track => track.genre?.toLowerCase().includes('podcast'));
