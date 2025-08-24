@@ -52,7 +52,17 @@ export default function Home() {
     }
   });
 
-  const isLoading = albumsLoading || tracksLoading || contentImportsLoading;
+  // Channels data
+  const { data: channels = [], isLoading: channelsLoading } = useQuery({
+    queryKey: ['/api/web3-channels'],
+    queryFn: async () => {
+      const response = await fetch('/api/web3-channels')
+      if (!response.ok) throw new Error('Failed to fetch channels')
+      return response.json()
+    }
+  });
+
+  const isLoading = albumsLoading || tracksLoading || contentImportsLoading || channelsLoading;
   const musicCategories = ["All", "Music", "Podcasts"];
 
   // Filter tracks for podcasts
@@ -362,11 +372,30 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-              ) : (
+              ) : channels.length === 0 ? (
                 <div className="text-center py-12">
                   <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <h3 className="text-lg font-semibold mb-2">No channels found</h3>
                   <p className="text-gray-400">Channels will appear here when available</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {channels.map((channel: Token) => (
+                    <div key={channel.id} className="group cursor-pointer">
+                      <div className="relative mb-2 md:mb-3">
+                        <img
+                          src={channel.avatarUrl || '/placeholder-avatar.png'}
+                          alt={channel.name}
+                          className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                          <Play className="w-8 h-8 md:w-12 md:h-12 text-green-500" fill="currentColor" />
+                        </div>
+                      </div>
+                      <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
+                      <p className="text-xs md:text-sm text-gray-400 truncate">{channel.symbol}</p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
