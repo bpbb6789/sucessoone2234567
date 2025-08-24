@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Edit, Share2, Wallet, Upload, FileText } from "lucide-react";
+import { Settings, Edit, Share2, Wallet, Upload, FileText, Radio } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import ShortsCard from "@/components/ShortsCard";
 import { useAccount, useBalance, useEnsName } from "wagmi";
@@ -173,7 +173,7 @@ export default function Profile() {
             {/* Content Management Dashboard */}
             <div className="mt-6 p-4 bg-muted/50 rounded-lg">
               <h3 className="text-lg font-semibold mb-4">Content Dashboard</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Button
                   variant="outline"
                   className="h-auto p-4 flex flex-col items-center gap-2"
@@ -194,6 +194,17 @@ export default function Profile() {
                   <div className="text-center">
                     <div className="font-medium">My Content</div>
                     <div className="text-xs text-muted-foreground">Manage imported content</div>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  onClick={() => window.location.href = '/subscriptions'}
+                >
+                  <Radio className="h-6 w-6" />
+                  <div className="text-center">
+                    <div className="font-medium">Subscriptions</div>
+                    <div className="text-xs text-muted-foreground">Manage your subscriptions</div>
                   </div>
                 </Button>
               </div>

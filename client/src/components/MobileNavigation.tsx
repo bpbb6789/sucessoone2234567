@@ -8,7 +8,6 @@ const navItems = [
   { icon: Home, label: "Channels", href: "/tokens" },
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
   { icon: PlusCircle, label: "Create", href: "/create-token" },
-  { icon: Radio, label: "Subscriptions", href: ROUTES.SUBSCRIPTIONS },
   { icon: Activity, label: "Activities", href: ROUTES.ACTIVITIES },
   { icon: User, label: "Profile", href: ROUTES.PROFILE },
 ];
