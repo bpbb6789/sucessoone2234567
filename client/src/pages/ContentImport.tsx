@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload, Link, FileImage, Video, Music, Calendar, FileText, Loader2, Trash2 } from 'lucide-react'
+import { Upload, Link, FileImage, Video, Music, Calendar, FileText, Loader2, Trash2, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -186,6 +186,116 @@ export default function ContentImport() {
       case 'failed': return 'Failed'
       default: return 'Unknown'
     }
+  }
+
+  // Content Preview Component
+  const ContentPreview = ({ file }: { file: any }) => {
+    const getIpfsUrl = (cid: string) => `https://gateway.pinata.cloud/ipfs/${cid}`
+
+    switch (file.contentType) {
+      case 'image':
+        if (file.thumbnailCid || file.mediaCid || file.ipfsCid) {
+          const imageCid = file.thumbnailCid || file.mediaCid || file.ipfsCid
+          return (
+            <div className="w-full h-20 bg-muted rounded overflow-hidden">
+              <img 
+                src={getIpfsUrl(imageCid)} 
+                alt={file.title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center"><FileImage class="w-6 h-6 text-muted-foreground" /></div>'
+                }}
+              />
+            </div>
+          )
+        }
+        break
+
+      case 'reel':
+        if (file.thumbnailCid || file.mediaCid) {
+          const videoCid = file.thumbnailCid || file.mediaCid
+          return (
+            <div className="w-full h-20 bg-muted rounded overflow-hidden relative">
+              {file.thumbnailCid ? (
+                <img 
+                  src={getIpfsUrl(file.thumbnailCid)} 
+                  alt={file.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <video 
+                  src={getIpfsUrl(videoCid)} 
+                  className="w-full h-full object-cover"
+                  muted
+                />
+              )}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Play className="w-6 h-6 text-white bg-black/50 rounded-full p-1" />
+              </div>
+            </div>
+          )
+        }
+        break
+
+      case 'podcast':
+        return (
+          <div className="w-full h-16 bg-muted rounded flex items-center justify-center p-3">
+            <div className="flex items-center gap-2 w-full">
+              <Music className="w-5 h-5 text-muted-foreground" />
+              <div className="flex-1">
+                <div className="flex gap-1">
+                  {[...Array(12)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className="w-1 bg-primary/30 rounded"
+                      style={{ height: `${Math.random() * 16 + 4}px` }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <Play className="w-4 h-4 text-muted-foreground" />
+            </div>
+          </div>
+        )
+
+      case 'post':
+        const excerpt = file.description || file.title || 'Text content'
+        return (
+          <div className="w-full p-3 bg-muted rounded">
+            <FileText className="w-4 h-4 text-muted-foreground mb-1" />
+            <p className="text-xs text-muted-foreground overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              {excerpt.slice(0, 80)}...
+            </p>
+          </div>
+        )
+
+      case 'event':
+        return (
+          <div className="w-full p-3 bg-muted rounded">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <p className="text-xs font-medium">{file.title}</p>
+                <p className="text-xs text-muted-foreground">Event Details</p>
+              </div>
+            </div>
+          </div>
+        )
+
+      default:
+        return (
+          <div className="w-full h-16 bg-muted rounded flex items-center justify-center">
+            <FileImage className="w-6 h-6 text-muted-foreground" />
+          </div>
+        )
+    }
+
+    return (
+      <div className="w-full h-16 bg-muted rounded flex items-center justify-center">
+        <FileImage className="w-6 h-6 text-muted-foreground" />
+      </div>
+    )
   }
 
   return (
@@ -406,11 +516,21 @@ export default function ContentImport() {
                   <div className="space-y-2 max-h-80 overflow-y-auto">
                     {contentImports.map((file) => (
                       <Card key={file.id} className="p-2">
-                        <div className="space-y-1">
+                        <div className="space-y-2">
+                          {/* Content Preview */}
+                          <ContentPreview file={file} />
+                          
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <h4 className="text-xs font-medium truncate">{file.title}</h4>
                               <p className="text-xs text-muted-foreground capitalize">{file.contentType}</p>
+                              {/* Coin Info */}
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="text-xs px-1 py-0">
+                                  ${file.coinSymbol}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">{file.coinName}</span>
+                              </div>
                             </div>
                             <Badge 
                               className={`text-xs ${getStatusColor(file.status)} text-white ml-1 px-1 py-0`}
