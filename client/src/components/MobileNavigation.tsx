@@ -25,7 +25,7 @@ export function MobileNavigation() {
       className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-youtube-dark border-t border-gray-200 dark:border-youtube-dark-secondary"
       data-testid="mobile-navigation"
     >
-      <div className="flex justify-around py-2">
+      <div className="flex justify-around py-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.href;
@@ -40,7 +40,6 @@ export function MobileNavigation() {
                 data-testid={`mobile-nav-${item.label.toLowerCase()}`}
               >
                 <Icon className="h-5 w-5" />
-                <span className="text-xs mt-1">{item.label}</span>
               </button>
             </Link>
           );
