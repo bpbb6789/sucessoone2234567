@@ -136,10 +136,10 @@ export function WalletConnectButton({
                     <button
                       onClick={openChainModal}
                       className={cn(
-                        "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80",
-                        size === "default" && "h-9 px-3 py-2",
+                        "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                        size === "default" && "h-9 px-2 py-2",
                         size === "sm" && "h-8 rounded-md px-2 text-xs",
-                        size === "lg" && "h-10 rounded-md px-4",
+                        size === "lg" && "h-10 rounded-md px-3",
                       )}
                       type="button"
                     >
@@ -151,7 +151,6 @@ export function WalletConnectButton({
                             height: 16,
                             borderRadius: 999,
                             overflow: "hidden",
-                            marginRight: 4,
                           }}
                         >
                           {chain.iconUrl && (
@@ -163,7 +162,6 @@ export function WalletConnectButton({
                           )}
                         </div>
                       )}
-                      {chain.name}
                     </button>
 
                     <DropdownMenu>
