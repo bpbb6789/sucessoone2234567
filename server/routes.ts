@@ -11,6 +11,12 @@ import {
   insertContentImportSchema
 } from "@shared/schema";
 import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
+import { contentImports } from "@shared/schema";
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
 
 // Helper function to handle database errors gracefully
 function handleDatabaseError(error: any, operation: string) {
@@ -35,11 +41,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ message: "No file provided" });
       }
-      
+
       const file = new File([req.file.buffer], req.file.originalname, {
         type: req.file.mimetype,
       });
-      
+
       const cid = await uploadFileToIPFS(file);
       res.json({ cid });
     } catch (error) {
@@ -733,11 +739,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/token-holders', async (req, res) => {
     try {
       const { tokenAddress } = req.body;
-      
+
       if (!tokenAddress) {
         return res.status(400).json({ error: true, message: 'Token address is required' });
       }
-      
+
       // Use GraphQL to get transaction data and count unique holders
       const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
         method: 'POST',
@@ -760,10 +766,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           variables: { tokenAddress }
         })
       });
-      
+
       const data = await response.json();
       const transfers = data.data?.transfers?.items || [];
-      
+
       // Count unique holders (exclude zero address)
       const holders = new Set();
       transfers.forEach((transfer: any) => {
@@ -771,7 +777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           holders.add(transfer.to.toLowerCase());
         }
       });
-      
+
       res.json({ holderCount: holders.size });
     } catch (error) {
       console.error('Error fetching holder count:', error);
@@ -783,11 +789,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/token-creation-time', async (req, res) => {
     try {
       const { tokenAddress } = req.body;
-      
+
       if (!tokenAddress) {
         return res.status(400).json({ error: true, message: 'Token address is required' });
       }
-      
+
       // Get creation time from GraphQL
       const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
         method: 'POST',
@@ -808,10 +814,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           variables: { tokenAddress }
         })
       });
-      
+
       const data = await response.json();
       const tokenData = data.data?.uniPumpCreatorSaless?.items?.[0];
-      
+
       if (tokenData?.blockTimestamp) {
         res.json({ creationTime: new Date(parseInt(tokenData.blockTimestamp) * 1000).toISOString() });
       } else {
@@ -831,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let baseSlug = req.body.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
       let slug = baseSlug;
       let counter = 1;
-      
+
       // Check if slug exists and increment until unique
       while (true) {
         try {
@@ -886,13 +892,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get wallet address from request headers or auth
       const walletAddress = req.headers['x-wallet-address'] as string;
-      
+
       if (!walletAddress) {
         return res.status(401).json({ message: "Wallet address required" });
       }
 
       const channel = await storage.getWeb3ChannelByOwner(walletAddress);
-      
+
       if (channel) {
         res.json({ 
           hasChannel: true, 
@@ -914,7 +920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!channelId) {
         return res.status(400).json({ message: "Channel ID is required" });
       }
-      
+
       const contents = await storage.getContentImportsByChannel(channelId);
       res.json(contents);
     } catch (error) {
@@ -973,13 +979,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Marketplace endpoint - get all tokenized content
   app.get("/api/marketplace", async (req, res) => {
     try {
-      const tokenizedContent = await db.select().from(contentImports)
-        .where(eq(contentImports.status, 'tokenized'))
-        .orderBy(desc(contentImports.tokenizedAt));
-      res.json(tokenizedContent);
+      // Get all content imports from database that are tokenized
+      const tokenizedContent = await prisma.contentImport.findMany({
+        where: {
+          status: 'tokenized'
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      })
+      res.json(tokenizedContent)
     } catch (error) {
-      console.error("Error fetching marketplace content:", error);
-      res.status(500).json({ message: "Failed to fetch marketplace content" });
+      console.error('Error fetching marketplace content:', error)
+      res.status(500).json({ message: 'Failed to fetch marketplace content' })
     }
   });
 
@@ -991,7 +1003,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { channelId, contentType, title, description, coinName, coinSymbol } = req.body;
-      
+
       if (!contentType || !title || !coinName || !coinSymbol) {
         return res.status(400).json({ message: "Missing required fields: contentType, title, coinName, coinSymbol" });
       }
@@ -1000,9 +1012,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const file = new File([req.file.buffer], req.file.originalname, {
         type: req.file.mimetype,
       });
-      
+
       const mediaCid = await uploadFileToIPFS(file);
-      
+
       // Create metadata JSON
       const metadata = {
         title,
@@ -1059,7 +1071,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const content = await storage.createContentImport(contentData);
-      
+
       // Auto-tokenize content after creation
       setTimeout(async () => {
         try {
@@ -1072,7 +1084,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateContentImport(content.id, { status: 'failed' });
         }
       }, 2000);
-      
+
       res.json({
         success: true,
         content,
@@ -1089,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/content-imports/import-url", async (req, res) => {
     try {
       const { url, channelId, contentType, title, description, coinName, coinSymbol } = req.body;
-      
+
       if (!url || !contentType || !title || !coinName || !coinSymbol) {
         return res.status(400).json({ message: "Missing required fields: url, contentType, title, coinName, coinSymbol" });
       }
@@ -1141,7 +1153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const content = await storage.createContentImport(contentData);
-      
+
       // Auto-tokenize content after creation
       setTimeout(async () => {
         try {
@@ -1154,7 +1166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateContentImport(content.id, { status: 'failed' });
         }
       }, 2000);
-      
+
       res.json({
         success: true,
         content,
