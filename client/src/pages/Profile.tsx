@@ -174,8 +174,8 @@ export default function Profile() {
             <div className="mt-6 p-4 bg-muted/50 rounded-lg">
               <h3 className="text-lg font-semibold mb-4">Content Dashboard</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="h-auto p-4 flex flex-col items-center gap-2"
                   onClick={() => window.location.href = '/dashboard/import'}
                 >
@@ -185,8 +185,8 @@ export default function Profile() {
                     <div className="text-xs text-muted-foreground">Upload and tokenize content</div>
                   </div>
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="h-auto p-4 flex flex-col items-center gap-2"
                   onClick={() => window.location.href = '/dashboard/content'}
                 >
