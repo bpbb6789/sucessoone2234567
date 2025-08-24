@@ -6,7 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { type ShortsWithChannel, type VideoWithChannel } from "@shared/schema";
 import { formatViewCount } from "@/lib/constants";
 
-const SHORTS_CATEGORIES = ["For you", "Following", "Channels", "Reels", "Music", "Podcasts"];
+const SHORTS_CATEGORIES = ["Channels", "Reels", "Music", "Podcasts"];
 import { ThumbsUp, ThumbsDown, MessageCircle, Share, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 export default function Shorts() {
   const isMobile = useIsMobile();
   const [, setLocation] = useLocation();
-  const [selectedCategory, setSelectedCategory] = useState<string>("For you");
+  const [selectedCategory, setSelectedCategory] = useState<string>("Channels");
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
@@ -36,12 +36,10 @@ export default function Shorts() {
   });
   
   // Filter shorts based on selected category
-  const shorts = selectedCategory === "For you" || selectedCategory === "Following" 
-    ? allShorts 
-    : allShorts.filter(short => 
-        short.category?.toLowerCase() === selectedCategory.toLowerCase() ||
-        short.hashtags?.some(tag => tag.toLowerCase().includes(selectedCategory.toLowerCase()))
-      );
+  const shorts = allShorts.filter(short => 
+    short.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+    short.hashtags?.some(tag => tag.toLowerCase().includes(selectedCategory.toLowerCase()))
+  );
 
   const isLoading = selectedCategory === "Music" ? (albumsLoading || tracksLoading) : shortsLoading;
   const error = shortsError;
