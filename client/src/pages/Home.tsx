@@ -116,15 +116,15 @@ export default function Home() {
   return (
     <div className="min-h-screen text-white dark:text-white text-gray-900 dark:text-white" data-testid="page-home">
       <div className="p-4 md:p-6">
-        <Tabs defaultValue="tokens" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50">
+        <Tabs defaultValue="channel" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50">
             <TabsTrigger 
-              value="tokens" 
+              value="channel" 
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
-              data-testid="tab-tokens"
+              data-testid="tab-channel"
             >
-              <Coins className="w-4 h-4" />
-              <span>Tokens</span>
+              <Play className="w-4 h-4" />
+              <span>Channels</span>
             </TabsTrigger>
             <TabsTrigger 
               value="music" 
@@ -141,14 +141,6 @@ export default function Home() {
             >
               <Radio className="w-4 h-4" />
               <span>Podcasts</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="channel" 
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
-              data-testid="tab-channel"
-            >
-              <Play className="w-4 h-4" />
-              <span>Channel</span>
             </TabsTrigger>
             <TabsTrigger 
               value="reels" 
