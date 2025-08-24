@@ -97,20 +97,6 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
-                data-testid="button-search-mobile"
-                asChild
-              >
-                <Link href={ROUTES.SEARCH}>
-                  <div>
-                    <Search className="h-4 w-4" />
-                  </div>
-                </Link>
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
                 data-testid="button-notifications-mobile"
                 asChild
               >
