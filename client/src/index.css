@@ -82,64 +82,93 @@
 html.dark,
 html.dark body,
 .dark {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(0, 0%, 98%) !important;
+  background-color: hsl(0, 0%, 5.9%) !important;
 }
 
-html.dark *:not(.text-primary):not(.text-secondary):not(.text-muted):not(.text-accent):not(.text-destructive):not([class*="text-"]),
-.dark *:not(.text-primary):not(.text-secondary):not(.text-muted):not(.text-accent):not(.text-destructive):not([class*="text-"]) {
-  color: hsl(var(--foreground)) !important;
+/* Global dark mode text color override */
+html.dark *,
+.dark * {
+  color: hsl(0, 0%, 98%) !important;
 }
 
+/* Specific element overrides for dark mode */
 html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6,
 .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(0, 0%, 98%) !important;
 }
 
-html.dark p, html.dark span, html.dark div, html.dark button, html.dark label,
-.dark p, .dark span, .dark div, .dark button, .dark label {
-  color: hsl(var(--foreground)) !important;
+html.dark p, html.dark span, html.dark div, html.dark button, html.dark label, html.dark a, html.dark li,
+.dark p, .dark span, .dark div, .dark button, .dark label, .dark a, .dark li {
+  color: hsl(0, 0%, 98%) !important;
+}
+
+/* Input and form elements in dark mode */
+html.dark input, html.dark textarea, html.dark select,
+.dark input, .dark textarea, .dark select {
+  color: hsl(0, 0%, 98%) !important;
+  background-color: hsl(0, 0%, 12.9%) !important;
 }
 
 /* Override specific text color classes in dark mode */
 html.dark .text-gray-900,
 .dark .text-gray-900 {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(0, 0%, 98%) !important;
 }
 
 html.dark .text-gray-800,
 .dark .text-gray-800 {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(0, 0%, 98%) !important;
 }
 
 html.dark .text-gray-700,
 .dark .text-gray-700 {
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(240, 5%, 64.9%) !important;
 }
 
 html.dark .text-gray-600,
 .dark .text-gray-600 {
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(240, 5%, 64.9%) !important;
 }
 
 html.dark .text-gray-500,
 .dark .text-gray-500 {
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(240, 5%, 64.9%) !important;
 }
 
 html.dark .text-gray-400,
 .dark .text-gray-400 {
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(240, 5%, 64.9%) !important;
 }
 
 html.dark .text-black,
 .dark .text-black {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(0, 0%, 98%) !important;
 }
 
 /* Ensure muted text shows properly */
 html.dark .text-muted-foreground,
 .dark .text-muted-foreground {
-  color: hsl(var(--muted-foreground)) !important;
+  color: hsl(240, 5%, 64.9%) !important;
+}
+
+/* Additional dark mode overrides for common patterns */
+html.dark [class*="text-"],
+.dark [class*="text-"] {
+  color: hsl(0, 0%, 98%) !important;
+}
+
+html.dark .text-white,
+.dark .text-white {
+  color: hsl(0, 0%, 98%) !important;
+}
+
+/* Ensure cards and containers have proper text color */
+html.dark .card,
+html.dark .bg-card,
+.dark .card,
+.dark .bg-card {
+  color: hsl(0, 0%, 98%) !important;
 }
 
 @layer base {
