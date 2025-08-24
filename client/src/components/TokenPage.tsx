@@ -9,10 +9,8 @@ import { Address } from '@coinbase/onchainkit/identity';
 import Big from 'big.js';
 import { formatUnits } from 'viem';
 import { useReadContract } from 'wagmi';
-import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import Script from 'next/script';
+import { useSearch } from 'wouter';
 import { TradingViewChartMain } from '@/components/TradingViewChart';
 import useGetAllSales from '@/hooks/useGetAllSales';
 import { ChartingLibraryWidgetOptions, ResolutionString } from '@/public/static/charting_library/charting_library';
@@ -30,8 +28,8 @@ const defaultWidgetProps: Partial<ChartingLibraryWidgetOptions> = {
 };
 
 const TokenPageComp = () => {
-  const [isScriptReady, setIsScriptReady] = useState(false);
-  const searchParams = useSearchParams();
+  const search = useSearch();
+  const searchParams = new URLSearchParams(search);
   const tokenAddress = searchParams.get('address') as `0x${string}` | null;
 
   if (!tokenAddress) {
@@ -81,8 +79,8 @@ const TokenPageComp = () => {
             {/* Placeholder for chart */}
             <div className="h-96 bg-gray-700 rounded-lg flex items-center justify-center">
               {tokenAddress === "0x0f1aa5058a58e56d99365fbab232bef578a0ad2d" ? 
-                <Image src={"/images/tv.jpeg"} alt="pump" layout='fill' /> :
-                isScriptReady && <TradingViewChartMain {...defaultWidgetProps} symbol={tokenData.symbol} />
+                <img src={"/images/tv.jpeg"} alt="pump" className="w-full h-full object-cover" /> :
+                <TradingViewChartMain {...defaultWidgetProps} symbol={tokenData.symbol} />
               }
             </div>
           </div>

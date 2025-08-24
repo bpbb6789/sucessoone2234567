@@ -8,7 +8,7 @@ import { Search, TrendingUp, DollarSign, Users, BarChart3, Coins, ExternalLink }
 import { useGetAllSales } from '@/hooks/useGetAllSales';
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from 'react-router-dom';
+import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 
 interface Token {
