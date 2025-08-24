@@ -198,7 +198,6 @@ export default function Profile() {
                 </Button>
               </div>
             </div>
-            </div>
           </div>
         </div>
       </div>
