@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Heart, MoreHorizontal, Shuffle, SkipBack, SkipForward, Volume2, ArrowLeft, Plus, Share } from "lucide-react";
@@ -26,7 +25,7 @@ export default function Music() {
     currentTime: 0,
     duration: 0,
   });
-  
+
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const { data: albums = [], isLoading: albumsLoading } = useQuery<MusicAlbum[]>({
@@ -95,7 +94,7 @@ export default function Music() {
       duration: track.duration,
     });
     setViewState({ view: 'nowplaying' });
-    
+
     // Set audio source - using a demo audio file since the track doesn't have real audio URLs
     if (audioRef.current) {
       audioRef.current.src = track.audioUrl || "https://www.soundjay.com/misc/sounds/cash-register-02.mp3";
@@ -216,7 +215,7 @@ export default function Music() {
               <p className="text-gray-400 mb-4 md:mb-6">
                 {viewState.selectedAlbum.releaseYear} • {viewState.selectedAlbum.trackCount} tracks
               </p>
-              
+
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 md:gap-4">
                 <button 
@@ -247,7 +246,7 @@ export default function Music() {
               <div className="col-span-2">DATE ADDED</div>
               <div className="col-span-1">TIME</div>
             </div>
-            
+
             {isLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -344,7 +343,7 @@ export default function Music() {
     <div className="min-h-screen bg-gradient-to-b from-purple-900/20 to-black text-white" data-testid="page-music">
       {/* Hidden Audio Element */}
       <audio ref={audioRef} preload="metadata" />
-      
+
       {/* Header */}
       <div className="p-4 md:p-6">
         <div className="flex items-center space-x-2 md:space-x-4 mb-6 md:mb-8 overflow-x-auto">
