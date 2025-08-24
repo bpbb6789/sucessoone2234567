@@ -46,29 +46,8 @@ export default function Shorts() {
     // Mobile vertical feed with category tabs
     return (
       <div className="shorts-container" data-testid="page-shorts-mobile">
-        {/* Category Tabs */}
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <div className="flex space-x-4 px-4 py-3 overflow-x-auto scrollbar-hide">
-            {SHORTS_CATEGORIES.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={cn(
-                  "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
-                  selectedCategory === category
-                    ? "bg-white text-black"
-                    : "bg-transparent text-white hover:bg-white/20"
-                )}
-                data-testid={`shorts-category-${category.toLowerCase().replace(' ', '-')}`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Shorts Content */}
-        <div className="pt-16">
+        {/* Shorts Content - Full Screen */}
+        <div className="relative">
           {shorts.length === 0 && !isLoading ? (
             <div className="flex items-center justify-center min-h-screen text-white">
               <div className="text-center">
@@ -79,6 +58,28 @@ export default function Shorts() {
           ) : (
             shorts.map((short, index) => (
           <div key={short.id} className="shorts-video relative bg-black flex items-center justify-center">
+            {/* Category Tabs Overlay - Only on first video */}
+            {index === 0 && (
+              <div className="absolute top-4 left-0 right-0 z-40">
+                <div className="flex space-x-3 px-4 overflow-x-auto scrollbar-hide">
+                  {SHORTS_CATEGORIES.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={cn(
+                        "flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+                        selectedCategory === category
+                          ? "bg-white text-black"
+                          : "bg-black/30 text-white hover:bg-black/50"
+                      )}
+                      data-testid={`shorts-category-${category.toLowerCase().replace(' ', '-')}`}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <img
               src={short.thumbnailUrl}
               alt={short.title}
