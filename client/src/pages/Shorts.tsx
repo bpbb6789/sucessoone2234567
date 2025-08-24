@@ -47,7 +47,7 @@ export default function Shorts() {
     return (
       <div className="shorts-container" data-testid="page-shorts-mobile">
         {/* Category Tabs */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm">
+        <div className="fixed top-0 left-0 right-0 z-50">
           <div className="flex space-x-4 px-4 py-3 overflow-x-auto scrollbar-hide">
             {SHORTS_CATEGORIES.map((category) => (
               <button
