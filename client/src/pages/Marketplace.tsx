@@ -165,9 +165,11 @@ export default function Marketplace() {
                           {content.contentType}
                         </Badge>
                       </div>
-                      <Badge className="bg-green-500 text-white text-xs px-2 py-1">
-                        NFT
-                      </Badge>
+                      <div className="flex gap-1">
+                        <Badge className="bg-green-500 text-white text-xs px-2 py-1">
+                          Content Coin
+                        </Badge>
+                      </div>
                     </div>
                     
                     <Link to={`/content/${content.id}`}>

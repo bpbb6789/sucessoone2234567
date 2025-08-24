@@ -9,6 +9,7 @@ import { useGetAllSales } from '@/hooks/useGetAllSales';
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 
 interface Token {
   id: string;
@@ -22,10 +23,15 @@ interface Token {
   createdAt: Date;
   description?: string;
   address: string;
+  // Token type
+  tokenType: 'channel' | 'content';
   // Channel-specific data
   slug?: string;
   avatarUrl?: string;
   coverUrl?: string;
+  // Content-specific data
+  contentType?: string;
+  originalUrl?: string;
   hasTokenData?: boolean;
   tokenDataLoading?: boolean;
 }
@@ -54,99 +60,118 @@ export default function Tokens() {
   // Get channels from database (fast)
   const { data: channelsData, isLoading: channelsLoading, error: channelsError } = useGetAllChannels();
 
+  // Get content imports (content coins)
+  const { data: contentImportsData, isLoading: contentImportsLoading } = useQuery({
+    queryKey: ['/api/marketplace'],
+    queryFn: async () => {
+      const response = await fetch('/api/marketplace')
+      if (!response.ok) throw new Error('Failed to fetch content imports')
+      return response.json()
+    }
+  });
+
   // Get token sales data from GraphQL (slower)
   const { data: salesData, loading: salesLoading, error: salesError } = useGetAllSales();
 
   useEffect(() => {
     const processData = () => {
-      // Start with channels data (fast, always show these)
+      let allTokens: Token[] = [];
+
+      // Process channel tokens
       if (channelsData && channelsData.length > 0) {
-        const channelTokens: Token[] = channelsData.map((channel) => ({
-          id: channel.coinAddress || channel.id,
-          address: channel.coinAddress,
-          name: channel.name,
-          symbol: `$${channel.name.toUpperCase()}`, // Default symbol from name
-          description: channel.description,
-          createdAt: new Date(channel.createdAt),
-          // Channel-specific data
-          slug: channel.slug,
-          avatarUrl: channel.avatarUrl,
-          coverUrl: channel.coverUrl,
-          // Default token data (will be updated when GraphQL loads)
-          price: '0.000001',
-          marketCap: '0',
-          volume24h: '0',
-          holders: 0,
-          change24h: 0,
-          hasTokenData: false,
-          tokenDataLoading: true
-        }));
+        const channelTokens: Token[] = channelsData
+          .filter(channel => channel.coinAddress) // Only include channels with token addresses
+          .map((channel) => ({
+            id: channel.coinAddress || channel.id,
+            address: channel.coinAddress,
+            name: channel.name,
+            symbol: `$${channel.name.toUpperCase()}`,
+            description: channel.description,
+            createdAt: new Date(channel.createdAt),
+            tokenType: 'channel' as const,
+            // Channel-specific data
+            slug: channel.slug,
+            avatarUrl: channel.avatarUrl,
+            coverUrl: channel.coverUrl,
+            // Default token data
+            price: '0.000001',
+            marketCap: '0',
+            volume24h: '0',
+            holders: 0,
+            change24h: 0,
+            hasTokenData: false,
+            tokenDataLoading: true
+          }));
 
-        // If we have GraphQL data, merge it with channel data
-        if (salesData?.uniPumpCreatorSaless?.items) {
-          const graphQLTokens = salesData.uniPumpCreatorSaless.items;
-          const mergedTokens = channelTokens.map((channelToken) => {
-            // Find matching token in GraphQL data by address
-            const matchingToken = graphQLTokens.find((gqlToken: any) => 
-              gqlToken.memeTokenAddress?.toLowerCase() === channelToken.address?.toLowerCase()
-            );
+        allTokens = [...allTokens, ...channelTokens];
+      }
 
-            if (matchingToken) {
-              return {
-                ...channelToken,
-                symbol: matchingToken.symbol || channelToken.symbol,
-                price: matchingToken.price || '0.000001',
-                marketCap: matchingToken.marketCap || '0',
-                volume24h: matchingToken.volume24h || '0',
-                holders: matchingToken.holders || 0,
-                change24h: matchingToken.priceChange24h || 0,
-                hasTokenData: true,
-                tokenDataLoading: false
-              };
-            }
-
-            return {
-              ...channelToken,
-              tokenDataLoading: !salesLoading // Stop loading if GraphQL is done
-            };
-          });
-
-          setTokens(mergedTokens);
-        } else {
-          // Just show channels without token data
-          setTokens(channelTokens);
-        }
-
-        setIsLoading(false);
-      } else if (!channelsLoading && (!channelsData || channelsData.length === 0)) {
-        // No channels, fall back to GraphQL only if available
-        if (salesData?.uniPumpCreatorSaless?.items && !salesLoading) {
-          const graphQLTokens: Token[] = salesData.uniPumpCreatorSaless.items.map((token: any) => ({
-            id: token.memeTokenAddress,
-            address: token.memeTokenAddress,
-            name: token.name || `Token ${token.memeTokenAddress?.slice(0, 8)}`,
-            symbol: token.symbol || 'TKN',
-            price: token.price || '0.000001',
-            marketCap: token.marketCap || '0',
-            volume24h: token.volume24h || '0',
-            holders: token.holders || 0,
-            change24h: token.priceChange24h || 0,
-            createdAt: token.createdAt || new Date(),
-            description: token.bio || 'No description available',
-            hasTokenData: true,
+      // Process content tokens
+      if (contentImportsData && contentImportsData.length > 0) {
+        const contentTokens: Token[] = contentImportsData
+          .filter((content: any) => content.status === 'tokenized' && content.coinAddress)
+          .map((content: any) => ({
+            id: content.coinAddress || content.id,
+            address: content.coinAddress,
+            name: content.coinName || content.title,
+            symbol: content.coinSymbol || 'CONTENT',
+            description: content.description,
+            createdAt: new Date(content.createdAt || content.tokenizedAt),
+            tokenType: 'content' as const,
+            // Content-specific data
+            contentType: content.contentType,
+            originalUrl: content.originalUrl,
+            // Default token data
+            price: content.currentPrice || '0.000001',
+            marketCap: content.marketCap || '0',
+            volume24h: '0',
+            holders: content.holders || 0,
+            change24h: 0,
+            hasTokenData: !!content.coinAddress,
             tokenDataLoading: false
           }));
-          setTokens(graphQLTokens);
-        }
-        setIsLoading(false);
+
+        allTokens = [...allTokens, ...contentTokens];
       }
+
+        // Merge with GraphQL data if available
+      if (salesData?.uniPumpCreatorSaless?.items) {
+        const graphQLTokens = salesData.uniPumpCreatorSaless.items;
+        allTokens = allTokens.map((token) => {
+          const matchingToken = graphQLTokens.find((gqlToken: any) => 
+            gqlToken.memeTokenAddress?.toLowerCase() === token.address?.toLowerCase()
+          );
+
+          if (matchingToken) {
+            return {
+              ...token,
+              symbol: matchingToken.symbol || token.symbol,
+              price: matchingToken.price || token.price,
+              marketCap: matchingToken.marketCap || token.marketCap,
+              volume24h: matchingToken.volume24h || '0',
+              holders: matchingToken.holders || token.holders,
+              change24h: matchingToken.priceChange24h || 0,
+              hasTokenData: true,
+              tokenDataLoading: false
+            };
+          }
+
+          return {
+            ...token,
+            tokenDataLoading: !salesLoading
+          };
+        });
+      }
+
+      setTokens(allTokens);
+      setIsLoading(channelsLoading && contentImportsLoading);
     };
 
     processData();
   }, [channelsData, channelsLoading, salesData, salesLoading]);
 
   // If initial loading and no data, show skeleton
-  if (isLoading && channelsLoading) {
+  if (isLoading && (channelsLoading || contentImportsLoading)) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="space-y-6">
@@ -204,13 +229,27 @@ export default function Tokens() {
   }
 
   const filteredTokens = tokens
-    .filter(token => 
-      token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(token => {
+      // Search filter
+      const matchesSearch = token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        token.symbol.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Type filter
+      const matchesType = selectedCategory === 'all' || 
+        selectedCategory === token.tokenType ||
+        (selectedCategory !== 'channels' && selectedCategory !== 'content');
+
+      return matchesSearch && matchesType;
+    })
     .sort((a, b) => {
-      // Placeholder for sorting logic, currently defaulting to newest
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      switch (selectedCategory) {
+        case 'marketCap':
+          return parseFloat(b.marketCap) - parseFloat(a.marketCap);
+        case 'volume':
+          return parseFloat(b.volume24h) - parseFloat(a.volume24h);
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
     });
 
   // Calculate totals
@@ -225,9 +264,9 @@ export default function Tokens() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Channels</h1>
+            <h1 className="text-3xl font-bold">All Tokens</h1>
             <p className="text-muted-foreground">
-              Browse and trade tokens created on TubeClone
+              Browse channel coins and content coins created on TubeClone
             </p>
           </div>
           <Link to="/create-token">
@@ -302,13 +341,13 @@ export default function Tokens() {
 
         {/* Tokens List */}
         <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="channels">Channels</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="newest">Newest</TabsTrigger>
             <TabsTrigger value="marketCap">Market Cap</TabsTrigger>
             <TabsTrigger value="volume">Volume</TabsTrigger>
-            <TabsTrigger value="gainers">Top Gainers</TabsTrigger>
-            <TabsTrigger value="losers">Top Losers</TabsTrigger>
           </TabsList>
 
           <TabsContent value={selectedCategory} className="space-y-4">
@@ -333,7 +372,7 @@ export default function Tokens() {
                       {/* Header Row */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          {/* Channel Avatar */}
+                          {/* Token Avatar */}
                           {token.avatarUrl ? (
                             <div className="w-10 h-10 rounded-lg overflow-hidden">
                               <img 
@@ -343,7 +382,7 @@ export default function Tokens() {
                               />
                             </div>
                           ) : (
-                            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                            <div className={`w-10 h-10 ${token.tokenType === 'channel' ? 'bg-gradient-to-br from-blue-500 to-purple-500' : 'bg-gradient-to-br from-green-500 to-teal-500'} rounded-lg flex items-center justify-center text-white font-bold text-sm`}>
                               {token.symbol.replace('$', '').charAt(0)}
                             </div>
                           )}
@@ -351,9 +390,18 @@ export default function Tokens() {
                             <div className="flex items-center gap-2">
                               <h3 className="text-gray-900 dark:text-white font-semibold text-sm">{token.name}</h3>
                               <span className="text-gray-500 dark:text-gray-400 text-xs">{token.symbol.replace('$', '')}</span>
+                              <Badge 
+                                variant={token.tokenType === 'channel' ? 'default' : 'secondary'} 
+                                className={`text-xs px-2 py-0 ${token.tokenType === 'channel' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}`}
+                              >
+                                {token.tokenType === 'channel' ? '📺 Channel' : '📄 Content'}
+                              </Badge>
                             </div>
-                            <div className="text-gray-500 dark:text-gray-500 text-xs">
-                              {formatTimeAgo(token.createdAt)}
+                            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500 text-xs">
+                              <span>{formatTimeAgo(token.createdAt)}</span>
+                              {token.contentType && (
+                                <span className="capitalize">• {token.contentType}</span>
+                              )}
                             </div>
                           </div>
                         </div>
