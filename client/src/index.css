@@ -171,6 +171,16 @@ html.dark .bg-card,
   color: hsl(0, 0%, 98%) !important;
 }
 
+/* Hide scrollbar on sidebar while maintaining scroll functionality */
+nav[data-testid="sidebar"] {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+nav[data-testid="sidebar"]::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
 @layer base {
   * {
     @apply border-border;
