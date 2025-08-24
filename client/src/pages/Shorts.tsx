@@ -18,10 +18,6 @@ export default function Shorts() {
   const [selectedCategory, setSelectedCategory] = useState<string>("For you");
 
   const handleCategorySelect = (category: string) => {
-    if (category === "Music" && isMobile) {
-      setLocation("/music");
-      return;
-    }
     setSelectedCategory(category);
   };
   
@@ -29,8 +25,13 @@ export default function Shorts() {
     queryKey: ["/api/shorts"],
   });
 
-  const { data: musicVideos = [], isLoading: musicLoading } = useQuery<VideoWithChannel[]>({
-    queryKey: ["/api/videos", "Music"],
+  const { data: musicAlbums = [], isLoading: albumsLoading } = useQuery<any[]>({
+    queryKey: ["/api/music/albums"],
+    enabled: selectedCategory === "Music",
+  });
+
+  const { data: musicTracks = [], isLoading: tracksLoading } = useQuery<any[]>({
+    queryKey: ["/api/music/tracks"],
     enabled: selectedCategory === "Music",
   });
   
@@ -42,7 +43,7 @@ export default function Shorts() {
         short.hashtags?.some(tag => tag.toLowerCase().includes(selectedCategory.toLowerCase()))
       );
 
-  const isLoading = selectedCategory === "Music" ? musicLoading : shortsLoading;
+  const isLoading = selectedCategory === "Music" ? (albumsLoading || tracksLoading) : shortsLoading;
   const error = shortsError;
 
   const handleAvatarClick = (e: React.MouseEvent, channelId: string) => {
@@ -89,27 +90,117 @@ export default function Shorts() {
         {/* Content - Full Screen */}
         <div className="relative">
           {selectedCategory === "Music" ? (
-            // Music Videos Grid
-            musicVideos.length === 0 && !isLoading ? (
-              <div className="flex items-center justify-center min-h-screen text-white">
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold mb-2">No music videos</h2>
-                  <p className="text-gray-300">No music content available</p>
+            // Music Content
+            <div className="pt-20 px-4 min-h-screen bg-gradient-to-b from-purple-900/20 to-black text-white">
+              {isLoading ? (
+                <div className="space-y-8">
+                  {/* Albums skeleton */}
+                  <div>
+                    <div className="h-6 bg-gray-700 rounded w-48 mb-4"></div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="bg-gray-700 rounded-lg aspect-square mb-3"></div>
+                          <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Tracks skeleton */}
+                  <div>
+                    <div className="h-6 bg-gray-700 rounded w-48 mb-4"></div>
+                    <div className="space-y-3">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="flex items-center space-x-4 animate-pulse">
+                          <div className="w-12 h-12 bg-gray-700 rounded"></div>
+                          <div className="flex-1">
+                            <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                            <div className="h-3 bg-gray-700 rounded w-1/2"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 pt-20">
-                {musicVideos.map((video) => (
-                  <VideoCard
-                    key={video.id}
-                    video={video}
-                    onClick={() => {
-                      console.log("Music video clicked:", video.id);
-                    }}
-                  />
-                ))}
-              </div>
-            )
+              ) : (
+                <div className="space-y-8">
+                  {/* Featured Albums */}
+                  {musicAlbums.length > 0 && (
+                    <div>
+                      <h2 className="text-xl font-bold mb-4">Featured Albums</h2>
+                      <div className="grid grid-cols-2 gap-4">
+                        {musicAlbums.slice(0, 4).map((album) => (
+                          <div key={album.id} className="group cursor-pointer">
+                            <div className="relative mb-3">
+                              <img
+                                src={album.coverUrl}
+                                alt={album.title}
+                                className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                              />
+                            </div>
+                            <h3 className="text-sm font-bold mb-1 truncate">
+                              {album.title}
+                            </h3>
+                            <p className="text-xs text-gray-400 truncate">
+                              {album.artist}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {album.releaseYear} • {album.trackCount} tracks
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fresh Tracks */}
+                  {musicTracks.length > 0 && (
+                    <div>
+                      <h2 className="text-xl font-bold mb-4">Fresh Tracks</h2>
+                      <div className="space-y-2">
+                        {musicTracks.slice(0, 8).map((track, index) => (
+                          <div
+                            key={track.id}
+                            className="flex items-center space-x-4 p-2 rounded-lg hover:bg-white/10 group cursor-pointer"
+                          >
+                            <div className="w-6 text-gray-400 text-sm font-medium">
+                              {index + 1}
+                            </div>
+                            <img
+                              src={track.coverUrl}
+                              alt={track.title}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-medium truncate">
+                                {track.title}
+                              </h3>
+                              <p className="text-xs text-gray-400 truncate">
+                                {track.artist}
+                              </p>
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Empty state */}
+                  {musicAlbums.length === 0 && musicTracks.length === 0 && (
+                    <div className="flex items-center justify-center min-h-[50vh] text-center">
+                      <div>
+                        <h2 className="text-xl font-semibold mb-2">No music content</h2>
+                        <p className="text-gray-300">No albums or tracks available</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
             // Shorts Content
             shorts.length === 0 && !isLoading ? (
