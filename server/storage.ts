@@ -519,6 +519,7 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: new Date(),
       description: insertShorts.description ?? null,
+      category: insertShorts.category ?? null,
       viewCount: insertShorts.viewCount ?? 0,
       likeCount: insertShorts.likeCount ?? 0,
       dislikeCount: insertShorts.dislikeCount ?? 0,
@@ -1221,7 +1222,7 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Use database storage instead of memory storage
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
 
 // Keep MemStorage for reference but don't export as default
 // export { MemStorage };
