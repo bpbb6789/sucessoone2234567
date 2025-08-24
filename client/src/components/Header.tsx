@@ -107,6 +107,20 @@ export function Header() {
                 </Link>
               </Button>
 
+              <Button
+                variant="ghost"
+                size="icon"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
+                data-testid="button-notifications-mobile"
+                asChild
+              >
+                <Link href={ROUTES.NOTIFICATIONS}>
+                  <div>
+                    <Bell className="h-4 w-4" />
+                  </div>
+                </Link>
+              </Button>
+
               {/* Mobile Wallet Connect Button */}
               <WalletConnectButton variant="ghost" size="sm" className="flex" />
             </>
