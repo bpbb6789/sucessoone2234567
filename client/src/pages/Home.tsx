@@ -169,37 +169,75 @@ export default function Home() {
               <div>
                 <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Jump back in</h2>
                 {isLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2 md:mb-3"></div>
-                        <div className="h-3 md:h-4 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded mb-1 md:mb-2"></div>
-                        <div className="h-2 md:h-3 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
-                      </div>
-                    ))}
+                  <div>
+                    <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2 md:mb-3"></div>
+                          <div className="h-3 md:h-4 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded mb-1 md:mb-2"></div>
+                          <div className="h-2 md:h-3 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="flex-shrink-0 w-24 animate-pulse">
+                          <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2"></div>
+                          <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-1"></div>
+                          <div className="h-2 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-2/3"></div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-                    {albums.slice(0, 6).map((album) => (
-                      <div
-                        key={album.id}
-                        className="group cursor-pointer"
-                        data-testid={`jump-back-album-${album.id}`}
-                      >
-                        <div className="relative mb-2 md:mb-3">
-                          <img
-                            src={album.coverUrl}
-                            alt={album.title}
-                            className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                            <Play className="w-8 h-8 md:w-12 md:h-12 text-green-500" fill="currentColor" />
+                  <div>
+                    {/* Desktop Grid */}
+                    <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
+                      {albums.slice(0, 6).map((album) => (
+                        <div
+                          key={album.id}
+                          className="group cursor-pointer"
+                          data-testid={`jump-back-album-${album.id}`}
+                        >
+                          <div className="relative mb-2 md:mb-3">
+                            <img
+                              src={album.coverUrl}
+                              alt={album.title}
+                              className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                              <Play className="w-8 h-8 md:w-12 md:h-12 text-green-500" fill="currentColor" />
+                            </div>
                           </div>
+                          <h3 className="font-medium text-sm md:text-base mb-1 truncate">{album.title}</h3>
+                          <p className="text-xs md:text-sm text-gray-400 truncate">{album.artist}</p>
                         </div>
-                        <h3 className="font-medium text-sm md:text-base mb-1 truncate">{album.title}</h3>
-                        <p className="text-xs md:text-sm text-gray-400 truncate">{album.artist}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    
+                    {/* Mobile Horizontal Scroll */}
+                    <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
+                      {albums.slice(0, 8).map((album) => (
+                        <div
+                          key={album.id}
+                          className="flex-shrink-0 w-24 group cursor-pointer"
+                          data-testid={`jump-back-album-${album.id}`}
+                        >
+                          <div className="relative mb-2">
+                            <img
+                              src={album.coverUrl}
+                              alt={album.title}
+                              className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                              <Play className="w-6 h-6 text-green-500" fill="currentColor" />
+                            </div>
+                          </div>
+                          <h3 className="font-medium text-xs mb-1 truncate">{album.title}</h3>
+                          <p className="text-xs text-gray-400 truncate">{album.artist}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -208,37 +246,75 @@ export default function Home() {
               <div>
                 <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">More of what you like</h2>
                 {isLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2 md:mb-3"></div>
-                        <div className="h-3 md:h-4 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded mb-1 md:mb-2"></div>
-                        <div className="h-2 md:h-3 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
-                      </div>
-                    ))}
+                  <div>
+                    <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2 md:mb-3"></div>
+                          <div className="h-3 md:h-4 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded mb-1 md:mb-2"></div>
+                          <div className="h-2 md:h-3 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="flex-shrink-0 w-24 animate-pulse">
+                          <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2"></div>
+                          <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-1"></div>
+                          <div className="h-2 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-2/3"></div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-                    {albums.slice(2, 8).map((album) => (
-                      <div
-                        key={album.id}
-                        className="group cursor-pointer"
-                        data-testid={`more-like-album-${album.id}`}
-                      >
-                        <div className="relative mb-2 md:mb-3">
-                          <img
-                            src={album.coverUrl}
-                            alt={album.title}
-                            className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
-                          />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                            <Play className="w-8 h-8 md:w-12 md:h-12 text-green-500" fill="currentColor" />
+                  <div>
+                    {/* Desktop Grid */}
+                    <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
+                      {albums.slice(2, 8).map((album) => (
+                        <div
+                          key={album.id}
+                          className="group cursor-pointer"
+                          data-testid={`more-like-album-${album.id}`}
+                        >
+                          <div className="relative mb-2 md:mb-3">
+                            <img
+                              src={album.coverUrl}
+                              alt={album.title}
+                              className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                              <Play className="w-8 h-8 md:w-12 md:h-12 text-green-500" fill="currentColor" />
+                            </div>
                           </div>
+                          <h3 className="font-medium text-sm md:text-base mb-1 truncate">{album.title}</h3>
+                          <p className="text-xs md:text-sm text-gray-400 truncate">{album.artist}</p>
                         </div>
-                        <h3 className="font-medium text-sm md:text-base mb-1 truncate">{album.title}</h3>
-                        <p className="text-xs md:text-sm text-gray-400 truncate">{album.artist}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    
+                    {/* Mobile Horizontal Scroll */}
+                    <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
+                      {albums.slice(2, 10).map((album) => (
+                        <div
+                          key={album.id}
+                          className="flex-shrink-0 w-24 group cursor-pointer"
+                          data-testid={`more-like-album-${album.id}`}
+                        >
+                          <div className="relative mb-2">
+                            <img
+                              src={album.coverUrl}
+                              alt={album.title}
+                              className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                              <Play className="w-6 h-6 text-green-500" fill="currentColor" />
+                            </div>
+                          </div>
+                          <h3 className="font-medium text-xs mb-1 truncate">{album.title}</h3>
+                          <p className="text-xs text-gray-400 truncate">{album.artist}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -337,22 +413,59 @@ export default function Home() {
           {/* Channel Tab Content */}
           <TabsContent value="channel" className="mt-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl md:text-2xl font-bold">Channels</h2>
-                <p className="text-sm text-gray-400">Discover content creators</p>
-              </div>
-
               {isLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg p-4">
-                        <div className="h-4 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2"></div>
-                        <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2 w-3/4"></div>
-                        <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-1/2"></div>
-                      </div>
+                <div className="space-y-6">
+                  {/* Loading Top Channels */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl md:text-2xl font-bold">Top Channels</h2>
+                      <div className="h-4 w-16 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
                     </div>
-                  ))}
+                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2"></div>
+                          <div className="h-4 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-3/4"></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="flex-shrink-0 w-24 animate-pulse">
+                          <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2"></div>
+                          <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-1"></div>
+                          <div className="h-2 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-2/3"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Loading Trending */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl md:text-2xl font-bold">Trending</h2>
+                      <div className="h-4 w-16 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </div>
+                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2"></div>
+                          <div className="h-4 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-3/4"></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className="flex-shrink-0 w-24 animate-pulse">
+                          <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2"></div>
+                          <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-1"></div>
+                          <div className="h-2 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-2/3"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ) : channels.length === 0 ? (
                 <div className="text-center py-12">
@@ -361,34 +474,136 @@ export default function Home() {
                   <p className="text-gray-400">Channels will appear here when available</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {channels.map((channel: any) => (
-                    <Link key={channel.id} href={`/channel/${channel.id}`}>
-                      <div className="group cursor-pointer">
-                        <div className="relative mb-2 md:mb-3">
-                          <img
-                            src={channel.avatarUrl || '/placeholder-avatar.png'}
-                            alt={channel.name}
-                            className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
-                          />
-                          <div className="absolute top-2 right-2">
-                            <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
-                              {channel.category}
-                            </span>
+                <div className="space-y-6">
+                  {/* Top Channels Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl md:text-2xl font-bold">Top Channels</h2>
+                      <button className="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                        Show all
+                      </button>
+                    </div>
+                    
+                    {/* Desktop Grid */}
+                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {channels.slice(0, 4).map((channel: any) => (
+                        <Link key={channel.id} href={`/channel/${channel.id}`}>
+                          <div className="group cursor-pointer">
+                            <div className="relative mb-2 md:mb-3">
+                              <img
+                                src={channel.avatarUrl || '/placeholder-avatar.png'}
+                                alt={channel.name}
+                                className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute top-2 right-2">
+                                <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
+                                  {channel.category}
+                                </span>
+                              </div>
+                            </div>
+                            <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
+                            <p className="text-xs md:text-sm text-gray-400 truncate mb-1">{channel.ticker}</p>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
+                              <span>{formatTimeAgo(new Date(channel.createdAt))}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 truncate mt-1">
+                              Owner: {channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}
+                            </p>
                           </div>
-                        </div>
-                        <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
-                        <p className="text-xs md:text-sm text-gray-400 truncate mb-1">{channel.ticker}</p>
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
-                          <span>{formatTimeAgo(new Date(channel.createdAt))}</span>
-                        </div>
-                        <p className="text-xs text-gray-500 truncate mt-1">
-                          Owner: {channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
+                        </Link>
+                      ))}
+                    </div>
+                    
+                    {/* Mobile Horizontal Scroll */}
+                    <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
+                      {channels.slice(0, 8).map((channel: any) => (
+                        <Link key={channel.id} href={`/channel/${channel.id}`}>
+                          <div className="flex-shrink-0 w-24 group cursor-pointer">
+                            <div className="relative mb-2">
+                              <img
+                                src={channel.avatarUrl || '/placeholder-avatar.png'}
+                                alt={channel.name}
+                                className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute top-1 right-1">
+                                <span className="bg-green-500 text-black text-xs px-1 py-0.5 rounded-full font-medium">
+                                  {channel.category.slice(0, 2)}
+                                </span>
+                              </div>
+                            </div>
+                            <h3 className="font-medium text-xs mb-1 truncate">{channel.name}</h3>
+                            <p className="text-xs text-gray-400 truncate">{channel.ticker}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Trending Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl md:text-2xl font-bold">Trending</h2>
+                      <button className="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                        Show all
+                      </button>
+                    </div>
+                    
+                    {/* Desktop Grid */}
+                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {channels.slice(4, 8).map((channel: any) => (
+                        <Link key={channel.id} href={`/channel/${channel.id}`}>
+                          <div className="group cursor-pointer">
+                            <div className="relative mb-2 md:mb-3">
+                              <img
+                                src={channel.avatarUrl || '/placeholder-avatar.png'}
+                                alt={channel.name}
+                                className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute top-2 right-2">
+                                <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
+                                  {channel.category}
+                                </span>
+                              </div>
+                            </div>
+                            <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
+                            <p className="text-xs md:text-sm text-gray-400 truncate mb-1">{channel.ticker}</p>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
+                              <span>{formatTimeAgo(new Date(channel.createdAt))}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 truncate mt-1">
+                              Owner: {channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                    
+                    {/* Mobile Horizontal Scroll */}
+                    <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
+                      {channels.slice(4, 12).map((channel: any) => (
+                        <Link key={channel.id} href={`/channel/${channel.id}`}>
+                          <div className="flex-shrink-0 w-24 group cursor-pointer">
+                            <div className="relative mb-2">
+                              <img
+                                src={channel.avatarUrl || '/placeholder-avatar.png'}
+                                alt={channel.name}
+                                className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                              />
+                              <div className="absolute top-1 right-1">
+                                <span className="bg-green-500 text-black text-xs px-1 py-0.5 rounded-full font-medium">
+                                  {channel.category.slice(0, 2)}
+                                </span>
+                              </div>
+                            </div>
+                            <h3 className="font-medium text-xs mb-1 truncate">{channel.name}</h3>
+                            <p className="text-xs text-gray-400 truncate">{channel.ticker}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
