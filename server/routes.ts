@@ -980,14 +980,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/marketplace", async (req, res) => {
     try {
       // Get all content imports from database that are tokenized
-      const tokenizedContent = await prisma.contentImport.findMany({
-        where: {
-          status: 'tokenized'
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      })
+      const tokenizedContent = await storage.getAllContentImports().then(content => 
+        content.filter(item => item.status === 'tokenized')
+      );
       res.json(tokenizedContent)
     } catch (error) {
       console.error('Error fetching marketplace content:', error)
