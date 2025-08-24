@@ -65,7 +65,7 @@ function AppContent() {
         <SidebarProvider>
           <Layout>
             <Switch>
-              <Route path="/" component={Tokens} />
+              <Route path="/" component={Home} />
               <Route path="/discovery" component={Discovery} />
               <Route path="/shorts" component={Shorts} />
               <Route path="/subscriptions" component={Subscriptions} />
