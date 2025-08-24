@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Coins, Music, Radio } from "lucide-react";
+import { Play, Coins, Music, Radio, Plus } from "lucide-react";
 import { type VideoWithChannel, type MusicAlbum, type MusicTrack } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 
 // Token interface from Tokens page
 interface Token {
@@ -256,80 +258,22 @@ export default function Home() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl md:text-2xl font-bold">Content Tokens</h2>
-                <p className="text-sm text-gray-400">{tokens.length} tokens found</p>
+                <p className="text-sm text-gray-400">Tokenized content marketplace</p>
               </div>
-              
-              {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg p-4">
-                        <div className="h-4 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2"></div>
-                        <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2 w-3/4"></div>
-                        <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : tokens.length === 0 ? (
-                <div className="text-center py-12">
-                  <Coins className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold mb-2">No tokens found</h3>
-                  <p className="text-gray-400">No tokenized content available at the moment</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {tokens.map((token) => (
-                    <div
-                      key={token.id}
-                      className="bg-gray-800/50 dark:bg-gray-800/50 bg-white/80 dark:bg-gray-800/50 rounded-lg p-4 hover:bg-gray-700/50 dark:hover:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                      data-testid={`token-card-${token.id}`}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm md:text-base truncate">{token.name}</h3>
-                          <p className="text-xs md:text-sm text-gray-400 font-mono">{token.symbol}</p>
-                        </div>
-                        <div className="text-right ml-2">
-                          <p className="text-xs md:text-sm font-semibold">${token.price}</p>
-                          {token.change24h && (
-                            <p className={cn(
-                              "text-xs",
-                              token.change24h >= 0 ? "text-green-400" : "text-red-400"
-                            )}>
-                              {token.change24h >= 0 ? "+" : ""}{token.change24h.toFixed(2)}%
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-1 mb-3">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Market Cap</span>
-                          <span>${token.marketCap}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Volume 24h</span>
-                          <span>${token.volume24h}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Holders</span>
-                          <span>{token.holders}</span>
-                        </div>
-                      </div>
 
-                      {token.description && (
-                        <p className="text-xs text-gray-400 mb-2 line-clamp-2">{token.description}</p>
-                      )}
-
-                      <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span>{token.tokenType === 'channel' ? 'Channel Token' : 'Content Token'}</span>
-                        <span>{formatTimeAgo(token.createdAt)}</span>
-                      </div>
-                    </div>
-                  ))}
+              <div className="text-center py-12">
+                <Coins className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold mb-2">No tokens found</h3>
+                <p className="text-gray-400">No tokenized content available at the moment</p>
+                <div className="mt-4">
+                  <Link href="/create">
+                    <Button variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Token
+                    </Button>
+                  </Link>
                 </div>
-              )}
+              </div>
             </div>
           </TabsContent>
 
@@ -378,7 +322,7 @@ export default function Home() {
                           <Play className="w-6 h-6 text-green-500" fill="currentColor" />
                         </div>
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm md:text-base mb-1 truncate">{track.title}</h3>
                         <p className="text-xs md:text-sm text-gray-400 mb-1 truncate">{track.artist}</p>
@@ -405,7 +349,7 @@ export default function Home() {
                 <h2 className="text-xl md:text-2xl font-bold">Channels</h2>
                 <p className="text-sm text-gray-400">Discover content creators</p>
               </div>
-              
+
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {Array.from({ length: 8 }).map((_, i) => (
@@ -435,7 +379,7 @@ export default function Home() {
                 <h2 className="text-xl md:text-2xl font-bold">Reels</h2>
                 <p className="text-sm text-gray-400">Short-form video content</p>
               </div>
-              
+
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {Array.from({ length: 8 }).map((_, i) => (
@@ -462,7 +406,7 @@ export default function Home() {
                 <h2 className="text-xl md:text-2xl font-bold">Contents</h2>
                 <p className="text-sm text-gray-400">All content types</p>
               </div>
-              
+
               {isLoading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {Array.from({ length: 8 }).map((_, i) => (
