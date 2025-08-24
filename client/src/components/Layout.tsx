@@ -18,7 +18,7 @@ export function Layout({ children }: LayoutProps) {
   // Check if we're on the shorts page for mobile full-screen experience
   const isShortsPage = location === '/shorts';
   const shouldHideHeaderOnMobile = isMobile && isShortsPage;
-  const shouldHideMobileNavOnMobile = isMobile && isShortsPage;
+  const shouldHideMobileNavOnMobile = false; // Always show mobile nav
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100/30 to-gray-50 dark:from-purple-900/20 dark:to-black text-gray-900 dark:text-white transition-theme">
