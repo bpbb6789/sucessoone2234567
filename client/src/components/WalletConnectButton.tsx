@@ -250,6 +250,7 @@ export function WalletConnectButton({
                               {theme === "dark" ? "Light Mode" : "Dark Mode"}
                             </span>
                           </DropdownMenuItem>
+                        </DropdownMenuGroup>
 
                         <DropdownMenuSeparator />
 
