@@ -97,8 +97,6 @@ export default function Home() {
   return (
     <div className="min-h-screen text-white dark:text-white text-gray-900 dark:text-white" data-testid="page-home">
       <div className="p-4 md:p-6">
-        <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Home</h1>
-        
         <Tabs defaultValue="tokens" className="w-full">
           <TabsList className="grid w-full grid-cols-6 bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50">
             <TabsTrigger 
