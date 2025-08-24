@@ -387,7 +387,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {channels.map((channel: Token) => (
+                  {channels.map((channel: any) => (
                     <div key={channel.id} className="group cursor-pointer">
                       <div className="relative mb-2 md:mb-3">
                         <img
@@ -395,9 +395,21 @@ export default function Home() {
                           alt={channel.name}
                           className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
                         />
+                        <div className="absolute top-2 right-2">
+                          <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
+                            {channel.category}
+                          </span>
+                        </div>
                       </div>
                       <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
-                      <p className="text-xs md:text-sm text-gray-400 truncate">{channel.symbol}</p>
+                      <p className="text-xs md:text-sm text-gray-400 truncate mb-1">{channel.ticker}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
+                        <span>{formatTimeAgo(new Date(channel.createdAt))}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate mt-1">
+                        Owner: {channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}
+                      </p>
                     </div>
                   ))}
                 </div>
