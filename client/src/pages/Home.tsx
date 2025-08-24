@@ -100,7 +100,7 @@ export default function Home() {
         <h1 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8">Home</h1>
         
         <Tabs defaultValue="tokens" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50">
+          <TabsList className="grid w-full grid-cols-6 bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50">
             <TabsTrigger 
               value="tokens" 
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
@@ -140,6 +140,14 @@ export default function Home() {
             >
               <Play className="w-4 h-4" />
               <span>Reels</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="contents" 
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
+              data-testid="tab-contents"
+            >
+              <Play className="w-4 h-4" />
+              <span>Contents</span>
             </TabsTrigger>
           </TabsList>
 
@@ -444,6 +452,36 @@ export default function Home() {
                   <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <h3 className="text-lg font-semibold mb-2">No reels found</h3>
                   <p className="text-gray-400">Reels will appear here when available</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Contents Tab Content */}
+          <TabsContent value="contents" className="mt-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl md:text-2xl font-bold">Contents</h2>
+                <p className="text-sm text-gray-400">All content types</p>
+              </div>
+              
+              {isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg p-4">
+                        <div className="h-4 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2 w-3/4"></div>
+                        <div className="h-3 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-lg font-semibold mb-2">No content found</h3>
+                  <p className="text-gray-400">Content will appear here when available</p>
                 </div>
               )}
             </div>
