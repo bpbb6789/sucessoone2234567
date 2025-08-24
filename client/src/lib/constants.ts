@@ -19,6 +19,21 @@ export const CATEGORIES = [
   "DIY",
 ] as const;
 
+export const SHORTS_CATEGORIES = [
+  "For you",
+  "Following",
+  "Music", 
+  "Gaming",
+  "Comedy",
+  "Sports",
+  "Dance",
+  "Food",
+  "Travel",
+  "Art",
+  "Fashion",
+  "Pets",
+] as const;
+
 export const MOBILE_BREAKPOINT = 768;
 
 export const ROUTES = {

@@ -44,6 +44,7 @@ export const shorts = pgTable("shorts", {
   dislikeCount: integer("dislike_count").default(0),
   commentCount: integer("comment_count").default(0),
   channelId: varchar("channel_id").references(() => channels.id).notNull(),
+  category: text("category"),
   hashtags: text("hashtags").array(),
   publishedAt: timestamp("published_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),

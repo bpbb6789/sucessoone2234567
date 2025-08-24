@@ -1,18 +1,30 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import ShortsCard from "@/components/ShortsCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { type ShortsWithChannel } from "@shared/schema";
-import { formatViewCount } from "@/lib/constants";
+import { formatViewCount, SHORTS_CATEGORIES } from "@/lib/constants";
 import { ThumbsUp, ThumbsDown, MessageCircle, Share, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 export default function Shorts() {
   const isMobile = useIsMobile();
   const [, setLocation] = useLocation();
-  const { data: shorts = [], isLoading, error } = useQuery<ShortsWithChannel[]>({
+  const [selectedCategory, setSelectedCategory] = useState<string>("For you");
+  
+  const { data: allShorts = [], isLoading, error } = useQuery<ShortsWithChannel[]>({
     queryKey: ["/api/shorts"],
   });
+  
+  // Filter shorts based on selected category
+  const shorts = selectedCategory === "For you" || selectedCategory === "Following" 
+    ? allShorts 
+    : allShorts.filter(short => 
+        short.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+        short.hashtags?.some(tag => tag.toLowerCase().includes(selectedCategory.toLowerCase()))
+      );
 
   const handleAvatarClick = (e: React.MouseEvent, channelId: string) => {
     e.stopPropagation();
@@ -30,11 +42,42 @@ export default function Shorts() {
     );
   }
 
-  if (isMobile && shorts.length > 0) {
-    // Mobile vertical feed
+  if (isMobile) {
+    // Mobile vertical feed with category tabs
     return (
       <div className="shorts-container" data-testid="page-shorts-mobile">
-        {shorts.map((short, index) => (
+        {/* Category Tabs */}
+        <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm">
+          <div className="flex space-x-4 px-4 py-3 overflow-x-auto scrollbar-hide">
+            {SHORTS_CATEGORIES.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={cn(
+                  "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+                  selectedCategory === category
+                    ? "bg-white text-black"
+                    : "bg-transparent text-white hover:bg-white/20"
+                )}
+                data-testid={`shorts-category-${category.toLowerCase().replace(' ', '-')}`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Shorts Content */}
+        <div className="pt-16">
+          {shorts.length === 0 && !isLoading ? (
+            <div className="flex items-center justify-center min-h-screen text-white">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold mb-2">No {selectedCategory.toLowerCase()} shorts</h2>
+                <p className="text-gray-300">Try a different category</p>
+              </div>
+            </div>
+          ) : (
+            shorts.map((short, index) => (
           <div key={short.id} className="shorts-video relative bg-black flex items-center justify-center">
             <img
               src={short.thumbnailUrl}
@@ -123,7 +166,9 @@ export default function Shorts() {
               </button>
             </div>
           </div>
-        ))}
+            ))
+          )}
+        </div>
       </div>
     );
   }
