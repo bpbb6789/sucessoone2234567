@@ -30,6 +30,8 @@ const mainNavItems = [
   { icon: Music, label: "Music", href: ROUTES.MUSIC },
   { icon: TrendingUp, label: "Home", href: ROUTES.HOME },
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
+  { icon: Coins, label: "Tokens", href: "/tokens" },
+  { icon: Upload, label: "Tokenize", href: "/tokenize" },
 ];
 
 
