@@ -66,7 +66,7 @@ export default function Shorts() {
       <div className="shorts-container" data-testid="page-shorts-mobile">
         {/* Category Tabs - Always visible */}
         <div className="fixed top-4 left-0 right-0 z-50">
-          <div className="flex space-x-2 px-4 overflow-x-auto scrollbar-hide">
+          <div className="flex justify-center space-x-2 px-4 overflow-x-auto scrollbar-hide">
             {SHORTS_CATEGORIES.map((category) => (
               <button
                 key={category}
