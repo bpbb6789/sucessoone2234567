@@ -1,5 +1,8 @@
 
 import { useAccount, useConnect, useDisconnect, useSwitchChain, useBalance } from 'wagmi';
+
+// Export useAccount for compatibility
+export { useAccount };
 import { useCallback } from 'react';
 import { useToast } from './use-toast';
 import { shortenAddress, formatBalance } from '@/lib/walletConnect';

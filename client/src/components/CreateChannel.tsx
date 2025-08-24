@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useAccount } from "wagmi";
+import { useAccount } from "@/hooks/useWallet";
 import { UNIPUMP_CREATOR_ADDRESS } from "@/lib/addresses";
 import { UniPumpCreatorAbi } from "../../../abi/UniPumpCreatorAbi";
 import TransactionComponent from "@/components/Transaction";

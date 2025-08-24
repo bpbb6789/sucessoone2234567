@@ -23,7 +23,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, and, desc, or, ilike, isNull, count } from "drizzle-orm";
+import { eq, and, desc, or, ilike, isNull, count, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Channels
@@ -316,7 +316,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateVideoViews(id: string): Promise<void> {
     await db.update(videos)
-      .set({ viewCount: videos.viewCount + 1 })
+      .set({ viewCount: sql`${videos.viewCount} + 1` })
       .where(eq(videos.id, id));
   }
 
@@ -498,7 +498,9 @@ export class DatabaseStorage implements IStorage {
   async getWeb3ChannelByOwner(): Promise<Web3Channel | undefined> { return undefined; }
   async getWeb3ChannelByCoinAddress(): Promise<Web3Channel | undefined> { return undefined; }
   async createWeb3Channel(): Promise<Web3Channel> { throw new Error('Not implemented'); }
-  async getAllWeb3Channels(): Promise<Web3Channel[]> { return []; }
+  async getAllWeb3Channels(): Promise<Web3Channel[]> {
+    return await db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
+  }
 }
 
 // Use database storage

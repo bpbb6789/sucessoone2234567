@@ -53,7 +53,7 @@ export default function Home() {
   });
 
   // Channels data
-  const { data: channels = [], isLoading: channelsLoading } = useQuery({
+  const { data: channelsData = [], isLoading: channelsLoading } = useQuery({
     queryKey: ['/api/web3-channels'],
     queryFn: async () => {
       const response = await fetch('/api/web3-channels')
@@ -61,6 +61,13 @@ export default function Home() {
       return response.json()
     }
   });
+
+  // Transform web3 channels data for display
+  const channels = channelsData.map((channel: any) => ({
+    ...channel,
+    avatarUrl: channel.avatarCid ? `https://ipfs.io/ipfs/${channel.avatarCid}` : '/placeholder-avatar.png',
+    coverUrl: channel.coverCid ? `https://ipfs.io/ipfs/${channel.coverCid}` : undefined
+  }));
 
   const isLoading = albumsLoading || tracksLoading || contentImportsLoading || channelsLoading;
   const musicCategories = ["All", "Music", "Podcasts"];
