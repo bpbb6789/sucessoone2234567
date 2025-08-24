@@ -264,9 +264,9 @@ export default function Tokens() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">All Tokens</h1>
+            <h1 className="text-3xl font-bold">Discovery</h1>
             <p className="text-muted-foreground">
-              Browse channel coins and content coins created on TubeClone
+              Discover trending channel coins and content coins on TubeClone
             </p>
           </div>
           <Link to="/create-token">

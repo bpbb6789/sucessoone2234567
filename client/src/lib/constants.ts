@@ -22,22 +22,21 @@ export const CATEGORIES = [
 export const MOBILE_BREAKPOINT = 768;
 
 export const ROUTES = {
-  HOME: "/",
-  SHORTS: "/shorts",
-  SUBSCRIPTIONS: "/subscriptions",
-  MUSIC: "/music",
-  LIBRARY: "/library",
-  HISTORY: "/history",
-  WATCH_LATER: "/watch-later",
-  LIKED_VIDEOS: "/liked-videos",
-  WATCH: "/watch",
-  SEARCH: "/search",
-  PROFILE: "/profile",
-  NOTIFICATIONS: "/notifications",
-  CREATE: "/create",
-  DOC: "/doc",
-  ACTIVITIES: "/activities",
-  FAQ: "/faq"
+  HOME: '/',
+  DISCOVERY: '/',
+  PROFILE: '/profile',
+  SHORTS: '/shorts',
+  SUBSCRIPTIONS: '/subscriptions',
+  ACTIVITIES: '/activities',
+  LIKED_VIDEOS: '/liked',
+  WATCH_LATER: '/watch-later',
+  LIBRARY: '/library',
+  HISTORY: '/history',
+  MUSIC: '/music',
+  SEARCH: '/search',
+  CREATE: '/create',
+  WATCH: '/watch',
+  NOTIFICATIONS: '/notifications'
 } as const;
 
 export const formatViewCount = (count: number): string => {

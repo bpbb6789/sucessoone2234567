@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useGetAllChannels } from "@/hooks/useGetAllChannels";
 
 const mainNavItems = [
-  { icon: TrendingUp, label: "Home", href: ROUTES.HOME },
+  { icon: Home, label: "Discovery", href: "/" },
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
   { icon: Radio, label: "Podcasts", href: ROUTES.SUBSCRIPTIONS },
   { icon: Music, label: "Music", href: ROUTES.MUSIC },
