@@ -254,19 +254,7 @@ export function WalletConnectButton({
 
                         <DropdownMenuSeparator />
 
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer">
-                            <HelpCircle className="w-4 h-4" />
-                            <span className="flex-1">Help Center</span>
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem className="flex items-center gap-3 py-2 cursor-pointer">
-                            <FileText className="w-4 h-4" />
-                            <span className="flex-1">Terms & Conditions</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-
-                        <DropdownMenuSeparator />
+                        
 
                         <DropdownMenuItem
                           className="flex items-center gap-3 py-2 cursor-pointer text-red-600 hover:text-red-700"
