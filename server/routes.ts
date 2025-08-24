@@ -990,10 +990,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file provided" });
       }
 
-      const { channelId, contentType, title, description } = req.body;
+      const { channelId, contentType, title, description, coinName, coinSymbol } = req.body;
       
-      if (!contentType || !title) {
-        return res.status(400).json({ message: "Missing required fields: contentType, title" });
+      if (!contentType || !title || !coinName || !coinSymbol) {
+        return res.status(400).json({ message: "Missing required fields: contentType, title, coinName, coinSymbol" });
       }
 
       // Upload file to IPFS
@@ -1053,7 +1053,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mediaCid,
         ipfsCid: metadataCid,
         metadata,
-        status: 'tokenizing' as const
+        status: 'tokenizing' as const,
+        coinName: req.body.coinName || req.file.originalname.replace(/\.[^/.]+$/, ""),
+        coinSymbol: req.body.coinSymbol || req.file.originalname.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, "")
       };
 
       const content = await storage.createContentImport(contentData);
@@ -1086,10 +1088,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // URL Import endpoint
   app.post("/api/content-imports/import-url", async (req, res) => {
     try {
-      const { url, channelId, contentType, title, description } = req.body;
+      const { url, channelId, contentType, title, description, coinName, coinSymbol } = req.body;
       
-      if (!url || !contentType || !title) {
-        return res.status(400).json({ message: "Missing required fields: url, contentType, title" });
+      if (!url || !contentType || !title || !coinName || !coinSymbol) {
+        return res.status(400).json({ message: "Missing required fields: url, contentType, title, coinName, coinSymbol" });
       }
 
       // Create metadata for URL import
@@ -1133,7 +1135,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         originalUrl: url,
         ipfsCid: metadataCid,
         metadata,
-        status: 'tokenizing' as const
+        status: 'tokenizing' as const,
+        coinName,
+        coinSymbol
       };
 
       const content = await storage.createContentImport(contentData);

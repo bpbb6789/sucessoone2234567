@@ -160,9 +160,15 @@ export const contentImports = pgTable("content_imports", {
   thumbnailCid: text("thumbnail_cid"), // Thumbnail CID
   metadata: jsonb("metadata"), // Additional metadata
   status: text("status").notNull().default("tokenizing"), // 'tokenizing', 'tokenized', 'failed'
-  price: text("price").default("0.001"), // Price in ETH
-  contractAddress: text("contract_address"), // NFT contract address
-  tokenId: text("token_id"), // NFT token ID
+  
+  // Content Coin Information
+  coinName: text("coin_name").notNull(), // e.g., "Epic Cooking Tutorial"
+  coinSymbol: text("coin_symbol").notNull(), // e.g., "COOK"
+  coinAddress: text("coin_address"), // Contract address after deployment
+  bondingCurveProgress: text("bonding_curve_progress").default("0"), // Progress percentage
+  currentPrice: text("current_price").default("0.000001"), // Current price per token
+  marketCap: text("market_cap").default("0"), // Market cap in USD
+  holders: integer("holders").default(0), // Number of holders
   tokenizedAt: timestamp("tokenized_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -239,6 +245,12 @@ export const insertContentImportSchema = createInsertSchema(contentImports).omit
   id: true,
   createdAt: true,
   updatedAt: true,
+  tokenizedAt: true,
+  coinAddress: true, // Will be set after deployment
+  bondingCurveProgress: true, // Auto-calculated
+  currentPrice: true, // Auto-calculated
+  marketCap: true, // Auto-calculated
+  holders: true, // Auto-calculated
 });
 
 // Types

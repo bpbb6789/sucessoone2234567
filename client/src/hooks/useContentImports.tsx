@@ -30,12 +30,16 @@ export function useFileUpload() {
       contentType: string
       title: string
       description?: string
+      coinName: string
+      coinSymbol: string
     }) => {
       const formData = new FormData()
       formData.append('file', data.file)
       formData.append('channelId', data.channelId)
       formData.append('contentType', data.contentType)
       formData.append('title', data.title)
+      formData.append('coinName', data.coinName)
+      formData.append('coinSymbol', data.coinSymbol)
       if (data.description) formData.append('description', data.description)
 
       const response = await fetch('/api/content-imports/upload', {
@@ -77,6 +81,8 @@ export function useUrlImport() {
       contentType: string
       title: string
       description?: string
+      coinName: string
+      coinSymbol: string
     }) => {
       const response = await fetch('/api/content-imports/import-url', {
         method: 'POST',

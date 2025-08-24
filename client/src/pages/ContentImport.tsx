@@ -22,6 +22,8 @@ export default function ContentImport() {
   const [selectedType, setSelectedType] = useState<string>('')
   const [isDragging, setIsDragging] = useState(false)
   const [importUrl, setImportUrl] = useState('')
+  const [coinName, setCoinName] = useState('')
+  const [coinSymbol, setCoinSymbol] = useState('')
   const { toast } = useToast()
   
   // Use a sample channel ID for now - this should come from user auth/context later
@@ -49,18 +51,18 @@ export default function ContentImport() {
     setIsDragging(false)
     
     const files = Array.from(e.dataTransfer.files)
-    if (files.length > 0 && selectedType) {
-      handleFileUpload(files)
-    } else if (!selectedType) {
+    if (files.length > 0 && selectedType && coinName && coinSymbol) {
+      handleFileUpload(files, coinName, coinSymbol)
+    } else {
       toast({
-        title: "Select Content Type",
-        description: "Please select a content type before uploading files.",
+        title: "Missing Information",
+        description: "Please fill in content type, coin name, and coin symbol first.",
         variant: "destructive"
       })
     }
   }
 
-  const handleFileUpload = async (files: File[]) => {
+  const handleFileUpload = async (files: File[], coinName?: string, coinSymbol?: string) => {
     if (!selectedType) {
       toast({
         title: "Select Content Type", 
@@ -77,7 +79,9 @@ export default function ContentImport() {
           channelId,
           contentType: selectedType,
           title: file.name,
-          description: `Uploaded ${file.name}`
+          description: `Uploaded ${file.name}`,
+          coinName: coinName || file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+          coinSymbol: coinSymbol || file.name.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, "") // Generate from filename
         })
         
         toast({
@@ -95,10 +99,10 @@ export default function ContentImport() {
   }
 
   const handleUrlImport = async () => {
-    if (!importUrl || !selectedType) {
+    if (!importUrl || !selectedType || !coinName || !coinSymbol) {
       toast({
         title: "Missing Information",
-        description: "Please select a content type and enter a URL.",
+        description: "Please fill in all fields: content type, URL, coin name, and symbol.",
         variant: "destructive"
       })
       return
@@ -110,8 +114,10 @@ export default function ContentImport() {
         url: importUrl,
         channelId,
         contentType: selectedType,
-        title: `Imported from ${hostname}`,
-        description: `Content imported from ${importUrl}`
+        title: coinName || `Imported from ${hostname}`,
+        description: `Content imported from ${importUrl}`,
+        coinName,
+        coinSymbol
       })
       
       setImportUrl('')
@@ -236,10 +242,48 @@ export default function ContentImport() {
               </CardContent>
             </Card>
 
+            {/* Coin Information */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">2. Set Coin Details</CardTitle>
+                <CardDescription className="text-xs">This content will become a tradable coin with bonding curve pricing</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="coin-name" className="text-sm">Coin Name</Label>
+                    <Input
+                      id="coin-name"
+                      placeholder="Epic Cooking Tutorial"
+                      value={coinName}
+                      onChange={(e) => setCoinName(e.target.value)}
+                      data-testid="coin-name-input"
+                      className="text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">Full name for your content coin</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="coin-symbol" className="text-sm">Coin Symbol</Label>
+                    <Input
+                      id="coin-symbol"
+                      placeholder="COOK"
+                      value={coinSymbol}
+                      onChange={(e) => setCoinSymbol(e.target.value.toUpperCase())}
+                      maxLength={10}
+                      data-testid="coin-symbol-input"
+                      className="text-sm font-mono"
+                    />
+                    <p className="text-xs text-muted-foreground">Trading symbol (3-10 characters)</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Import Methods */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">2. Import Content</CardTitle>
+                <CardTitle className="text-base">3. Import Content</CardTitle>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="upload" className="w-full">
@@ -263,9 +307,9 @@ export default function ContentImport() {
                       <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
                       <h3 className="text-sm font-medium mb-1">Drop files or browse</h3>
                       <p className="text-xs text-muted-foreground mb-3">
-                        {selectedType 
-                          ? `Upload ${contentTypes.find(t => t.id === selectedType)?.name} files`
-                          : 'Select a content type first'
+                        {!selectedType ? 'Select a content type first' :
+                         !coinName || !coinSymbol ? 'Set coin name and symbol first' :
+                         `Upload ${contentTypes.find(t => t.id === selectedType)?.name} files to create ${coinSymbol} coin`
                         }
                       </p>
                       <Input
@@ -275,7 +319,15 @@ export default function ContentImport() {
                         id="file-upload"
                         onChange={(e) => {
                           const files = Array.from(e.target.files || [])
-                          if (files.length > 0) handleFileUpload(files)
+                          if (files.length > 0 && coinName && coinSymbol) {
+                            handleFileUpload(files, coinName, coinSymbol)
+                          } else if (!coinName || !coinSymbol) {
+                            toast({
+                              title: "Missing Information",
+                              description: "Please set coin name and symbol first.",
+                              variant: "destructive"
+                            })
+                          }
                         }}
                         disabled={!selectedType}
                       />
@@ -283,7 +335,7 @@ export default function ContentImport() {
                         variant="outline"
                         size="sm"
                         onClick={() => document.getElementById('file-upload')?.click()}
-                        disabled={!selectedType}
+                        disabled={!selectedType || !coinName || !coinSymbol}
                         data-testid="browse-files-button"
                       >
                         Browse Files
