@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import ShortsCard from "@/components/ShortsCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { type ShortsWithChannel } from "@shared/schema";
-import { formatViewCount, SHORTS_CATEGORIES } from "@/lib/constants";
+import { formatViewCount } from "@/lib/constants";
+
+const SHORTS_CATEGORIES = ["For you", "Following", "Channels", "Reels", "Music", "Podcasts"];
 import { ThumbsUp, ThumbsDown, MessageCircle, Share, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -48,16 +50,16 @@ export default function Shorts() {
       <div className="shorts-container" data-testid="page-shorts-mobile">
         {/* Category Tabs - Always visible */}
         <div className="fixed top-4 left-0 right-0 z-50">
-          <div className="flex space-x-3 px-4 overflow-x-auto scrollbar-hide">
+          <div className="flex space-x-2 px-4 overflow-x-auto scrollbar-hide">
             {SHORTS_CATEGORIES.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
                 className={cn(
-                  "flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+                  "flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200",
                   selectedCategory === category
                     ? "bg-white text-black"
-                    : "bg-black/30 text-white hover:bg-black/50"
+                    : "bg-white/20 text-white hover:bg-white/30"
                 )}
                 data-testid={`shorts-category-${category.toLowerCase().replace(' ', '-')}`}
               >
