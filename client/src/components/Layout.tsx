@@ -21,7 +21,7 @@ export function Layout({ children }: LayoutProps) {
   const shouldHideMobileNavOnMobile = isMobile && isShortsPage;
 
   return (
-    <div className="min-h-screen bg-background transition-theme">
+    <div className="min-h-screen bg-gradient-to-b from-purple-100/30 to-gray-50 dark:from-purple-900/20 dark:to-black text-gray-900 dark:text-white transition-theme">
       {!shouldHideHeaderOnMobile && <Header />}
       <Sidebar />
       
