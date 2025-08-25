@@ -241,6 +241,65 @@ export const insertMusicTrackSchema = createInsertSchema(musicTracks).omit({
   createdAt: true,
 });
 
+// Pads - pump.fun style meme tokens
+export const pads = pgTable("pads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  creatorAddress: text("creator_address").notNull(), // Wallet address of creator
+  title: text("title").notNull(),
+  description: text("description"),
+  mediaType: text("media_type").notNull(), // 'image', 'gif', 'animation', 'audio', 'svg'
+  mediaCid: text("media_cid").notNull(), // IPFS CID of the media file
+  thumbnailCid: text("thumbnail_cid"), // Thumbnail for videos/animations
+  
+  // Token Information
+  tokenName: text("token_name").notNull(), // e.g., "Pepe Moon"
+  tokenSymbol: text("token_symbol").notNull(), // e.g., "PMOON"
+  tokenAddress: text("token_address"), // Contract address after deployment
+  
+  // Trading & Metrics
+  currentPrice: text("current_price").default("0.000001"), // Current price per token
+  marketCap: text("market_cap").default("0"), // Market cap in USD
+  bondingCurveProgress: text("bonding_curve_progress").default("0"), // Progress percentage (0-100)
+  totalSupply: text("total_supply").default("1000000000"), // Total token supply
+  holders: integer("holders").default(0), // Number of unique holders
+  volume24h: text("volume_24h").default("0"), // 24h trading volume
+  
+  // Social & Engagement
+  likes: integer("likes").default(0),
+  comments: integer("comments").default(0),
+  shares: integer("shares").default(0),
+  
+  // Status & Deployment
+  status: text("status").notNull().default("pending"), // 'pending', 'deployed', 'graduated', 'failed'
+  deploymentTxHash: text("deployment_tx_hash"), // Transaction hash of token deployment
+  graduationTxHash: text("graduation_tx_hash"), // If graduated to full DEX
+  
+  // Metadata
+  metadata: jsonb("metadata"), // Additional data (colors, themes, etc.)
+  tags: text("tags").array(), // Searchable tags
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Pad interactions (likes, comments, etc.)
+export const padLikes = pgTable("pad_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  padId: varchar("pad_id").references(() => pads.id).notNull(),
+  userAddress: text("user_address").notNull(), // Wallet address of user who liked
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const padComments = pgTable("pad_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  padId: varchar("pad_id").references(() => pads.id).notNull(),
+  userAddress: text("user_address").notNull(), // Wallet address of commenter
+  content: text("content").notNull(),
+  parentId: varchar("parent_id"), // For threaded comments
+  likes: integer("likes").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
   id: true,
   createdAt: true,
@@ -257,6 +316,34 @@ export const insertContentImportSchema = createInsertSchema(contentImports).omit
   currentPrice: true, // Auto-calculated
   marketCap: true, // Auto-calculated
   holders: true, // Auto-calculated
+});
+
+export const insertPadSchema = createInsertSchema(pads).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  tokenAddress: true, // Will be set after deployment
+  currentPrice: true, // Auto-calculated
+  marketCap: true, // Auto-calculated
+  bondingCurveProgress: true, // Auto-calculated
+  holders: true, // Auto-calculated
+  volume24h: true, // Auto-calculated
+  likes: true, // Auto-calculated
+  comments: true, // Auto-calculated
+  shares: true, // Auto-calculated
+  deploymentTxHash: true, // Set during deployment
+  graduationTxHash: true, // Set during graduation
+});
+
+export const insertPadLikeSchema = createInsertSchema(padLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPadCommentSchema = createInsertSchema(padComments).omit({
+  id: true,
+  createdAt: true,
+  likes: true, // Auto-calculated
 });
 
 // Types
@@ -301,6 +388,15 @@ export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
 
 export type ContentImport = typeof contentImports.$inferSelect;
 export type InsertContentImport = z.infer<typeof insertContentImportSchema>;
+
+export type Pad = typeof pads.$inferSelect;
+export type InsertPad = z.infer<typeof insertPadSchema>;
+
+export type PadLike = typeof padLikes.$inferSelect;
+export type InsertPadLike = z.infer<typeof insertPadLikeSchema>;
+
+export type PadComment = typeof padComments.$inferSelect;
+export type InsertPadComment = z.infer<typeof insertPadCommentSchema>;
 
 // Extended types with relations
 export type VideoWithChannel = Video & {
