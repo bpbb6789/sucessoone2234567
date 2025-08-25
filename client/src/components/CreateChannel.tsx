@@ -158,8 +158,8 @@ export default function CreateChannel() {
 
   if (!address) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8 text-center">
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-6 text-center">
           <Coins className="w-12 h-12 mx-auto mb-4 text-gray-400" />
           <h3 className="text-lg font-semibold mb-2">Connect Your Wallet</h3>
           <p className="text-gray-400">Please connect your wallet to create a channel</p>
@@ -170,8 +170,8 @@ export default function CreateChannel() {
 
   if (step === "success") {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8 text-center">
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-6 text-center">
           <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-white text-xl">✓</span>
           </div>
@@ -189,8 +189,8 @@ export default function CreateChannel() {
 
   if (step === "uploading") {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8">
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-6">
           <div className="text-center">
             <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
               <Zap className="w-6 h-6 text-white" />
@@ -215,8 +215,8 @@ export default function CreateChannel() {
     ];
 
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8">
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-6">
           <div className="text-center mb-6">
             <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Coins className="w-6 h-6 text-white" />
@@ -254,8 +254,8 @@ export default function CreateChannel() {
 
   if (step === "creating") {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8">
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-6">
           <div className="text-center">
             <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
               <Zap className="w-6 h-6 text-white" />
@@ -269,30 +269,24 @@ export default function CreateChannel() {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
+    <div className="w-full max-w-md mx-auto space-y-2">
       <Card>
-        <CardHeader>
-          <CardTitle>Create Channel</CardTitle>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            This will deploy your Channel Coin on-chain and create your channel.
-          </p>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Create Channel</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
               {/* Required Fields */}
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Channel Name *</FormLabel>
+                    <FormLabel>Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="My Amazing Channel" {...field} />
+                      <Input placeholder="Channel name" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      This will also be your on-chain token name.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -303,7 +297,7 @@ export default function CreateChannel() {
                 name="ticker"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ticker (3-8 chars) *</FormLabel>
+                    <FormLabel>Ticker *</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="ALEX" 
@@ -312,9 +306,6 @@ export default function CreateChannel() {
                         maxLength={8}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Your on-chain token symbol, e.g. @alex → ALEX.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -345,17 +336,17 @@ export default function CreateChannel() {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 <FormField
                   control={form.control}
                   name="avatarFile"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Avatar (Image)</FormLabel>
+                      <FormLabel>Avatar</FormLabel>
                       <FormControl>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                          <p className="text-sm text-gray-600">Upload Avatar</p>
+                        <div className="border-2 border-dashed border-gray-300 rounded p-2 text-center">
+                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
+                          <p className="text-xs text-gray-600 mb-1">Avatar</p>
                           <input
                             type="file"
                             accept="image/*"
@@ -367,10 +358,10 @@ export default function CreateChannel() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="mt-2"
+                            className="h-6 text-xs px-2"
                             onClick={() => document.getElementById('avatar-upload')?.click()}
                           >
-                            Choose File
+                            Choose
                           </Button>
                         </div>
                       </FormControl>
@@ -384,11 +375,11 @@ export default function CreateChannel() {
                   name="coverFile"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cover Media</FormLabel>
+                      <FormLabel>Cover</FormLabel>
                       <FormControl>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                          <p className="text-sm text-gray-600">Upload Cover</p>
+                        <div className="border-2 border-dashed border-gray-300 rounded p-2 text-center">
+                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
+                          <p className="text-xs text-gray-600 mb-1">Cover</p>
                           <input
                             type="file"
                             accept="image/*,video/*"
@@ -400,10 +391,10 @@ export default function CreateChannel() {
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="mt-2"
+                            className="h-6 text-xs px-2"
                             onClick={() => document.getElementById('cover-upload')?.click()}
                           >
-                            Choose File
+                            Choose
                           </Button>
                         </div>
                       </FormControl>
@@ -421,7 +412,7 @@ export default function CreateChannel() {
                     <ChevronDown className={`h-4 w-4 transition-transform ${isAdvancedOpen ? "rotate-180" : ""}`} />
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4 pt-4">
+                <CollapsibleContent className="space-y-2 pt-2">
                   <FormField
                     control={form.control}
                     name="payoutAddress"
@@ -489,16 +480,13 @@ export default function CreateChannel() {
 
               <Button 
                 type="submit" 
-                className="w-full" 
-                size="lg"
+                className="w-full mt-3" 
+                size="default"
                 disabled={createChannelMutation.isPending}
               >
                 Create Channel
               </Button>
               
-              <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-                This will deploy your Channel Coin on-chain and create your channel.
-              </p>
             </form>
           </Form>
         </CardContent>
