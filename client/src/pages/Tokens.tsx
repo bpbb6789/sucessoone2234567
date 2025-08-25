@@ -81,7 +81,15 @@ export default function Tokens() {
       if (channelsData && channelsData.length > 0) {
         console.log('Processing channels data:', channelsData.map(c => ({ name: c.name, coinAddress: c.coinAddress, hasAddress: !!c.coinAddress })));
         const channelTokens: Token[] = channelsData
-          .filter(channel => channel.coinAddress && channel.coinAddress !== '' && channel.coinAddress !== '0x0000000000000000000000000000000000000000') // Only include channels with valid token addresses
+          .filter(channel => {
+            // Check for valid coin address - allow addresses with leading zeros
+            const hasValidAddress = channel.coinAddress && 
+              channel.coinAddress !== '' && 
+              channel.coinAddress !== '0x0000000000000000000000000000000000000000' &&
+              channel.coinAddress.match(/^0x[0-9a-fA-F]{40}$/); // Valid 42-character hex address
+            console.log(`Channel ${channel.name}: coinAddress=${channel.coinAddress}, hasValidAddress=${hasValidAddress}`);
+            return hasValidAddress;
+          }) // Only include channels with valid token addresses
           .map((channel) => ({
             id: channel.coinAddress || channel.id,
             address: channel.coinAddress,
@@ -234,7 +242,7 @@ export default function Tokens() {
       // Search filter
       const matchesSearch = token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         token.symbol.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       // Type filter
       const matchesType = selectedCategory === 'all' || 
         selectedCategory === token.tokenType ||
