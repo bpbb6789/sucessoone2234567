@@ -103,10 +103,7 @@ const CreateToken = ({
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Create a Channel coin</DialogTitle>
-                    <DialogDescription>
-                        Make changes to your profile here. Click save whenne.
-                    </DialogDescription>
+                    <DialogTitle>Create Channel Coin</DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
@@ -115,9 +112,9 @@ const CreateToken = ({
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Channel Name</FormLabel>
+                                    <FormLabel>Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Memer" {...field} />
+                                        <Input placeholder="Channel name" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -128,9 +125,9 @@ const CreateToken = ({
                             name="ticker"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Channel Ticker</FormLabel>
+                                    <FormLabel>Ticker</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="JONETH" {...field} />
+                                        <Input placeholder="TOKEN" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -143,7 +140,7 @@ const CreateToken = ({
                                 <FormItem>
                                     <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Describe what your channel is about" {...field} />
+                                        <Textarea placeholder="Brief description" {...field} rows={2} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -156,7 +153,7 @@ const CreateToken = ({
                                 <FormItem>
                                     <FormLabel>Twitter</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="(Optional)" {...field} />
+                                        <Input placeholder="@username" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -169,7 +166,7 @@ const CreateToken = ({
                                 <FormItem>
                                     <FormLabel>Discord</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="(Optional)" {...field} />
+                                        <Input placeholder="discord.gg/invite" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -180,9 +177,9 @@ const CreateToken = ({
                             name="imageUri"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Image URI</FormLabel>
+                                    <FormLabel>Image</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="(Optional)" {...field} />
+                                        <Input placeholder="Image URL" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

@@ -72,7 +72,7 @@ export default function CreateTokenPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] via-[#23234b] to-[#0f3460] py-20">
       <div className="w-full max-w-lg bg-zinc-900 rounded-2xl shadow-xl p-8 border border-zinc-800">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-6 text-center">Create a new Channel coin</h1>
+        <h1 className="text-2xl font-bold text-white mb-4 text-center">Create Channel Coin</h1>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
             <FormField
@@ -80,9 +80,9 @@ export default function CreateTokenPage() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Channel Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Memer" {...field} />
+                    <Input placeholder="Channel name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -93,9 +93,9 @@ export default function CreateTokenPage() {
               name="ticker"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Channel Coin Ticker</FormLabel>
+                  <FormLabel>Ticker</FormLabel>
                   <FormControl>
-                    <Input placeholder="MRETHCHAN" {...field} />
+                    <Input placeholder="TOKEN" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -106,9 +106,9 @@ export default function CreateTokenPage() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Channel Description</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Describe your channel" {...field} />
+                    <Textarea placeholder="Brief description" {...field} rows={2} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,7 +121,7 @@ export default function CreateTokenPage() {
                 <FormItem>
                   <FormLabel>Twitter</FormLabel>
                   <FormControl>
-                    <Input placeholder="(Optional)" {...field} />
+                    <Input placeholder="@username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -134,7 +134,7 @@ export default function CreateTokenPage() {
                 <FormItem>
                   <FormLabel>Discord</FormLabel>
                   <FormControl>
-                    <Input placeholder="(Optional)" {...field} />
+                    <Input placeholder="discord.gg/invite" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -145,9 +145,9 @@ export default function CreateTokenPage() {
               name="imageUri"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URI</FormLabel>
+                  <FormLabel>Image</FormLabel>
                   <FormControl>
-                    <Input placeholder="(Optional)" {...field} />
+                    <Input placeholder="Image URL" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

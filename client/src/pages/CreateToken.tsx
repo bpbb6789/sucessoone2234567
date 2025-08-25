@@ -132,14 +132,11 @@ export default function CreateTokenPage() {
 
     return (
         <div className="p-4 max-w-xl mx-auto" data-testid="page-create-token">
-            <h1 className="text-2xl font-bold mb-4">Launch Your Token</h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">
-                Create and launch your own token with a built-in bonding curve. No coding required!
-            </p>
+            <h1 className="text-2xl font-bold mb-4">Launch Token</h1>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Token Details</CardTitle>
+                    <CardTitle>Details</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
