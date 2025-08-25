@@ -137,26 +137,26 @@ export class DopplerV4Service {
         const dopplerConfig: DopplerPreDeploymentConfig = {
           name: config.name,
           symbol: config.symbol,
-          totalSupply: config.totalSupply || parseEther('1000000000'), // 1B tokens
-          numTokensToSell: config.numTokensToSell || parseEther('600000000'), // 600M for sale
+          totalSupply: parseEther('1000000'), // 1M tokens (smaller for testing)
+          numTokensToSell: parseEther('500000'), // 500K for sale
           tokenURI,
           blockTimestamp: Math.floor(Date.now() / 1000),
-          startTimeOffset: 60 / (24 * 60 * 60), // Start in 1 minute (converted to days)
-          duration: 7, // 7 days
-          epochLength: 3600, // 1 hour epochs
-          gamma: 800, // Price movement per epoch
+          startTimeOffset: 1, // Start in 1 day for better stability
+          duration: 1, // 1 day for testing
+          epochLength: 600, // 10 minute epochs for faster testing
+          gamma: 100, // Lower gamma for more stable price movement
           tickRange: {
-            startTick: 174_312, // Starting price tick
-            endTick: 186_840,   // Ending price tick
+            startTick: -887220, // Lower starting price tick for testnet
+            endTick: 887220,    // Higher ending price tick for testnet  
           },
-          tickSpacing: 2,
+          tickSpacing: 60, // Standard tick spacing for most pools
           fee: 20_000, // 2% fee
-          minProceeds: parseEther('0.1'), // Minimum 0.1 ETH
-          maxProceeds: parseEther('10'), // Maximum 10 ETH
+          minProceeds: parseEther('0.01'), // Minimum 0.01 ETH (lower for testing)
+          maxProceeds: parseEther('1'), // Maximum 1 ETH (lower for testing)
           yearlyMintRate: BigInt(0), // No inflation
           vestingDuration: BigInt(24 * 60 * 60 * 365), // 1 year vesting
           recipients: [config.creatorAddress as `0x${string}`],
-          amounts: [parseEther('50000000')], // 50M tokens to creator
+          amounts: [parseEther('50000')], // 50K tokens to creator
           numPdSlugs: 15,
           integrator: config.creatorAddress as `0x${string}`,
         };
@@ -178,6 +178,15 @@ export class DopplerV4Service {
 
         // Execute deployment
         console.log('🚀 Executing deployment...');
+        console.log('🔧 Deployment parameters:', {
+          name: dopplerConfig.name,
+          symbol: dopplerConfig.symbol,
+          totalSupply: dopplerConfig.totalSupply.toString(),
+          numTokensToSell: dopplerConfig.numTokensToSell.toString(),
+          startTimeOffset: dopplerConfig.startTimeOffset,
+          duration: dopplerConfig.duration,
+          useGovernance: false
+        });
         const txHash = await this.factory.create(createParams);
         console.log(`🎉 Doppler pool created: ${txHash}`);
 
@@ -208,24 +217,41 @@ export class DopplerV4Service {
 
     } catch (error: any) {
       console.error('❌ Doppler V4 token deployment failed:', error);
+      console.error('❌ Full error object:', JSON.stringify(error, null, 2));
       
       // Extract more specific error information
       let errorMessage = error.message || error;
+      let revertReason = 'Unknown';
+      
+      // Try to extract revert data
+      if (error.data) {
+        console.error('❌ Error data:', error.data);
+        revertReason = `Contract revert data: ${error.data}`;
+      }
+      
+      if (error.cause?.data) {
+        console.error('❌ Cause data:', error.cause.data);
+        revertReason = `Contract revert: ${error.cause.data}`;
+      }
+      
       if (error.cause?.reason) {
         errorMessage = error.cause.reason;
+        revertReason = error.cause.reason;
       } else if (error.details) {
         errorMessage = error.details;
       } else if (error.reason) {
         errorMessage = error.reason;
+        revertReason = error.reason;
       }
       
       // Check for common issues
       if (errorMessage.includes('insufficient funds')) {
         errorMessage = 'Insufficient ETH balance for gas fees. Please add testnet ETH to your wallet.';
       } else if (errorMessage.includes('execution reverted')) {
-        errorMessage = 'Transaction reverted. This might be due to invalid parameters or contract validation failure.';
+        errorMessage = `Transaction reverted: ${revertReason}. Check deployment parameters and contract requirements.`;
       }
       
+      console.error('❌ Final error message:', errorMessage);
       throw new Error(`Doppler V4 deployment failed: ${errorMessage}`);
     }
   }
