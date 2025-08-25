@@ -477,30 +477,30 @@ export default function Home() {
                 <div className="space-y-6">
                   {/* Top Channels Section */}
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl md:text-2xl font-bold">Top Channels</h2>
-                      <button className="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-lg md:text-xl font-bold">Top Channels</h2>
+                      <button className="text-blue-500 hover:text-blue-600 text-xs font-medium">
                         Show all
                       </button>
                     </div>
 
                     {/* Desktop Grid - Compact Spotify-like cards */}
-                    <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                      {channels.slice(0, 8).map((channel: any) => (
+                    <div className="hidden md:grid md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+                      {channels.slice(0, 10).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
-                          <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-3 transition-colors">
-                            <div className="relative mb-3">
+                          <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-2 transition-colors">
+                            <div className="relative mb-2">
                               <img
                                 src={channel.avatarUrl || '/placeholder-avatar.png'}
                                 alt={channel.name}
                                 className="w-full aspect-square object-cover rounded-md group-hover:scale-105 transition-transform shadow-lg"
                               />
                             </div>
-                            <h3 className="font-medium text-sm mb-1 truncate text-white">{channel.name}</h3>
+                            <h3 className="font-medium text-xs mb-1 truncate text-white">{channel.name}</h3>
                             <p className="text-xs text-gray-400 truncate mb-1">{channel.ticker}</p>
                             <div className="flex items-center text-xs text-gray-500">
-                              <span className="bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded text-xs">
-                                {channel.category}
+                              <span className="bg-blue-500/20 text-blue-400 px-1 py-0.5 rounded text-xs">
+                                MC
                               </span>
                             </div>
                           </div>
@@ -535,39 +535,32 @@ export default function Home() {
 
                   {/* Trending Section */}
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl md:text-2xl font-bold">Trending</h2>
-                      <button className="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-lg md:text-xl font-bold">Trending</h2>
+                      <button className="text-blue-500 hover:text-blue-600 text-xs font-medium">
                         Show all
                       </button>
                     </div>
 
                     {/* Desktop Grid */}
-                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {channels.slice(4, 8).map((channel: any) => (
+                    <div className="hidden md:grid md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+                      {channels.slice(4, 14).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
-                          <div className="group cursor-pointer">
-                            <div className="relative mb-2 md:mb-3">
+                          <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-2 transition-colors">
+                            <div className="relative mb-2">
                               <img
                                 src={channel.avatarUrl || '/placeholder-avatar.png'}
                                 alt={channel.name}
-                                className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                                className="w-full aspect-square object-cover rounded-md group-hover:scale-105 transition-transform"
                               />
-                              <div className="absolute top-2 right-2">
-                                <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
-                                  {channel.category}
-                                </span>
-                              </div>
                             </div>
-                            <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
-                            <p className="text-xs md:text-sm text-gray-400 truncate mb-1">{channel.ticker}</p>
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <span>{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
-                              <span>{formatTimeAgo(new Date(channel.createdAt))}</span>
+                            <h3 className="font-medium text-xs mb-1 truncate text-white">{channel.name}</h3>
+                            <p className="text-xs text-gray-400 truncate mb-1">{channel.ticker}</p>
+                            <div className="flex items-center text-xs text-gray-500">
+                              <span className="bg-blue-500/20 text-blue-400 px-1 py-0.5 rounded text-xs">
+                                MC
+                              </span>
                             </div>
-                            <p className="text-xs text-gray-500 truncate mt-1">
-                              Owner: {channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}
-                            </p>
                           </div>
                         </Link>
                       ))}
