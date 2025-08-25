@@ -485,33 +485,38 @@ export default function Home() {
                     </div>
 
                     {/* Desktop Grid - Compact Spotify-like cards */}
-                    <div className="hidden md:grid md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-                      {channels.slice(0, 10).map((channel: any) => (
+                    <div className="hidden md:grid md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                      {channels.slice(0, 8).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
-                          <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-2 transition-colors">
-                            <div className="relative mb-2">
+                          <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-3 transition-colors">
+                            <div className="relative mb-3">
                               <img
                                 src={channel.avatarUrl || '/placeholder-avatar.png'}
                                 alt={channel.name}
                                 className="w-full aspect-square object-cover rounded-md group-hover:scale-105 transition-transform shadow-lg"
                               />
                             </div>
-                            <h3 className="font-medium text-xs mb-1 truncate text-white">{channel.name}</h3>
-                            <p className="text-xs text-gray-400 truncate mb-1">{channel.ticker}</p>
-                            <div className="flex items-center gap-1 text-xs">
-                              <span className="bg-blue-500/20 text-blue-400 px-1 py-0.5 rounded text-xs">
-                                MC
-                              </span>
-                              <span className="bg-green-500/20 text-green-400 px-1 py-0.5 rounded text-xs flex items-center gap-1">
-                                📄 {Math.floor(Math.random() * 50) + 5}
-                              </span>
-                              <span className="bg-purple-500/20 text-purple-400 px-1 py-0.5 rounded text-xs flex items-center gap-1">
-                                👥 {Math.floor(Math.random() * 100) + 10}
-                              </span>
+                            <h3 className="font-medium text-sm mb-1 truncate text-white">{channel.name}</h3>
+                            <p className="text-xs text-gray-400 truncate mb-2">{channel.ticker}</p>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1">
+                                <span className="text-green-500">▲</span>
+                                <span className="text-green-400 text-xs font-medium">
+                                  ${Math.floor(Math.random() * 50000) + 1000}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  📄 {Math.floor(Math.random() * 50) + 5}
+                                </span>
+                                <span className="bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  👥 {Math.floor(Math.random() * 100) + 10}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </Link>
-                      ))}
+                      ))}</div>
                     </div>
 
                     {/* Mobile Horizontal Scroll */}
@@ -557,33 +562,38 @@ export default function Home() {
                     </div>
 
                     {/* Desktop Grid */}
-                    <div className="hidden md:grid md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-                      {channels.slice(4, 14).map((channel: any) => (
+                    <div className="hidden md:grid md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                      {channels.slice(4, 12).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
-                          <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-2 transition-colors">
-                            <div className="relative mb-2">
+                          <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-3 transition-colors">
+                            <div className="relative mb-3">
                               <img
                                 src={channel.avatarUrl || '/placeholder-avatar.png'}
                                 alt={channel.name}
                                 className="w-full aspect-square object-cover rounded-md group-hover:scale-105 transition-transform"
                               />
                             </div>
-                            <h3 className="font-medium text-xs mb-1 truncate text-white">{channel.name}</h3>
-                            <p className="text-xs text-gray-400 truncate mb-1">{channel.ticker}</p>
-                            <div className="flex items-center gap-1 text-xs">
-                              <span className="bg-blue-500/20 text-blue-400 px-1 py-0.5 rounded text-xs">
-                                MC
-                              </span>
-                              <span className="bg-green-500/20 text-green-400 px-1 py-0.5 rounded text-xs flex items-center gap-1">
-                                📄 {Math.floor(Math.random() * 50) + 5}
-                              </span>
-                              <span className="bg-purple-500/20 text-purple-400 px-1 py-0.5 rounded text-xs flex items-center gap-1">
-                                👥 {Math.floor(Math.random() * 100) + 10}
-                              </span>
+                            <h3 className="font-medium text-sm mb-1 truncate text-white">{channel.name}</h3>
+                            <p className="text-xs text-gray-400 truncate mb-2">{channel.ticker}</p>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1">
+                                <span className="text-pink-500">▼</span>
+                                <span className="text-pink-400 text-xs font-medium">
+                                  ${Math.floor(Math.random() * 20000) + 500}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  📄 {Math.floor(Math.random() * 50) + 5}
+                                </span>
+                                <span className="bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  👥 {Math.floor(Math.random() * 100) + 10}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </Link>
-                      ))}
+                      ))}</div>
                     </div>
 
                     {/* Mobile Horizontal Scroll */}
