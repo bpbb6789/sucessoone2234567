@@ -484,32 +484,25 @@ export default function Home() {
                       </button>
                     </div>
                     
-                    {/* Desktop Grid */}
-                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {channels.slice(0, 4).map((channel: any) => (
+                    {/* Desktop Grid - Compact Spotify-like cards */}
+                    <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                      {channels.slice(0, 8).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
-                          <div className="group cursor-pointer">
-                            <div className="relative mb-2 md:mb-3">
+                          <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-3 transition-colors">
+                            <div className="relative mb-3">
                               <img
                                 src={channel.avatarUrl || '/placeholder-avatar.png'}
                                 alt={channel.name}
-                                className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                                className="w-full aspect-square object-cover rounded-md group-hover:scale-105 transition-transform shadow-lg"
                               />
-                              <div className="absolute top-2 right-2">
-                                <span className="bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
-                                  {channel.category}
-                                </span>
-                              </div>
                             </div>
-                            <h3 className="font-medium text-sm md:text-base mb-1 truncate">{channel.name}</h3>
-                            <p className="text-xs md:text-sm text-gray-400 truncate mb-1">{channel.ticker}</p>
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <span>{channel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
-                              <span>{formatTimeAgo(new Date(channel.createdAt))}</span>
+                            <h3 className="font-medium text-sm mb-1 truncate text-white">{channel.name}</h3>
+                            <p className="text-xs text-gray-400 truncate mb-1">{channel.ticker}</p>
+                            <div className="flex items-center text-xs text-gray-500">
+                              <span className="bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded text-xs">
+                                {channel.category}
+                              </span>
                             </div>
-                            <p className="text-xs text-gray-500 truncate mt-1">
-                              Owner: {channel.owner.slice(0, 6)}...{channel.owner.slice(-4)}
-                            </p>
                           </div>
                         </Link>
                       ))}
