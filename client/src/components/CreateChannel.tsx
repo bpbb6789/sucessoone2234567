@@ -348,7 +348,7 @@ export default function CreateChannel() {
                         <AvatarUploadField 
                           field={field} 
                           uploadProgress={progress}
-                          isUploading={step === "uploading"}
+                          isUploading={step === "uploading" || step === "creating"}
                         />
                       </FormControl>
                       <FormMessage />
@@ -366,7 +366,7 @@ export default function CreateChannel() {
                         <CoverUploadField 
                           field={field} 
                           uploadProgress={progress}
-                          isUploading={step === "uploading"}
+                          isUploading={step === "uploading" || step === "creating"}
                         />
                       </FormControl>
                       <FormMessage />

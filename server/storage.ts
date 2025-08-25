@@ -518,32 +518,26 @@ export class DatabaseStorage implements IStorage {
     return channel || undefined;
   }
   async getWeb3ChannelByOwner(owner: string): Promise<Web3Channel | undefined> {
-    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.createdBy, owner));
+    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.owner, owner));
     return channel || undefined;
   }
   async getWeb3ChannelByCoinAddress(coinAddress: string): Promise<Web3Channel | undefined> {
-    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.id, coinAddress)); // Assuming coinAddress is the id for now, adjust if schema differs
+    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.coinAddress, coinAddress));
     return channel || undefined;
   }
   async createWeb3Channel(channel: InsertWeb3Channel): Promise<Web3Channel> {
     const [newChannel] = await db.insert(web3Channels).values({
-      id: randomUUID(),
-      owner: channel.owner || channel.createdBy, // Ensure owner is set
+      owner: channel.owner,
       name: channel.name,
-      description: channel.description || '',
-      imageUri: channel.imageUri || '',
-      createdBy: channel.createdBy,
-      coinAddress: channel.coinAddress || '',
-      ticker: channel.ticker || channel.name.toUpperCase().slice(0, 8),
-      category: channel.category || 'General',
-      chainId: channel.chainId || 8453,
-      txHash: channel.txHash || '',
-      metadataUri: channel.metadataUri || '',
       slug: channel.slug || channel.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-      avatarCid: channel.avatarCid || '',
-      coverCid: channel.coverCid || '',
-      isVerified: channel.isVerified || false,
-      subscriberCount: channel.subscriberCount || 0,
+      ticker: channel.ticker,
+      coinAddress: channel.coinAddress,
+      chainId: channel.chainId || 8453,
+      avatarCid: channel.avatarCid,
+      coverCid: channel.coverCid,
+      category: channel.category,
+      status: channel.status || 'active',
+      txHash: channel.txHash,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
