@@ -1473,10 +1473,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'deploying' as any,
       });
 
-      // Get Doppler service (using Base Sepolia for testing)
+      // Get Doppler V4 service (using Base Sepolia for testing)
       const dopplerService = getDopplerService(84532);
 
-      // Prepare token configuration
+      // Prepare token configuration for Doppler V4
       const tokenConfig: PadTokenConfig = {
         name: pad.tokenName,
         symbol: pad.tokenSymbol,
@@ -1492,13 +1492,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let deploymentResult;
       
       if (hasDeployerKey) {
-        console.log('🚀 Real deployment using UniPump contracts...');
+        console.log('🚀 Real deployment using Doppler V4 SDK...');
         deploymentResult = await dopplerService.deployPadToken(tokenConfig);
-        console.log('✅ Token deployed successfully:', deploymentResult);
+        console.log('✅ Doppler V4 token deployed successfully:', deploymentResult);
       } else {
-        console.log('🔄 Simulating token deployment...');
+        console.log('🔄 Simulating Doppler V4 deployment...');
         deploymentResult = await dopplerService.simulateDeployment(tokenConfig);
-        console.log('✅ Token deployment simulated:', deploymentResult);
+        console.log('✅ Doppler V4 deployment simulated:', deploymentResult);
       }
 
       // Update pad with deployment info
