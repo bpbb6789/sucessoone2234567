@@ -131,22 +131,24 @@ export default function CreateTokenPage() {
     const args = [form.watch('name'), form.watch('ticker'), form.watch('twitter'), form.watch('discord'), form.watch('description'), form.watch('imageUri')]
 
     return (
-        <div className="p-3 max-w-md mx-auto" data-testid="page-create-token">
-            <h1 className="text-xl font-bold mb-3">Create Token</h1>
+        <div className="p-4 max-w-md mx-auto" data-testid="page-create-token">
+            <h1 className="text-2xl font-bold mb-2">Create Channel</h1>
+            <p className="text-sm text-gray-600 mb-4">Deploy your Channel Coin on-chain and create your channel.</p>
 
             <Card>
                 <CardContent className="pt-4">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                             <FormField
                                 control={form.control}
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Name</FormLabel>
+                                        <FormLabel className="text-sm font-medium">Channel Name *</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Token name" {...field} />
+                                            <Input placeholder="My Amazing Channel" {...field} className="h-9" />
                                         </FormControl>
+                                        <p className="text-xs text-gray-500">This will also be your on-chain token name.</p>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -156,10 +158,11 @@ export default function CreateTokenPage() {
                                 name="ticker"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Symbol</FormLabel>
+                                        <FormLabel className="text-sm font-medium">Ticker (3-8 chars) *</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. MYTOKEN" {...field} />
+                                            <Input placeholder="ALEX" {...field} className="h-9" maxLength={8} />
                                         </FormControl>
+                                        <p className="text-xs text-gray-500">Your on-chain token symbol, e.g. @alex → ALEX.</p>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -169,13 +172,24 @@ export default function CreateTokenPage() {
                                 name="description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Description</FormLabel>
+                                        <FormLabel className="text-sm font-medium">Category *</FormLabel>
                                         <FormControl>
-                                            <Textarea 
-                                                placeholder="Token description" 
+                                            <select 
                                                 {...field} 
-                                                rows={2}
-                                            />
+                                                className="w-full h-9 px-3 border border-gray-300 rounded-md text-sm bg-white"
+                                            >
+                                                <option value="">Select a category</option>
+                                                <option value="Entertainment">Entertainment</option>
+                                                <option value="Gaming">Gaming</option>
+                                                <option value="Education">Education</option>
+                                                <option value="Technology">Technology</option>
+                                                <option value="Lifestyle">Lifestyle</option>
+                                                <option value="Music">Music</option>
+                                                <option value="Art">Art</option>
+                                                <option value="Sports">Sports</option>
+                                                <option value="News">News</option>
+                                                <option value="Other">Other</option>
+                                            </select>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -195,41 +209,16 @@ export default function CreateTokenPage() {
                                         previewImage={previewImage}
                                         setPreviewImage={setPreviewImage}
                                         toast={toast}
+                                        isCompact={true}
                                     />
                                 )}
                             />
-                            <FormField
-                                control={form.control}
-                                name="twitter"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Twitter</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="@handle" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="discord"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Discord</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Discord link" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
 
-                            <div className="flex justify-end pt-3 border-t mt-4">
+                            <div className="pt-4">
                                 <TransactionComponent
                                     contractAddress={UNIPUMP_CREATOR_ADDRESS}
                                     contractAbi={UniPumpCreatorAbi}
-                                    cta="Launch Token"
+                                    cta="Create Channel"
                                     functionName="createTokenSale"
                                     handleOnStatus2={async (status) => {
                                         queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
@@ -310,7 +299,8 @@ function ImageUploadField({
     setIsUploading, 
     previewImage, 
     setPreviewImage, 
-    toast 
+    toast,
+    isCompact = false
 }: {
     field: any
     form: any
@@ -321,6 +311,7 @@ function ImageUploadField({
     previewImage: string
     setPreviewImage: (image: string) => void
     toast: any
+    isCompact?: boolean
 }) {
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0]
@@ -410,90 +401,91 @@ function ImageUploadField({
     }
 
     return (
-        <FormItem>
-            <FormLabel>Token Image</FormLabel>
-            <FormControl>
-                <div className="space-y-4">
-                    {/* Upload Area */}
-                    <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                        isUploading ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' : 
-                        'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-                    }`}>
-                        {!previewImage ? (
+        <div className="grid grid-cols-2 gap-3">
+            <FormItem>
+                <FormLabel className="text-sm font-medium">Avatar (Image)</FormLabel>
+                <FormControl>
+                    <div className="space-y-2">
+                        <div className={`border-2 border-dashed rounded-lg p-3 text-center transition-colors ${
+                            isUploading ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' : 
+                            'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                        }`}>
+                            {!previewImage ? (
+                                <label className="cursor-pointer block">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        disabled={isUploading}
+                                    />
+                                    <div className="flex flex-col items-center space-y-1">
+                                        {isUploading ? (
+                                            <Upload className="h-6 w-6 text-blue-500 animate-pulse" />
+                                        ) : (
+                                            <ImageIcon className="h-6 w-6 text-gray-400" />
+                                        )}
+                                        <div className="text-xs">
+                                            {isUploading ? (
+                                                <span className="text-blue-600 font-medium">Uploading...</span>
+                                            ) : (
+                                                <span className="font-medium text-blue-600">Upload Avatar</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </label>
+                            ) : (
+                                <div className="relative">
+                                    <img 
+                                        src={previewImage} 
+                                        alt="Preview" 
+                                        className="w-16 h-16 mx-auto rounded-lg object-cover"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={clearImage}
+                                        className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
+                                        data-testid="button-remove-image"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-xs text-center text-gray-500">
+                            Choose File
+                        </div>
+                    </div>
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            
+            <FormItem>
+                <FormLabel className="text-sm font-medium">Cover Media</FormLabel>
+                <FormControl>
+                    <div className="space-y-2">
+                        <div className="border-2 border-dashed rounded-lg p-3 text-center border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
                             <label className="cursor-pointer block">
                                 <input
                                     type="file"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
+                                    accept="image/*,video/*"
                                     className="hidden"
-                                    disabled={isUploading}
                                 />
-                                <div className="flex flex-col items-center space-y-2">
-                                    {isUploading ? (
-                                        <Upload className="h-8 w-8 text-blue-500 animate-pulse" />
-                                    ) : (
-                                        <ImageIcon className="h-8 w-8 text-gray-400" />
-                                    )}
-                                    <div className="text-sm">
-                                        {isUploading ? (
-                                            <span className="text-blue-600 font-medium">{uploadProgress}</span>
-                                        ) : (
-                                            <>
-                                                <span className="font-medium text-blue-600">Click to upload</span>
-                                                <span className="text-gray-500"> or drag and drop</span>
-                                            </>
-                                        )}
-                                    </div>
-                                    <div className="text-xs text-gray-400">
-                                        PNG, JPG, GIF up to 5MB
+                                <div className="flex flex-col items-center space-y-1">
+                                    <ImageIcon className="h-6 w-6 text-gray-400" />
+                                    <div className="text-xs">
+                                        <span className="font-medium text-blue-600">Upload Cover</span>
                                     </div>
                                 </div>
                             </label>
-                        ) : (
-                            <div className="relative">
-                                <img 
-                                    src={previewImage} 
-                                    alt="Preview" 
-                                    className="max-h-32 mx-auto rounded-lg"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={clearImage}
-                                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
-                                    data-testid="button-remove-image"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                                {isUploading && (
-                                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                                        <span className="text-white text-sm font-medium">{uploadProgress}</span>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                        </div>
+                        <div className="text-xs text-center text-gray-500">
+                            Choose File
+                        </div>
                     </div>
-                    
-                    {/* Alternative URL input */}
-                    <div className="relative">
-                        <span className="text-xs text-gray-500 bg-background px-2 absolute -top-2 left-2">
-                            Or paste image URL
-                        </span>
-                        <Input 
-                            placeholder="https://example.com/image.png"
-                            value={form.watch('imageUri') || ''}
-                            onChange={(e) => {
-                                form.setValue('imageUri', e.target.value)
-                                if (e.target.value) {
-                                    setPreviewImage(e.target.value)
-                                }
-                            }}
-                            className="pt-4"
-                            data-testid="input-image-url"
-                        />
-                    </div>
-                </div>
-            </FormControl>
-            <FormMessage />
-        </FormItem>
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+        </div>
     )
 }
