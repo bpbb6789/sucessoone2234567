@@ -889,8 +889,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: channel.id,
         name: channel.name,
         description: channel.description || '',
-        avatarUrl: channel.imageUri ? (channel.imageUri.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.imageUri}` : channel.imageUri) : null,
-        coverUrl: channel.imageUri ? (channel.imageUri.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.imageUri}` : channel.imageUri) : null,
+        avatarUrl: channel.avatarCid ? (channel.avatarCid.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.avatarCid}` : channel.avatarCid) : null,
+        coverUrl: channel.coverCid ? (channel.coverCid.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.coverCid}` : channel.coverCid) : null,
         coinAddress: channel.coinAddress,
         metadataUri: channel.metadataUri || '',
         transactionHash: channel.txHash || '',
@@ -903,7 +903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: channel.updatedAt
       }));
 
-      console.log(`Returning ${transformedChannels.length} channels with coin addresses:`, transformedChannels.map(c => ({ name: c.name, coinAddress: c.coinAddress })));
+      console.log(`Returning ${transformedChannels.length} channels with coin addresses:`, transformedChannels.map(c => ({ name: c.name, coinAddress: c.coinAddress, avatarUrl: c.avatarUrl, coverUrl: c.coverUrl })));
       res.json(transformedChannels);
     } catch (error: any) {
       console.error('Error fetching web3 channels:', error);
