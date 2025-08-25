@@ -131,24 +131,21 @@ export default function CreateTokenPage() {
     const args = [form.watch('name'), form.watch('ticker'), form.watch('twitter'), form.watch('discord'), form.watch('description'), form.watch('imageUri')]
 
     return (
-        <div className="p-4 max-w-xl mx-auto" data-testid="page-create-token">
-            <h1 className="text-2xl font-bold mb-4">Launch Token</h1>
+        <div className="p-3 max-w-md mx-auto" data-testid="page-create-token">
+            <h1 className="text-xl font-bold mb-3">Create Token</h1>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Details</CardTitle>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                             <FormField
                                 control={form.control}
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Token Name</FormLabel>
+                                        <FormLabel>Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g., My Awesome Token" {...field} />
+                                            <Input placeholder="Token name" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -159,9 +156,9 @@ export default function CreateTokenPage() {
                                 name="ticker"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Token Symbol</FormLabel>
+                                        <FormLabel>Symbol</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g., MAT" {...field} />
+                                            <Input placeholder="e.g. MYTOKEN" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -175,9 +172,9 @@ export default function CreateTokenPage() {
                                         <FormLabel>Description</FormLabel>
                                         <FormControl>
                                             <Textarea 
-                                                placeholder="Describe your token and its purpose" 
+                                                placeholder="Token description" 
                                                 {...field} 
-                                                rows={3}
+                                                rows={2}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -206,9 +203,9 @@ export default function CreateTokenPage() {
                                 name="twitter"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Twitter Handle</FormLabel>
+                                        <FormLabel>Twitter</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="@yourhandle (Optional)" {...field} />
+                                            <Input placeholder="@handle" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -221,14 +218,14 @@ export default function CreateTokenPage() {
                                     <FormItem>
                                         <FormLabel>Discord</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Discord invite link (Optional)" {...field} />
+                                            <Input placeholder="Discord link" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
 
-                            <div className="flex justify-end pt-4 border-t">
+                            <div className="flex justify-end pt-3 border-t mt-4">
                                 <TransactionComponent
                                     contractAddress={UNIPUMP_CREATOR_ADDRESS}
                                     contractAbi={UniPumpCreatorAbi}
