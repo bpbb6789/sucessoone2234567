@@ -12,7 +12,7 @@ const NETWORK_CONFIG = {
   },
   84532: { // Base Sepolia
     chain: baseSepolia,
-    rpcUrl: process.env.BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org'
+    rpcUrl: process.env.BASE_SEPOLIA_RPC_URL || 'https://base-sepolia.g.alchemy.com/v2/o3VW3WRXrsXXMRX3l7jZxLUqhWyZzXBy'
   }
 };
 
