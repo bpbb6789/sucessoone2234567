@@ -70,7 +70,13 @@ export class DopplerV4Service {
         return;
       }
 
-      const account = privateKeyToAccount(deployerPrivateKey as `0x${string}`);
+      // Ensure private key is properly formatted
+      let formattedKey = deployerPrivateKey;
+      if (!deployerPrivateKey.startsWith('0x')) {
+        formattedKey = `0x${deployerPrivateKey}`;
+      }
+      
+      const account = privateKeyToAccount(formattedKey as `0x${string}`);
       const walletClient = createWalletClient({
         account,
         chain: config.chain,
