@@ -130,17 +130,79 @@ export class DopplerV4Service {
       // Create token metadata URI from IPFS CID
       const tokenURI = `https://gateway.pinata.cloud/ipfs/${config.mediaCid}`;
 
-      // Always simulate for now due to testnet reliability issues
-      console.log('🔄 Using simulation mode for better reliability...');
-      console.log('💡 Real deployment requires stable testnet conditions and sufficient gas');
-      return this.simulateDeployment(config);
+      if (this.walletClient && this.factory) {
+        console.log('🚀 Real deployment using Doppler V4 SDK...');
+        
+        // Get current block timestamp for deployment parameters
+        const blockTimestamp = Math.floor(Date.now() / 1000);
+        
+        // Configure deployment parameters
+        const deploymentConfig: DopplerPreDeploymentConfig = {
+          name: config.name,
+          symbol: config.symbol,
+          totalSupply: BigInt('1000000000000000000000000'), // 1M tokens with 18 decimals
+          numTokensToSell: BigInt('800000000000000000000000'), // 800K tokens for sale
+          tokenURI,
+          blockTimestamp,
+          startTimeOffset: 0, // Start immediately
+          duration: 86400 * 7, // 7 days
+          epochLength: 86400, // 1 day epochs
+          gamma: 0.5, // Price discovery parameter
+          tickSpacing: 60,
+          fee: 3000, // 0.3%
+          minProceeds: BigInt('1000000000000000'), // 0.001 ETH minimum
+          maxProceeds: BigInt('10000000000000000000'), // 10 ETH maximum
+          yearlyMintRate: BigInt('0'), // No inflation
+          vestingDuration: BigInt('0'), // No vesting
+          recipients: [config.creatorAddress as `0x${string}`],
+          amounts: [BigInt('200000000000000000000000')], // 200K tokens to creator
+          integrator: config.creatorAddress as `0x${string}`,
+        };
+
+        // Deploy using Doppler V4 factory
+        const result = await this.factory.preDeploy(deploymentConfig);
+        
+        console.log('✅ Real Doppler V4 deployment successful:', result);
+        
+        return {
+          tokenAddress: result.tokenAddress || '0x0000000000000000000000000000000000000000',
+          txHash: result.txHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
+          poolId: result.poolId || `doppler-pool-${Date.now()}`,
+          bondingCurveAddress: result.bondingCurveAddress || this.addresses.airlock,
+          dopplerAddress: result.dopplerAddress || this.addresses.airlock,
+          isSimulated: false,
+          explorerUrl: `https://sepolia.basescan.org/tx/${result.txHash}`,
+        };
+
+      } else {
+        // Fallback to simulation if no wallet/SDK
+        console.log('⚠️ No wallet client available, using simulation mode...');
+        return this.simulateDeployment(config);
+      }
 
     } catch (error: any) {
-      console.error('❌ Token deployment error:', error);
+      console.error('❌ Real deployment failed:', error);
+      console.error('❌ Full error details:', JSON.stringify(error, null, 2));
       
-      // Always fall back to simulation if anything fails
-      console.log('🔄 Falling back to simulation mode...');
-      return this.simulateDeployment(config);
+      // Extract more specific error information
+      let errorMessage = error.message || error;
+      
+      if (error.cause?.reason) {
+        errorMessage = error.cause.reason;
+      } else if (error.details) {
+        errorMessage = error.details;
+      } else if (error.reason) {
+        errorMessage = error.reason;
+      }
+      
+      // Check for common issues
+      if (errorMessage.includes('insufficient funds')) {
+        errorMessage = 'Insufficient ETH balance for gas fees. Please add testnet ETH to your wallet.';
+      } else if (errorMessage.includes('execution reverted')) {
+        errorMessage = 'Transaction reverted. Check deployment parameters and contract requirements.';
+      }
+      
+      throw new Error(`Real deployment failed: ${errorMessage}`);
     }
   }
 
