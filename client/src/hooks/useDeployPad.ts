@@ -37,15 +37,17 @@ export function useDeployPad() {
     },
     onSuccess: (data) => {
       if (data.isSimulated) {
+        const method = data.method || 'simulation';
         toast({
           title: "Token Deployment Simulated",
-          description: "Your token deployment was simulated successfully. Set DEPLOYER_PRIVATE_KEY for real deployment.",
+          description: `Your token deployment was simulated successfully using ${method}. Set DEPLOYER_PRIVATE_KEY and ZORA_API_KEY for real deployment.`,
           variant: "default",
         });
       } else {
+        const method = data.method === 'zora' ? 'Zora protocol' : 'blockchain';
         toast({
           title: "Token Deployed!",
-          description: `Your token is now live on-chain! TX: ${data.txHash.slice(0, 10)}...`,
+          description: `Your token is now live on ${method}! TX: ${data.txHash.slice(0, 10)}...`,
         });
       }
     },

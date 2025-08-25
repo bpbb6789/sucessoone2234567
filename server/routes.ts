@@ -1514,15 +1514,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isReal: hasDeployerKey
       });
 
+      const deploymentMethod = deploymentResult.deploymentMethod || 'unknown';
+      const isSimulated = deploymentResult.isSimulated || false;
+      
+      let message = "Pad token deployed successfully!";
+      if (isSimulated) {
+        message = `Pad token deployment simulated successfully (${deploymentMethod})`;
+      } else if (deploymentMethod === 'zora') {
+        message = "Pad token deployed successfully using Zora protocol!";
+      } else if (deploymentMethod === 'doppler') {
+        message = "Pad token deployed successfully using Doppler protocol!";
+      }
+
       res.json({
         success: true,
-        message: deploymentResult.isSimulated ? "Pad token deployment simulated successfully" : "Pad token deployed successfully on-chain!",
+        message,
+        method: deploymentMethod,
         pad: updatedPad,
         tokenAddress: deploymentResult.tokenAddress,
         txHash: deploymentResult.txHash,
         poolId: deploymentResult.poolId,
         bondingCurveAddress: deploymentResult.bondingCurveAddress || null,
-        isSimulated: deploymentResult.isSimulated || false,
+        isSimulated,
         explorerUrl: deploymentResult.explorerUrl || null
       });
     } catch (error: any) {
