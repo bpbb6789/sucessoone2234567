@@ -1258,10 +1258,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ==================== PAD ROUTES (pump.fun style tokens) ====================
   
-  // Get all pads
+  // Get all pads (with optional deployed filter)
   app.get("/api/pads", async (req, res) => {
     try {
-      const pads = await storage.getAllPads();
+      let pads = await storage.getAllPads();
+      
+      // Filter for deployed pads if requested
+      if (req.query.deployed === 'true') {
+        pads = pads.filter(pad => 
+          pad.status === 'deployed' || 
+          pad.status === 'graduated' ||
+          (pad.tokenAddress && pad.deploymentTxHash)
+        );
+      }
+      
       res.json(pads);
     } catch (error) {
       res.status(500).json(handleDatabaseError(error, "getAllPads"));

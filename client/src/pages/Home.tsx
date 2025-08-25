@@ -52,6 +52,16 @@ export default function Home() {
     }
   });
 
+  // Deployed Pads data
+  const { data: deployedPadsData = [], isLoading: deployedPadsLoading } = useQuery({
+    queryKey: ['/api/pads/deployed'],
+    queryFn: async () => {
+      const response = await fetch('/api/pads?deployed=true')
+      if (!response.ok) throw new Error('Failed to fetch deployed pads')
+      return response.json()
+    }
+  });
+
   // Channels data
   const { data: channelsData = [], isLoading: channelsLoading } = useQuery({
     queryKey: ['/api/web3-channels'],
@@ -69,7 +79,7 @@ export default function Home() {
     coverUrl: channel.coverCid ? `https://ipfs.io/ipfs/${channel.coverCid}` : undefined
   }));
 
-  const isLoading = albumsLoading || tracksLoading || contentImportsLoading || channelsLoading;
+  const isLoading = albumsLoading || tracksLoading || contentImportsLoading || channelsLoading || deployedPadsLoading;
   const musicCategories = ["Music", "Podcasts"];
 
   // Filter tracks for podcasts
@@ -116,8 +126,16 @@ export default function Home() {
   return (
     <div className="min-h-screen text-white dark:text-white text-gray-900 dark:text-white" data-testid="page-home">
       <div className="p-4 md:p-6">
-        <Tabs defaultValue="channel" className="w-full">
+        <Tabs defaultValue="pads" className="w-full">
           <TabsList className="inline-flex w-auto bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50 h-8 p-0.5 rounded-lg">
+            <TabsTrigger
+              value="pads"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-md transition-all"
+              data-testid="tab-pads"
+            >
+              <Coins className="w-3 h-3" />
+              <span className="hidden sm:inline">Deployed Pads</span>
+            </TabsTrigger>
             <TabsTrigger
               value="channel"
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-md transition-all"
@@ -159,6 +177,69 @@ export default function Home() {
               <span className="hidden sm:inline">Contents</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Deployed Pads Tab Content */}
+          <TabsContent value="pads" className="mt-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl md:text-2xl font-bold">Deployed Pads</h2>
+                <p className="text-sm text-gray-400">{deployedPadsData.length} tokens deployed</p>
+              </div>
+
+              {isLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-3"></div>
+                      <div className="h-4 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : deployedPadsData.length === 0 ? (
+                <div className="text-center py-12">
+                  <Coins className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-lg font-semibold mb-2">No deployed pads yet</h3>
+                  <p className="text-gray-400 mb-4">Create and deploy your first token pad</p>
+                  <Link href="/create-pad">
+                    <Button variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Pad
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {deployedPadsData.map((pad: any) => (
+                    <div
+                      key={pad.id}
+                      className="group cursor-pointer"
+                      data-testid={`deployed-pad-${pad.id}`}
+                    >
+                      <div className="relative mb-3">
+                        <img
+                          src={`https://gateway.pinata.cloud/ipfs/${pad.mediaCid}`}
+                          alt={pad.title}
+                          className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                          <Coins className="w-8 h-8 md:w-12 md:h-12 text-green-500" />
+                        </div>
+                        <div className="absolute top-2 right-2 bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
+                          {pad.status === 'graduated' ? 'GRADUATED' : 'DEPLOYED'}
+                        </div>
+                      </div>
+                      <h3 className="font-medium text-sm md:text-base mb-1 truncate">{pad.title}</h3>
+                      <p className="text-xs text-gray-400 truncate mb-1">{pad.tokenSymbol}</p>
+                      <p className="text-xs text-green-400 font-medium">${pad.currentPrice}</p>
+                      <p className="text-xs text-gray-400">{formatTimeAgo(new Date(pad.createdAt))}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
           {/* Music Tab Content */}
           <TabsContent value="music" className="mt-6">
