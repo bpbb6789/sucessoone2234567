@@ -63,6 +63,9 @@ function WagmiApp() {
               mode: 'auto',
               theme: 'default',
             },
+            analytics: {
+              enabled: false,  // Disable analytics to prevent connection errors
+            },
           }}
         >
           <RainbowKitProvider>
