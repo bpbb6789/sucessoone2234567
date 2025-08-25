@@ -1236,7 +1236,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update status to tokenizing
       await storage.updateContentImport(req.params.id, { status: 'tokenizing' });
 
-      // Simulate tokenization process (replace with actual Zora SDK integration)
+      // Simulate tokenization process (replace with actual Doppler integration)
       setTimeout(async () => {
         try {
           await storage.updateContentImport(req.params.id, {
@@ -1496,9 +1496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deploymentResult = await dopplerService.deployPadToken(tokenConfig);
         console.log('✅ Doppler V4 token deployed successfully:', deploymentResult);
       } else {
-        console.log('🔄 Simulating Doppler V4 deployment...');
-        deploymentResult = await dopplerService.simulateDeployment(tokenConfig);
-        console.log('✅ Doppler V4 deployment simulated:', deploymentResult);
+        throw new Error('No DEPLOYER_PRIVATE_KEY found! Real deployment requires a private key.');
       }
 
       // Update pad with deployment info
@@ -1515,15 +1513,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const deploymentMethod = deploymentResult.deploymentMethod || 'unknown';
-      const isSimulated = deploymentResult.isSimulated || false;
       
       let message = "Pad token deployed successfully!";
-      if (isSimulated) {
-        message = `Pad token deployment simulated successfully (${deploymentMethod})`;
-      } else if (deploymentMethod === 'zora') {
-        message = "Pad token deployed successfully using Zora protocol!";
-      } else if (deploymentMethod === 'doppler') {
-        message = "Pad token deployed successfully using Doppler protocol!";
+      if (deploymentMethod === 'doppler') {
+        message = "Pad token deployed successfully using Doppler V4 protocol!";
       }
 
       res.json({
@@ -1535,7 +1528,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         txHash: deploymentResult.txHash,
         poolId: deploymentResult.poolId,
         bondingCurveAddress: deploymentResult.bondingCurveAddress || null,
-        isSimulated,
         explorerUrl: deploymentResult.explorerUrl || null
       });
     } catch (error: any) {
