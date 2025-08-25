@@ -1186,6 +1186,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File upload endpoint for IPFS
+  app.post("/api/upload/file", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file provided" });
+      }
+
+      // Upload file to IPFS
+      const cid = await uploadFileToIPFS(req.file);
+      
+      res.json({ 
+        success: true, 
+        cid,
+        url: `https://gateway.pinata.cloud/ipfs/${cid}`
+      });
+    } catch (error) {
+      console.error("File upload error:", error);
+      res.status(500).json({ message: "Failed to upload file to IPFS" });
+    }
+  });
+
   // Tokenize content endpoint
   app.post("/api/content-imports/:id/tokenize", async (req, res) => {
     try {
