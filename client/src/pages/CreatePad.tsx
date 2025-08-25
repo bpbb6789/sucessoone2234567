@@ -252,47 +252,45 @@ export default function CreatePad() {
     <div className="min-h-screen bg-background p-4" data-testid="page-create-pad">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <TrendingUp className="w-8 h-8 text-green-500" />
-            <h1 className="text-3xl font-bold">Create Pad</h1>
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <TrendingUp className="w-6 h-6 text-green-500" />
+            <h1 className="text-2xl font-bold">Create Pad</h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto">
-            Turn your content into a tradable meme token with pump.fun-style mechanics. 
-            Upload media, set your token details, and let the market decide its value.
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Upload media, create a tradable meme token
           </p>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-yellow-500" />
-              Meme Token Details
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Sparkles className="w-4 h-4 text-yellow-500" />
+              Token Details
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Media Upload */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">1. Upload Your Media</h3>
+                <div className="space-y-3">
+                  <h3 className="text-base font-semibold">Upload Media</h3>
                   
                   {/* Media Type Selection */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-4 gap-2">
                     {mediaTypes.map((type) => {
                       const Icon = type.icon;
                       return (
                         <div
                           key={type.id}
-                          className={`p-3 border-2 rounded-lg text-center cursor-pointer transition-all ${
+                          className={`p-2 border rounded text-center cursor-pointer transition-all ${
                             selectedMediaType === type.id 
                               ? 'border-green-500 bg-green-500/10' 
                               : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
                           }`}
                         >
-                          <Icon className={`w-6 h-6 mx-auto mb-2 ${type.color}`} />
-                          <p className="text-sm font-medium">{type.name}</p>
-                          <p className="text-xs text-gray-500">{type.description}</p>
+                          <Icon className={`w-4 h-4 mx-auto mb-1 ${type.color}`} />
+                          <p className="text-xs font-medium">{type.name}</p>
                         </div>
                       );
                     })}
@@ -307,11 +305,10 @@ export default function CreatePad() {
                         <FormControl>
                           <div className="space-y-3">
                             {!previewUrl ? (
-                              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                                <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                                <h3 className="text-lg font-semibold mb-2">Drop files or browse</h3>
-                                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                                  Supports images, GIFs, audio, and video files
+                              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                                <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                  Drop files or browse
                                 </p>
                                 <input
                                   type="file"
@@ -323,6 +320,7 @@ export default function CreatePad() {
                                 <Button
                                   type="button"
                                   variant="outline"
+                                  size="sm"
                                   onClick={() => document.getElementById('media-upload')?.click()}
                                 >
                                   Choose File
@@ -379,8 +377,8 @@ export default function CreatePad() {
                 </div>
 
                 {/* Content Details */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">2. Content Details</h3>
+                <div className="space-y-3">
+                  <h3 className="text-base font-semibold">Content Details</h3>
                   
                   <FormField
                     control={form.control}
@@ -398,7 +396,6 @@ export default function CreatePad() {
                             }}
                           />
                         </FormControl>
-                        <FormDescription>A catchy title for your meme token</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -414,7 +411,7 @@ export default function CreatePad() {
                           <Textarea
                             placeholder="Tell people about your meme..."
                             {...field}
-                            rows={3}
+                            rows={2}
                           />
                         </FormControl>
                         <FormMessage />
@@ -431,7 +428,6 @@ export default function CreatePad() {
                         <FormControl>
                           <Input placeholder="meme, funny, crypto" {...field} />
                         </FormControl>
-                        <FormDescription>Comma-separated tags to help people find your token</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -439,8 +435,8 @@ export default function CreatePad() {
                 </div>
 
                 {/* Token Economics */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">3. Token Details</h3>
+                <div className="space-y-3">
+                  <h3 className="text-base font-semibold">Token Details</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
@@ -452,7 +448,6 @@ export default function CreatePad() {
                           <FormControl>
                             <Input placeholder="Epic Meme Token" {...field} />
                           </FormControl>
-                          <FormDescription>Full name for your token</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -473,7 +468,6 @@ export default function CreatePad() {
                               className="font-mono"
                             />
                           </FormControl>
-                          <FormDescription>Trading symbol (2-10 chars)</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -526,36 +520,7 @@ export default function CreatePad() {
           </CardContent>
         </Card>
 
-        {/* Info Cards */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4">
-            <div className="text-center">
-              <TrendingUp className="w-8 h-8 mx-auto mb-2 text-green-500" />
-              <h4 className="font-semibold mb-1">Bonding Curve</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Price increases as more people buy your token
-              </p>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="text-center">
-              <Coins className="w-8 h-8 mx-auto mb-2 text-blue-500" />
-              <h4 className="font-semibold mb-1">Instant Trading</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Your token is tradable immediately after creation
-              </p>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="text-center">
-              <Sparkles className="w-8 h-8 mx-auto mb-2 text-purple-500" />
-              <h4 className="font-semibold mb-1">Fair Launch</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                No presale, everyone starts at the same price
-              </p>
-            </div>
-          </Card>
-        </div>
+        
       </div>
     </div>
   );
