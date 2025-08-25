@@ -203,7 +203,7 @@ export default function CreatePad() {
             isReal: !deployResult.isSimulated
           });
         } else {
-          throw new Error(deployResult.message || 'Deployment failed');
+          throw new Error((deployResult && deployResult.message) || 'Deployment failed');
         }
 
         setStep("success");
