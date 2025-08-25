@@ -25,9 +25,8 @@ export interface TokenDeploymentResult {
   poolId: string;
   bondingCurveAddress: string;
   dopplerAddress?: string;
-  isSimulated?: boolean;
   explorerUrl?: string;
-  deploymentMethod?: 'zora' | 'doppler' | 'simulation';
+  deploymentMethod?: 'zora' | 'doppler';
 }
 
 export interface DopplerPreDeploymentConfig {
@@ -197,7 +196,6 @@ export class DopplerV4Service {
           poolId: `zora-coin-${Date.now()}`,
           bondingCurveAddress: result.deployment?.market || '0x0000000000000000000000000000000000000000',
           dopplerAddress: result.deployment?.market,
-          isSimulated: false,
           explorerUrl: this.chainId === 84532 
             ? `https://sepolia.basescan.org/tx/${result.hash}`
             : `https://basescan.org/tx/${result.hash}`,
@@ -205,9 +203,7 @@ export class DopplerV4Service {
         };
 
       } else {
-        // Fallback to simulation if no wallet clients
-        console.log('⚠️ No wallet client available, using simulation mode...');
-        return this.simulateZoraDeployment(config);
+        throw new Error('No wallet client available! DEPLOYER_PRIVATE_KEY must be set for real deployments.');
       }
 
     } catch (error: any) {
@@ -234,47 +230,10 @@ export class DopplerV4Service {
         errorMessage = 'Zora API key required. Please set ZORA_API_KEY environment variable.';
       }
       
-      // Fallback to simulation on any error
-      console.log('🔄 Falling back to simulation mode due to error...');
-      return this.simulateZoraDeployment(config);
+      throw new Error(errorMessage);
     }
   }
 
-  // Simulate Zora deployment for testing without spending gas
-  async simulateZoraDeployment(config: PadTokenConfig): Promise<TokenDeploymentResult> {
-    console.log('🔄 Simulating Zora coin deployment for:', config.name, config.symbol);
-    
-    // Generate realistic-looking addresses
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
-    
-    // Generate realistic token address
-    const tokenAddress = `0x${random}${'0'.repeat(34)}`.slice(0, 42);
-    
-    // Generate realistic tx hash
-    const txHash = `0x${'b'.repeat(8)}${timestamp.toString(16)}${'0'.repeat(48)}`.slice(0, 66);
-    
-    // Add a small delay to simulate network time
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    return {
-      tokenAddress,
-      txHash,
-      poolId: `zora-coin-${timestamp}`,
-      bondingCurveAddress: `0x${'20720'.padEnd(40, '0')}`, // "zora" in hex-like format
-      dopplerAddress: `0x${'20720'.padEnd(40, '0')}`,
-      isSimulated: true,
-      explorerUrl: this.chainId === 84532 
-        ? `https://sepolia.basescan.org/tx/${txHash}`
-        : `https://basescan.org/tx/${txHash}`,
-      deploymentMethod: 'simulation'
-    };
-  }
-
-  // Keep old simulation method for backwards compatibility
-  async simulateDeployment(config: PadTokenConfig): Promise<TokenDeploymentResult> {
-    return this.simulateZoraDeployment(config);
-  }
 
   // Get current token price from Doppler bonding curve
   async getCurrentPrice(tokenAddress: string, poolId: string): Promise<string> {
