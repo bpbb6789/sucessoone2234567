@@ -56,14 +56,6 @@ export class DopplerV4Service {
         throw new Error(`Doppler V4 not deployed on chain ${this.chainId}`);
       }
 
-      // Create public client
-      const publicClient = createPublicClient({
-        chain: config.chain,
-        transport: http(config.rpcUrl),
-      });
-
-      // For now, we'll use a dummy private key - in production this should come from environment
-      // Or better yet, use a different approach for server-side deployment
       const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
       if (!deployerPrivateKey) {
         console.warn('No DEPLOYER_PRIVATE_KEY found. Token deployment will be simulated.');
@@ -77,14 +69,31 @@ export class DopplerV4Service {
       }
       
       const account = privateKeyToAccount(formattedKey as `0x${string}`);
+
+      // Create clients with proper configuration for Drift
+      const transport = http(config.rpcUrl);
+      
+      const publicClient = createPublicClient({
+        chain: config.chain,
+        transport,
+      });
+
       const walletClient = createWalletClient({
         account,
         chain: config.chain,
-        transport: http(config.rpcUrl),
+        transport,
       });
 
+      // Verify clients are working before creating Drift
+      console.log('Testing clients...');
+      const blockNumber = await publicClient.getBlockNumber();
+      console.log(`Connected to chain ${this.chainId}, block: ${blockNumber}`);
+
       // Create drift instance
-      this.drift = createDrift({ publicClient, walletClient });
+      this.drift = createDrift({
+        publicClient,
+        walletClient,
+      });
 
       // Initialize factory
       this.factory = new ReadWriteFactory(this.addresses.airlock, this.drift);

@@ -1,0 +1,121 @@
+✅ Pad creation success, data: 
+{id: '1e251760-584d-4a29-8bf4-04d543955010', creatorAddress: '0x6C602eFCd9860eB4Ff7E478221BB72a779fCEAd5', title: 'HEad phonezzzzz', description: '', mediaType: 'image', …}
+bondingCurveProgress
+: 
+"0"
+comments
+: 
+0
+createdAt
+: 
+"2025-08-25T12:26:15.061Z"
+creatorAddress
+: 
+"0x6C602eFCd9860eB4Ff7E478221BB72a779fCEAd5"
+currentPrice
+: 
+"0.000001"
+deploymentTxHash
+: 
+null
+description
+: 
+""
+graduationTxHash
+: 
+null
+holders
+: 
+0
+id
+: 
+"1e251760-584d-4a29-8bf4-04d543955010"
+likes
+: 
+0
+marketCap
+: 
+"0"
+mediaCid
+: 
+"bafybeibbj2gxvljhypt3am6z74xuolkvijmmd4k2mtm4gbjju32qzdkaka"
+mediaType
+: 
+"image"
+metadata
+: 
+null
+shares
+: 
+0
+status
+: 
+"pending"
+tags
+: 
+[]
+thumbnailCid
+: 
+null
+title
+: 
+"HEad phonezzzzz"
+tokenAddress
+: 
+null
+tokenName
+: 
+"HEADPHOXND"
+tokenSymbol
+: 
+"HEADFOXEXX"
+totalSupply
+: 
+"1000000000"
+updatedAt
+: 
+"2025-08-25T12:26:15.061Z"
+volume24h
+: 
+"0"
+[[Prototype]]
+: 
+Object
+CreatePad.tsx:171 ✅ Pad ID: 1e251760-584d-4a29-8bf4-04d543955010
+CreatePad.tsx:179 🚀 Starting token deployment for pad: 1e251760-584d-4a29-8bf4-04d543955010
+CreatePad.tsx:186 🚀 Token deployment completed successfully
+useDeployPad.ts:20 🚀 deployMutation called with padId: 1e251760-584d-4a29-8bf4-04d543955010
+queryClient.ts:15 
+ POST https://db402819-1ab8-4030-9180-28cff4b9eb85-00-1884m2v50yu8s.janeway.replit.dev:3000/api/pads/1e251760-584d-4a29-8bf4-04d543955010/deploy 500 (Internal Server Error)
+apiRequest	@	queryClient.ts:15
+mutationFn	@	useDeployPad.ts:22
+fn	@	chunk-A67CSFD6.js?v=67c74ce0:1234
+run	@	chunk-A67CSFD6.js?v=67c74ce0:507
+start	@	chunk-A67CSFD6.js?v=67c74ce0:550
+execute	@	chunk-A67CSFD6.js?v=67c74ce0:1270
+await in execute		
+mutate	@	chunk-A67CSFD6.js?v=67c74ce0:2692
+(anonymous)	@	chunk-A67CSFD6.js?v=67c74ce0:3415
+onSuccess	@	CreatePad.tsx:185
+execute	@	chunk-A67CSFD6.js?v=67c74ce0:1278
+await in execute		
+mutate	@	chunk-A67CSFD6.js?v=67c74ce0:2692
+(anonymous)	@	chunk-A67CSFD6.js?v=67c74ce0:3415
+onSubmit	@	CreatePad.tsx:220
+(anonymous)	@	chunk-CLZTDWJN.js?v=67c74ce0:1465
+await in (anonymous)		
+callCallback2	@	chunk-J4NESBNT.js?v=67c74ce0:3674
+invokeGuardedCallbackDev	@	chunk-J4NESBNT.js?v=67c74ce0:3699
+invokeGuardedCallback	@	chunk-J4NESBNT.js?v=67c74ce0:3733
+invokeGuardedCallbackAndCatchFirstError	@	chunk-J4NESBNT.js?v=67c74ce0:3736
+executeDispatch	@	chunk-J4NESBNT.js?v=67c74ce0:7014
+processDispatchQueueItemsInOrder	@	chunk-J4NESBNT.js?v=67c74ce0:7034
+processDispatchQueue	@	chunk-J4NESBNT.js?v=67c74ce0:7043
+dispatchEventsForPlugins	@	chunk-J4NESBNT.js?v=67c74ce0:7051
+(anonymous)	@	chunk-J4NESBNT.js?v=67c74ce0:7174
+batchedUpdates$1	@	chunk-J4NESBNT.js?v=67c74ce0:18913
+batchedUpdates	@	chunk-J4NESBNT.js?v=67c74ce0:3579
+dispatchEventForPluginEventSystem	@	chunk-J4NESBNT.js?v=67c74ce0:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay	@	chunk-J4NESBNT.js?v=67c74ce0:5478
+dispatchEvent	@	chunk-J4NESBNT.js?v=67c74ce0:5472
+dispatchDiscreteEvent	@	chunk-J4NESBNT.js?v=67c74ce0:5449
