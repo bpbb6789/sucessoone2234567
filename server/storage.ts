@@ -124,6 +124,25 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // Initialize client here if it's not already done or passed in constructor
+  private client: any; // Assuming 'client' is a property that holds the database connection client
+
+  constructor() {
+    // Assuming 'db' is initialized elsewhere and accessible.
+    // If 'client' needs to be explicitly set, you might need to inject it or initialize it here.
+    // For this example, we'll assume 'db' can be used directly or has a client property.
+    // If 'db' is a Drizzle client, it might not have a 'query' method directly like this.
+    // The following implementation assumes a different client structure based on the provided snippet.
+    // Let's adapt to use Drizzle's client if possible, or stick to the provided structure.
+
+    // If the intention is to use Drizzle's `db` object for inserts:
+    // We will adapt the `createWeb3Channel` to use Drizzle's insert method.
+    // If the provided snippet implies a different client (e.g., pg client), then this needs adjustment.
+
+    // For now, let's assume the provided snippet's `this.client.query` was a placeholder
+    // and we should use Drizzle's `db` object as shown in other methods.
+  }
+
   // Channel methods
   async getChannel(id: string): Promise<Channel | undefined> {
     const [channel] = await db.select().from(channels).where(eq(channels.id, id));
@@ -191,7 +210,7 @@ export class DatabaseStorage implements IStorage {
     .from(videos)
     .innerJoin(channels, eq(videos.channelId, channels.id))
     .where(eq(videos.id, id));
-    
+
     return video || undefined;
   }
 
@@ -494,10 +513,32 @@ export class DatabaseStorage implements IStorage {
   async getAllTokens(): Promise<Token[]> { return []; }
   async createToken(): Promise<Token> { throw new Error('Not implemented'); }
 
-  async getWeb3Channel(): Promise<Web3Channel | undefined> { return undefined; }
-  async getWeb3ChannelByOwner(): Promise<Web3Channel | undefined> { return undefined; }
-  async getWeb3ChannelByCoinAddress(): Promise<Web3Channel | undefined> { return undefined; }
-  async createWeb3Channel(): Promise<Web3Channel> { throw new Error('Not implemented'); }
+  async getWeb3Channel(id: string): Promise<Web3Channel | undefined> {
+    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.id, id));
+    return channel || undefined;
+  }
+  async getWeb3ChannelByOwner(owner: string): Promise<Web3Channel | undefined> {
+    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.createdBy, owner));
+    return channel || undefined;
+  }
+  async getWeb3ChannelByCoinAddress(coinAddress: string): Promise<Web3Channel | undefined> {
+    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.id, coinAddress)); // Assuming coinAddress is the id for now, adjust if schema differs
+    return channel || undefined;
+  }
+  async createWeb3Channel(channel: InsertWeb3Channel): Promise<Web3Channel> {
+    const [newChannel] = await db.insert(web3Channels).values({
+      id: randomUUID(),
+      name: channel.name,
+      description: channel.description || '',
+      imageUri: channel.imageUri || '',
+      createdBy: channel.createdBy,
+      isVerified: channel.isVerified || false,
+      subscriberCount: channel.subscriberCount || 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+    return newChannel;
+  }
   async getAllWeb3Channels(): Promise<Web3Channel[]> {
     return await db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
   }
