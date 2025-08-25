@@ -42,7 +42,7 @@ export default function Home() {
     queryKey: ["/api/music/tracks"],
   });
 
-  // Token data queries  
+  // Token data queries
   const { data: contentImportsData, isLoading: contentImportsLoading } = useQuery({
     queryKey: ['/api/marketplace'],
     queryFn: async () => {
@@ -118,40 +118,40 @@ export default function Home() {
       <div className="p-4 md:p-6">
         <Tabs defaultValue="channel" className="w-full">
           <TabsList className="grid w-full grid-cols-5 bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50">
-            <TabsTrigger 
-              value="channel" 
+            <TabsTrigger
+              value="channel"
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
               data-testid="tab-channel"
             >
               <Play className="w-4 h-4" />
               <span>Channels</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="music" 
+            <TabsTrigger
+              value="music"
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
               data-testid="tab-music"
             >
               <Music className="w-4 h-4" />
               <span>Music</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="podcasts" 
+            <TabsTrigger
+              value="podcasts"
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
               data-testid="tab-podcasts"
             >
               <Radio className="w-4 h-4" />
               <span>Podcasts</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="reels" 
+            <TabsTrigger
+              value="reels"
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
               data-testid="tab-reels"
             >
               <Play className="w-4 h-4" />
               <span>Reels</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="contents" 
+            <TabsTrigger
+              value="contents"
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
               data-testid="tab-contents"
             >
@@ -163,7 +163,7 @@ export default function Home() {
           {/* Music Tab Content */}
           <TabsContent value="music" className="mt-6">
             <div className="space-y-6 md:space-y-8">
-              
+
 
               {/* Jump back in section */}
               <div>
@@ -214,7 +214,7 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-                    
+
                     {/* Mobile Horizontal Scroll */}
                     <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
                       {albums.slice(0, 8).map((album) => (
@@ -291,7 +291,7 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-                    
+
                     {/* Mobile Horizontal Scroll */}
                     <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
                       {albums.slice(2, 10).map((album) => (
@@ -440,7 +440,7 @@ export default function Home() {
                       ))}
                     </div>
                   </div>
-                  
+
                   {/* Loading Trending */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
@@ -483,7 +483,7 @@ export default function Home() {
                         Show all
                       </button>
                     </div>
-                    
+
                     {/* Desktop Grid - Compact Spotify-like cards */}
                     <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                       {channels.slice(0, 8).map((channel: any) => (
@@ -507,7 +507,7 @@ export default function Home() {
                         </Link>
                       ))}
                     </div>
-                    
+
                     {/* Mobile Horizontal Scroll */}
                     <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
                       {channels.slice(0, 8).map((channel: any) => (
@@ -520,8 +520,8 @@ export default function Home() {
                                 className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
                               />
                               <div className="absolute top-1 right-1">
-                                <span className="bg-green-500 text-black text-xs px-1 py-0.5 rounded-full font-medium">
-                                  {channel.category.slice(0, 2)}
+                                <span className="bg-blue-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
+                                  MC
                                 </span>
                               </div>
                             </div>
@@ -541,7 +541,7 @@ export default function Home() {
                         Show all
                       </button>
                     </div>
-                    
+
                     {/* Desktop Grid */}
                     <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {channels.slice(4, 8).map((channel: any) => (
@@ -572,7 +572,7 @@ export default function Home() {
                         </Link>
                       ))}
                     </div>
-                    
+
                     {/* Mobile Horizontal Scroll */}
                     <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
                       {channels.slice(4, 12).map((channel: any) => (
@@ -585,8 +585,8 @@ export default function Home() {
                                 className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
                               />
                               <div className="absolute top-1 right-1">
-                                <span className="bg-green-500 text-black text-xs px-1 py-0.5 rounded-full font-medium">
-                                  {channel.category.slice(0, 2)}
+                                <span className="bg-blue-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
+                                  MC
                                 </span>
                               </div>
                             </div>
