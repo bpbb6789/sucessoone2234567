@@ -761,7 +761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.JSON.stringify({
           query: `
             query GetTokenTransfers($tokenAddress: String!) {
               transfers(
@@ -811,7 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.JSON.stringify({
           query: `
             query GetTokenCreation($tokenAddress: String!) {
               uniPumpCreatorSaless(
@@ -883,9 +883,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/web3-channels", async (req, res) => {
     try {
       const channels = await storage.getAllWeb3Channels();
-      res.json(channels);
-    } catch (error) {
-      res.status(500).json(handleDatabaseError(error, "getAllWeb3Channels"));
+
+      // Transform channels to match expected structure for tokens page
+      const transformedChannels = channels.map(channel => ({
+        id: channel.id,
+        name: channel.name,
+        description: channel.description || '',
+        avatarUrl: channel.imageUri ? (channel.imageUri.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.imageUri}` : channel.imageUri) : null,
+        coverUrl: channel.imageUri ? (channel.imageUri.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.imageUri}` : channel.imageUri) : null,
+        coinAddress: channel.coinAddress,
+        metadataUri: channel.metadataUri || '',
+        transactionHash: channel.txHash || '',
+        owner: channel.owner || channel.createdBy,
+        ticker: channel.ticker || channel.name.toUpperCase().slice(0, 8),
+        category: channel.category || 'General',
+        chainId: channel.chainId || 8453,
+        slug: channel.slug || channel.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        createdAt: channel.createdAt,
+        updatedAt: channel.updatedAt
+      }));
+
+      console.log(`Returning ${transformedChannels.length} channels with coin addresses:`, transformedChannels.map(c => ({ name: c.name, coinAddress: c.coinAddress })));
+      res.json(transformedChannels);
+    } catch (error: any) {
+      console.error('Error fetching web3 channels:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 
@@ -1195,7 +1217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Upload file to IPFS
       const cid = await uploadFileToIPFS(req.file);
-      
+
       res.json({ 
         success: true, 
         cid,

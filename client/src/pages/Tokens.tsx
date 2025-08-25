@@ -79,8 +79,9 @@ export default function Tokens() {
 
       // Process channel tokens
       if (channelsData && channelsData.length > 0) {
+        console.log('Processing channels data:', channelsData.map(c => ({ name: c.name, coinAddress: c.coinAddress, hasAddress: !!c.coinAddress })));
         const channelTokens: Token[] = channelsData
-          .filter(channel => channel.coinAddress) // Only include channels with token addresses
+          .filter(channel => channel.coinAddress && channel.coinAddress !== '' && channel.coinAddress !== '0x0000000000000000000000000000000000000000') // Only include channels with valid token addresses
           .map((channel) => ({
             id: channel.coinAddress || channel.id,
             address: channel.coinAddress,
