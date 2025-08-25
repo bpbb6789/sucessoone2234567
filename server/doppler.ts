@@ -4,7 +4,8 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { ReadWriteFactory, DOPPLER_V4_ADDRESSES, ReadDoppler, ReadQuoter } from 'doppler-v4-sdk';
 import { createDrift } from '@delvtech/drift';
 import { viemAdapter } from '@delvtech/drift-viem';
-import { createCoin, CreateConstants, setApiKey, type ContentCoinCurrency } from '@zoralabs/coins-sdk';
+import { createCoin, setApiKey } from '@zoralabs/coins-sdk';
+import type { ContentCoinCurrency, StartingMarketCap } from '@zoralabs/coins-sdk';
 
 export interface PadTokenConfig {
   name: string;
@@ -147,10 +148,10 @@ export class DopplerV4Service {
         let currency: ContentCoinCurrency;
         if (this.chainId === 84532) {
           // Base Sepolia - use ETH as ZORA tokens aren't available on testnet
-          currency = CreateConstants.ContentCoinCurrencies.ETH;
+          currency = "ETH";
         } else {
           // Base mainnet - use ZORA
-          currency = CreateConstants.ContentCoinCurrencies.ZORA;
+          currency = "ZORA";
         }
 
         // Configure Zora coin creation parameters
@@ -164,7 +165,7 @@ export class DopplerV4Service {
           },
           currency,
           chainId: this.chainId,
-          startingMarketCap: CreateConstants.StartingMarketCaps.LOW,
+          startingMarketCap: "LOW" as StartingMarketCap,
           // Optional: add platform referrer if available
           // platformReferrer: "0x..." as Address,
         };
