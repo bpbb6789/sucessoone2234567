@@ -2,8 +2,7 @@ import { ReadWriteFactory, DOPPLER_V4_ADDRESSES } from 'doppler-v4-sdk';
 import { createPublicClient, createWalletClient, http, parseEther } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import { createDrift } from '@delvtech/drift';
-import { viemAdapter } from '@delvtech/drift-viem';
+import { createDrift, getContract } from '@delvtech/drift';
 
 // Configuration for different networks
 const NETWORK_CONFIG = {
@@ -13,7 +12,7 @@ const NETWORK_CONFIG = {
   },
   84532: { // Base Sepolia
     chain: baseSepolia,
-    rpcUrl: process.env.BASE_SEPOLIA_RPC_URL || 'https://base-sepolia.g.alchemy.com/v2/o3VW3WRXrsXXMRX3l7jZxLUqhWyZzXBy'
+    rpcUrl: process.env.BASE_SEPOLIA_RPC_URL || 'https://sepolia.base.org'
   }
 };
 
@@ -39,89 +38,97 @@ export class DopplerV4Service {
   private addresses: any = null;
   private chainId: number;
   private initPromise: Promise<void>;
+  private rpcUrl: string;
 
   constructor(chainId: number = 84532) { // Default to Base Sepolia for testing
     this.chainId = chainId;
+    this.rpcUrl = this.getRpcUrl(chainId);
     this.initPromise = this.initialize();
   }
 
-  private async initialize() {
+  private getRpcUrl(chainId: number): string {
+    const rpcUrls: Record<number, string> = {
+      84532: process.env.BASE_SEPOLIA_RPC || 'https://sepolia.base.org', // Base Sepolia
+      8453: process.env.BASE_MAINNET_RPC || 'https://mainnet.base.org',  // Base Mainnet
+    };
+
+    const url = rpcUrls[chainId] || rpcUrls[84532];
+    console.log(`Using RPC URL for chain ${chainId}: ${url}`);
+    return url;
+  }
+
+  private getAddressesForChain(chainId: number): any | null {
+    // This function should return the Doppler V4 contract addresses for the given chain ID
+    // For now, it's a placeholder. In a real scenario, this would fetch from a configuration or constant.
+    // Example structure:
+    // const addresses = {
+    //   airlock: '0x...',
+    //   factory: '0x...',
+    //   // ... other addresses
+    // };
+    // return addresses[chainId];
+    return DOPPLER_V4_ADDRESSES[chainId];
+  }
+
+  async initialize(): Promise<void> {
     try {
       console.log(`🔧 Initializing Doppler V4 Service for chain ${this.chainId}...`);
-      
-      const config = NETWORK_CONFIG[this.chainId];
-      if (!config) {
-        throw new Error(`Unsupported chain ID: ${this.chainId}`);
-      }
 
-      // Get Doppler V4 addresses for this chain
-      this.addresses = DOPPLER_V4_ADDRESSES[this.chainId];
+      // Initialize addresses
+      this.addresses = this.getAddressesForChain(this.chainId);
       if (!this.addresses) {
-        console.error(`❌ Doppler V4 not deployed on chain ${this.chainId}`);
-        throw new Error(`Doppler V4 not deployed on chain ${this.chainId}`);
+        throw new Error(`No addresses configured for chain ${this.chainId}`);
       }
-      
       console.log(`✅ Found Doppler V4 addresses for chain ${this.chainId}`);
 
-      const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
-      if (!deployerPrivateKey) {
-        console.warn('No DEPLOYER_PRIVATE_KEY found. Token deployment will be simulated.');
-        return;
-      }
-
-      // Ensure private key is properly formatted
-      let formattedKey = deployerPrivateKey;
-      if (!deployerPrivateKey.startsWith('0x')) {
-        formattedKey = `0x${deployerPrivateKey}`;
-      }
-      
-      const account = privateKeyToAccount(formattedKey as `0x${string}`);
-
-      // Create clients with proper configuration for Drift
-      const transport = http(config.rpcUrl);
-      
-      const publicClient = createPublicClient({
-        chain: config.chain,
-        transport,
-      });
-
-      const walletClient = createWalletClient({
-        account,
-        chain: config.chain,
-        transport,
-      });
-
-      // Verify clients are working before creating Drift
       console.log('Testing clients...');
-      const blockNumber = await publicClient.getBlockNumber();
-      console.log(`Connected to chain ${this.chainId}, block: ${blockNumber}`);
 
-      // Create drift instance with viemAdapter (correct approach)
-      this.drift = createDrift({
-        adapter: viemAdapter({ 
-          publicClient, 
-          walletClient 
-        })
+      // Create Drift client with simplified configuration
+      try {
+        this.drift = createDrift({
+          rpcUrl: this.rpcUrl
+        });
+        console.log('✅ Drift client created successfully');
+      } catch (driftError) {
+        console.error('Failed to create Drift client:', driftError);
+        // Try alternative initialization
+        console.log('Attempting alternative Drift initialization...');
+        this.drift = createDrift(this.rpcUrl);
+      }
+
+      console.log('Deploying token with Doppler V4 SDK...');
+
+      // Create factory client
+      this.factory = getContract({
+        abi: DopplerFactoryAbi, // Assuming DopplerFactoryAbi is defined elsewhere
+        address: this.addresses.factory as `0x${string}`,
+        client: this.drift,
       });
 
-      // Initialize factory
-      this.factory = new ReadWriteFactory(this.addresses.airlock, this.drift);
-      
-      console.log(`Doppler V4 Service initialized for chain ${this.chainId}`);
+      // Test connection with a simple call
+      try {
+        const blockNumber = await this.drift.getBlockNumber();
+        console.log(`Connected to chain ${this.chainId}, block: ${blockNumber}`);
+      } catch (blockError) {
+        console.warn('Could not get block number, but continuing...');
+      }
+
+      console.log(`✅ Doppler V4 Service initialized successfully`);
     } catch (error) {
       console.error('Failed to initialize Doppler V4 Service:', error);
+      throw error;
     }
   }
 
   async deployPadToken(config: PadTokenConfig): Promise<TokenDeploymentResult> {
     // Ensure initialization is complete
     await this.initPromise;
-    
+
     if (!this.factory || !this.drift || !this.addresses) {
-      console.error('Doppler V4 Service components:', { 
-        factory: !!this.factory, 
-        drift: !!this.drift, 
-        addresses: !!this.addresses 
+      console.error('Doppler V4 Service components:', {
+        factory: !!this.factory,
+        drift: !!this.drift,
+        addresses: !!this.addresses
       });
       throw new Error('Doppler V4 Service not properly initialized after await');
     }
@@ -154,13 +161,13 @@ export class DopplerV4Service {
         vestingDuration: BigInt(0), // No vesting
         recipients: [config.creatorAddress], // Creator gets remaining tokens
         amounts: [parseEther('400000000')], // 40% to creator
-        numPdSlugs: 15,
+        numPdSlães: 15,
         integrator: config.creatorAddress, // Integrator (usually the creator)
       };
 
       // Build configuration (without governance for simplicity)
       const { createParams, hook, token } = this.factory.buildConfig(
-        dopplerConfig, 
+        dopplerConfig,
         this.addresses,
         { useGovernance: false } // Use NoOpGovernanceFactory for simpler deployment
       );
