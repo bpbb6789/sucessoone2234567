@@ -69,8 +69,15 @@ export class DopplerV4Service {
     this.chainId = chainId;
     this.addresses = DOPPLER_V4_ADDRESSES[chainId as keyof typeof DOPPLER_V4_ADDRESSES];
     
-    // Set up Zora API key if available
+    // Check for required environment variables
+    const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
     const zoraApiKey = process.env.ZORA_API_KEY;
+    
+    console.log('🔑 Environment Variables Status:');
+    console.log(`   DEPLOYER_PRIVATE_KEY: ${deployerPrivateKey ? '✅ Found' : '❌ Missing'}`);
+    console.log(`   ZORA_API_KEY: ${zoraApiKey ? '✅ Found' : '❌ Missing'}`);
+    
+    // Set up Zora API key if available
     if (zoraApiKey) {
       setApiKey(zoraApiKey);
       console.log('✅ Zora API key configured');
