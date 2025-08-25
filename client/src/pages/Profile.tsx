@@ -62,6 +62,21 @@ export default function Profile() {
     enabled: !!address,
   });
 
+  // Get user's created channels count
+  const { data: userChannels = [] } = useQuery({
+    queryKey: ["user-channels", address],
+    queryFn: async () => {
+      if (!address) return [];
+      const response = await fetch('/api/web3-channels');
+      if (!response.ok) return [];
+      const allChannels = await response.json();
+      return allChannels.filter((channel: any) => 
+        channel.owner?.toLowerCase() === address.toLowerCase()
+      );
+    },
+    enabled: !!address,
+  });
+
   const displayName = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "");
   const handle = address ? `@${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
@@ -116,6 +131,7 @@ export default function Profile() {
             <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
               <span>{videos.length} videos</span>
               <span>{shorts.length} shorts</span>
+              <span>{userChannels.length} channel coins</span>
               {balance && (
                 <span>{parseFloat(balance.formatted).toFixed(4)} {balance.symbol}</span>
               )}
