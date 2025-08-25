@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
 import { useContentImports, useFileUpload, useUrlImport, useTokenizeContent, useDeleteContentImport } from '@/hooks/useContentImports'
+import { useAccount } from 'wagmi'
+import { useQuery } from '@tanstack/react-query'
 
 const contentTypes = [
   { id: 'reel', name: 'Reel', icon: Video, description: 'Short-form video content' },
@@ -25,9 +27,39 @@ export default function ContentImport() {
   const [coinName, setCoinName] = useState('')
   const [coinSymbol, setCoinSymbol] = useState('')
   const { toast } = useToast()
+  const { address } = useAccount()
   
-  // Use a sample channel ID for now - this should come from user auth/context later
-  const channelId = '57b556d8-23ca-4397-81ed-e5ee8afdd' // Sample channel ID
+  // Get user's channel data
+  const { data: userChannelData } = useQuery({
+    queryKey: ["user-channel", address],
+    queryFn: async () => {
+      if (!address) return null;
+      const response = await fetch(`/api/me`, {
+        headers: { 'x-wallet-address': address }
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!address,
+  });
+
+  // Get user's Web3 channels
+  const { data: userChannels = [] } = useQuery({
+    queryKey: ["user-web3-channels", address],
+    queryFn: async () => {
+      if (!address) return [];
+      const response = await fetch('/api/web3-channels');
+      if (!response.ok) return [];
+      const allChannels = await response.json();
+      return allChannels.filter((channel: any) => 
+        channel.owner?.toLowerCase() === address.toLowerCase()
+      );
+    },
+    enabled: !!address,
+  });
+
+  // Use the first Web3 channel if user has one, otherwise use 'public' for uploads
+  const channelId = userChannels.length > 0 ? userChannels[0].id : 'public'
   
   // API hooks
   const { data: contentImports = [], isLoading, refetch } = useContentImports(channelId)
