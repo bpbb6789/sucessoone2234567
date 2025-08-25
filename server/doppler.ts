@@ -37,14 +37,17 @@ export class DopplerV4Service {
   private drift: any = null;
   private addresses: any = null;
   private chainId: number;
+  private initPromise: Promise<void>;
 
   constructor(chainId: number = 84532) { // Default to Base Sepolia for testing
     this.chainId = chainId;
-    this.initialize();
+    this.initPromise = this.initialize();
   }
 
   private async initialize() {
     try {
+      console.log(`🔧 Initializing Doppler V4 Service for chain ${this.chainId}...`);
+      
       const config = NETWORK_CONFIG[this.chainId];
       if (!config) {
         throw new Error(`Unsupported chain ID: ${this.chainId}`);
@@ -53,8 +56,11 @@ export class DopplerV4Service {
       // Get Doppler V4 addresses for this chain
       this.addresses = DOPPLER_V4_ADDRESSES[this.chainId];
       if (!this.addresses) {
+        console.error(`❌ Doppler V4 not deployed on chain ${this.chainId}`);
         throw new Error(`Doppler V4 not deployed on chain ${this.chainId}`);
       }
+      
+      console.log(`✅ Found Doppler V4 addresses for chain ${this.chainId}`);
 
       const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
       if (!deployerPrivateKey) {
@@ -105,8 +111,16 @@ export class DopplerV4Service {
   }
 
   async deployPadToken(config: PadTokenConfig): Promise<TokenDeploymentResult> {
+    // Ensure initialization is complete
+    await this.initPromise;
+    
     if (!this.factory || !this.drift || !this.addresses) {
-      throw new Error('Doppler V4 Service not properly initialized');
+      console.error('Doppler V4 Service components:', { 
+        factory: !!this.factory, 
+        drift: !!this.drift, 
+        addresses: !!this.addresses 
+      });
+      throw new Error('Doppler V4 Service not properly initialized after await');
     }
 
     try {
