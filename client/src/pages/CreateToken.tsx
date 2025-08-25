@@ -123,9 +123,9 @@ export default function CreateTokenPage() {
     const args = [form.watch('name'), form.watch('ticker'), form.watch('twitter'), form.watch('discord'), form.watch('description'), form.watch('imageUri')]
 
     return (
-        <div className="p-4 max-w-2xl mx-auto" data-testid="page-create-token">
-            <h1 className="text-3xl font-bold mb-6">Launch Your Token</h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-8">
+        <div className="p-4 max-w-xl mx-auto" data-testid="page-create-token">
+            <h1 className="text-2xl font-bold mb-4">Launch Your Token</h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">
                 Create and launch your own token with a built-in bonding curve. No coding required!
             </p>
 
@@ -135,7 +135,7 @@ export default function CreateTokenPage() {
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                             <FormField
                                 control={form.control}
                                 name="name"
@@ -172,7 +172,7 @@ export default function CreateTokenPage() {
                                             <Textarea 
                                                 placeholder="Describe your token and its purpose" 
                                                 {...field} 
-                                                rows={4}
+                                                rows={3}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -219,40 +219,68 @@ export default function CreateTokenPage() {
                                 )}
                             />
 
-                            <div className="flex justify-end pt-6 border-t">
+                            <div className="flex justify-end pt-4 border-t">
                                 <TransactionComponent
                                     contractAddress={UNIPUMP_CREATOR_ADDRESS}
                                     contractAbi={UniPumpCreatorAbi}
                                     cta="Launch Token"
                                     functionName="createTokenSale"
-                                    handleOnStatus2={async () => {
+                                    handleOnStatus2={async (status) => {
                                         queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
+                                        queryClient.invalidateQueries({ queryKey: ["/api/web3-channels"] })
 
-                                        // Save token to database after successful blockchain transaction
-                                        try {
-                                            const tokenData = {
-                                                name: form.getValues('name'),
-                                                symbol: form.getValues('ticker'),
-                                                bio: form.getValues('description'),
-                                                imageUri: form.getValues('imageUri') || '',
-                                                memeTokenAddress: '', // This would be set from the transaction receipt
-                                                createdBy: '', // This would be set from the connected wallet
-                                                twitter: form.getValues('twitter') || '',
-                                                discord: form.getValues('discord') || '',
-                                                isUSDCToken0: false, // Default value
-                                                marketCap: '0',
-                                                price: '0',
-                                                volume24h: '0',
-                                                holders: 0
-                                            };
+                                        // Save web3 channel to database after successful blockchain transaction
+                                        if (status.statusName === 'success' && status.receipt) {
+                                            try {
+                                                // Extract token address from transaction logs
+                                                const logs = status.receipt.logs || [];
+                                                let tokenAddress = '';
+                                                
+                                                // Look for token creation event in logs
+                                                for (const log of logs) {
+                                                    if (log.topics && log.topics.length > 0) {
+                                                        // The token address is typically in the log data or topics
+                                                        if (log.address && log.address !== UNIPUMP_CREATOR_ADDRESS) {
+                                                            tokenAddress = log.address;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
 
-                                            await fetch('/api/tokens', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify(tokenData)
-                                            });
-                                        } catch (error) {
-                                            console.error('Failed to save token to database:', error);
+                                                const channelData = {
+                                                    owner: status.receipt.from || '', // wallet address that created the transaction
+                                                    name: form.getValues('name'),
+                                                    ticker: form.getValues('ticker'),
+                                                    coinAddress: tokenAddress,
+                                                    chainId: 84532, // Base Sepolia
+                                                    category: 'Lifestyle', // default category
+                                                    txHash: status.receipt.transactionHash || '',
+                                                    avatarCid: null,
+                                                    coverCid: null,
+                                                    status: 'active'
+                                                };
+
+                                                console.log('Saving channel data:', channelData);
+
+                                                const response = await fetch('/api/web3-channels', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify(channelData)
+                                                });
+
+                                                if (!response.ok) {
+                                                    const error = await response.text();
+                                                    console.error('Failed to save channel:', error);
+                                                } else {
+                                                    console.log('Channel saved successfully!');
+                                                    // Refresh the page to see the new token
+                                                    setTimeout(() => {
+                                                        window.location.href = '/tokens';
+                                                    }, 2000);
+                                                }
+                                            } catch (error) {
+                                                console.error('Failed to save channel to database:', error);
+                                            }
                                         }
                                     }}
                                     args={args}

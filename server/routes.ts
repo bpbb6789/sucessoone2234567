@@ -710,6 +710,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pending channel endpoint for pre-transaction metadata
+  app.post("/api/pending-channel", async (req, res) => {
+    try {
+      // Just acknowledge the pending channel metadata for now
+      // This can be used to store temporary data before blockchain confirmation
+      console.log('Pending channel metadata received:', req.body);
+      res.json({ success: true, message: "Pending channel metadata received" });
+    } catch (error) {
+      console.error('Error processing pending channel:', error);
+      res.status(500).json({ message: "Failed to process pending channel" });
+    }
+  });
+
   // Tokens API endpoints
   app.get("/api/tokens", async (req, res) => {
     try {

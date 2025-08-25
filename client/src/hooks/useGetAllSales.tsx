@@ -141,7 +141,6 @@ const client = {
                                     symbol
                                     bio
                                     createdBy
-                                    totalSupply
                                     isUSDCToken0
                                     imageUri
                                     twitter
