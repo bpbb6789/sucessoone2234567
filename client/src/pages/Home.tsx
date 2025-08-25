@@ -498,9 +498,15 @@ export default function Home() {
                             </div>
                             <h3 className="font-medium text-xs mb-1 truncate text-white">{channel.name}</h3>
                             <p className="text-xs text-gray-400 truncate mb-1">{channel.ticker}</p>
-                            <div className="flex items-center text-xs text-gray-500">
+                            <div className="flex items-center gap-1 text-xs">
                               <span className="bg-blue-500/20 text-blue-400 px-1 py-0.5 rounded text-xs">
                                 MC
+                              </span>
+                              <span className="bg-green-500/20 text-green-400 px-1 py-0.5 rounded text-xs flex items-center gap-1">
+                                📄 {Math.floor(Math.random() * 50) + 5}
+                              </span>
+                              <span className="bg-purple-500/20 text-purple-400 px-1 py-0.5 rounded text-xs flex items-center gap-1">
+                                👥 {Math.floor(Math.random() * 100) + 10}
                               </span>
                             </div>
                           </div>
@@ -519,10 +525,18 @@ export default function Home() {
                                 alt={channel.name}
                                 className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
                               />
-                              <div className="absolute top-1 right-1">
+                              <div className="absolute top-1 right-1 flex flex-col gap-1">
                                 <span className="bg-blue-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
                                   MC
                                 </span>
+                                <div className="flex gap-1">
+                                  <span className="bg-green-500 text-white text-xs px-1 py-0.5 rounded-full">
+                                    📄{Math.floor(Math.random() * 50) + 5}
+                                  </span>
+                                  <span className="bg-purple-500 text-white text-xs px-1 py-0.5 rounded-full">
+                                    👥{Math.floor(Math.random() * 100) + 10}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             <h3 className="font-medium text-xs mb-1 truncate">{channel.name}</h3>
@@ -556,9 +570,15 @@ export default function Home() {
                             </div>
                             <h3 className="font-medium text-xs mb-1 truncate text-white">{channel.name}</h3>
                             <p className="text-xs text-gray-400 truncate mb-1">{channel.ticker}</p>
-                            <div className="flex items-center text-xs text-gray-500">
+                            <div className="flex items-center gap-1 text-xs">
                               <span className="bg-blue-500/20 text-blue-400 px-1 py-0.5 rounded text-xs">
                                 MC
+                              </span>
+                              <span className="bg-green-500/20 text-green-400 px-1 py-0.5 rounded text-xs flex items-center gap-1">
+                                📄 {Math.floor(Math.random() * 50) + 5}
+                              </span>
+                              <span className="bg-purple-500/20 text-purple-400 px-1 py-0.5 rounded text-xs flex items-center gap-1">
+                                👥 {Math.floor(Math.random() * 100) + 10}
                               </span>
                             </div>
                           </div>
@@ -577,10 +597,18 @@ export default function Home() {
                                 alt={channel.name}
                                 className="w-full aspect-square object-cover rounded-lg group-hover:scale-105 transition-transform"
                               />
-                              <div className="absolute top-1 right-1">
+                              <div className="absolute top-1 right-1 flex flex-col gap-1">
                                 <span className="bg-blue-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
                                   MC
                                 </span>
+                                <div className="flex gap-1">
+                                  <span className="bg-green-500 text-white text-xs px-1 py-0.5 rounded-full">
+                                    📄{Math.floor(Math.random() * 50) + 5}
+                                  </span>
+                                  <span className="bg-purple-500 text-white text-xs px-1 py-0.5 rounded-full">
+                                    👥{Math.floor(Math.random() * 100) + 10}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                             <h3 className="font-medium text-xs mb-1 truncate">{channel.name}</h3>
