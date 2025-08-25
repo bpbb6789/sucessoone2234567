@@ -15,7 +15,7 @@ import { UNIPUMP_CREATOR_ADDRESS } from "@/lib/addresses";
 import { UniPumpCreatorAbi } from "../../../abi/UniPumpCreatorAbi";
 import TransactionComponent from "@/components/Transaction";
 import type { LifecycleStatus } from '@coinbase/onchainkit/transaction';
-import { ChevronDown, Upload, Coins, Zap } from "lucide-react";
+import { ChevronDown, Upload, Coins, Zap, X, ImageIcon } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -336,34 +336,19 @@ export default function CreateChannel() {
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="avatarFile"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Avatar</FormLabel>
+                      <FormLabel className="text-sm">Avatar</FormLabel>
                       <FormControl>
-                        <div className="border-2 border-dashed border-gray-300 rounded p-2 text-center">
-                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
-                          <p className="text-xs text-gray-600 mb-1">Avatar</p>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => field.onChange(e.target.files?.[0])}
-                            className="hidden"
-                            id="avatar-upload"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-6 text-xs px-2"
-                            onClick={() => document.getElementById('avatar-upload')?.click()}
-                          >
-                            Choose
-                          </Button>
-                        </div>
+                        <AvatarUploadField 
+                          field={field} 
+                          uploadProgress={progress}
+                          isUploading={step === "uploading"}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -375,28 +360,13 @@ export default function CreateChannel() {
                   name="coverFile"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cover</FormLabel>
+                      <FormLabel className="text-sm">Cover</FormLabel>
                       <FormControl>
-                        <div className="border-2 border-dashed border-gray-300 rounded p-2 text-center">
-                          <Upload className="w-4 h-4 mx-auto mb-1 text-gray-400" />
-                          <p className="text-xs text-gray-600 mb-1">Cover</p>
-                          <input
-                            type="file"
-                            accept="image/*,video/*"
-                            onChange={(e) => field.onChange(e.target.files?.[0])}
-                            className="hidden"
-                            id="cover-upload"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-6 text-xs px-2"
-                            onClick={() => document.getElementById('cover-upload')?.click()}
-                          >
-                            Choose
-                          </Button>
-                        </div>
+                        <CoverUploadField 
+                          field={field} 
+                          uploadProgress={progress}
+                          isUploading={step === "uploading"}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -528,4 +498,186 @@ async function uploadMetadataToIPFS(metadata: any): Promise<string> {
   
   const data = await response.json();
   return data.cid;
+}
+
+// Compact Avatar Upload Component
+function AvatarUploadField({ field, uploadProgress, isUploading }: {
+  field: any;
+  uploadProgress: string;
+  isUploading: boolean;
+}) {
+  const [previewImage, setPreviewImage] = useState<string>("");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    field.onChange(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPreviewImage(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setPreviewImage("");
+    field.onChange(null);
+  };
+
+  if (!previewImage) {
+    return (
+      <div className={`border-2 border-dashed rounded-lg p-2 text-center transition-colors ${
+        isUploading ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' : 
+        'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+      }`}>
+        <label className="cursor-pointer block">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+            disabled={isUploading}
+          />
+          <div className="flex flex-col items-center space-y-1">
+            {isUploading ? (
+              <Upload className="h-4 w-4 text-blue-500 animate-pulse" />
+            ) : (
+              <ImageIcon className="h-4 w-4 text-gray-400" />
+            )}
+            <div className="text-xs">
+              {isUploading ? (
+                <span className="text-blue-600 font-medium">Uploading...</span>
+              ) : (
+                <span className="font-medium text-blue-600">Upload Avatar</span>
+              )}
+            </div>
+          </div>
+        </label>
+        {isUploading && (
+          <div className="mt-2">
+            <div className="text-xs text-blue-600">{uploadProgress}</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <img 
+        src={previewImage} 
+        alt="Avatar Preview" 
+        className="w-full h-16 rounded-lg object-cover"
+      />
+      <button
+        type="button"
+        onClick={clearImage}
+        className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
+      >
+        <X className="h-3 w-3" />
+      </button>
+      {isUploading && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+          <div className="text-white text-xs text-center">
+            <Upload className="h-4 w-4 mx-auto animate-pulse mb-1" />
+            <div>{uploadProgress}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Compact Cover Upload Component
+function CoverUploadField({ field, uploadProgress, isUploading }: {
+  field: any;
+  uploadProgress: string;
+  isUploading: boolean;
+}) {
+  const [previewImage, setPreviewImage] = useState<string>("");
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    field.onChange(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPreviewImage(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearImage = () => {
+    setPreviewImage("");
+    field.onChange(null);
+  };
+
+  if (!previewImage) {
+    return (
+      <div className={`border-2 border-dashed rounded-lg p-2 text-center transition-colors ${
+        isUploading ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' : 
+        'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+      }`}>
+        <label className="cursor-pointer block">
+          <input
+            type="file"
+            accept="image/*,video/*"
+            onChange={handleFileChange}
+            className="hidden"
+            disabled={isUploading}
+          />
+          <div className="flex flex-col items-center space-y-1">
+            {isUploading ? (
+              <Upload className="h-4 w-4 text-blue-500 animate-pulse" />
+            ) : (
+              <ImageIcon className="h-4 w-4 text-gray-400" />
+            )}
+            <div className="text-xs">
+              {isUploading ? (
+                <span className="text-blue-600 font-medium">Uploading...</span>
+              ) : (
+                <span className="font-medium text-blue-600">Upload Cover</span>
+              )}
+            </div>
+          </div>
+        </label>
+        {isUploading && (
+          <div className="mt-2">
+            <div className="text-xs text-blue-600">{uploadProgress}</div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <img 
+        src={previewImage} 
+        alt="Cover Preview" 
+        className="w-full h-16 rounded-lg object-cover"
+      />
+      <button
+        type="button"
+        onClick={clearImage}
+        className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
+      >
+        <X className="h-3 w-3" />
+      </button>
+      {isUploading && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+          <div className="text-white text-xs text-center">
+            <Upload className="h-4 w-4 mx-auto animate-pulse mb-1" />
+            <div>{uploadProgress}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
