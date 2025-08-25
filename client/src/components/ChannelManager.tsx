@@ -22,6 +22,52 @@ export default function ChannelManager() {
     },
   });
 
+  // Get real token data
+  const { data: tokenData } = useQuery({
+    queryKey: ["token-data", channel?.coinAddress],
+    queryFn: async () => {
+      if (!channel?.coinAddress) return null;
+      
+      try {
+        const [holdersRes, creationRes] = await Promise.all([
+          fetch('/api/token-holders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tokenAddress: channel.coinAddress })
+          }),
+          fetch('/api/token-creation-time', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tokenAddress: channel.coinAddress })
+          })
+        ]);
+
+        const [holdersData, creationData] = await Promise.all([
+          holdersRes.ok ? holdersRes.json() : { holderCount: 0 },
+          creationRes.ok ? creationRes.json() : null
+        ]);
+
+        return {
+          price: '0.000001',
+          marketCap: '0.00',
+          volume24h: '0.00',
+          holders: holdersData.holderCount || 0,
+          change24h: 0,
+          creationTime: creationData?.creationTime
+        };
+      } catch (error) {
+        return {
+          price: '0.000001',
+          marketCap: '0.00', 
+          volume24h: '0.00',
+          holders: 0,
+          change24h: 0
+        };
+      }
+    },
+    enabled: !!channel?.coinAddress
+  });
+
   if (isLoading) {
     return (
       <div className="p-8 text-center">
@@ -114,8 +160,13 @@ export default function ChannelManager() {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$0.0001</div>
-                  <p className="text-xs text-muted-foreground">+12.5% from last hour</p>
+                  <div className="text-2xl font-bold">${tokenData?.price || '0.000001'}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {tokenData?.change24h ? 
+                      `${tokenData.change24h > 0 ? '+' : ''}${tokenData.change24h}% from last hour` : 
+                      'No price change data'
+                    }
+                  </p>
                 </CardContent>
               </Card>
 
@@ -125,8 +176,10 @@ export default function ChannelManager() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">1,234</div>
-                  <p className="text-xs text-muted-foreground">+89 new holders today</p>
+                  <div className="text-2xl font-bold">{tokenData?.holders || 0}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {tokenData?.holders > 0 ? 'Total token holders' : 'No holders yet'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -136,8 +189,8 @@ export default function ChannelManager() {
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$80K</div>
-                  <p className="text-xs text-muted-foreground">Volume: $12K (24h)</p>
+                  <div className="text-2xl font-bold">${tokenData?.marketCap || '0.00'}</div>
+                  <p className="text-xs text-muted-foreground">Volume: ${tokenData?.volume24h || '0.00'} (24h)</p>
                 </CardContent>
               </Card>
             </div>
