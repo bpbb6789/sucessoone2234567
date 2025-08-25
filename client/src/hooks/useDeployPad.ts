@@ -3,13 +3,15 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export interface DeployPadResult {
+  success: boolean;
   message: string;
-  pad: any;
+  pad?: any;
   tokenAddress: string;
   txHash: string;
   poolId: string;
   bondingCurveAddress?: string;
   isSimulated: boolean;
+  explorerUrl?: string;
 }
 
 export function useDeployPad() {

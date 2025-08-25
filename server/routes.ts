@@ -1516,14 +1516,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         success: true,
-        message: hasDeployerKey ? "Pad token deployed successfully on-chain!" : "Pad token deployment simulated",
+        message: deploymentResult.isSimulated ? "Pad token deployment simulated successfully" : "Pad token deployed successfully on-chain!",
         pad: updatedPad,
         tokenAddress: deploymentResult.tokenAddress,
         txHash: deploymentResult.txHash,
         poolId: deploymentResult.poolId,
         bondingCurveAddress: deploymentResult.bondingCurveAddress || null,
-        isSimulated: !hasDeployerKey,
-        explorerUrl: hasDeployerKey ? `https://sepolia.basescan.org/tx/${deploymentResult.txHash}` : null
+        isSimulated: deploymentResult.isSimulated || false,
+        explorerUrl: deploymentResult.explorerUrl || null
       });
     } catch (error: any) {
       console.error(`❌ Pad ${padId} deployment failed:`, error);
