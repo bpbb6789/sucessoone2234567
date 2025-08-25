@@ -3,8 +3,8 @@ import { createServer, type Server } from "http";
 import multer from 'multer';
 import { storage } from "./storage";
 import { uploadFileToIPFS, uploadJSONToIPFS } from './ipfs';
-import { 
-  insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema, 
+import {
+  insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema,
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
   insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
   insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema, insertWeb3ChannelSchema,
@@ -30,7 +30,7 @@ function handleDatabaseError(error: any, operation: string) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
-  const upload = multer({ 
+  const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
   });
@@ -761,7 +761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.JSON.stringify({
+        body: JSON.stringify({
           query: `
             query GetTokenTransfers($tokenAddress: String!) {
               transfers(
@@ -811,7 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.JSON.stringify({
+        body: JSON.stringify({
           query: `
             query GetTokenCreation($tokenAddress: String!) {
               uniPumpCreatorSaless(
@@ -935,10 +935,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const channel = await storage.getWeb3ChannelByOwner(walletAddress);
 
       if (channel) {
-        res.json({ 
-          hasChannel: true, 
+        res.json({
+          hasChannel: true,
           managerPath: `/channel/${channel.slug}/manager`,
-          channel 
+          channel
         });
       } else {
         res.json({ hasChannel: false });
@@ -1015,7 +1015,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/marketplace", async (req, res) => {
     try {
       // Get all content imports from database that are tokenized
-      const tokenizedContent = await storage.getAllContentImports().then(content => 
+      const tokenizedContent = await storage.getAllContentImports().then(content =>
         content.filter(item => item.status === 'tokenized')
       );
       res.json(tokenizedContent)
@@ -1105,7 +1105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Auto-tokenize content after creation
       setTimeout(async () => {
         try {
-          await storage.updateContentImport(content.id, { 
+          await storage.updateContentImport(content.id, {
             status: 'tokenized',
             tokenizedAt: new Date()
           });
@@ -1187,7 +1187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Auto-tokenize content after creation
       setTimeout(async () => {
         try {
-          await storage.updateContentImport(content.id, { 
+          await storage.updateContentImport(content.id, {
             status: 'tokenized',
             tokenizedAt: new Date()
           });
@@ -1218,8 +1218,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload file to IPFS
       const cid = await uploadFileToIPFS(req.file);
 
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         cid,
         url: `https://gateway.pinata.cloud/ipfs/${cid}`
       });
@@ -1238,7 +1238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Simulate tokenization process (replace with actual Zora SDK integration)
       setTimeout(async () => {
         try {
-          await storage.updateContentImport(req.params.id, { 
+          await storage.updateContentImport(req.params.id, {
             status: 'tokenized',
             tokenizedAt: new Date()
           });
