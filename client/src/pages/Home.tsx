@@ -117,46 +117,46 @@ export default function Home() {
     <div className="min-h-screen text-white dark:text-white text-gray-900 dark:text-white" data-testid="page-home">
       <div className="p-4 md:p-6">
         <Tabs defaultValue="channel" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50">
+          <TabsList className="inline-flex w-auto bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50 h-8 p-0.5 rounded-lg">
             <TabsTrigger
               value="channel"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-md transition-all"
               data-testid="tab-channel"
             >
-              <Play className="w-4 h-4" />
-              <span>Channels</span>
+              <Play className="w-3 h-3" />
+              <span className="hidden sm:inline">Channels</span>
             </TabsTrigger>
             <TabsTrigger
               value="music"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-md transition-all"
               data-testid="tab-music"
             >
-              <Music className="w-4 h-4" />
-              <span>Music</span>
+              <Music className="w-3 h-3" />
+              <span className="hidden sm:inline">Music</span>
             </TabsTrigger>
             <TabsTrigger
               value="podcasts"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-md transition-all"
               data-testid="tab-podcasts"
             >
-              <Radio className="w-4 h-4" />
-              <span>Podcasts</span>
+              <Radio className="w-3 h-3" />
+              <span className="hidden sm:inline">Podcasts</span>
             </TabsTrigger>
             <TabsTrigger
               value="reels"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-md transition-all"
               data-testid="tab-reels"
             >
-              <Play className="w-4 h-4" />
-              <span>Reels</span>
+              <Play className="w-3 h-3" />
+              <span className="hidden sm:inline">Reels</span>
             </TabsTrigger>
             <TabsTrigger
               value="contents"
-              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-2"
+              className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-md transition-all"
               data-testid="tab-contents"
             >
-              <Play className="w-4 h-4" />
-              <span>Contents</span>
+              <Play className="w-3 h-3" />
+              <span className="hidden sm:inline">Contents</span>
             </TabsTrigger>
           </TabsList>
 
