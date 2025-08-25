@@ -49,7 +49,7 @@ export interface DopplerPreDeploymentConfig {
   vestingDuration: bigint;
   recipients: `0x${string}`[];
   amounts: bigint[];
-  integrator: string;
+  integrator: `0x${string}`;
 }
 
 export class DopplerV4Service {
@@ -208,7 +208,25 @@ export class DopplerV4Service {
 
     } catch (error: any) {
       console.error('❌ Doppler V4 token deployment failed:', error);
-      throw new Error(`Doppler V4 deployment failed: ${error.message || error}`);
+      
+      // Extract more specific error information
+      let errorMessage = error.message || error;
+      if (error.cause?.reason) {
+        errorMessage = error.cause.reason;
+      } else if (error.details) {
+        errorMessage = error.details;
+      } else if (error.reason) {
+        errorMessage = error.reason;
+      }
+      
+      // Check for common issues
+      if (errorMessage.includes('insufficient funds')) {
+        errorMessage = 'Insufficient ETH balance for gas fees. Please add testnet ETH to your wallet.';
+      } else if (errorMessage.includes('execution reverted')) {
+        errorMessage = 'Transaction reverted. This might be due to invalid parameters or contract validation failure.';
+      }
+      
+      throw new Error(`Doppler V4 deployment failed: ${errorMessage}`);
     }
   }
 
