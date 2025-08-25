@@ -168,21 +168,21 @@ export default function CreatePad() {
     },
     onSuccess: async (data) => {
       console.log("✅ Pad creation success, data:", data);
-      console.log("✅ Pad ID:", data.pad?.id);
+      console.log("✅ Pad ID:", data.id);
       
-      setCreatedPadId(data.pad.id);
+      setCreatedPadId(data.id);
       setProgress("Deploying token on blockchain...");
       setStep("deploying");
       
       // Automatically deploy the token after creation
       try {
-        console.log("🚀 Starting token deployment for pad:", data.pad.id);
+        console.log("🚀 Starting token deployment for pad:", data.id);
         
         if (!deployPad) {
           throw new Error("deployPad function not available");
         }
         
-        await deployPad(data.pad.id);
+        await deployPad(data.id);
         console.log("🚀 Token deployment completed successfully");
         
         setStep("success");
