@@ -58,15 +58,6 @@ function WagmiApp() {
         <OnchainKitProvider
           apiKey={import.meta.env.VITE_NEXT_PUBLIC_ONCHAINKIT_API_KEY}
           chain={baseSepolia}
-          config={{
-            appearance: {
-              mode: 'auto',
-              theme: 'default',
-            },
-            analytics: {
-              enabled: false,  // Disable analytics to prevent connection errors
-            },
-          }}
         >
           <RainbowKitProvider>
             <AppContent />

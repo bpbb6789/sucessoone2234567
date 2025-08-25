@@ -1495,7 +1495,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Pad deployment error:", error);
-      res.status(500).json(handleDatabaseError(error, "deployPad"));
+      console.error("Error details:", error.message, error.stack);
+      
+      // Mark pad as failed if deployment fails
+      try {
+        await storage.updatePad(req.params.id, {
+          status: 'failed',
+        });
+      } catch (updateError) {
+        console.error("Failed to update pad status:", updateError);
+      }
+      
+      res.status(500).json({
+        error: true,
+        message: `Token deployment failed: ${error.message}`,
+        details: error.message
+      });
     }
   });
 
