@@ -18,6 +18,8 @@ import { z } from "zod"
 import TransactionComponent from "./Transaction"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 import { Textarea } from "./ui/textarea"
+import { useWallet } from "@/hooks/useWallet"
+import { Button } from "./ui/button"
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -41,6 +43,7 @@ const CreateToken = ({
 }) => {
     const queryClient = useQueryClient()
     const searchParams = useSearchParams()
+    const { isConnected, account } = useWallet()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -62,7 +65,7 @@ const CreateToken = ({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    owner: '', // TODO: Fill with connected wallet address
+                    owner: account?.address || '',
                     name: values.name,
                     symbol: values.ticker,
                     description: values.description,
@@ -105,6 +108,13 @@ const CreateToken = ({
                 <DialogHeader>
                     <DialogTitle>Create Channel Coin</DialogTitle>
                 </DialogHeader>
+                {!isConnected && (
+                    <div className="p-4 border border-yellow-500 rounded-lg bg-yellow-50 dark:bg-yellow-900/20">
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                            Please connect your wallet to create a token.
+                        </p>
+                    </div>
+                )}
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
                         <FormField
@@ -188,16 +198,22 @@ const CreateToken = ({
 
                         <div className="flex justify-end ">
                             <div className="h-[20px]"></div>
-                            <TransactionComponent
-                                contractAddress={UNIPUMP_CREATOR_ADDRESS}
-                                contractAbi={UniPumpCreatorAbi}
-                                cta="Create Token"
-                                functionName="createTokenSale"
-                                handleOnStatus2={() => {
-                                    queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
-                                }}
-                                args={args}
-                            />
+                            {isConnected ? (
+                                <TransactionComponent
+                                    contractAddress={UNIPUMP_CREATOR_ADDRESS}
+                                    contractAbi={UniPumpCreatorAbi}
+                                    cta="Create Token"
+                                    functionName="createTokenSale"
+                                    handleOnStatus2={() => {
+                                        queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
+                                    }}
+                                    args={args}
+                                />
+                            ) : (
+                                <Button disabled>
+                                    Connect Wallet to Create Token
+                                </Button>
+                            )}
                         </div>
                     </form>
                 </Form>
