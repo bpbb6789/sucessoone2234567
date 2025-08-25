@@ -3,6 +3,7 @@ import { createPublicClient, createWalletClient, http, parseEther } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { createDrift } from '@delvtech/drift';
+import { viemAdapter } from '@delvtech/drift-viem';
 
 // Configuration for different networks
 const NETWORK_CONFIG = {
@@ -95,10 +96,12 @@ export class DopplerV4Service {
       const blockNumber = await publicClient.getBlockNumber();
       console.log(`Connected to chain ${this.chainId}, block: ${blockNumber}`);
 
-      // Create drift instance
+      // Create drift instance with viemAdapter (correct approach)
       this.drift = createDrift({
-        publicClient,
-        walletClient,
+        adapter: viemAdapter({ 
+          publicClient, 
+          walletClient 
+        })
       });
 
       // Initialize factory
