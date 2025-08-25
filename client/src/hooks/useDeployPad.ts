@@ -17,12 +17,21 @@ export function useDeployPad() {
 
   const deployMutation = useMutation({
     mutationFn: async (padId: string): Promise<DeployPadResult> => {
+      console.log("🚀 deployMutation called with padId:", padId);
+      
       const response = await apiRequest("POST", `/api/pads/${padId}/deploy`, {});
+      
+      console.log("🚀 Deployment API response status:", response.status);
+      
       if (!response.ok) {
         const error = await response.json();
+        console.error("🚀 Deployment API error:", error);
         throw new Error(error.message || "Failed to deploy token");
       }
-      return response.json();
+      
+      const result = await response.json();
+      console.log("🚀 Deployment successful:", result);
+      return result;
     },
     onSuccess: (data) => {
       if (data.isSimulated) {
