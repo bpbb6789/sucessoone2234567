@@ -99,10 +99,9 @@ export class DopplerV4Service {
       console.log('Deploying token with Doppler V4 SDK...');
 
       // Create factory client
-      this.factory = getContract({
+      this.factory = this.drift.contract({
         abi: DopplerFactoryAbi, // Assuming DopplerFactoryAbi is defined elsewhere
         address: this.addresses.factory as `0x${string}`,
-        client: this.drift,
       });
 
       // Test connection with a simple call
