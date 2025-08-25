@@ -35,10 +35,9 @@ export function useDeployPad() {
       return result;
     },
     onSuccess: (data) => {
-      const method = data.method === 'zora' ? 'Zora protocol' : 'blockchain';
       toast({
         title: "Token Deployed!",
-        description: `Your token is now live on ${method}! TX: ${data.txHash.slice(0, 10)}...`,
+        description: `Your token is now live on Doppler V4! TX: ${data.txHash.slice(0, 10)}...`,
       });
     },
     onError: (error: Error) => {

@@ -4,8 +4,6 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { ReadWriteFactory, DOPPLER_V4_ADDRESSES, ReadDoppler, ReadQuoter } from 'doppler-v4-sdk';
 import { createDrift } from '@delvtech/drift';
 import { viemAdapter } from '@delvtech/drift-viem';
-import { createCoin, setApiKey } from '@zoralabs/coins-sdk';
-import type { ContentCoinCurrency, StartingMarketCap } from '@zoralabs/coins-sdk';
 
 export interface PadTokenConfig {
   name: string;
@@ -26,7 +24,7 @@ export interface TokenDeploymentResult {
   bondingCurveAddress: string;
   dopplerAddress?: string;
   explorerUrl?: string;
-  deploymentMethod?: 'zora' | 'doppler';
+  deploymentMethod?: 'doppler';
 }
 
 export interface DopplerPreDeploymentConfig {
@@ -70,19 +68,9 @@ export class DopplerV4Service {
     
     // Check for required environment variables
     const deployerPrivateKey = process.env.DEPLOYER_PRIVATE_KEY;
-    const zoraApiKey = process.env.ZORA_API_KEY;
     
     console.log('🔑 Environment Variables Status:');
     console.log(`   DEPLOYER_PRIVATE_KEY: ${deployerPrivateKey ? '✅ Found' : '❌ Missing'}`);
-    console.log(`   ZORA_API_KEY: ${zoraApiKey ? '✅ Found' : '❌ Missing'}`);
-    
-    // Set up Zora API key if available
-    if (zoraApiKey) {
-      setApiKey(zoraApiKey);
-      console.log('✅ Zora API key configured');
-    } else {
-      console.log('⚠️ No ZORA_API_KEY found, using without API key');
-    }
     
     this.initialize();
   }
@@ -132,7 +120,7 @@ export class DopplerV4Service {
         this.factory = new ReadWriteFactory(this.addresses.airlock, this.drift);
         console.log('✅ Doppler V4 SDK initialized successfully');
       } else {
-        console.log('⚠️ No DEPLOYER_PRIVATE_KEY found, will simulate deployments');
+        console.log('⚠️ No DEPLOYER_PRIVATE_KEY found, deployments will fail');
       }
 
       console.log(`✅ Doppler V4 Service initialized successfully`);
@@ -144,70 +132,62 @@ export class DopplerV4Service {
 
   async deployPadToken(config: PadTokenConfig): Promise<TokenDeploymentResult> {
     try {
-      // Create token metadata URI from IPFS CID
-      const tokenURI = `https://gateway.pinata.cloud/ipfs/${config.mediaCid}`;
-
-      if (this.walletClient && this.publicClient) {
-        console.log('🚀 Real deployment using Zora Coins SDK...');
-        
-        // Determine currency based on chain
-        let currency: ContentCoinCurrency;
-        if (this.chainId === 84532) {
-          // Base Sepolia - use ETH as ZORA tokens aren't available on testnet
-          currency = "ETH";
-        } else {
-          // Base mainnet - use ZORA
-          currency = "ZORA";
-        }
-
-        // Configure Zora coin creation parameters
-        const createCoinArgs = {
-          creator: config.creatorAddress as `0x${string}`,
-          name: config.name,
-          symbol: config.symbol,
-          metadata: {
-            type: "RAW_URI" as const,
-            uri: tokenURI
-          },
-          currency,
-          chainId: this.chainId,
-          startingMarketCap: "LOW" as StartingMarketCap,
-          // Optional: add platform referrer if available
-          // platformReferrer: "0x..." as Address,
-        };
-
-        console.log('📝 Creating coin with Zora SDK:', createCoinArgs);
-
-        // Deploy using Zora SDK
-        const result = await createCoin({
-          call: createCoinArgs,
-          walletClient: this.walletClient,
-          publicClient: this.publicClient,
-          options: {
-            skipValidateTransaction: false
-          }
-        });
-        
-        console.log('✅ Zora coin deployment successful:', result);
-        
-        return {
-          tokenAddress: result.address || '0x0000000000000000000000000000000000000000',
-          txHash: result.hash || '0x0000000000000000000000000000000000000000000000000000000000000000',
-          poolId: `zora-coin-${Date.now()}`,
-          bondingCurveAddress: result.deployment?.market || '0x0000000000000000000000000000000000000000',
-          dopplerAddress: result.deployment?.market,
-          explorerUrl: this.chainId === 84532 
-            ? `https://sepolia.basescan.org/tx/${result.hash}`
-            : `https://basescan.org/tx/${result.hash}`,
-          deploymentMethod: 'zora'
-        };
-
-      } else {
+      if (!this.walletClient || !this.publicClient || !this.factory) {
         throw new Error('No wallet client available! DEPLOYER_PRIVATE_KEY must be set for real deployments.');
       }
 
+      console.log('🚀 Real deployment using Doppler V4 SDK...');
+      
+      // Create token metadata URI from IPFS CID
+      const tokenURI = `https://gateway.pinata.cloud/ipfs/${config.mediaCid}`;
+      
+      // Get current block timestamp
+      const blockTimestamp = Math.floor(Date.now() / 1000);
+      
+      // Configure Doppler deployment parameters
+      const dopplerConfig: DopplerPreDeploymentConfig = {
+        name: config.name,
+        symbol: config.symbol,
+        totalSupply: config.totalSupply || parseEther('1000000'), // Default 1M tokens
+        numTokensToSell: config.numTokensToSell || parseEther('500000'), // Default 500K for sale
+        tokenURI,
+        blockTimestamp,
+        startTimeOffset: 0, // Start immediately
+        duration: 86400 * 7, // 7 days
+        epochLength: 3600, // 1 hour epochs
+        gamma: 5000, // 50% gamma
+        tickSpacing: 60,
+        fee: 3000, // 0.3% fee
+        minProceeds: parseEther('0.01'), // Minimum 0.01 ETH
+        maxProceeds: parseEther('10'), // Maximum 10 ETH
+        yearlyMintRate: BigInt(0), // No additional minting
+        vestingDuration: BigInt(0), // No vesting
+        recipients: [config.creatorAddress as `0x${string}`],
+        amounts: [config.totalSupply || parseEther('1000000')],
+        integrator: config.creatorAddress as `0x${string}`
+      };
+
+      console.log('📝 Creating token with Doppler V4 SDK:', dopplerConfig);
+
+      // Deploy using Doppler V4 SDK
+      const result = await this.factory.preDeploy(dopplerConfig);
+      
+      console.log('✅ Doppler deployment successful:', result);
+        
+      return {
+        tokenAddress: result.tokenAddress || '0x0000000000000000000000000000000000000000',
+        txHash: result.txHash || '0x0000000000000000000000000000000000000000000000000000000000000000',
+        poolId: result.poolId || `doppler-${Date.now()}`,
+        bondingCurveAddress: result.dopplerAddress || '0x0000000000000000000000000000000000000000',
+        dopplerAddress: result.dopplerAddress,
+        explorerUrl: this.chainId === 84532 
+          ? `https://sepolia.basescan.org/tx/${result.txHash}`
+          : `https://basescan.org/tx/${result.txHash}`,
+        deploymentMethod: 'doppler'
+      };
+
     } catch (error: any) {
-      console.error('❌ Zora deployment failed:', error);
+      console.error('❌ Doppler deployment failed:', error);
       console.error('❌ Full error details:', JSON.stringify(error, null, 2));
       
       // Extract more specific error information
@@ -226,8 +206,6 @@ export class DopplerV4Service {
         errorMessage = 'Insufficient ETH balance for gas fees. Please add testnet ETH to your wallet.';
       } else if (errorMessage.includes('execution reverted')) {
         errorMessage = 'Transaction reverted. Check deployment parameters and contract requirements.';
-      } else if (errorMessage.includes('API key')) {
-        errorMessage = 'Zora API key required. Please set ZORA_API_KEY environment variable.';
       }
       
       throw new Error(errorMessage);
