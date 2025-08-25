@@ -131,86 +131,142 @@ export class DopplerV4Service {
       const tokenURI = `https://gateway.pinata.cloud/ipfs/${config.mediaCid}`;
 
       if (this.walletClient && this.factory) {
-        // Real deployment using Doppler V4 SDK
-        console.log('🚀 Deploying token with Doppler V4 SDK...');
-        
-        const dopplerConfig: DopplerPreDeploymentConfig = {
-          name: config.name,
-          symbol: config.symbol,
-          totalSupply: parseEther('1000000'), // 1M tokens (smaller for testing)
-          numTokensToSell: parseEther('500000'), // 500K for sale
-          tokenURI,
-          blockTimestamp: Math.floor(Date.now() / 1000),
-          startTimeOffset: 1, // Start in 1 day for better stability
-          duration: 1, // 1 day for testing
-          epochLength: 600, // 10 minute epochs for faster testing
-          gamma: 100, // Lower gamma for more stable price movement
-          tickRange: {
-            startTick: -887220, // Lower starting price tick for testnet
-            endTick: 887220,    // Higher ending price tick for testnet  
+        // Try multiple parameter configurations for better success rate
+        const parameterConfigurations = [
+          // Configuration 1: Standard Uniswap-compatible 
+          {
+            name: 'Standard Config',
+            totalSupply: parseEther('1000000'), // 1M tokens
+            numTokensToSell: parseEther('500000'), // 500K for sale
+            startTimeOffset: 1, // 1 day
+            duration: 1, // 1 day
+            epochLength: 3600, // 1 hour
+            gamma: 10, // Simple gamma divisible by tick spacing
+            tickRange: { startTick: -887220, endTick: 887220 }, // Max range
+            tickSpacing: 10, // 10 is commonly used
+            amounts: [parseEther('50000')], // 50K tokens to creator
+            minProceeds: parseEther('0.01'),
+            maxProceeds: parseEther('1'),
           },
-          tickSpacing: 60, // Standard tick spacing for most pools
-          fee: 20_000, // 2% fee
-          minProceeds: parseEther('0.01'), // Minimum 0.01 ETH (lower for testing)
-          maxProceeds: parseEther('1'), // Maximum 1 ETH (lower for testing)
-          yearlyMintRate: BigInt(0), // No inflation
-          vestingDuration: BigInt(24 * 60 * 60 * 365), // 1 year vesting
-          recipients: [config.creatorAddress as `0x${string}`],
-          amounts: [parseEther('50000')], // 50K tokens to creator
-          numPdSlugs: 15,
-          integrator: config.creatorAddress as `0x${string}`,
-        };
+          // Configuration 2: Ultra-simple configuration
+          {
+            name: 'Simple Config',
+            totalSupply: parseEther('1000000'), // 1M tokens
+            numTokensToSell: parseEther('500000'), // 500K for sale
+            startTimeOffset: 1, // 1 day 
+            duration: 1, // 1 day
+            epochLength: 3600, // 1 hour
+            gamma: 1, // Simplest gamma (1/1=1)
+            tickRange: { startTick: -100000, endTick: 100000 },
+            tickSpacing: 1, // Simplest tick spacing
+            amounts: [parseEther('10000')], // 10K tokens to creator
+            minProceeds: parseEther('0.01'),
+            maxProceeds: parseEther('1'),
+          }
+        ];
 
-        // Build configuration with Doppler SDK (no governance for simple launches)
-        console.log('🔧 Building configuration...');
-        const { createParams, hook, token } = this.factory.buildConfig(
-          dopplerConfig, 
-          this.addresses,
-          { useGovernance: false } // No governance for simple launches
-        );
+        let lastError = null;
 
-        console.log('📋 Configuration built successfully');
+        // Try each configuration until one succeeds
+        for (const paramConfig of parameterConfigurations) {
+          try {
+            console.log(`🚀 Attempting deployment with ${paramConfig.name}...`);
+            
+            const dopplerConfig: DopplerPreDeploymentConfig = {
+              name: config.name,
+              symbol: config.symbol,
+              totalSupply: paramConfig.totalSupply,
+              numTokensToSell: paramConfig.numTokensToSell,
+              tokenURI,
+              blockTimestamp: Math.floor(Date.now() / 1000),
+              startTimeOffset: paramConfig.startTimeOffset,
+              duration: paramConfig.duration,
+              epochLength: paramConfig.epochLength,
+              gamma: paramConfig.gamma,
+              tickRange: paramConfig.tickRange,
+              tickSpacing: paramConfig.tickSpacing,
+              fee: 20_000, // 2% fee
+              minProceeds: paramConfig.minProceeds,
+              maxProceeds: paramConfig.maxProceeds,
+              yearlyMintRate: BigInt(0), // No inflation
+              vestingDuration: BigInt(24 * 60 * 60 * 365), // 1 year vesting
+              recipients: [config.creatorAddress as `0x${string}`],
+              amounts: paramConfig.amounts,
+              numPdSlugs: 15,
+              integrator: config.creatorAddress as `0x${string}`,
+            };
 
-        // Simulate deployment first
-        console.log('🔍 Simulating deployment...');
-        const simulation = await this.factory.simulateCreate(createParams);
-        console.log('⛽ Deployment simulation complete');
+            // Build configuration with Doppler SDK (no governance for simple launches)
+            console.log('🔧 Building configuration...');
+            const { createParams, hook, token } = this.factory.buildConfig(
+              dopplerConfig, 
+              this.addresses,
+              { useGovernance: false } // No governance for simple launches
+            );
 
-        // Execute deployment
-        console.log('🚀 Executing deployment...');
-        console.log('🔧 Deployment parameters:', {
-          name: dopplerConfig.name,
-          symbol: dopplerConfig.symbol,
-          totalSupply: dopplerConfig.totalSupply.toString(),
-          numTokensToSell: dopplerConfig.numTokensToSell.toString(),
-          startTimeOffset: dopplerConfig.startTimeOffset,
-          duration: dopplerConfig.duration,
-          useGovernance: false
-        });
-        const txHash = await this.factory.create(createParams);
-        console.log(`🎉 Doppler pool created: ${txHash}`);
+            console.log('📋 Configuration built successfully');
 
-        // Wait for transaction confirmation
-        console.log('⏳ Waiting for transaction confirmation...');
-        const receipt = await this.publicClient.waitForTransactionReceipt({
-          hash: txHash,
-        });
+            // Simulate deployment first
+            console.log('🔍 Simulating deployment...');
+            const simulation = await this.factory.simulateCreate(createParams);
+            console.log('⛽ Deployment simulation complete');
 
-        console.log('✅ Transaction confirmed:', receipt.status);
+            // Execute deployment
+            console.log('🚀 Executing deployment...');
+            console.log('🔧 Using parameters:', {
+              config: paramConfig.name,
+              totalSupply: paramConfig.totalSupply.toString(),
+              numTokensToSell: paramConfig.numTokensToSell.toString(),
+              startTimeOffset: paramConfig.startTimeOffset,
+              duration: paramConfig.duration,
+            });
+            
+            const txHash = await this.factory.create(createParams);
+            console.log(`🎉 Doppler pool created with ${paramConfig.name}: ${txHash}`);
 
-        // Extract addresses from deployment
-        const tokenAddress = token;
-        const dopplerAddress = hook;
+            // Wait for transaction confirmation
+            console.log('⏳ Waiting for transaction confirmation...');
+            const receipt = await this.publicClient.waitForTransactionReceipt({
+              hash: txHash,
+            });
 
-        return {
-          tokenAddress,
-          txHash,
-          poolId: `doppler-${Date.now()}`,
-          bondingCurveAddress: dopplerAddress,
-          dopplerAddress,
-        };
+            console.log('✅ Transaction confirmed:', receipt.status);
+
+            // Extract addresses from deployment
+            const tokenAddress = token;
+            const dopplerAddress = hook;
+
+            return {
+              tokenAddress,
+              poolId: dopplerAddress,
+              bondingCurveAddress: dopplerAddress,
+              txHash,
+              explorerUrl: `https://sepolia.basescan.org/tx/${txHash}`,
+              message: `Token deployed successfully with ${paramConfig.name}! TX: ${txHash}`,
+              isSimulated: false,
+              metadata: {
+                name: config.name,
+                symbol: config.symbol,
+                totalSupply: paramConfig.totalSupply,
+                deployedAt: new Date().toISOString(),
+                network: 'base-sepolia',
+                protocol: 'doppler-v4',
+                configUsed: paramConfig.name
+              }
+            };
+
+          } catch (configError: any) {
+            console.error(`❌ ${paramConfig.name} failed:`, configError.message);
+            lastError = configError;
+            // Continue to next configuration
+          }
+        }
+
+        // If all configurations failed, throw the last error
+        throw lastError || new Error('All parameter configurations failed');
+
       } else {
-        // Simulation mode
+        // Fallback to simulation if no wallet/SDK
         console.log('🔄 Simulating Doppler V4 deployment (no private key or SDK)...');
         return this.simulateDeployment(config);
       }
