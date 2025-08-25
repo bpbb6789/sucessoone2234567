@@ -593,7 +593,7 @@ export default function Home() {
                             </div>
                           </div>
                         </Link>
-                      ))}</div>
+                      ))}
                     </div>
 
                     {/* Mobile Horizontal Scroll */}
