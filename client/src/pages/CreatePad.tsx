@@ -164,37 +164,55 @@ export default function CreatePad() {
       };
 
       const response = await apiRequest("POST", "/api/pads", padData);
-      return response.json();
-    },
-    onSuccess: async (data) => {
-      console.log("✅ Pad creation success, data:", data);
-      console.log("✅ Pad ID:", data.id);
-      
-      setCreatedPadId(data.id);
+      const createdPad = await response.json(); // Await the JSON parsing
+
+      setCreatedPadId(createdPad.id);
       setProgress("Deploying token on blockchain...");
       setStep("deploying");
-      
+
       // Automatically deploy the token after creation
       try {
-        console.log("🚀 Starting token deployment for pad:", data.id);
-        
+        console.log("🚀 Starting token deployment for pad:", createdPad.id);
+
         if (!deployPad) {
           throw new Error("deployPad function not available");
         }
-        
-        await deployPad(data.id);
-        console.log("🚀 Token deployment completed successfully");
-        
+
+        // Call the deployPad hook with the new pad ID
+        const deployResult = await deployPad(createdPad.id);
+
+        // Check if deployment was successful
+        if (deployResult && deployResult.success) {
+          console.log('Token deployed successfully:', deployResult);
+          
+          // Show success message with explorer link
+          const message = deployResult.isSimulated 
+            ? `${data.title} token deployment simulated successfully`
+            : `${data.title} token deployed on Base Sepolia testnet!`;
+
+          toast({
+            title: deployResult.isSimulated ? "Deployment Simulated!" : "Token Deployed!",
+            description: message,
+          });
+
+          // Log deployment details
+          console.log('Deployment details:', {
+            tokenAddress: deployResult.tokenAddress,
+            txHash: deployResult.txHash,
+            explorerUrl: deployResult.explorerUrl,
+            isReal: !deployResult.isSimulated
+          });
+        } else {
+          throw new Error(deployResult.message || 'Deployment failed');
+        }
+
         setStep("success");
-        toast({
-          title: "Pad Created & Token Deployed!",
-          description: "Your meme token is now live and ready for trading.",
-        });
+
       } catch (error: any) {
         console.error("🚀 Token deployment failed:", error);
         console.error("🚀 Error message:", error.message);
         console.error("🚀 Error stack:", error.stack);
-        
+
         // Even if deployment fails, pad was created successfully
         setStep("success");
         toast({
@@ -203,7 +221,7 @@ export default function CreatePad() {
           variant: "destructive",
         });
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ["/api/pads"] });
     },
     onError: (error: any) => {
@@ -317,7 +335,7 @@ export default function CreatePad() {
                 {/* Media Upload */}
                 <div className="space-y-3">
                   <h3 className="text-base font-semibold">Upload Media</h3>
-                  
+
                   {/* Media Type Selection */}
                   <div className="grid grid-cols-4 gap-2">
                     {mediaTypes.map((type) => {
@@ -421,7 +439,7 @@ export default function CreatePad() {
                 {/* Content Details */}
                 <div className="space-y-3">
                   <h3 className="text-base font-semibold">Content Details</h3>
-                  
+
                   <FormField
                     control={form.control}
                     name="title"
@@ -479,7 +497,7 @@ export default function CreatePad() {
                 {/* Token Economics */}
                 <div className="space-y-3">
                   <h3 className="text-base font-semibold">Token Details</h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -562,7 +580,7 @@ export default function CreatePad() {
           </CardContent>
         </Card>
 
-        
+
       </div>
     </div>
   );

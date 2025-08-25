@@ -1451,15 +1451,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Deploy pad token using Doppler V4 SDK
   app.post("/api/pads/:id/deploy", async (req, res) => {
+    let padId = req.params.id;
+    
     try {
-      const pad = await storage.getPad(req.params.id);
+      console.log(`Starting deployment for pad ${padId}`);
+      
+      const pad = await storage.getPad(padId);
       if (!pad) {
         return res.status(404).json({ message: "Pad not found" });
       }
 
       if (pad.status !== 'pending') {
-        return res.status(400).json({ message: "Pad is not in pending status" });
+        return res.status(400).json({ 
+          message: `Pad is in ${pad.status} status, cannot deploy`,
+          currentStatus: pad.status
+        });
       }
+
+      // Update status to deploying
+      await storage.updatePad(padId, {
+        status: 'deploying' as any,
+      });
 
       // Get Doppler service (using Base Sepolia for testing)
       const dopplerService = getDopplerService(84532);
@@ -1472,54 +1484,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creatorAddress: pad.creatorAddress,
       };
 
+      console.log(`Deploying token with config:`, tokenConfig);
+
       // Check if we have a deployer private key
       const hasDeployerKey = !!process.env.DEPLOYER_PRIVATE_KEY;
       
       let deploymentResult;
       
       if (hasDeployerKey) {
-        // Real deployment using Doppler V4 SDK
-        console.log('Deploying token with Doppler V4 SDK...');
+        console.log('🚀 Real deployment using UniPump contracts...');
         deploymentResult = await dopplerService.deployPadToken(tokenConfig);
+        console.log('✅ Token deployed successfully:', deploymentResult);
       } else {
-        // Simulation for development
-        console.log('Simulating token deployment...');
+        console.log('🔄 Simulating token deployment...');
         deploymentResult = await dopplerService.simulateDeployment(tokenConfig);
+        console.log('✅ Token deployment simulated:', deploymentResult);
       }
 
       // Update pad with deployment info
-      const updatedPad = await storage.updatePad(pad.id, {
+      const updatedPad = await storage.updatePad(padId, {
         status: 'deployed',
         tokenAddress: deploymentResult.tokenAddress,
         deploymentTxHash: deploymentResult.txHash,
       });
 
+      console.log(`✅ Pad ${padId} deployment complete:`, {
+        tokenAddress: deploymentResult.tokenAddress,
+        txHash: deploymentResult.txHash,
+        isReal: hasDeployerKey
+      });
+
       res.json({
-        message: hasDeployerKey ? "Pad token deployed successfully on-chain" : "Pad token deployment simulated",
+        success: true,
+        message: hasDeployerKey ? "Pad token deployed successfully on-chain!" : "Pad token deployment simulated",
         pad: updatedPad,
         tokenAddress: deploymentResult.tokenAddress,
         txHash: deploymentResult.txHash,
         poolId: deploymentResult.poolId,
         bondingCurveAddress: deploymentResult.bondingCurveAddress || null,
-        isSimulated: !hasDeployerKey
+        isSimulated: !hasDeployerKey,
+        explorerUrl: hasDeployerKey ? `https://sepolia.basescan.org/tx/${deploymentResult.txHash}` : null
       });
     } catch (error: any) {
-      console.error("Pad deployment error:", error);
-      console.error("Error details:", error.message, error.stack);
+      console.error(`❌ Pad ${padId} deployment failed:`, error);
+      console.error("Full error details:", error.message, error.stack);
       
       // Mark pad as failed if deployment fails
       try {
-        await storage.updatePad(req.params.id, {
+        await storage.updatePad(padId, {
           status: 'failed',
         });
       } catch (updateError) {
-        console.error("Failed to update pad status:", updateError);
+        console.error("Failed to update pad status to failed:", updateError);
       }
       
       res.status(500).json({
+        success: false,
         error: true,
         message: `Token deployment failed: ${error.message}`,
-        details: error.message
+        details: error.message,
+        padId: padId
       });
     }
   });

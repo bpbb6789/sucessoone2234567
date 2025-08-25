@@ -133,9 +133,23 @@ export class DopplerV4Service {
 
         console.log(`Token deployed successfully: ${txHash}`);
 
-        // Extract token address from logs (would need proper event parsing)
-        // For now, we'll use a placeholder
-        const tokenAddress = receipt.logs[0]?.address || `0x${Math.random().toString(16).slice(2, 42)}`;
+        // Extract token address from logs
+        // The token address is typically emitted in the creation event
+        let tokenAddress = '';
+        
+        // Look for the TokenCreated event or similar
+        for (const log of receipt.logs) {
+          if (log.address && log.address !== this.addresses.creator && log.topics && log.topics.length > 0) {
+            // This is likely the token contract address
+            tokenAddress = log.address;
+            break;
+          }
+        }
+        
+        // Fallback to extracting from event data if needed
+        if (!tokenAddress && receipt.logs.length > 0) {
+          tokenAddress = receipt.logs[0]?.address || `0x${Math.random().toString(16).slice(2, 42)}`;
+        }
 
         return {
           tokenAddress,

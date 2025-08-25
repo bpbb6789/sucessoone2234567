@@ -270,7 +270,7 @@ export const pads = pgTable("pads", {
   shares: integer("shares").default(0),
   
   // Status & Deployment
-  status: text("status").notNull().default("pending"), // 'pending', 'deployed', 'graduated', 'failed'
+  status: text("status").notNull().default("pending"), // 'pending', 'deploying', 'deployed', 'graduated', 'failed'
   deploymentTxHash: text("deployment_tx_hash"), // Transaction hash of token deployment
   graduationTxHash: text("graduation_tx_hash"), // If graduated to full DEX
   
