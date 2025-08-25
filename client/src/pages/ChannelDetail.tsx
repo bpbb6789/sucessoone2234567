@@ -45,7 +45,7 @@ export default function ChannelDetail() {
   const { id } = useParams()
   const [tradeAmount, setTradeAmount] = useState('')
   const [comment, setComment] = useState('')
-  const [activeTab, setActiveTab] = useState('comments')
+  
 
   const { data: channelsData = [], isLoading } = useQuery({
     queryKey: ['/api/web3-channels'],
@@ -309,103 +309,7 @@ export default function ChannelDetail() {
           </div>
         </div>
 
-        {/* Tabs Section */}
-        <div className="mt-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 bg-gray-900">
-              <TabsTrigger value="comments">Comments</TabsTrigger>
-              <TabsTrigger value="holders">
-                Holders <Badge variant="secondary" className="ml-1">{tokenData?.holders || 0}</Badge>
-              </TabsTrigger>
-              <TabsTrigger value="activity">Activity</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="comments" className="mt-4">
-              <Card className="bg-gray-900 border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Comments</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-400 text-center py-6">
-                    No comments yet. Be the first to comment!
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="holders" className="mt-4">
-              <Card className="bg-gray-900 border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Token Holders</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-400 text-center py-6">
-                    {tokenData?.holders ? `${tokenData.holders} holders` : 'No holders yet'}
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="activity" className="mt-4">
-              <Card className="bg-gray-900 border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Trading Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-400 text-center py-6">
-                    Recent trading activity will be shown here.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="details" className="mt-4">
-              <Card className="bg-gray-900 border-gray-700">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Channel Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-400">Created</p>
-                      <p className="font-medium">{formatTimeAgo(new Date(transformedChannel.createdAt))}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-400">Contract address</p>
-                      <div className="flex items-center space-x-2">
-                        <p className="font-mono text-sm">{transformedChannel.coinAddress.slice(0, 6)}...{transformedChannel.coinAddress.slice(-4)}</p>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => copyAddress(transformedChannel.coinAddress)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-400">Chain</p>
-                      <div className="flex items-center space-x-1">
-                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                        <span className="font-medium">{transformedChannel.chainId === 8453 ? 'Base' : 'Base Sepolia'}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-400">Pair</p>
-                      <p className="font-medium">@ilovemolly-4ever</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-400">Media</p>
-                      <p className="font-medium">JPG</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+        
       </div>
     </div>
   )
