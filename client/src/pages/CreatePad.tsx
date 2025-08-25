@@ -34,7 +34,7 @@ const mediaTypes = [
 ];
 
 export default function CreatePad() {
-  const { address } = useAccount();
+  const { address, connect, disconnect } = useAccount();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { deployPad, isDeploying, deploymentResult } = useDeployPad();

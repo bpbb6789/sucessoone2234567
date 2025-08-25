@@ -212,12 +212,12 @@ export default function Home() {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {deployedPadsData.map((pad: any) => (
-                    <div
-                      key={pad.id}
-                      className="group cursor-pointer"
-                      data-testid={`deployed-pad-${pad.id}`}
-                    >
-                      <div className="relative mb-3">
+                    <Link key={pad.id} href={`/token/${pad.id}`}>
+                      <div
+                        className="group cursor-pointer"
+                        data-testid={`deployed-pad-${pad.id}`}
+                      >
+                        <div className="relative mb-3">
                         <img
                           src={`https://gateway.pinata.cloud/ipfs/${pad.mediaCid}`}
                           alt={pad.title}
@@ -230,11 +230,12 @@ export default function Home() {
                           {pad.status === 'graduated' ? 'GRADUATED' : 'DEPLOYED'}
                         </div>
                       </div>
-                      <h3 className="font-medium text-sm md:text-base mb-1 truncate">{pad.title}</h3>
-                      <p className="text-xs text-gray-400 truncate mb-1">{pad.tokenSymbol}</p>
-                      <p className="text-xs text-green-400 font-medium">${pad.currentPrice}</p>
-                      <p className="text-xs text-gray-400">{formatTimeAgo(new Date(pad.createdAt))}</p>
-                    </div>
+                        <h3 className="font-medium text-sm md:text-base mb-1 truncate">{pad.title}</h3>
+                        <p className="text-xs text-gray-400 truncate mb-1">{pad.tokenSymbol}</p>
+                        <p className="text-xs text-green-400 font-medium">${pad.currentPrice}</p>
+                        <p className="text-xs text-gray-400">{formatTimeAgo(new Date(pad.createdAt))}</p>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               )}

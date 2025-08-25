@@ -42,6 +42,7 @@ import ChannelDetail from '@/pages/ChannelDetail';
 import PostDetail from '@/pages/PostDetail';
 import Tokenize from '@/pages/Tokenize'
 import CreatePad from '@/pages/CreatePad'
+import TokenDetail from '@/pages/TokenDetail'
 import NotFound from '@/pages/not-found'
 
 import '@rainbow-me/rainbowkit/styles.css'
@@ -95,6 +96,7 @@ function AppContent() {
               <Route path="/create" component={Create} />
               <Route path="/create-channel" component={CreateChannel} />
               <Route path="/create-pad" component={CreatePad} />
+              <Route path="/token/:id" component={TokenDetail} />
               <Route path="/channel/:slug/manager" component={ChannelManager} />
               <Route path="/dashboard/import" component={ContentImport} />
               <Route path="/my-content" component={MyContent} />
