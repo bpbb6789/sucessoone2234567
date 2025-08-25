@@ -421,8 +421,8 @@ export default function Home() {
                       <h2 className="text-xl md:text-2xl font-bold">Top Channels</h2>
                       <div className="h-4 w-16 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
                     </div>
-                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {Array.from({ length: 4 }).map((_, i) => (
+                    <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className="animate-pulse">
                           <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2"></div>
                           <div className="h-4 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2"></div>
@@ -447,8 +447,8 @@ export default function Home() {
                       <h2 className="text-xl md:text-2xl font-bold">Trending</h2>
                       <div className="h-4 w-16 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
                     </div>
-                    <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {Array.from({ length: 4 }).map((_, i) => (
+                    <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
                         <div key={i} className="animate-pulse">
                           <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-square mb-2"></div>
                           <div className="h-4 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2"></div>
@@ -642,8 +642,8 @@ export default function Home() {
               </div>
 
               {isLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {Array.from({ length: 8 }).map((_, i) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="animate-pulse">
                       <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg aspect-[9/16]"></div>
                       <div className="h-3 bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded mt-2"></div>
@@ -651,7 +651,7 @@ export default function Home() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <Link key={i} href={`/reel/${i + 1}`}>
                       <div className="group cursor-pointer">
@@ -687,8 +687,8 @@ export default function Home() {
               </div>
 
               {isLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {Array.from({ length: 8 }).map((_, i) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
                     <div key={i} className="animate-pulse">
                       <div className="bg-gray-700 dark:bg-gray-700 bg-gray-300 dark:bg-gray-700 rounded-lg p-4">
                         <div className="h-4 bg-gray-600 dark:bg-gray-600 bg-gray-400 dark:bg-gray-600 rounded mb-2"></div>
@@ -699,7 +699,7 @@ export default function Home() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {Array.from({ length: 6 }).map((_, i) => (
                     <Link key={i} href={`/content/${i + 1}`}>
                       <div className="group cursor-pointer">
