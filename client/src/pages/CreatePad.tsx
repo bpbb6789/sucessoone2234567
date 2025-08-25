@@ -13,6 +13,7 @@ import { useAccount } from "@/hooks/useWallet";
 import { Upload, X, ImageIcon, Music, Play, Sparkles, Coins, Zap, TrendingUp } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useDeployPad } from "@/hooks/useDeployPad";
 
 const createPadSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title must be under 100 characters"),
@@ -36,10 +37,12 @@ export default function CreatePad() {
   const { address } = useAccount();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { deployPad, isDeploying, deploymentResult } = useDeployPad();
   const [selectedMediaType, setSelectedMediaType] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [step, setStep] = useState<"form" | "uploading" | "deploying" | "success">("form");
   const [progress, setProgress] = useState("");
+  const [createdPadId, setCreatedPadId] = useState<string>("");
 
   const form = useForm<CreatePadForm>({
     resolver: zodResolver(createPadSchema),
@@ -163,12 +166,29 @@ export default function CreatePad() {
       const response = await apiRequest("POST", "/api/pads", padData);
       return response.json();
     },
-    onSuccess: (data) => {
-      setStep("success");
-      toast({
-        title: "Pad Created!",
-        description: "Your meme token pad has been created and is ready for trading.",
-      });
+    onSuccess: async (data) => {
+      setCreatedPadId(data.pad.id);
+      setProgress("Deploying token on blockchain...");
+      setStep("deploying");
+      
+      // Automatically deploy the token after creation
+      try {
+        await deployPad(data.pad.id);
+        setStep("success");
+        toast({
+          title: "Pad Created & Token Deployed!",
+          description: "Your meme token is now live and ready for trading.",
+        });
+      } catch (error) {
+        // Even if deployment fails, pad was created successfully
+        setStep("success");
+        toast({
+          title: "Pad Created",
+          description: "Pad created but token deployment failed. You can try deploying later.",
+          variant: "default",
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/pads"] });
     },
     onError: (error: any) => {
@@ -230,7 +250,7 @@ export default function CreatePad() {
     );
   }
 
-  if (step === "uploading") {
+  if (step === "uploading" || step === "deploying") {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -239,8 +259,15 @@ export default function CreatePad() {
               <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
                 <Zap className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Creating Your Pad</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                {step === "deploying" ? "Deploying Token" : "Creating Your Pad"}
+              </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">{progress}</p>
+              {step === "deploying" && (
+                <div className="text-xs text-gray-500 mt-2">
+                  🚀 Deploying with Doppler V4 SDK...
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -13,6 +13,7 @@ import {
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 import { contentImports } from "@shared/schema";
+import { getDopplerService, type PadTokenConfig } from "./doppler";
 import { PrismaClient } from '../lib/generated/prisma/index.js';
 
 const prisma = new PrismaClient();
@@ -95,8 +96,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(channel);
     } catch (error) {
       // res.status(400).json({ message: "Invalid channel data" });
-      if (error.name === 'ZodError') {
-        res.status(400).json({ message: "Invalid channel data", errors: error.errors });
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid channel data", errors: (error as any).errors });
       } else {
         res.status(400).json(handleDatabaseError(error, "createChannel"));
       }
@@ -1450,27 +1451,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Pad is not in pending status" });
       }
 
-      // TODO: Implement Doppler V4 SDK token deployment
-      // This is where we'll integrate with the Doppler V4 SDK to deploy the actual token
+      // Get Doppler service (using Base Sepolia for testing)
+      const dopplerService = getDopplerService(84532);
+
+      // Prepare token configuration
+      const tokenConfig: PadTokenConfig = {
+        name: pad.tokenName,
+        symbol: pad.tokenSymbol,
+        mediaCid: pad.mediaCid,
+        creatorAddress: pad.creatorAddress,
+      };
+
+      // Check if we have a deployer private key
+      const hasDeployerKey = !!process.env.DEPLOYER_PRIVATE_KEY;
       
-      // For now, simulate deployment
-      const simulatedTokenAddress = `0x${Math.random().toString(16).slice(2, 42)}`;
-      const simulatedTxHash = `0x${Math.random().toString(16).slice(2, 66)}`;
+      let deploymentResult;
+      
+      if (hasDeployerKey) {
+        // Real deployment using Doppler V4 SDK
+        console.log('Deploying token with Doppler V4 SDK...');
+        deploymentResult = await dopplerService.deployPadToken(tokenConfig);
+      } else {
+        // Simulation for development
+        console.log('Simulating token deployment...');
+        deploymentResult = await dopplerService.simulateDeployment(tokenConfig);
+      }
 
       // Update pad with deployment info
       const updatedPad = await storage.updatePad(pad.id, {
         status: 'deployed',
-        tokenAddress: simulatedTokenAddress,
-        deploymentTxHash: simulatedTxHash,
+        tokenAddress: deploymentResult.tokenAddress,
+        deploymentTxHash: deploymentResult.txHash,
       });
 
       res.json({
-        message: "Pad token deployed successfully",
+        message: hasDeployerKey ? "Pad token deployed successfully on-chain" : "Pad token deployment simulated",
         pad: updatedPad,
-        tokenAddress: simulatedTokenAddress,
-        txHash: simulatedTxHash
+        tokenAddress: deploymentResult.tokenAddress,
+        txHash: deploymentResult.txHash,
+        poolId: deploymentResult.poolId,
+        bondingCurveAddress: deploymentResult.bondingCurveAddress || null,
+        isSimulated: !hasDeployerKey
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Pad deployment error:", error);
       res.status(500).json(handleDatabaseError(error, "deployPad"));
     }
   });
