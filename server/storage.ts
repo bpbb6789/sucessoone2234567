@@ -528,6 +528,7 @@ export class DatabaseStorage implements IStorage {
   async createWeb3Channel(channel: InsertWeb3Channel): Promise<Web3Channel> {
     const [newChannel] = await db.insert(web3Channels).values({
       id: randomUUID(),
+      owner: channel.owner || channel.createdBy, // Ensure owner is set
       name: channel.name,
       description: channel.description || '',
       imageUri: channel.imageUri || '',

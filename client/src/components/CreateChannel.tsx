@@ -106,6 +106,7 @@ export default function CreateChannel() {
         const formData = form.getValues();
         const channelData = {
           owner: address,
+          createdBy: address,
           name: formData.name,
           ticker: formData.ticker,
           coinAddress: tokenAddress,
