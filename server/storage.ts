@@ -16,10 +16,13 @@ import {
   type TokenSale, type InsertTokenSale,
   type Web3Channel, type InsertWeb3Channel,
   type ContentImport, type InsertContentImport,
+  type Pad, type InsertPad,
+  type PadLike, type InsertPadLike,
+  type PadComment, type InsertPadComment,
   type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel,
   channels, videos, shorts, playlists, musicAlbums, comments, subscriptions,
   videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles,
-  tokens, tokenSales, web3Channels, contentImports
+  tokens, tokenSales, web3Channels, contentImports, pads, padLikes, padComments
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -121,6 +124,27 @@ export interface IStorage {
   updateContentImport(id: string, updates: Partial<InsertContentImport>): Promise<ContentImport | undefined>;
   deleteContentImport(id: string): Promise<void>;
   getAllContentImports(): Promise<ContentImport[]>;
+
+  // Pads (pump.fun style tokens)
+  getPad(id: string): Promise<Pad | undefined>;
+  getAllPads(): Promise<Pad[]>;
+  getPadsByCreator(creatorAddress: string): Promise<Pad[]>;
+  createPad(pad: InsertPad): Promise<Pad>;
+  updatePad(id: string, updates: Partial<InsertPad>): Promise<Pad | undefined>;
+  deletePad(id: string): Promise<void>;
+  searchPads(query: string): Promise<Pad[]>;
+
+  // Pad Interactions
+  likePad(padId: string, userAddress: string): Promise<void>;
+  unlikePad(padId: string, userAddress: string): Promise<void>;
+  getPadLikes(padId: string): Promise<PadLike[]>;
+  getUserPadLike(padId: string, userAddress: string): Promise<PadLike | undefined>;
+
+  // Pad Comments
+  getPadComment(id: string): Promise<PadComment | undefined>;
+  getPadComments(padId: string): Promise<PadComment[]>;
+  createPadComment(comment: InsertPadComment): Promise<PadComment>;
+  deletePadComment(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -456,6 +480,137 @@ export class DatabaseStorage implements IStorage {
 
   async getAllContentImports(): Promise<ContentImport[]> {
     return await db.select().from(contentImports).orderBy(desc(contentImports.createdAt));
+  }
+
+  // Pad methods
+  async getPad(id: string): Promise<Pad | undefined> {
+    const [pad] = await db.select().from(pads).where(eq(pads.id, id));
+    return pad || undefined;
+  }
+
+  async getAllPads(): Promise<Pad[]> {
+    return await db.select().from(pads).orderBy(desc(pads.createdAt));
+  }
+
+  async getPadsByCreator(creatorAddress: string): Promise<Pad[]> {
+    return await db.select().from(pads)
+      .where(eq(pads.creatorAddress, creatorAddress))
+      .orderBy(desc(pads.createdAt));
+  }
+
+  async createPad(pad: InsertPad): Promise<Pad> {
+    const [newPad] = await db.insert(pads).values({
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...pad,
+    }).returning();
+    return newPad;
+  }
+
+  async updatePad(id: string, updates: Partial<InsertPad>): Promise<Pad | undefined> {
+    const [pad] = await db.update(pads)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(pads.id, id))
+      .returning();
+    return pad || undefined;
+  }
+
+  async deletePad(id: string): Promise<void> {
+    await db.delete(pads).where(eq(pads.id, id));
+  }
+
+  async searchPads(query: string): Promise<Pad[]> {
+    return await db.select().from(pads)
+      .where(or(
+        ilike(pads.title, `%${query}%`),
+        ilike(pads.description, `%${query}%`),
+        ilike(pads.tokenName, `%${query}%`),
+        ilike(pads.tokenSymbol, `%${query}%`)
+      ))
+      .orderBy(desc(pads.createdAt));
+  }
+
+  // Pad interaction methods
+  async likePad(padId: string, userAddress: string): Promise<void> {
+    // Check if like already exists
+    const existingLike = await this.getUserPadLike(padId, userAddress);
+    if (existingLike) return;
+
+    await db.insert(padLikes).values({
+      id: randomUUID(),
+      padId,
+      userAddress,
+      createdAt: new Date(),
+    });
+
+    // Update like count in pads table
+    await db.update(pads)
+      .set({ likes: sql`${pads.likes} + 1` })
+      .where(eq(pads.id, padId));
+  }
+
+  async unlikePad(padId: string, userAddress: string): Promise<void> {
+    const result = await db.delete(padLikes)
+      .where(and(eq(padLikes.padId, padId), eq(padLikes.userAddress, userAddress)))
+      .returning();
+
+    if (result.length > 0) {
+      // Update like count in pads table
+      await db.update(pads)
+        .set({ likes: sql`${pads.likes} - 1` })
+        .where(eq(pads.id, padId));
+    }
+  }
+
+  async getPadLikes(padId: string): Promise<PadLike[]> {
+    return await db.select().from(padLikes).where(eq(padLikes.padId, padId));
+  }
+
+  async getUserPadLike(padId: string, userAddress: string): Promise<PadLike | undefined> {
+    const [like] = await db.select().from(padLikes)
+      .where(and(eq(padLikes.padId, padId), eq(padLikes.userAddress, userAddress)));
+    return like || undefined;
+  }
+
+  // Pad comment methods
+  async getPadComment(id: string): Promise<PadComment | undefined> {
+    const [comment] = await db.select().from(padComments).where(eq(padComments.id, id));
+    return comment || undefined;
+  }
+
+  async getPadComments(padId: string): Promise<PadComment[]> {
+    return await db.select().from(padComments)
+      .where(eq(padComments.padId, padId))
+      .orderBy(desc(padComments.createdAt));
+  }
+
+  async createPadComment(comment: InsertPadComment): Promise<PadComment> {
+    const [newComment] = await db.insert(padComments).values({
+      id: randomUUID(),
+      createdAt: new Date(),
+      ...comment,
+    }).returning();
+
+    // Update comment count in pads table
+    await db.update(pads)
+      .set({ comments: sql`${pads.comments} + 1` })
+      .where(eq(pads.id, comment.padId));
+
+    return newComment;
+  }
+
+  async deletePadComment(id: string): Promise<void> {
+    const [deletedComment] = await db.delete(padComments)
+      .where(eq(padComments.id, id))
+      .returning();
+
+    if (deletedComment) {
+      // Update comment count in pads table
+      await db.update(pads)
+        .set({ comments: sql`${pads.comments} - 1` })
+        .where(eq(pads.id, deletedComment.padId));
+    }
   }
 
   // Placeholder implementations for remaining methods

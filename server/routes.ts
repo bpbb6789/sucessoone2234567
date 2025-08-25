@@ -8,7 +8,7 @@ import {
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
   insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
   insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema, insertWeb3ChannelSchema,
-  insertContentImportSchema
+  insertContentImportSchema, insertPadSchema, insertPadLikeSchema, insertPadCommentSchema
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -1252,6 +1252,226 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Tokenization error:", error);
       res.status(500).json({ message: "Failed to start tokenization" });
+    }
+  });
+
+  // ==================== PAD ROUTES (pump.fun style tokens) ====================
+  
+  // Get all pads
+  app.get("/api/pads", async (req, res) => {
+    try {
+      const pads = await storage.getAllPads();
+      res.json(pads);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getAllPads"));
+    }
+  });
+
+  // Get pad by ID
+  app.get("/api/pads/:id", async (req, res) => {
+    try {
+      const pad = await storage.getPad(req.params.id);
+      if (!pad) {
+        return res.status(404).json({ message: "Pad not found" });
+      }
+      res.json(pad);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getPad"));
+    }
+  });
+
+  // Get pads by creator
+  app.get("/api/pads/creator/:address", async (req, res) => {
+    try {
+      const pads = await storage.getPadsByCreator(req.params.address);
+      res.json(pads);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getPadsByCreator"));
+    }
+  });
+
+  // Create new pad
+  app.post("/api/pads", async (req, res) => {
+    try {
+      const validatedData = insertPadSchema.parse(req.body);
+      const pad = await storage.createPad(validatedData);
+
+      // TODO: Integrate Doppler V4 SDK for token deployment
+      // For now, we'll set status to pending and deploy later
+      
+      res.status(201).json(pad);
+    } catch (error) {
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid pad data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createPad"));
+      }
+    }
+  });
+
+  // Update pad (for deployment status, token address, etc.)
+  app.patch("/api/pads/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const pad = await storage.updatePad(req.params.id, updates);
+      if (!pad) {
+        return res.status(404).json({ message: "Pad not found" });
+      }
+      res.json(pad);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "updatePad"));
+    }
+  });
+
+  // Delete pad
+  app.delete("/api/pads/:id", async (req, res) => {
+    try {
+      await storage.deletePad(req.params.id);
+      res.json({ message: "Pad deleted successfully" });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "deletePad"));
+    }
+  });
+
+  // Search pads
+  app.get("/api/pads/search/:query", async (req, res) => {
+    try {
+      const pads = await storage.searchPads(req.params.query);
+      res.json(pads);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "searchPads"));
+    }
+  });
+
+  // ==================== PAD INTERACTION ROUTES ====================
+
+  // Like a pad
+  app.post("/api/pads/:id/like", async (req, res) => {
+    try {
+      const { userAddress } = req.body;
+      if (!userAddress) {
+        return res.status(400).json({ message: "User address required" });
+      }
+      
+      await storage.likePad(req.params.id, userAddress);
+      res.json({ message: "Pad liked successfully" });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "likePad"));
+    }
+  });
+
+  // Unlike a pad
+  app.delete("/api/pads/:id/like", async (req, res) => {
+    try {
+      const { userAddress } = req.body;
+      if (!userAddress) {
+        return res.status(400).json({ message: "User address required" });
+      }
+      
+      await storage.unlikePad(req.params.id, userAddress);
+      res.json({ message: "Pad unliked successfully" });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "unlikePad"));
+    }
+  });
+
+  // Get pad likes
+  app.get("/api/pads/:id/likes", async (req, res) => {
+    try {
+      const likes = await storage.getPadLikes(req.params.id);
+      res.json(likes);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getPadLikes"));
+    }
+  });
+
+  // Check if user liked pad
+  app.get("/api/pads/:id/likes/:userAddress", async (req, res) => {
+    try {
+      const like = await storage.getUserPadLike(req.params.id, req.params.userAddress);
+      res.json({ liked: !!like, like });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getUserPadLike"));
+    }
+  });
+
+  // ==================== PAD COMMENT ROUTES ====================
+
+  // Get pad comments
+  app.get("/api/pads/:id/comments", async (req, res) => {
+    try {
+      const comments = await storage.getPadComments(req.params.id);
+      res.json(comments);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getPadComments"));
+    }
+  });
+
+  // Create pad comment
+  app.post("/api/pads/:id/comments", async (req, res) => {
+    try {
+      const validatedData = insertPadCommentSchema.parse({
+        ...req.body,
+        padId: req.params.id
+      });
+      
+      const comment = await storage.createPadComment(validatedData);
+      res.status(201).json(comment);
+    } catch (error) {
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid comment data", errors: error.errors });
+      } else {
+        res.status(400).json(handleDatabaseError(error, "createPadComment"));
+      }
+    }
+  });
+
+  // Delete pad comment
+  app.delete("/api/pads/comments/:commentId", async (req, res) => {
+    try {
+      await storage.deletePadComment(req.params.commentId);
+      res.json({ message: "Comment deleted successfully" });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "deletePadComment"));
+    }
+  });
+
+  // ==================== PAD DEPLOYMENT ENDPOINT ====================
+
+  // Deploy pad token using Doppler V4 SDK
+  app.post("/api/pads/:id/deploy", async (req, res) => {
+    try {
+      const pad = await storage.getPad(req.params.id);
+      if (!pad) {
+        return res.status(404).json({ message: "Pad not found" });
+      }
+
+      if (pad.status !== 'pending') {
+        return res.status(400).json({ message: "Pad is not in pending status" });
+      }
+
+      // TODO: Implement Doppler V4 SDK token deployment
+      // This is where we'll integrate with the Doppler V4 SDK to deploy the actual token
+      
+      // For now, simulate deployment
+      const simulatedTokenAddress = `0x${Math.random().toString(16).slice(2, 42)}`;
+      const simulatedTxHash = `0x${Math.random().toString(16).slice(2, 66)}`;
+
+      // Update pad with deployment info
+      const updatedPad = await storage.updatePad(pad.id, {
+        status: 'deployed',
+        tokenAddress: simulatedTokenAddress,
+        deploymentTxHash: simulatedTxHash,
+      });
+
+      res.json({
+        message: "Pad token deployed successfully",
+        pad: updatedPad,
+        tokenAddress: simulatedTokenAddress,
+        txHash: simulatedTxHash
+      });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "deployPad"));
     }
   });
 
