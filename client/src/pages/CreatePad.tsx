@@ -120,7 +120,7 @@ export default function CreatePad() {
   };
 
   const clearFile = () => {
-    form.setValue("mediaFile", undefined);
+    form.setValue("mediaFile", null as any);
     setSelectedMediaType("");
     setPreviewUrl("");
   };
@@ -173,19 +173,22 @@ export default function CreatePad() {
       
       // Automatically deploy the token after creation
       try {
+        console.log("Starting token deployment for pad:", data.pad.id);
         await deployPad(data.pad.id);
         setStep("success");
         toast({
           title: "Pad Created & Token Deployed!",
           description: "Your meme token is now live and ready for trading.",
         });
-      } catch (error) {
+      } catch (error: any) {
+        console.error("Token deployment failed:", error);
+        console.error("Deployment error details:", error.message, error.response);
         // Even if deployment fails, pad was created successfully
         setStep("success");
         toast({
           title: "Pad Created",
-          description: "Pad created but token deployment failed. You can try deploying later.",
-          variant: "default",
+          description: `Pad created but token deployment failed: ${error.message || 'Unknown error'}`,
+          variant: "destructive",
         });
       }
       
