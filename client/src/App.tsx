@@ -42,6 +42,7 @@ import ChannelDetail from '@/pages/ChannelDetail';
 import PostDetail from '@/pages/PostDetail';
 import Tokenize from '@/pages/Tokenize'
 import CreatePad from '@/pages/CreatePad'
+import CreateToken from '@/pages/CreateToken'
 import TokenDetail from '@/pages/TokenDetail'
 import NotFound from '@/pages/not-found'
 
@@ -90,6 +91,7 @@ function AppContent() {
               <Route path="/notifications" component={Notifications} />
               <Route path="/search" component={Search} />
               <Route path="/create-token" component={CreateChannel} />
+              <Route path="/createtoken" component={CreateToken} />
               <Route path="/watch/:id" component={Watch} />
               <Route path="/tokens" component={Tokens} />
               <Route path="/tokenize" component={Tokenize} />
