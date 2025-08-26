@@ -56,19 +56,24 @@ export const TokenCard = ({ token, userAddress, heldOnly, createdOnly }: { token
   return (
     <div key={token.memeTokenAddress} className="mb-4">
       <div className="rounded-xl border border-stone-800 bg-stone-950 text-stone-50 shadow p-4 flex flex-col items-center gap-4">
-        {token.imageUri ? (
+        {token.imageUri && token.imageUri.trim() !== '' ? (
           <img
             src={token.imageUri}
             alt={`${token.name} icon`}
             width={64}
             height={64}
-            className="rounded-full border border-stone-700"
+            className="rounded-full border border-stone-700 object-cover"
+            onError={(e) => {
+              const target = e.currentTarget as HTMLImageElement;
+              const fallback = target.nextElementSibling as HTMLElement;
+              target.style.display = 'none';
+              if (fallback) fallback.style.display = 'flex';
+            }}
           />
-        ) : (
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full border border-stone-700 flex items-center justify-center text-white font-bold text-lg">
-            {token.symbol?.charAt(0) || '?'}
-          </div>
-        )}
+        ) : null}
+        <div className={`w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full border border-stone-700 flex items-center justify-center text-white font-bold text-lg ${token.imageUri && token.imageUri.trim() !== '' ? 'hidden' : ''}`}>
+          {token.symbol?.charAt(0) || '?'}
+        </div>
         <div className="flex-1 min-w-0 w-full">
           <div className="flex flex-wrap items-center gap-2 mb-1 justify-center">
             <span className="font-bold text-lg text-stone-50">{token.name}</span>

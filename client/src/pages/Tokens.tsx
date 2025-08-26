@@ -383,19 +383,24 @@ export default function Tokens() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           {/* Token Avatar */}
-                          {token.avatarUrl ? (
+                          {token.avatarUrl || (token.imageUri && token.imageUri.trim() !== '') ? (
                             <div className="w-10 h-10 rounded-lg overflow-hidden">
                               <img 
-                                src={token.avatarUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.avatarUrl}` : token.avatarUrl}
+                                src={token.avatarUrl ? (token.avatarUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${token.avatarUrl}` : token.avatarUrl) : token.imageUri}
                                 alt={`${token.name} avatar`}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  const fallback = target.parentElement?.nextElementSibling as HTMLElement;
+                                  target.parentElement!.style.display = 'none';
+                                  if (fallback) fallback.style.display = 'flex';
+                                }}
                               />
                             </div>
-                          ) : (
-                            <div className={`w-10 h-10 ${token.tokenType === 'channel' ? 'bg-gradient-to-br from-blue-500 to-purple-500' : 'bg-gradient-to-br from-green-500 to-teal-500'} rounded-lg flex items-center justify-center text-white font-bold text-sm`}>
-                              {token.symbol.replace('$', '').charAt(0)}
-                            </div>
-                          )}
+                          ) : null}
+                          <div className={`w-10 h-10 ${token.tokenType === 'channel' ? 'bg-gradient-to-br from-blue-500 to-purple-500' : 'bg-gradient-to-br from-green-500 to-teal-500'} rounded-lg flex items-center justify-center text-white font-bold text-sm ${(token.avatarUrl || (token.imageUri && token.imageUri.trim() !== '')) ? 'hidden' : ''}`}>
+                            {token.symbol.replace('$', '').charAt(0)}
+                          </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="text-gray-900 dark:text-white font-semibold text-sm">{token.name}</h3>

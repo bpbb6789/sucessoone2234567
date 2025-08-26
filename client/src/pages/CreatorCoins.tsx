@@ -60,6 +60,7 @@ export default function CreatorCoins() {
         name: token.name || token.symbol || 'Unknown Token',
         symbol: token.symbol || 'UNKNOWN',
         description: token.bio || token.description || 'Created via pump.fun mechanics',
+        imageUri: token.imageUri || '',
         createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
         creator: token.createdBy || 'No Creator Found',
         price: token.price || '0.000001',
@@ -270,7 +271,20 @@ export default function CreatorCoins() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           {/* Token Avatar */}
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                          {token.imageUri && token.imageUri.trim() !== '' ? (
+                            <img 
+                              src={token.imageUri}
+                              alt={`${token.name} logo`}
+                              className="w-10 h-10 rounded-lg object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                target.style.display = 'none';
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-sm ${token.imageUri && token.imageUri.trim() !== '' ? 'hidden' : ''}`}>
                             {token.symbol.charAt(0)}
                           </div>
                           <div>
