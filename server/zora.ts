@@ -1,4 +1,9 @@
-import { createCoin, createCoinCall, DeployCurrency, setApiKey } from '@zoralabs/coins-sdk';
+import { 
+  createCoin, 
+  createCoinCall, 
+  setApiKey,
+  DeployCurrency
+} from '@zoralabs/coins-sdk';
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -54,60 +59,54 @@ const getWalletClient = () => {
   });
 };
 
-// Helper to create Zora metadata
+// Helper to create Zora metadata (simplified - SDK doesn't have metadata builder)
 export async function createZoraMetadata(params: {
   name: string;
   description: string;
   imageUrl: string;
   contentType: string;
-  externalUrl?: string;
   attributes?: Array<{ trait_type: string; value: string }>;
 }): Promise<string> {
-  const metadata = {
-    name: params.name,
-    description: params.description,
-    image: params.imageUrl.startsWith('http') ? params.imageUrl : `https://gateway.pinata.cloud/ipfs/${params.imageUrl}`,
-    external_url: params.externalUrl,
-    attributes: [
-      {
-        trait_type: 'Content Type',
-        value: params.contentType
-      },
-      {
-        trait_type: 'Creator Platform',
-        value: 'Web3 Video Platform'
-      },
-      ...(params.attributes || [])
-    ],
-    // Zora-specific fields
-    animation_url: params.contentType === 'video' || params.contentType === 'audio' 
-      ? (params.imageUrl.startsWith('http') ? params.imageUrl : `https://gateway.pinata.cloud/ipfs/${params.imageUrl}`)
-      : undefined,
-    content_type: params.contentType,
-    properties: {
-      category: 'creator-content',
-      platform: 'web3-video-platform'
-    }
-  };
-
   try {
-    console.log('📤 Uploading metadata to IPFS:', JSON.stringify(metadata, null, 2));
-    // Upload metadata to IPFS and return the CID
+    console.log('📝 Creating Zora metadata...');
+    
+    const metadata = {
+      name: params.name,
+      description: params.description,
+      image: params.imageUrl.startsWith('http') ? params.imageUrl : `https://gateway.pinata.cloud/ipfs/${params.imageUrl}`,
+      attributes: [
+        {
+          trait_type: 'Content Type',
+          value: params.contentType
+        },
+        {
+          trait_type: 'Creator Platform',
+          value: 'Web3 Video Platform'
+        },
+        ...(params.attributes || [])
+      ],
+      animation_url: params.contentType === 'video' || params.contentType === 'audio' 
+        ? (params.imageUrl.startsWith('http') ? params.imageUrl : `https://gateway.pinata.cloud/ipfs/${params.imageUrl}`)
+        : undefined
+    };
+
+    // Upload metadata to IPFS and return the URI
     const metadataCid = await uploadJSONToIPFS(metadata);
-    console.log('✅ Metadata uploaded to IPFS with CID:', metadataCid);
-    return `https://gateway.pinata.cloud/ipfs/${metadataCid}`;
+    const metadataUri = `https://gateway.pinata.cloud/ipfs/${metadataCid}`;
+    
+    console.log('✅ Metadata created successfully:', metadataUri);
+    return metadataUri;
   } catch (error) {
-    console.error('❌ Failed to upload metadata to IPFS:', error);
+    console.error('❌ Failed to create Zora metadata:', error);
     throw error;
   }
 }
 
-// Create a creator coin using Zora SDK
+// Create a creator coin using Zora SDK (actual API)
 export async function createCreatorCoin(params: {
   name: string;
   symbol: string;
-  metadataUri: string;
-  startingMarketCap: 'LOW' | 'HIGH';
+  uri: string;
   currency: string;
   creatorAddress: string;
 }): Promise<{
@@ -128,8 +127,8 @@ export async function createCreatorCoin(params: {
 
     console.log('⚡ Deploying Creator Coin with Zora SDK...');
 
-    // Map our currency to Zora's currency enum
-    let zoraCurrency: DeployCurrency;
+    // Map our currency to Zora's actual DeployCurrency enum
+    let zoraCurrency = DeployCurrency.ETH; // Default to ETH
     switch (params.currency) {
       case 'ETH':
         zoraCurrency = DeployCurrency.ETH;
@@ -137,28 +136,22 @@ export async function createCreatorCoin(params: {
       case 'ZORA':
         zoraCurrency = DeployCurrency.ZORA;
         break;
-      default:
-        zoraCurrency = DeployCurrency.ETH;
     }
 
-    // Note: Based on the SDK, there's no startingMarketCap enum 
-    // The Zora SDK uses different pool configuration approach
-
-    // Create coin using official Zora SDK - following the correct API structure
+    // Use the actual Zora SDK API structure (no startingMarketCap in real API)
     const coinArgs = {
       name: params.name,
       symbol: params.symbol,
-      uri: params.metadataUri,
+      uri: params.uri,
       chainId: baseSepolia.id,
       payoutRecipient: params.creatorAddress as `0x${string}`,
       currency: zoraCurrency,
-      owners: [params.creatorAddress as `0x${string}`],
       platformReferrer: undefined // Optional platform referrer
     };
 
     console.log('📋 Zora coin creation args:', coinArgs);
 
-    // Deploy using Zora SDK
+    // Deploy using actual Zora SDK API
     const result = await createCoin(
       coinArgs,
       walletClient,
@@ -190,8 +183,7 @@ export async function createCreatorCoin(params: {
 function simulateZoraDeployment(params: {
   name: string;
   symbol: string;
-  metadataUri: string;
-  startingMarketCap: 'LOW' | 'HIGH';
+  uri: string;
   currency: string;
   creatorAddress: string;
 }) {

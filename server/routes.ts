@@ -1641,10 +1641,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const thumbnailCid = await generateThumbnail(contentType, mediaCid);
       console.log('Thumbnail CID:', thumbnailCid);
 
-      // Create Zora metadata
+      // Create Zora metadata 
       console.log('📝 Creating Zora metadata...');
       const imageUrl = `https://gateway.pinata.cloud/ipfs/${mediaCid}`;
-      console.log('Image URL:', imageUrl);
       
       let metadataUri: string | null = null;
       try {
@@ -1675,7 +1674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         contentType,
         mediaCid,
         thumbnailCid,
-        metadataUri,
+        metadataUri: metadataUri,
         coinName,
         coinSymbol,
         currency: currency || 'ETH',
@@ -1696,7 +1695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Content uploaded successfully",
         coin: newCoin,
         mediaCid,
-        metadataUri
+        metadataUri: metadataUri
       });
     } catch (error) {
       console.error("❌ Creator coin upload error:", error);
@@ -1757,8 +1756,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const deploymentResult = await createCreatorCoin({
         name: coinData.coinName,
         symbol: coinData.coinSymbol,
-        metadataUri: coinData.metadataUri!,
-        startingMarketCap: coinData.startingMarketCap as 'LOW' | 'HIGH',
+        uri: coinData.metadataUri!,
         currency: coinData.currency,
         creatorAddress: coinData.creatorAddress
       });
