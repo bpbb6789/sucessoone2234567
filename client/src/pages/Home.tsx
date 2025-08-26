@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Coins, Music, Radio, Plus } from "lucide-react";
+import { Play, Coins, Music, Radio, Plus, ExternalLink } from "lucide-react";
 import { type VideoWithChannel, type MusicAlbum, type MusicTrack } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
