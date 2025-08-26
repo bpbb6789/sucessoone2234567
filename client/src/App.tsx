@@ -43,6 +43,7 @@ import PostDetail from '@/pages/PostDetail';
 import Tokenize from '@/pages/Tokenize'
 import CreatePad from '@/pages/CreatePad'
 import CreateToken from '@/pages/CreateToken'
+import CreatorCoins from '@/pages/CreatorCoins'
 import TokenDetail from '@/pages/TokenDetail'
 import NotFound from '@/pages/not-found'
 
@@ -94,6 +95,7 @@ function AppContent() {
               <Route path="/createtoken" component={CreateToken} />
               <Route path="/watch/:id" component={Watch} />
               <Route path="/tokens" component={Tokens} />
+              <Route path="/creatorcoins" component={CreatorCoins} />
               <Route path="/tokenize" component={Tokenize} />
               <Route path="/create" component={Create} />
               <Route path="/create-channel" component={CreateChannel} />
