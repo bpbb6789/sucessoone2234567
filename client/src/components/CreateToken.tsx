@@ -206,7 +206,10 @@ const CreateToken = ({
                                     contractAbi={TOKEN_FACTORY_ABI}
                                     cta={isFeeLoading ? 'Loading fee...' : `Create Token (${createFee ? (Number(createFee) / 1e18).toFixed(4) : '0'} ETH)`}
                                     functionName="deployERC20Token"
-                                    handleOnStatus2={() => {
+                                    handleOnStatus2={(status) => {
+                                        console.log('=== TRANSACTION STATUS ===');
+                                        console.log('Status:', status);
+                                        console.log('Create fee used:', createFee?.toString());
                                         queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
                                     }}
                                     args={args}

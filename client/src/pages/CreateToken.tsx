@@ -26,16 +26,34 @@ export default function CreateTokenPage() {
     e.preventDefault();
     if (!isConnected) return;
 
-    writeContract({
-      address: TOKEN_FACTORY_ADDRESS as `0x${string}`,
-      abi: TOKEN_FACTORY_ABI,
-      functionName: 'deployERC20Token',
-      args: [
-        formData.name,
-        formData.ticker
-      ],
-      value: createFee || BigInt(0),
-    });
+    console.log('=== TOKEN CREATION DEBUG ===');
+    console.log('Form data:', formData);
+    console.log('Create fee:', createFee);
+    console.log('Create fee (hex):', createFee?.toString(16));
+    console.log('Create fee (decimal):', createFee?.toString());
+    console.log('Is connected:', isConnected);
+    console.log('Token Factory Address:', TOKEN_FACTORY_ADDRESS);
+
+    if (!createFee) {
+      console.error('❌ No create fee available - cannot proceed');
+      return;
+    }
+
+    try {
+      writeContract({
+        address: TOKEN_FACTORY_ADDRESS as `0x${string}`,
+        abi: TOKEN_FACTORY_ABI,
+        functionName: 'deployERC20Token',
+        args: [
+          formData.name,
+          formData.ticker
+        ],
+        value: createFee,
+      });
+      console.log('✅ Transaction submitted with value:', createFee.toString());
+    } catch (error) {
+      console.error('❌ Error submitting transaction:', error);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
