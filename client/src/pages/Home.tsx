@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { Play, Coins, Music, Radio, Plus } from "lucide-react";
@@ -154,7 +154,7 @@ export default function Home() {
 
 
   // Process GraphQL data for creator tokens
-  React.useEffect(() => {
+  useEffect(() => {
     let allCreatorTokens: CreatorToken[] = [];
 
     // Add GraphQL tokens if available
