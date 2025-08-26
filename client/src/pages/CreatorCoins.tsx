@@ -50,64 +50,30 @@ export default function CreatorCoins() {
   const { data: salesData, loading: salesLoading, error: salesError } = useGetAllSales();
 
   React.useEffect(() => {
-    console.log('=== CREATOR COINS DEBUG ===');
-    console.log('Sales data:', salesData);
-    console.log('Loading:', salesLoading);
-    console.log('Error:', salesError);
-
     let allCreatorTokens: CreatorToken[] = [];
 
     // Add GraphQL tokens if available
     if (salesData?.uniPumpCreatorSaless?.items) {
-      console.log('Found GraphQL tokens:', salesData.uniPumpCreatorSaless.items.length);
-      const pumpFunTokens = salesData.uniPumpCreatorSaless.items.map((token: any) => {
-        console.log('Processing token:', token);
-        return {
-          id: token.memeTokenAddress || token.id,
-          address: token.memeTokenAddress,
-          name: token.name || token.symbol || 'Unknown Token',
-          symbol: token.symbol || 'UNKNOWN',
-          description: token.description || 'Created via pump.fun mechanics',
-          createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
-          creator: token.creator || 'Unknown Creator',
-          price: token.price || '0.000001',
-          marketCap: token.marketCap || '0',
-          volume24h: token.volume24h || '0',
-          holders: token.holders || 0,
-          change24h: token.priceChange24h || 0,
-          isOnBondingCurve: token.bondingCurve !== null,
-          progress: token.progress || 0
-        };
-      });
+      const pumpFunTokens = salesData.uniPumpCreatorSaless.items.map((token: any) => ({
+        id: token.memeTokenAddress || token.id,
+        address: token.memeTokenAddress,
+        name: token.name || token.symbol || 'Unknown Token',
+        symbol: token.symbol || 'UNKNOWN',
+        description: token.description || 'Created via pump.fun mechanics',
+        createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
+        creator: token.creator || 'Unknown Creator',
+        price: token.price || '0.000001',
+        marketCap: token.marketCap || '0',
+        volume24h: token.volume24h || '0',
+        holders: token.holders || 0,
+        change24h: token.priceChange24h || 0,
+        isOnBondingCurve: token.bondingCurve !== null,
+        progress: token.progress || 0
+      }));
       allCreatorTokens = [...allCreatorTokens, ...pumpFunTokens];
     }
 
-    // Add example/recent tokens if no GraphQL data (for demonstration)
-    if (allCreatorTokens.length === 0) {
-      console.log('No GraphQL tokens found, adding example tokens...');
-      // Add your recently created token as an example
-      const exampleTokens: CreatorToken[] = [
-        {
-          id: 'tessdfeso-token',
-          address: '0x1234567890123456789012345678901234567890', // Placeholder address
-          name: 'LARGELM',
-          symbol: 'TESSDFESO',
-          description: 'Recently created token via pump.fun mechanics',
-          createdAt: new Date(Date.now() - 10 * 60 * 1000), // 10 minutes ago
-          creator: '0x' + '1'.repeat(40), // Your wallet address would be here
-          price: '0.000001',
-          marketCap: '1.5',
-          volume24h: '0.1',
-          holders: 1,
-          change24h: 5.2,
-          isOnBondingCurve: true,
-          progress: 15
-        }
-      ];
-      allCreatorTokens = [...allCreatorTokens, ...exampleTokens];
-    }
-
-    console.log('Final creator tokens:', allCreatorTokens);
+    // Only show real data from GraphQL - no fallbacks or mock data
     setCreatorTokens(allCreatorTokens);
   }, [salesData, salesLoading]);
 
@@ -327,13 +293,15 @@ export default function CreatorCoins() {
                         </div>
                         <div className="flex items-center gap-2">
                           {token.address && (
-                            <Button 
-                              className="px-2 py-1 h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
-                              size="sm"
-                              data-testid={`trade-${token.id}`}
-                            >
-                              Trade
-                            </Button>
+                            <Link to={`/token/${token.address}`}>
+                              <Button 
+                                className="px-2 py-1 h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
+                                size="sm"
+                                data-testid={`trade-${token.id}`}
+                              >
+                                Trade
+                              </Button>
+                            </Link>
                           )}
                         </div>
                       </div>
@@ -396,14 +364,16 @@ export default function CreatorCoins() {
                             </span>
                           </div>
                           {token.address && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-5 px-2 text-xs text-gray-500 hover:text-purple-600"
-                              data-testid={`view-${token.id}`}
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
+                            <Link to={`/token/${token.address}`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 px-2 text-xs text-gray-500 hover:text-purple-600"
+                                data-testid={`view-${token.id}`}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            </Link>
                           )}
                         </div>
                       </div>

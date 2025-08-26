@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { useParams } from "wouter";
+import React, { useState } from "react";
+import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useAccount } from "@/hooks/useWallet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAccount, useReadContract } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Coins, 
@@ -18,58 +19,111 @@ import {
   ArrowUp,
   ArrowDown,
   Copy,
-  ExternalLink
+  ExternalLink,
+  BarChart3,
+  Zap,
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PUMP_FUN_ADDRESS } from "@/lib/addresses";
+import { PUMP_FUN_ABI } from "../../../abi/PumpFunAbi";
+import TransactionComponent from "@/components/Transaction";
+import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
+import { useGetAllSales } from "@/hooks/useGetAllSales";
+
+interface TokenData {
+  id: string;
+  name: string;
+  symbol: string;
+  description: string;
+  address: string;
+  creator: string;
+  price: string;
+  marketCap: string;
+  volume24h: string;
+  holders: number;
+  change24h?: number;
+  createdAt: Date;
+  isOnBondingCurve?: boolean;
+  progress?: number;
+  bondingCurveAddress?: string;
+}
 
 export default function TokenDetail() {
   const params = useParams();
-  const padId = params.id;
-  const { address, connect } = useAccount();
+  const tokenAddress = params.id;
+  const { address } = useAccount();
   const { toast } = useToast();
-  const [tradeAmount, setTradeAmount] = useState("");
-  const [tradeType, setTradeType] = useState<"buy" | "sell">("buy");
+  const [buyAmount, setBuyAmount] = useState("");
+  const [sellAmount, setSellAmount] = useState("");
 
-  // Fetch pad data
-  const { data: pad, isLoading } = useQuery({
-    queryKey: [`/api/pads/${padId}`],
-    enabled: !!padId,
+  // Get token data from GraphQL
+  const { data: salesData, loading: salesLoading } = useGetAllSales();
+  
+  const tokenData = React.useMemo(() => {
+    if (!salesData?.uniPumpCreatorSaless?.items || !tokenAddress) return null;
+    
+    const token = salesData.uniPumpCreatorSaless.items.find((t: any) => 
+      t.memeTokenAddress?.toLowerCase() === tokenAddress.toLowerCase()
+    );
+    
+    if (!token) return null;
+    
+    return {
+      id: token.memeTokenAddress,
+      address: token.memeTokenAddress,
+      name: token.name || token.symbol || 'Unknown Token',
+      symbol: token.symbol || 'UNKNOWN',
+      description: token.description || 'Created via pump.fun mechanics',
+      creator: token.creator || 'Unknown Creator',
+      price: token.price || '0.000001',
+      marketCap: token.marketCap || '0',
+      volume24h: token.volume24h || '0',
+      holders: token.holders || 0,
+      change24h: token.priceChange24h || 0,
+      createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
+      isOnBondingCurve: token.bondingCurve !== null,
+      progress: token.progress || 0,
+      bondingCurveAddress: token.bondingCurve
+    } as TokenData;
+  }, [salesData, tokenAddress]);
+
+  // Get user's ETH balance
+  const { data: ethBalance } = useReadContract({
+    address: tokenAddress as Address,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [address as Address],
+    query: {
+      enabled: !!address && !!tokenAddress
+    }
   });
 
-  // Mock data - in real app this would come from blockchain
-  const tokenStats = {
-    price: pad?.currentPrice || "0.000001",
-    marketCap: pad?.marketCap || "0",
-    volume24h: pad?.volume24h || "0",
-    holders: pad?.holders || 0,
-    change24h: Math.random() > 0.5 ? Math.random() * 50 : -(Math.random() * 30),
-  };
-
-  const handleTrade = async () => {
-    if (!address) {
-      await connect();
-      return;
+  // Get user's token balance
+  const { data: tokenBalance } = useReadContract({
+    address: tokenAddress as Address,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [address as Address],
+    query: {
+      enabled: !!address && !!tokenAddress
     }
+  });
 
-    if (!tradeAmount || parseFloat(tradeAmount) <= 0) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid trade amount",
-        variant: "destructive"
-      });
-      return;
+  // Get bonding curve data
+  const { data: bondingCurvePrice } = useReadContract({
+    address: PUMP_FUN_ADDRESS as Address,
+    abi: PUMP_FUN_ABI,
+    functionName: "getCurrentPrice",
+    args: [tokenAddress as Address],
+    query: {
+      enabled: !!tokenAddress
     }
-
-    // TODO: Implement actual trading logic with Doppler V4 SDK
-    toast({
-      title: "Trade Initiated",
-      description: `${tradeType === 'buy' ? 'Buying' : 'Selling'} ${tradeAmount} ${pad?.tokenSymbol}`,
-    });
-  };
+  });
 
   const copyAddress = () => {
-    if (pad?.tokenAddress) {
-      navigator.clipboard.writeText(pad.tokenAddress);
+    if (tokenAddress) {
+      navigator.clipboard.writeText(tokenAddress);
       toast({
         title: "Address Copied",
         description: "Token address copied to clipboard",
@@ -77,19 +131,33 @@ export default function TokenDetail() {
     }
   };
 
-  if (isLoading) {
+  const formatTimeAgo = (date: Date): string => {
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+      return `${diffInMinutes}m ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays}d ago`;
+    }
+  };
+
+  if (salesLoading) {
     return (
-      <div className="min-h-screen bg-black text-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-32 bg-gray-800 rounded-lg"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-4">
-                <div className="h-96 bg-gray-800 rounded-lg"></div>
-              </div>
-              <div className="space-y-4">
-                <div className="h-64 bg-gray-800 rounded-lg"></div>
-              </div>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="h-64 bg-gray-300 rounded"></div>
+              <div className="h-32 bg-gray-300 rounded"></div>
+            </div>
+            <div className="space-y-4">
+              <div className="h-80 bg-gray-300 rounded"></div>
             </div>
           </div>
         </div>
@@ -97,265 +165,327 @@ export default function TokenDetail() {
     );
   }
 
-  if (!pad) {
+  if (!tokenData) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Token Not Found</h2>
-          <p className="text-gray-400">The requested token does not exist</p>
+          <h1 className="text-2xl font-bold mb-4">Token Not Found</h1>
+          <p className="text-muted-foreground mb-6">The token you're looking for doesn't exist or hasn't been indexed yet.</p>
+          <Link to="/creatorcoins">
+            <Button>View All Creator Coins</Button>
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white" data-testid="token-detail">
-      <div className="max-w-7xl mx-auto p-6">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <img
-              src={`https://gateway.pinata.cloud/ipfs/${pad.mediaCid}`}
-              alt={pad.title}
-              className="w-16 h-16 rounded-lg object-cover"
-            />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+              {tokenData.symbol.charAt(0)}
+            </div>
             <div>
-              <h1 className="text-3xl font-bold">{pad.title}</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-gray-400">{pad.tokenSymbol}</span>
-                <Badge className={cn(
-                  "text-xs",
-                  pad.status === 'graduated' ? 'bg-purple-500' : 'bg-green-500'
-                )}>
-                  {pad.status === 'graduated' ? 'GRADUATED' : 'DEPLOYED'}
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold">{tokenData.name}</h1>
+                <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 dark:from-purple-900 dark:to-pink-900 dark:text-purple-200">
+                  🚀 Creator Coin
                 </Badge>
+                {tokenData.isOnBondingCurve && (
+                  <Badge variant="outline" className="border-green-500 text-green-600">
+                    Bonding Curve
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                <span className="font-mono">{tokenData.symbol}</span>
+                <span>•</span>
+                <span>Created {formatTimeAgo(tokenData.createdAt)}</span>
+                <span>•</span>
+                <button 
+                  onClick={copyAddress}
+                  className="flex items-center gap-1 hover:text-foreground transition-colors"
+                >
+                  <span className="font-mono">{tokenAddress?.slice(0, 6)}...{tokenAddress?.slice(-4)}</span>
+                  <Copy className="h-3 w-3" />
+                </button>
               </div>
             </div>
           </div>
+          <Link to="/creatorcoins">
+            <Button variant="outline">Back to Creator Coins</Button>
+          </Link>
+        </div>
 
-          {/* Token Address */}
-          {pad.tokenAddress && (
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <span>Token Address:</span>
-              <code className="bg-gray-800 px-2 py-1 rounded text-xs">
-                {pad.tokenAddress.slice(0, 6)}...{pad.tokenAddress.slice(-4)}
-              </code>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={copyAddress}
-                className="h-6 w-6 p-0"
-              >
-                <Copy className="w-3 h-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0"
-                onClick={() => window.open(`https://sepolia.basescan.org/token/${pad.tokenAddress}`, '_blank')}
-              >
-                <ExternalLink className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Price</p>
+                  <p className="text-xl font-bold text-green-500">
+                    ${tokenData.price}
+                  </p>
+                </div>
+                <DollarSign className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Market Cap</p>
+                  <p className="text-xl font-bold">${tokenData.marketCap}K</p>
+                </div>
+                <BarChart3 className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">24h Volume</p>
+                  <p className="text-xl font-bold">${tokenData.volume24h}K</p>
+                </div>
+                <Activity className="h-8 w-8 text-orange-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Holders</p>
+                  <p className="text-xl font-bold">{tokenData.holders}</p>
+                </div>
+                <Users className="h-8 w-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Chart and Stats */}
+          {/* Left Column - Chart & Info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Price Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="bg-gray-900 border-gray-800">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-4 h-4 text-green-500" />
-                    <span className="text-xs text-gray-400">Price</span>
-                  </div>
-                  <div className="text-lg font-bold">${tokenStats.price}</div>
-                  <div className={cn(
-                    "text-xs flex items-center gap-1",
-                    tokenStats.change24h > 0 ? "text-green-500" : "text-red-500"
-                  )}>
-                    {tokenStats.change24h > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                    {Math.abs(tokenStats.change24h).toFixed(2)}%
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-900 border-gray-800">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="w-4 h-4 text-blue-500" />
-                    <span className="text-xs text-gray-400">Market Cap</span>
-                  </div>
-                  <div className="text-lg font-bold">
-                    ${parseInt(tokenStats.marketCap).toLocaleString()}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-900 border-gray-800">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Activity className="w-4 h-4 text-purple-500" />
-                    <span className="text-xs text-gray-400">24h Volume</span>
-                  </div>
-                  <div className="text-lg font-bold">
-                    ${parseInt(tokenStats.volume24h).toLocaleString()}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gray-900 border-gray-800">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-4 h-4 text-orange-500" />
-                    <span className="text-xs text-gray-400">Holders</span>
-                  </div>
-                  <div className="text-lg font-bold">{tokenStats.holders}</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Chart Placeholder */}
-            <Card className="bg-gray-900 border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg">Price Chart</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 bg-gray-800 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <Activity className="w-12 h-12 mx-auto mb-2" />
-                    <p>Price chart coming soon</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Description */}
-            {pad.description && (
-              <Card className="bg-gray-900 border-gray-800">
+            {/* Bonding Curve Progress */}
+            {tokenData.isOnBondingCurve && (
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">About</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-purple-500" />
+                    Bonding Curve Progress
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-300">{pad.description}</p>
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <span>Progress to Graduation</span>
+                      <span className="font-bold">{tokenData.progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                      <div 
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 h-4 rounded-full transition-all duration-300 flex items-center justify-end pr-2"
+                        style={{ width: `${Math.min(tokenData.progress || 0, 100)}%` }}
+                      >
+                        {tokenData.progress && tokenData.progress > 20 && (
+                          <span className="text-white text-xs font-bold">
+                            {tokenData.progress}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      When the market cap reaches $69K, all the liquidity from the bonding curve will be deposited into Uniswap and burned. 
+                      Progression increases as the price goes up.
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
-          </div>
 
-          {/* Right Column - Trading */}
-          <div className="space-y-6">
-            {/* Trading Card */}
-            <Card className="bg-gray-900 border-gray-800">
+            {/* Price Chart Placeholder */}
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Coins className="w-5 h-5 text-green-500" />
-                  Trade {pad.tokenSymbol}
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                  Price Chart
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Buy/Sell Toggle */}
-                <div className="flex bg-gray-800 rounded-lg p-1">
-                  <Button
-                    variant={tradeType === "buy" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setTradeType("buy")}
-                    className={cn(
-                      "flex-1",
-                      tradeType === "buy" && "bg-green-600 hover:bg-green-700"
-                    )}
-                  >
-                    Buy
-                  </Button>
-                  <Button
-                    variant={tradeType === "sell" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setTradeType("sell")}
-                    className={cn(
-                      "flex-1",
-                      tradeType === "sell" && "bg-red-600 hover:bg-red-700"
-                    )}
-                  >
-                    Sell
-                  </Button>
-                </div>
-
-                {/* Amount Input */}
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-400">
-                    {tradeType === "buy" ? "ETH Amount" : `${pad.tokenSymbol} Amount`}
-                  </label>
-                  <Input
-                    type="number"
-                    placeholder="0.0"
-                    value={tradeAmount}
-                    onChange={(e) => setTradeAmount(e.target.value)}
-                    className="bg-gray-800 border-gray-700 text-white"
-                  />
-                </div>
-
-                {/* Estimated Output */}
-                <div className="p-3 bg-gray-800 rounded-lg">
-                  <div className="text-xs text-gray-400 mb-1">You will receive</div>
-                  <div className="font-medium">
-                    ~{tradeAmount ? (parseFloat(tradeAmount) / parseFloat(tokenStats.price)).toFixed(2) : "0.00"} {tradeType === "buy" ? pad.tokenSymbol : "ETH"}
+              <CardContent>
+                <div className="h-64 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Price chart integration coming soon</p>
+                    <p className="text-sm">TradingView or Dexscreener integration</p>
                   </div>
-                </div>
-
-                {/* Trade Button */}
-                <Button 
-                  onClick={handleTrade}
-                  className={cn(
-                    "w-full",
-                    tradeType === "buy" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
-                  )}
-                  disabled={!tradeAmount}
-                >
-                  {!address ? "Connect Wallet" : `${tradeType === "buy" ? "Buy" : "Sell"} ${pad.tokenSymbol}`}
-                </Button>
-
-                <div className="text-xs text-gray-500 text-center">
-                  Trading powered by pump.fun bonding curves
                 </div>
               </CardContent>
             </Card>
 
             {/* Token Info */}
-            <Card className="bg-gray-900 border-gray-800">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Token Information</CardTitle>
+                <CardTitle>About {tokenData.name}</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Name</span>
-                  <span>{pad.tokenName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Symbol</span>
-                  <span>{pad.tokenSymbol}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Supply</span>
-                  <span>{pad.totalSupply}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Status</span>
-                  <Badge className={cn(
-                    pad.status === 'graduated' ? 'bg-purple-500' : 'bg-green-500'
-                  )}>
-                    {pad.status === 'graduated' ? 'GRADUATED' : 'DEPLOYED'}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Created</span>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span className="text-sm">
-                      {new Date(pad.createdAt).toLocaleDateString()}
-                    </span>
+              <CardContent className="space-y-4">
+                <p>{tokenData.description}</p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Creator:</span>
+                    <p className="font-mono">{tokenData.creator.slice(0, 10)}...{tokenData.creator.slice(-4)}</p>
                   </div>
+                  <div>
+                    <span className="text-muted-foreground">Contract:</span>
+                    <p className="font-mono">{tokenAddress?.slice(0, 10)}...{tokenAddress?.slice(-4)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Trading */}
+          <div className="space-y-6">
+            {/* Trading Card */}
+            <Card className="sticky top-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-purple-500" />
+                  Trade {tokenData.symbol}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="buy" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="buy" className="text-green-600 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
+                      Buy
+                    </TabsTrigger>
+                    <TabsTrigger value="sell" className="text-red-600 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">
+                      Sell
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="buy" className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Amount (ETH)</label>
+                      <Input
+                        type="number"
+                        placeholder="0.0"
+                        value={buyAmount}
+                        onChange={(e) => setBuyAmount(e.target.value)}
+                      />
+                    </div>
+                    
+                    <TransactionComponent
+                      contractAddress={PUMP_FUN_ADDRESS}
+                      contractAbi={PUMP_FUN_ABI}
+                      functionName="buyToken"
+                      args={[tokenAddress as Address]}
+                      value={buyAmount ? parseUnits(buyAmount, 18) : BigInt(0)}
+                      cta={`Buy ${tokenData.symbol}`}
+                      disabled={!buyAmount || parseFloat(buyAmount) <= 0}
+                      handleOnStatus2={(status) => {
+                        if (status === 'success') {
+                          setBuyAmount("");
+                          toast({
+                            title: "Purchase Successful!",
+                            description: `Successfully bought ${tokenData.symbol}`,
+                          });
+                        }
+                      }}
+                    />
+                    
+                    {buyAmount && parseFloat(buyAmount) > 0 && (
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <div className="flex justify-between">
+                          <span>You pay:</span>
+                          <span>{buyAmount} ETH</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>You receive:</span>
+                          <span>~{(parseFloat(buyAmount) / parseFloat(tokenData.price)).toFixed(2)} {tokenData.symbol}</span>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="sell" className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Amount ({tokenData.symbol})</label>
+                      <Input
+                        type="number"
+                        placeholder="0.0"
+                        value={sellAmount}
+                        onChange={(e) => setSellAmount(e.target.value)}
+                      />
+                      {tokenBalance && (
+                        <p className="text-xs text-muted-foreground">
+                          Balance: {formatUnits(tokenBalance, 18)} {tokenData.symbol}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <TransactionComponent
+                      contractAddress={PUMP_FUN_ADDRESS}
+                      contractAbi={PUMP_FUN_ABI}
+                      functionName="sellToken"
+                      args={[tokenAddress as Address, sellAmount ? parseUnits(sellAmount, 18) : BigInt(0)]}
+                      cta={`Sell ${tokenData.symbol}`}
+                      disabled={!sellAmount || parseFloat(sellAmount) <= 0}
+                      handleOnStatus2={(status) => {
+                        if (status === 'success') {
+                          setSellAmount("");
+                          toast({
+                            title: "Sale Successful!",
+                            description: `Successfully sold ${tokenData.symbol}`,
+                          });
+                        }
+                      }}
+                    />
+                    
+                    {sellAmount && parseFloat(sellAmount) > 0 && (
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <div className="flex justify-between">
+                          <span>You sell:</span>
+                          <span>{sellAmount} {tokenData.symbol}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>You receive:</span>
+                          <span>~{(parseFloat(sellAmount) * parseFloat(tokenData.price)).toFixed(6)} ETH</span>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* How it Works */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">How it works</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <div>
+                  <strong className="text-foreground">Step 1:</strong> Pick a token you like
+                </div>
+                <div>
+                  <strong className="text-foreground">Step 2:</strong> Buy the token on the bonding curve
+                </div>
+                <div>
+                  <strong className="text-foreground">Step 3:</strong> Sell at any time to lock in profits or losses
+                </div>
+                <div className="text-xs pt-2 border-t">
+                  Tokens graduate to Uniswap when they reach a market cap of $69K. 
+                  This creates permanent liquidity and enables decentralized trading.
                 </div>
               </CardContent>
             </Card>
