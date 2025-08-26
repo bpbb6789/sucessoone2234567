@@ -21,6 +21,7 @@ export default function TransactionComponent({
     args,
     handleOnStatus2,
     disabled,
+    value,
 }: {
     contractAddress: Address;
     functionName: string;
@@ -29,6 +30,7 @@ export default function TransactionComponent({
     disabled?: boolean;
     handleOnStatus2: (status: LifecycleStatus) => void;
     contractAbi: any;
+    value?: bigint;
 }) {
     const { address, chainId } = useAccount();
 
@@ -49,6 +51,7 @@ export default function TransactionComponent({
                 abi: contractAbi,
                 functionName,
                 args,
+                value,
             }]}
             isSponsored={false}
             className='mt-4'

@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from "./ui/textarea"
 import { useWallet } from "@/hooks/useWallet"
 import { Button } from "./ui/button"
+import { useCreateFee } from "@/hooks/useCreateFee"
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -44,6 +45,7 @@ const CreateToken = ({
     const queryClient = useQueryClient()
     const searchParams = useSearchParams()
     const { isConnected, account } = useWallet()
+    const { createFee, isLoading: isFeeLoading } = useCreateFee()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -202,12 +204,14 @@ const CreateToken = ({
                                 <TransactionComponent
                                     contractAddress={TOKEN_FACTORY_ADDRESS}
                                     contractAbi={TOKEN_FACTORY_ABI}
-                                    cta="Create Token"
+                                    cta={isFeeLoading ? 'Loading fee...' : `Create Token (${createFee ? (Number(createFee) / 1e18).toFixed(4) : '0'} ETH)`}
                                     functionName="deployERC20Token"
                                     handleOnStatus2={() => {
                                         queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
                                     }}
                                     args={args}
+                                    value={createFee}
+                                    disabled={isFeeLoading || !createFee}
                                 />
                             ) : (
                                 <Button disabled>

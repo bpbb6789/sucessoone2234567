@@ -3,9 +3,11 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { TOKEN_FACTORY_ABI } from '../../../abi/TokenFactoryAbi';
 import { TOKEN_FACTORY_ADDRESS } from '../../../lib/addresses';
+import { useCreateFee } from '../hooks/useCreateFee';
 
 export default function CreateTokenPage() {
   const { address, isConnected } = useAccount();
+  const { createFee, isLoading: isFeeLoading } = useCreateFee();
   const [formData, setFormData] = useState({
     name: '',
     ticker: '',
@@ -32,6 +34,7 @@ export default function CreateTokenPage() {
         formData.name,
         formData.ticker
       ],
+      value: createFee || 0n,
     });
   };
 
@@ -127,10 +130,10 @@ export default function CreateTokenPage() {
 
                 <button
                   type="submit" 
-                  disabled={isPending || isConfirming || !formData.name || !formData.ticker}
+                  disabled={isPending || isConfirming || isFeeLoading || !formData.name || !formData.ticker || !createFee}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
                 >
-                  {isPending ? 'Preparing...' : isConfirming ? 'Creating Token...' : 'Create Token'}
+                  {isFeeLoading ? 'Loading fee...' : isPending ? 'Preparing...' : isConfirming ? 'Creating Token...' : `Create Token (${createFee ? (Number(createFee) / 1e18).toFixed(4) : '0'} ETH)`}
                 </button>
 
                 {hash && (
