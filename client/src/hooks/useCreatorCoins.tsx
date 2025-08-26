@@ -92,9 +92,7 @@ export function useDeployCreatorCoin() {
   
   return useMutation({
     mutationFn: async (coinId: string) => {
-      const response = await apiRequest(`/api/creator-coins/${coinId}/deploy`, {
-        method: 'POST'
-      });
+      const response = await apiRequest('POST', `/api/creator-coins/${coinId}/deploy`);
       return response;
     },
     onSuccess: (data, coinId) => {
@@ -124,10 +122,7 @@ export function useLikeCreatorCoin() {
   
   return useMutation({
     mutationFn: async ({ coinId, userAddress }: { coinId: string; userAddress: string }) => {
-      const response = await apiRequest(`/api/creator-coins/${coinId}/like`, {
-        method: 'POST',
-        body: { userAddress }
-      });
+      const response = await apiRequest('POST', `/api/creator-coins/${coinId}/like`, { userAddress });
       return response;
     },
     onSuccess: (data, { coinId }) => {
@@ -143,10 +138,7 @@ export function useUnlikeCreatorCoin() {
   
   return useMutation({
     mutationFn: async ({ coinId, userAddress }: { coinId: string; userAddress: string }) => {
-      const response = await apiRequest(`/api/creator-coins/${coinId}/like`, {
-        method: 'DELETE',
-        body: { userAddress }
-      });
+      const response = await apiRequest('DELETE', `/api/creator-coins/${coinId}/like`, { userAddress });
       return response;
     },
     onSuccess: (data, { coinId }) => {

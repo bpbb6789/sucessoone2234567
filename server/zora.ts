@@ -1,4 +1,4 @@
-import { createCoin, buildMetadataBuilder, type CreateCoinConfig } from '@zoralabs/coins-sdk';
+import { createCoin, type CreateCoinArgs } from '@zoralabs/coins-sdk';
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { uploadJSONToIPFS } from './ipfs';
@@ -64,35 +64,33 @@ export async function createCreatorCoin(params: {
   txHash: string;
 }> {
   try {
-    // Build the coin creation configuration
-    const coinConfig: CreateCoinConfig = {
+    // For deployment, we need proper wallet client and chain configuration
+    // Since this is a simulation for now, we'll create a mock deployment
+    // In production, this would require:
+    // 1. User wallet connection and signing
+    // 2. Proper chain configuration (Base mainnet)
+    // 3. Real transaction execution with Zora contracts
+    
+    console.log('Creating creator coin with Zora SDK:', {
       name: params.name,
       symbol: params.symbol,
-      metadataURI: params.metadataUri,
-      // Initial price configuration based on market cap preference
-      initialSupply: params.startingMarketCap === 'HIGH' ? '10000' : '1000000',
-      // Zora uses their own pricing mechanisms
-    };
+      metadataUri: params.metadataUri,
+      creator: params.creatorAddress
+    });
 
-    // For now, we'll simulate the coin creation process
-    // In a real implementation, you would use the actual Zora SDK
-    // with proper wallet integration and transaction signing
-    
-    // Placeholder implementation - in reality you'd call:
-    // const result = await createCoin(coinConfig, walletClient);
-    
-    // Simulate successful coin creation
+    // Simulate coin deployment for now
+    // In real implementation, you would use createCoin with proper wallet client
     const simulatedCoinAddress = `0x${Math.random().toString(16).slice(2, 42).padStart(40, '0')}`;
     const simulatedTxHash = `0x${Math.random().toString(16).slice(2, 66).padStart(64, '0')}`;
     
     return {
       coinAddress: simulatedCoinAddress,
-      factoryAddress: '0x1234567890123456789012345678901234567890', // Zora factory address
+      factoryAddress: '0x777777C4c14b133858c3982D41Dbf02509fc18d7', // Zora Hook Registry
       txHash: simulatedTxHash
     };
   } catch (error) {
-    console.error('Error creating creator coin:', error);
-    throw new Error('Failed to create creator coin with Zora SDK');
+    console.error('Error creating creator coin with Zora SDK:', error);
+    throw new Error(`Failed to create creator coin: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
