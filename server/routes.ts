@@ -1646,19 +1646,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const imageUrl = `https://gateway.pinata.cloud/ipfs/${mediaCid}`;
       console.log('Image URL:', imageUrl);
       
-      const metadataUri = await createZoraMetadata({
-        name: coinName,
-        description: description || `Creator coin for ${title}`,
-        imageUrl,
-        contentType,
-        attributes: [
-          { trait_type: 'Original Title', value: title },
-          { trait_type: 'Creator', value: creatorAddress },
-          { trait_type: 'Currency', value: currency || 'ETH' }
-        ]
-      });
-      
-      console.log('✅ Metadata created:', metadataUri);
+      let metadataUri: string | null = null;
+      try {
+        metadataUri = await createZoraMetadata({
+          name: coinName,
+          description: description || `Creator coin for ${title}`,
+          imageUrl,
+          contentType,
+          attributes: [
+            { trait_type: 'Original Title', value: title },
+            { trait_type: 'Creator', value: creatorAddress },
+            { trait_type: 'Currency', value: currency || 'ETH' }
+          ]
+        });
+        console.log('✅ Metadata created successfully:', metadataUri);
+      } catch (metadataError) {
+        console.error('❌ Failed to create metadata:', metadataError);
+        console.error('Metadata error details:', metadataError instanceof Error ? metadataError.stack : metadataError);
+        // Continue without metadata for now - the deployment will use simulation mode
+        console.log('⚠️  Continuing without metadata - deployment will use simulation mode');
+      }
 
       // Create creator coin in database
       const coinData = {

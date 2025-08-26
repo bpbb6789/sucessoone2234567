@@ -80,9 +80,16 @@ export async function createZoraMetadata(params: {
     }
   };
 
-  // Upload metadata to IPFS and return the CID
-  const metadataCid = await uploadJSONToIPFS(metadata);
-  return `https://gateway.pinata.cloud/ipfs/${metadataCid}`;
+  try {
+    console.log('📤 Uploading metadata to IPFS:', JSON.stringify(metadata, null, 2));
+    // Upload metadata to IPFS and return the CID
+    const metadataCid = await uploadJSONToIPFS(metadata);
+    console.log('✅ Metadata uploaded to IPFS with CID:', metadataCid);
+    return `https://gateway.pinata.cloud/ipfs/${metadataCid}`;
+  } catch (error) {
+    console.error('❌ Failed to upload metadata to IPFS:', error);
+    throw error;
+  }
 }
 
 // Create a creator coin using Zora SDK
