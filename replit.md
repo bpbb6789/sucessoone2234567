@@ -11,7 +11,9 @@ This is a cutting-edge Web3 video platform that revolutionizes content creation 
   - PumpFun.sol: Main bonding curve contract with virtual reserves
   - TokenFactory.sol: ERC20 token deployment factory  
   - Token.sol: Standard ERC20 token implementation
-- **Migration Status**: Contract addresses pending deployment (currently set to 0x000...)
+- **Migration Status**: ✅ COMPLETE - Contracts deployed to Base Sepolia
+  - TokenFactory: 0x24408Fc5a7f57c3b24E85B9f97016F582391C9A9
+  - PumpFun: 0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201
 
 # User Preferences
 

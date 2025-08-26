@@ -1,6 +1,6 @@
-// Note: These addresses need to be updated after deploying the new contracts
-export const PUMP_FUN_ADDRESS = "0x0000000000000000000000000000000000000000"; // To be deployed
-export const TOKEN_FACTORY_ADDRESS = "0x0000000000000000000000000000000000000000"; // To be deployed
+// DEPLOYED contract addresses on Base Sepolia
+export const PUMP_FUN_ADDRESS = "0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201";
+export const TOKEN_FACTORY_ADDRESS = "0x24408Fc5a7f57c3b24E85B9f97016F582391C9A9";
 export const MOCK_WETH_ADDRESS = "0x4267D742e4fD1C03805083b087DeB575203e9b19";
 
 // Legacy exports for backward compatibility (will be removed)
