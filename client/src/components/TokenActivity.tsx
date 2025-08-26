@@ -25,36 +25,9 @@ interface TokenActivityProps {
 }
 
 export default function TokenActivity({ tokenAddress, symbol }: TokenActivityProps) {
-  // Mock transaction data - in a real app, this would come from your GraphQL API or blockchain indexer
-  const transactions: Transaction[] = [
-    {
-      id: '1',
-      type: 'buy',
-      amount: '1000000',
-      price: '0.000012',
-      user: '0x1234...5678',
-      timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-      txHash: '0xabcd...1234'
-    },
-    {
-      id: '2',
-      type: 'sell',
-      amount: '500000',
-      price: '0.000011',
-      user: '0x9876...5432',
-      timestamp: new Date(Date.now() - 600000), // 10 minutes ago
-      txHash: '0xefgh...5678'
-    },
-    {
-      id: '3',
-      type: 'buy',
-      amount: '2000000',
-      price: '0.000010',
-      user: '0x5555...9999',
-      timestamp: new Date(Date.now() - 900000), // 15 minutes ago
-      txHash: '0xijkl...9012'
-    },
-  ];
+  // In a real app, this would fetch from your GraphQL API or blockchain indexer
+  // For now, we show a placeholder since no real transaction data is available yet
+  const transactions: Transaction[] = [];
 
   const formatTimeAgo = (date: Date): string => {
     const now = new Date();

@@ -77,8 +77,8 @@ export default function TokenDetail() {
       address: token.memeTokenAddress,
       name: token.name || token.symbol || 'Unknown Token',
       symbol: token.symbol || 'UNKNOWN',
-      description: token.description || 'Created via pump.fun mechanics',
-      creator: token.creator || 'Unknown Creator',
+      description: token.bio || token.description || 'Created via pump.fun mechanics',
+      creator: token.createdBy || 'No Creator Found',
       price: token.price || '0.000001',
       marketCap: token.marketCap || '0',
       volume24h: token.volume24h || '0',
@@ -292,7 +292,7 @@ export default function TokenDetail() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Creator:</span>
-                    <p className="font-mono">{tokenData.creator.slice(0, 10)}...{tokenData.creator.slice(-4)}</p>
+                    <p className="font-mono">{tokenData.creator !== 'No Creator Found' ? `${tokenData.creator.slice(0, 10)}...${tokenData.creator.slice(-4)}` : 'No Creator Found'}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Contract:</span>
