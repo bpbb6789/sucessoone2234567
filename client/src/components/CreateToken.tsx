@@ -87,7 +87,7 @@ const CreateToken = ({
     }
 
     useEffect(() => {
-        const searchTicker = searchParams?.get('ticker')
+        const searchTicker = searchParams[0]?.get('ticker')
         if (searchTicker) {
             form.setValue('ticker', searchTicker)
         }

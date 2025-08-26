@@ -34,7 +34,7 @@ export default function CreateTokenPage() {
         formData.name,
         formData.ticker
       ],
-      value: createFee || 0n,
+      value: createFee || BigInt(0),
     });
   };
 
