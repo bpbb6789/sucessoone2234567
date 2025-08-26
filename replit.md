@@ -5,26 +5,28 @@ This is a cutting-edge Web3 video platform that revolutionizes content creation 
 ## Recent Changes (January 26, 2025)
 
 ### Creator Coins Feature with Zora SDK Integration 🎨
-- **Added**: Complete content tokenization system using Zora's infrastructure
-- **Features**: Multi-media content support (images, videos, audio, GIFs, documents)
+- **Added**: NEW content tokenization system using official Zora SDK (separate from PumpFun)
+- **Purpose**: Tokenize content (images, videos, audio, GIFs, documents) using Zora's infrastructure
+- **Features**: Multi-media content support with IPFS storage and metadata generation
 - **Database**: New `creatorCoins` table with comprehensive metadata and social integration
 - **Frontend**: Advanced content upload interface with drag-and-drop and live preview
-- **Backend**: Zora SDK service with IPFS storage and automated thumbnail generation
-- **API**: Full CRUD endpoints for creator coin management, deployment, and price tracking
+- **Backend**: Official Zora SDK service with proper Zora contract integration
+- **Contracts**: Uses official Zora Factory and Hook Registry (NOT PumpFun contracts)
 - **Routes**: 
-  - `/create-content-coin` - Main content tokenization interface
-  - `/api/creator-coins/*` - Complete API for coin management
+  - `/create-content-coin` - Content tokenization interface using Zora
+  - `/api/creator-coins/*` - Creator coin management API
 
-### Smart Contract Migration
-- **Removed**: Old `unipump-contracts-main` directory 
-- **Added**: New `EVM-Smart-Contract-main` with pump.fun clone implementation
-- **Updated**: Contract ABIs and addresses for new architecture
-  - PumpFun.sol: Main bonding curve contract with virtual reserves
-  - TokenFactory.sol: ERC20 token deployment factory  
-  - Token.sol: Standard ERC20 token implementation
-- **Migration Status**: ✅ COMPLETE - Contracts deployed to Base Sepolia
-  - TokenFactory: 0x24408Fc5a7f57c3b24E85B9f97016F582391C9A9
-  - PumpFun: 0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201
+### Dual Token Creation Systems
+**System 1: PumpFun Factory** (Existing - for regular tokens)
+- **Purpose**: Create regular ERC20 tokens with bonding curves
+- **Contracts**: Custom PumpFun.sol, TokenFactory.sol, Token.sol
+- **Addresses**: TokenFactory: 0x24408Fc5a7f57c3b24E85B9f97016F582391C9A9, PumpFun: 0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201
+
+**System 2: Zora Creator Coins** (New - for content tokenization)  
+- **Purpose**: Tokenize multimedia content using official Zora protocol
+- **Contracts**: Official Zora Factory: 0x777777751622c0d3258f214F9DF38E35BF45baF3
+- **SDK**: Uses @zoralabs/coins-sdk for proper integration
+- **Features**: Content-specific metadata, IPFS storage, Zora ecosystem integration
 
 # User Preferences
 
