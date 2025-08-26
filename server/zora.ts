@@ -1,4 +1,4 @@
-import { createCoin, createCoinCall, createMetadataBuilder, createZoraUploaderForCreator, DeployCurrency } from '@zoralabs/coins-sdk';
+import { createCoin, createCoinCall, DeployCurrency } from '@zoralabs/coins-sdk';
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -17,15 +17,15 @@ const publicClient = createPublicClient({
 
 // Get deployment account (server-side signing for demonstration)
 const getDeploymentAccount = () => {
-  const privateKey = process.env.DEPLOYMENT_PRIVATE_KEY;
+  const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
   if (!privateKey) {
-    console.log('⚠️  DEPLOYMENT_PRIVATE_KEY not found, using simulation mode');
+    console.log('⚠️  DEPLOYER_PRIVATE_KEY not found, using simulation mode');
     return null;
   }
   try {
     return privateKeyToAccount(privateKey as `0x${string}`);
   } catch (error) {
-    console.error('❌ Invalid DEPLOYMENT_PRIVATE_KEY format');
+    console.error('❌ Invalid DEPLOYER_PRIVATE_KEY format');
     return null;
   }
 };
@@ -154,9 +154,9 @@ export async function createCreatorCoin(params: {
     console.log('✅ Zora Creator Coin deployed successfully:', result);
 
     return {
-      coinAddress: result.address,
+      coinAddress: result.address || '',
       factoryAddress: ZORA_FACTORY_ADDRESS,
-      txHash: result.hash
+      txHash: result.hash || ''
     };
 
   } catch (error) {
