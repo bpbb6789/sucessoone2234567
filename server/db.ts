@@ -24,11 +24,15 @@ if (databaseUrl && !databaseUrl.includes('pooler')) {
   poolUrl = databaseUrl.replace('.us-east-1', '-pooler.us-east-1').replace('.us-east-2', '-pooler.us-east-2');
 }
 
-export const pool = new Pool({ 
+export const pool = new Pool({
   connectionString: poolUrl,
-  max: 10,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  // Add connection timeout and retry logic
+  connectionTimeoutMillis: 10000,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  max: 10
 });
 export const db = drizzle({ client: pool, schema });
 

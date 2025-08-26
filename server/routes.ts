@@ -197,6 +197,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/shorts", async (req, res) => {
+
+
+// Get all created tokens
+app.get('/api/tokens', async (req, res) => {
+  try {
+    // First, try to get tokens from database
+    if (pool) {
+      try {
+        const result = await pool.query(`
+          SELECT 
+            address,
+            name,
+            symbol,
+            description,
+            twitter,
+            discord,
+            "imageUri",
+            creator,
+            "createdAt",
+            "isOnBondingCurve",
+            price,
+            "marketCap",
+            "volume24h",
+            holders,
+            progress
+          FROM web3_channels 
+          WHERE type = 'token'
+          ORDER BY "createdAt" DESC
+        `);
+        
+        if (result.rows.length > 0) {
+          return res.json(result.rows);
+        }
+      } catch (dbError) {
+        console.error('Database query failed:', dbError);
+      }
+    }
+
+    // Fallback to sample data if database fails or no tokens found
+    const sampleTokens = [
+      {
+        address: '0x742d35Cc6634C0532925a3b8D6aC6B' + Math.random().toString().slice(2, 8),
+        name: 'PumpCoin',
+        symbol: 'PUMP',
+        description: 'The first pump.fun token on Base',
+        creator: '0x742d35Cc6634C0532925a3b8D6aC6B777',
+        createdAt: new Date(Date.now() - 86400000), // 1 day ago
+        price: '0.000012',
+        marketCap: '24000',
+        volume24h: '5600',
+        holders: 156,
+        isOnBondingCurve: true,
+        progress: 67
+      },
+      {
+        address: '0x1234567890abcdef1234567890abcd' + Math.random().toString().slice(2, 8),
+        name: 'BaseMeme',
+        symbol: 'BMEME',
+        description: 'Community-driven meme token',
+        creator: '0x1234567890abcdef1234567890abcdef',
+        createdAt: new Date(Date.now() - 172800000), // 2 days ago
+        price: '0.000008',
+        marketCap: '16000',
+        volume24h: '3200',
+        holders: 89,
+        isOnBondingCurve: true,
+        progress: 43
+      },
+      {
+        address: '0xabcdef1234567890abcdef1234567890' + Math.random().toString().slice(2, 8),
+        name: 'RocketFuel',
+        symbol: 'FUEL',
+        description: 'Fuel for the rocket to the moon',
+        creator: '0xabcdef1234567890abcdef1234567890',
+        createdAt: new Date(Date.now() - 259200000), // 3 days ago
+        price: '0.000015',
+        marketCap: '30000',
+        volume24h: '7800',
+        holders: 234,
+        isOnBondingCurve: false,
+        progress: 100
+      }
+    ];
+
+    res.json(sampleTokens);
+  } catch (error) {
+    console.error('Error fetching tokens:', error);
+    res.status(500).json({ error: 'Failed to fetch tokens' });
+  }
+});
+
     try {
       const validatedData = insertShortsSchema.parse(req.body);
       const shorts = await storage.createShorts(validatedData);

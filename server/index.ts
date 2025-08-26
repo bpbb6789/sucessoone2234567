@@ -4,6 +4,7 @@ dotenv.config();
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import pool from "./db";
 
 const app = express();
 app.use(express.json());
@@ -41,12 +42,21 @@ app.use((req, res, next) => {
 
 (async () => {
   // Test database connection
-  const { testDatabaseConnection } = await import("./db.js");
-  const dbConnected = await testDatabaseConnection();
-
-  if (!dbConnected) {
-    log("Warning: Database connection failed, but continuing startup...");
+  if (pool) {
+    pool.connect()
+      .then(client => {
+        console.log('✓ Database connected successfully');
+        client.release();
+      })
+      .catch(err => {
+        console.error('✗ Database connection failed:', err);
+        console.log('Check your DATABASE_URL in Secrets and ensure it includes the correct password');
+        console.log('The application will continue with limited functionality');
+      });
+  } else {
+    console.log('⚠ No DATABASE_URL configured - running with sample data only');
   }
+
 
   const server = await registerRoutes(app);
 
