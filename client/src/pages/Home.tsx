@@ -134,7 +134,7 @@ export default function Home() {
               data-testid="tab-pads"
             >
               <Coins className="w-3 h-3" />
-              <span className="hidden sm:inline">Deployed Pads</span>
+              <span className="hidden sm:inline">Creator Coins</span>
             </TabsTrigger>
             <TabsTrigger
               value="channel"
@@ -178,12 +178,12 @@ export default function Home() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Deployed Pads Tab Content */}
+          {/* Creator Coins Tab Content */}
           <TabsContent value="pads" className="mt-6">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl md:text-2xl font-bold">Deployed Pads</h2>
-                <p className="text-sm text-gray-400">{deployedPadsData.length} tokens deployed</p>
+                <h2 className="text-xl md:text-2xl font-bold">Creator Coins</h2>
+                <p className="text-sm text-gray-400">{deployedPadsData.length} creator coins available</p>
               </div>
 
               {isLoading ? (
@@ -200,12 +200,12 @@ export default function Home() {
               ) : deployedPadsData.length === 0 ? (
                 <div className="text-center py-12">
                   <Coins className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-semibold mb-2">No deployed pads yet</h3>
-                  <p className="text-gray-400 mb-4">Create and deploy your first token pad</p>
-                  <Link href="/create-pad">
+                  <h3 className="text-lg font-semibold mb-2">No creator coins yet</h3>
+                  <p className="text-gray-400 mb-4">Create your first creator coin</p>
+                  <Link href="/creatorcoins">
                     <Button variant="outline">
                       <Plus className="w-4 h-4 mr-2" />
-                      Create Pad
+                      Create Creator Coin
                     </Button>
                   </Link>
                 </div>
@@ -227,7 +227,7 @@ export default function Home() {
                           <Coins className="w-8 h-8 md:w-12 md:h-12 text-green-500" />
                         </div>
                         <div className="absolute top-2 right-2 bg-green-500 text-black text-xs px-2 py-1 rounded-full font-medium">
-                          {pad.status === 'graduated' ? 'GRADUATED' : 'DEPLOYED'}
+                          {pad.status === 'graduated' ? 'GRADUATED' : 'LIVE'}
                         </div>
                       </div>
                         <h3 className="font-medium text-sm md:text-base mb-1 truncate">{pad.title}</h3>
