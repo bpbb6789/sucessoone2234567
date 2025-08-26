@@ -63,6 +63,9 @@ export async function createCreatorCoin(params: {
   factoryAddress: string;
   txHash: string;
 }> {
+  console.log('🔧 Zora SDK: Starting coin creation...');
+  console.log('Parameters:', params);
+  
   try {
     // For deployment, we need proper wallet client and chain configuration
     // Since this is a simulation for now, we'll create a mock deployment
@@ -71,25 +74,35 @@ export async function createCreatorCoin(params: {
     // 2. Proper chain configuration (Base mainnet)
     // 3. Real transaction execution with Zora contracts
     
-    console.log('Creating creator coin with Zora SDK:', {
+    console.log('⚡ Zora SDK: Simulating coin creation with parameters:', {
       name: params.name,
       symbol: params.symbol,
       metadataUri: params.metadataUri,
-      creator: params.creatorAddress
+      creator: params.creatorAddress,
+      marketCap: params.startingMarketCap,
+      currency: params.currency
     });
+
+    // Add a small delay to simulate network call
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Simulate coin deployment for now
     // In real implementation, you would use createCoin with proper wallet client
     const simulatedCoinAddress = `0x${Math.random().toString(16).slice(2, 42).padStart(40, '0')}`;
     const simulatedTxHash = `0x${Math.random().toString(16).slice(2, 66).padStart(64, '0')}`;
     
-    return {
+    const result = {
       coinAddress: simulatedCoinAddress,
       factoryAddress: '0x777777C4c14b133858c3982D41Dbf02509fc18d7', // Zora Hook Registry
       txHash: simulatedTxHash
     };
+    
+    console.log('✅ Zora SDK: Coin creation completed:', result);
+    
+    return result;
   } catch (error) {
-    console.error('Error creating creator coin with Zora SDK:', error);
+    console.error('❌ Zora SDK: Error creating creator coin:', error);
+    console.error('Error details:', error instanceof Error ? error.stack : 'Unknown error type');
     throw new Error(`Failed to create creator coin: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

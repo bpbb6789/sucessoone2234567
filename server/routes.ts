@@ -1585,8 +1585,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/creator-coins/upload", upload.single('file'), async (req, res) => {
+    console.log('📤 Creator coin upload started');
+    console.log('Request body:', req.body);
+    console.log('File info:', req.file ? { 
+      name: req.file.originalname, 
+      size: req.file.size, 
+      mimetype: req.file.mimetype 
+    } : 'No file');
+
     try {
       if (!req.file) {
+        console.error('❌ No file provided in upload request');
         return res.status(400).json({ message: "No file provided" });
       }
 
@@ -1596,8 +1605,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         twitter, discord, website 
       } = req.body;
 
+      console.log('📋 Upload parameters:', {
+        creatorAddress, title, contentType, coinName, coinSymbol, currency, startingMarketCap
+      });
+
       // Validate required fields
       if (!creatorAddress || !title || !coinName || !coinSymbol || !contentType) {
+        console.error('❌ Missing required fields:', { 
+          creatorAddress: !!creatorAddress, 
+          title: !!title, 
+          coinName: !!coinName, 
+          coinSymbol: !!coinSymbol, 
+          contentType: !!contentType 
+        });
         return res.status(400).json({ message: "Missing required fields" });
       }
 
@@ -1607,18 +1627,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: validation.error });
       }
 
+      console.log('📤 Uploading file to IPFS...');
       // Upload file to IPFS
       const file = new File([req.file.buffer], req.file.originalname, {
         type: req.file.mimetype,
       });
 
       const mediaCid = await uploadFileToIPFS(file);
+      console.log('✅ File uploaded to IPFS:', mediaCid);
 
       // Generate thumbnail if needed
+      console.log('🖼️ Generating thumbnail...');
       const thumbnailCid = await generateThumbnail(contentType, mediaCid);
+      console.log('Thumbnail CID:', thumbnailCid);
 
       // Create Zora metadata
+      console.log('📝 Creating Zora metadata...');
       const imageUrl = `https://gateway.pinata.cloud/ipfs/${mediaCid}`;
+      console.log('Image URL:', imageUrl);
+      
       const metadataUri = await createZoraMetadata({
         name: coinName,
         description: description || `Creator coin for ${title}`,
@@ -1630,6 +1657,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { trait_type: 'Currency', value: currency || 'ETH' }
         ]
       });
+      
+      console.log('✅ Metadata created:', metadataUri);
 
       // Create creator coin in database
       const coinData = {
@@ -1650,8 +1679,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'pending' as const
       };
 
+      console.log('💾 Saving coin to database...', coinData);
       const validatedCoinData = insertCreatorCoinSchema.parse(coinData);
       const [newCoin] = await db.insert(creatorCoins).values(validatedCoinData).returning();
+
+      console.log('✅ Upload completed successfully:', newCoin);
 
       res.status(201).json({
         message: "Content uploaded successfully",
@@ -1660,8 +1692,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadataUri
       });
     } catch (error) {
-      console.error("Creator coin upload error:", error);
+      console.error("❌ Creator coin upload error:", error);
+      console.error("Full error details:", error instanceof Error ? error.stack : error);
+      
       if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        console.error('Validation errors:', (error as any).errors);
         res.status(400).json({ message: "Invalid coin data", errors: (error as any).errors });
       } else {
         res.status(500).json(handleDatabaseError(error, "uploadCreatorCoin"));
@@ -1670,24 +1705,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/creator-coins/:id/deploy", async (req, res) => {
+    const coinId = req.params.id;
+    console.log(`🚀 Starting deployment for creator coin: ${coinId}`);
+    
     try {
-      const coinId = req.params.id;
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
       
       if (!coin.length) {
+        console.error(`❌ Creator coin not found: ${coinId}`);
         return res.status(404).json({ message: "Creator coin not found" });
       }
 
       const coinData = coin[0];
+      console.log(`📋 Found creator coin:`, {
+        id: coinData.id,
+        name: coinData.coinName,
+        symbol: coinData.coinSymbol,
+        status: coinData.status,
+        creator: coinData.creatorAddress
+      });
       
       if (coinData.status !== 'pending') {
-        return res.status(400).json({ message: "Coin is not in pending status" });
+        console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending`);
+        return res.status(400).json({ message: `Coin is not in pending status (current: ${coinData.status})` });
       }
 
+      console.log(`⏳ Updating coin status to 'creating'...`);
       // Update status to creating
       await db.update(creatorCoins)
         .set({ status: 'creating', updatedAt: new Date() })
         .where(eq(creatorCoins.id, coinId));
+
+      console.log(`🔧 Creating coin with Zora SDK...`);
+      console.log(`Deployment params:`, {
+        name: coinData.coinName,
+        symbol: coinData.coinSymbol,
+        metadataUri: coinData.metadataUri,
+        startingMarketCap: coinData.startingMarketCap,
+        currency: coinData.currency,
+        creator: coinData.creatorAddress
+      });
 
       // Create coin using Zora SDK
       const deploymentResult = await createCreatorCoin({
@@ -1699,6 +1756,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creatorAddress: coinData.creatorAddress
       });
 
+      console.log(`✅ Zora deployment successful:`, deploymentResult);
+
+      console.log(`💾 Updating coin with deployment info...`);
       // Update coin with deployment info
       const [updatedCoin] = await db.update(creatorCoins)
         .set({
@@ -1710,6 +1770,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(eq(creatorCoins.id, coinId))
         .returning();
+
+      console.log(`🎉 Creator coin deployment complete:`, updatedCoin);
 
       res.json({
         message: "Creator coin deployed successfully!",

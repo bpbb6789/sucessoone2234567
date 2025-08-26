@@ -130,7 +130,14 @@ export default function CreateContentCoin() {
   };
 
   const handleUpload = async () => {
+    console.log('🚀 Starting content upload...');
+    
     if (!selectedFile || !address || !selectedType) {
+      console.error('❌ Missing required information:', { 
+        hasFile: !!selectedFile, 
+        hasAddress: !!address, 
+        hasType: !!selectedType 
+      });
       toast({
         title: "Missing Information",
         description: "Please select a file and connect your wallet",
@@ -140,6 +147,7 @@ export default function CreateContentCoin() {
     }
 
     if (!formData.title || !formData.coinName || !formData.coinSymbol) {
+      console.error('❌ Missing form details:', formData);
       toast({
         title: "Missing Details",
         description: "Please fill in the title, coin name, and symbol",
@@ -149,6 +157,15 @@ export default function CreateContentCoin() {
     }
 
     try {
+      console.log('📤 Uploading content with data:', {
+        fileName: selectedFile.name,
+        fileSize: selectedFile.size,
+        contentType: selectedType,
+        coinName: formData.coinName,
+        coinSymbol: formData.coinSymbol,
+        creator: address
+      });
+
       const result = await uploadMutation.mutateAsync({
         file: selectedFile,
         creatorAddress: address,
@@ -164,13 +181,15 @@ export default function CreateContentCoin() {
         website: formData.website || undefined
       });
 
+      console.log('✅ Upload successful:', result);
       setUploadedCoin(result.coin);
       
       toast({
-        title: "Content Uploaded! 🎉",
+        title: "Content Uploaded!",
         description: `${formData.coinName} is ready for tokenization with Zora`,
       });
     } catch (error: any) {
+      console.error('❌ Upload failed:', error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload content",
@@ -180,17 +199,26 @@ export default function CreateContentCoin() {
   };
 
   const handleDeploy = async () => {
-    if (!uploadedCoin) return;
+    if (!uploadedCoin) {
+      console.error('❌ No uploaded coin found for deployment');
+      return;
+    }
+
+    console.log('🚀 Starting coin deployment...', { coinId: uploadedCoin.id, coinName: formData.coinName });
 
     try {
+      console.log('📡 Calling deployment API...');
       const result = await deployMutation.mutateAsync(uploadedCoin.id);
       
+      console.log('✅ Deployment successful:', result);
+      
       toast({
-        title: "Creator Coin Deployed! 🚀",
+        title: "Creator Coin Deployed!",
         description: `${formData.coinName} is now live on Zora with bonding curves`,
       });
       
       // Reset form
+      console.log('🔄 Resetting form after successful deployment');
       setSelectedFile(null);
       setPreviewUrl('');
       setUploadedCoin(null);
@@ -207,6 +235,9 @@ export default function CreateContentCoin() {
         website: ''
       });
     } catch (error: any) {
+      console.error('❌ Deployment failed:', error);
+      console.error('Full error object:', error);
+      
       toast({
         title: "Deployment Failed",
         description: error.message || "Failed to deploy creator coin",
