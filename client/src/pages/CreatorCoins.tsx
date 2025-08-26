@@ -53,8 +53,8 @@ export default function CreatorCoins() {
     let allCreatorTokens: CreatorToken[] = [];
 
     // Add GraphQL tokens if available
-    if (salesData?.uniPumpCreatorSaless?.items) {
-      const pumpFunTokens = salesData.uniPumpCreatorSaless.items.map((token: any) => ({
+    if (salesData && Array.isArray(salesData) && salesData.length > 0) {
+      const pumpFunTokens = salesData.map((token: any) => ({
         id: token.memeTokenAddress || token.id,
         address: token.memeTokenAddress,
         name: token.name || token.symbol || 'Unknown Token',
@@ -131,7 +131,7 @@ export default function CreatorCoins() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-red-500 mb-4">Error loading creator tokens: {salesError.message}</p>
+            <p className="text-red-500 mb-4">Error loading creator tokens: {salesError}</p>
             <Button onClick={() => window.location.reload()}>
               Retry
             </Button>

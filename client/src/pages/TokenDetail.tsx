@@ -28,6 +28,9 @@ import { cn } from "@/lib/utils";
 import { PUMP_FUN_ADDRESS } from "@/lib/addresses";
 import { PUMP_FUN_ABI } from "../../../abi/PumpFunAbi";
 import TransactionComponent from "@/components/Transaction";
+import TradingChart from "@/components/TradingChart";
+import TokenStats from "@/components/TokenStats";
+import TokenActivity from "@/components/TokenActivity";
 import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
 import { useGetAllSales } from "@/hooks/useGetAllSales";
 
@@ -61,9 +64,9 @@ export default function TokenDetail() {
   const { data: salesData, loading: salesLoading } = useGetAllSales();
   
   const tokenData = React.useMemo(() => {
-    if (!salesData?.uniPumpCreatorSaless?.items || !tokenAddress) return null;
+    if (!salesData || !Array.isArray(salesData) || !tokenAddress) return null;
     
-    const token = salesData.uniPumpCreatorSaless.items.find((t: any) => 
+    const token = salesData.find((t: any) => 
       t.memeTokenAddress?.toLowerCase() === tokenAddress.toLowerCase()
     );
     
@@ -88,7 +91,7 @@ export default function TokenDetail() {
     } as TokenData;
   }, [salesData, tokenAddress]);
 
-  // Get user's ETH balance
+  // Get user's token balance
   const { data: ethBalance } = useReadContract({
     address: tokenAddress as Address,
     abi: erc20Abi,
@@ -114,7 +117,7 @@ export default function TokenDetail() {
   const { data: bondingCurvePrice } = useReadContract({
     address: PUMP_FUN_ADDRESS as Address,
     abi: PUMP_FUN_ABI,
-    functionName: "getCurrentPrice",
+    functionName: "getBondingCurve",
     args: [tokenAddress as Address],
     query: {
       enabled: !!tokenAddress
@@ -220,58 +223,8 @@ export default function TokenDetail() {
           </Link>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Price</p>
-                  <p className="text-xl font-bold text-green-500">
-                    ${tokenData.price}
-                  </p>
-                </div>
-                <DollarSign className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Market Cap</p>
-                  <p className="text-xl font-bold">${tokenData.marketCap}K</p>
-                </div>
-                <BarChart3 className="h-8 w-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">24h Volume</p>
-                  <p className="text-xl font-bold">${tokenData.volume24h}K</p>
-                </div>
-                <Activity className="h-8 w-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Holders</p>
-                  <p className="text-xl font-bold">{tokenData.holders}</p>
-                </div>
-                <Users className="h-8 w-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Token Stats */}
+        <TokenStats tokenData={tokenData} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Chart & Info */}
@@ -312,22 +265,20 @@ export default function TokenDetail() {
               </Card>
             )}
 
-            {/* Price Chart Placeholder */}
+            {/* TradingView Chart */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-green-500" />
                   Price Chart
+                  <Badge variant="secondary" className="ml-2">Live</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-64 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Price chart integration coming soon</p>
-                    <p className="text-sm">TradingView or Dexscreener integration</p>
-                  </div>
-                </div>
+                <TradingChart 
+                  tokenAddress={tokenAddress || ""} 
+                  symbol={tokenData.symbol} 
+                />
               </CardContent>
             </Card>
 
@@ -348,8 +299,27 @@ export default function TokenDetail() {
                     <p className="font-mono">{tokenAddress?.slice(0, 10)}...{tokenAddress?.slice(-4)}</p>
                   </div>
                 </div>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => window.open(`https://sepolia.basescan.org/token/${tokenAddress}`, '_blank')}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full transition-colors"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    BaseScan
+                  </button>
+                  <button
+                    onClick={() => window.open(`https://dexscreener.com/base/${tokenAddress}`, '_blank')}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-full transition-colors"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    DexScreener
+                  </button>
+                </div>
               </CardContent>
             </Card>
+
+            {/* Token Activity */}
+            <TokenActivity tokenAddress={tokenAddress || ""} symbol={tokenData.symbol} />
           </div>
 
           {/* Right Column - Trading */}
@@ -364,36 +334,66 @@ export default function TokenDetail() {
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="buy" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="buy" className="text-green-600 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
-                      Buy
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger 
+                      value="buy" 
+                      className="text-green-600 data-[state=active]:bg-green-50 data-[state=active]:text-green-700 dark:data-[state=active]:bg-green-900/30"
+                    >
+                      🚀 Buy
                     </TabsTrigger>
-                    <TabsTrigger value="sell" className="text-red-600 data-[state=active]:bg-red-50 data-[state=active]:text-red-700">
-                      Sell
+                    <TabsTrigger 
+                      value="sell" 
+                      className="text-red-600 data-[state=active]:bg-red-50 data-[state=active]:text-red-700 dark:data-[state=active]:bg-red-900/30"
+                    >
+                      💰 Sell
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="buy" className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Amount (ETH)</label>
-                      <Input
-                        type="number"
-                        placeholder="0.0"
-                        value={buyAmount}
-                        onChange={(e) => setBuyAmount(e.target.value)}
-                      />
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <label className="text-sm font-medium">Amount (ETH)</label>
+                        <div className="text-xs text-muted-foreground">
+                          Balance: {address ? '0.0 ETH' : 'Connect Wallet'}
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          placeholder="0.0"
+                          value={buyAmount}
+                          onChange={(e) => setBuyAmount(e.target.value)}
+                          className="pr-12"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                          ETH
+                        </div>
+                      </div>
+                      
+                      {/* Quick Amount Buttons */}
+                      <div className="flex gap-2">
+                        {['0.001', '0.01', '0.1'].map((amount) => (
+                          <button
+                            key={amount}
+                            onClick={() => setBuyAmount(amount)}
+                            className="flex-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded transition-colors"
+                          >
+                            {amount} ETH
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     
                     <TransactionComponent
                       contractAddress={PUMP_FUN_ADDRESS}
                       contractAbi={PUMP_FUN_ABI}
-                      functionName="buyToken"
-                      args={[tokenAddress as Address]}
+                      functionName="buy"
+                      args={[tokenAddress as Address, parseUnits(buyAmount, 18), BigInt(0)]}
                       value={buyAmount ? parseUnits(buyAmount, 18) : BigInt(0)}
                       cta={`Buy ${tokenData.symbol}`}
                       disabled={!buyAmount || parseFloat(buyAmount) <= 0}
                       handleOnStatus2={(status) => {
-                        if (status === 'success') {
+                        if (status?.statusName === 'success') {
                           setBuyAmount("");
                           toast({
                             title: "Purchase Successful!",
@@ -418,30 +418,55 @@ export default function TokenDetail() {
                   </TabsContent>
 
                   <TabsContent value="sell" className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Amount ({tokenData.symbol})</label>
-                      <Input
-                        type="number"
-                        placeholder="0.0"
-                        value={sellAmount}
-                        onChange={(e) => setSellAmount(e.target.value)}
-                      />
-                      {tokenBalance && (
-                        <p className="text-xs text-muted-foreground">
-                          Balance: {formatUnits(tokenBalance, 18)} {tokenData.symbol}
-                        </p>
-                      )}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <label className="text-sm font-medium">Amount ({tokenData.symbol})</label>
+                        <div className="text-xs text-muted-foreground">
+                          Balance: {tokenBalance ? formatUnits(tokenBalance, 18) : '0.0'} {tokenData.symbol}
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          placeholder="0.0"
+                          value={sellAmount}
+                          onChange={(e) => setSellAmount(e.target.value)}
+                          className="pr-20"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                          {tokenData.symbol}
+                        </div>
+                      </div>
+                      
+                      {/* Quick Amount Buttons */}
+                      <div className="flex gap-2">
+                        {['25%', '50%', '100%'].map((percentage) => (
+                          <button
+                            key={percentage}
+                            onClick={() => {
+                              if (tokenBalance) {
+                                const balance = formatUnits(tokenBalance, 18);
+                                const percent = parseInt(percentage) / 100;
+                                setSellAmount((parseFloat(balance) * percent).toString());
+                              }
+                            }}
+                            className="flex-1 px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded transition-colors"
+                          >
+                            {percentage}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     
                     <TransactionComponent
                       contractAddress={PUMP_FUN_ADDRESS}
                       contractAbi={PUMP_FUN_ABI}
-                      functionName="sellToken"
-                      args={[tokenAddress as Address, sellAmount ? parseUnits(sellAmount, 18) : BigInt(0)]}
+                      functionName="sell"
+                      args={[tokenAddress as Address, sellAmount ? parseUnits(sellAmount, 18) : BigInt(0), BigInt(0)]}
                       cta={`Sell ${tokenData.symbol}`}
                       disabled={!sellAmount || parseFloat(sellAmount) <= 0}
                       handleOnStatus2={(status) => {
-                        if (status === 'success') {
+                        if (status?.statusName === 'success') {
                           setSellAmount("");
                           toast({
                             title: "Sale Successful!",

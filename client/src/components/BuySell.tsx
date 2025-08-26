@@ -1,5 +1,5 @@
 "'use client'"
-import { UniPumpAbi } from "@/lib/contracts";
+import { PUMP_FUN_ABI } from "../../../abi/PumpFunAbi";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/tabs";
 import { MOCK_WETH_ADDRESS, UNIPUMP_ADDRESS } from "@/lib/addresses";
 import { useQueryClient } from "@tanstack/react-query";
-import Image from "next/image";
 import { useState } from "react";
 import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import { useAccount, useReadContract } from "wagmi";
@@ -92,7 +91,9 @@ export function BuySell({ tokenData }: { tokenData: any }) {
               <div className="relative mt-2">
                 <Input value={amount} type="text" onChange={(e) => setAmount(e.target.value)} id="name" defaultValue="Pedro Duarte" />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <Image src={useWeth ? "/images/weth.png" : tokenData.imageUri} alt={useWeth ? "WETH" : tokenData.symbol} width={20} height={20} />
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                    {useWeth ? "W" : tokenData.symbol?.charAt(0)}
+                  </div>
                   <span className="text-md text-slate-300">{useWeth ? "WETH" : tokenData.symbol}</span>
                 </div>
               </div>
@@ -132,9 +133,9 @@ export function BuySell({ tokenData }: { tokenData: any }) {
                 }}
                 cta="Buy"
                 contractAddress={UNIPUMP_ADDRESS}
-                contractAbi={UniPumpAbi}
-                functionName="buyTokenFromSale"
-                args={[tokenData.memeTokenAddress, parseUnits(amount, 18).toString()]}
+                contractAbi={PUMP_FUN_ABI}
+                functionName="buy"
+                args={[tokenData.memeTokenAddress, parseUnits(amount, 18), BigInt(0)]}
               />
             ) : (
               <TransactionComponent
@@ -173,7 +174,9 @@ export function BuySell({ tokenData }: { tokenData: any }) {
               <div className="relative mt-2">
                 <Input value={amount} type="text" onChange={(e) => setAmount(e.target.value)} id="name" defaultValue="Pedro Duarte" />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <Image src={tokenData.imageUri} alt={tokenData.symbol} width={20} height={20} />
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
+                    {tokenData.symbol?.charAt(0)}
+                  </div>
                   <span className="text-md text-slate-300">{tokenData.symbol}</span>
                 </div>
               </div>
@@ -214,9 +217,9 @@ export function BuySell({ tokenData }: { tokenData: any }) {
                 }}
                 cta="Sell"
                 contractAddress={UNIPUMP_ADDRESS}
-                contractAbi={UniPumpAbi}
-                functionName="sellTokenFromSale"
-                args={[tokenData.memeTokenAddress, parseUnits(amount, 18).toString()]}
+                contractAbi={PUMP_FUN_ABI}
+                functionName="sell"
+                args={[tokenData.memeTokenAddress, parseUnits(amount, 18), BigInt(0)]}
               />
             ) : (
               <TransactionComponent
