@@ -1,8 +1,18 @@
-import { createCoin, createCoinCall, DeployCurrency } from '@zoralabs/coins-sdk';
+import { createCoin, createCoinCall, DeployCurrency, setApiKey } from '@zoralabs/coins-sdk';
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { uploadJSONToIPFS } from './ipfs';
+
+// Initialize Zora SDK with API key
+const zoraApiKey = process.env.ZORA_API_KEY;
+if (zoraApiKey) {
+  console.log('🔑 Initializing Zora SDK with API key...');
+  setApiKey(zoraApiKey);
+  console.log('✅ Zora SDK initialized successfully');
+} else {
+  console.warn('⚠️  ZORA_API_KEY not found - SDK may use rate-limited requests');
+}
 
 // Zora contract addresses - these are the official Zora addresses, NOT PumpFun
 // Zora Factory on Base Sepolia (different from mainnet)
