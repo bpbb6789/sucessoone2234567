@@ -46,53 +46,36 @@ export default function CreatorCoins() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Fetch token data from backend
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  // Get token sales data from GraphQL (PumpFun tokens)
+  const { data: salesData, loading: salesLoading, error: salesError } = useGetAllSales();
 
   React.useEffect(() => {
-    const fetchTokens = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Fetch from the actual backend endpoint
-        const response = await fetch('/api/tokens');
-        if (!response.ok) {
-          throw new Error('Failed to fetch tokens');
-        }
-        
-        const tokens = await response.json();
-        
-        // Transform the data to match our interface
-        const transformedTokens = tokens.map((token: any) => ({
-          id: token.address || token.id,
-          address: token.address,
-          name: token.name || 'Unknown Token',
-          symbol: token.symbol || 'UNKNOWN',
-          description: token.description || 'Created via pump.fun mechanics',
-          createdAt: new Date(token.createdAt || Date.now()),
-          creator: token.creator || 'Unknown Creator',
-          price: token.price || '0.000001',
-          marketCap: token.marketCap || '0',
-          volume24h: token.volume24h || '0',
-          holders: token.holders || 0,
-          change24h: token.priceChange24h || Math.floor(Math.random() * 100) - 50,
-          isOnBondingCurve: token.isOnBondingCurve || Math.random() > 0.5,
-          progress: token.progress || Math.floor(Math.random() * 100)
-        }));
+    let allCreatorTokens: CreatorToken[] = [];
 
-        setCreatorTokens(transformedTokens);
-      } catch (err) {
-        console.error('Error fetching tokens:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch tokens');
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Add GraphQL tokens if available
+    if (salesData?.uniPumpCreatorSaless?.items) {
+      const pumpFunTokens = salesData.uniPumpCreatorSaless.items.map((token: any) => ({
+        id: token.memeTokenAddress || token.id,
+        address: token.memeTokenAddress,
+        name: token.name || token.symbol || 'Unknown Token',
+        symbol: token.symbol || 'UNKNOWN',
+        description: token.description || 'Created via pump.fun mechanics',
+        createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
+        creator: token.creator || 'Unknown Creator',
+        price: token.price || '0.000001',
+        marketCap: token.marketCap || '0',
+        volume24h: token.volume24h || '0',
+        holders: token.holders || 0,
+        change24h: token.priceChange24h || 0,
+        isOnBondingCurve: token.bondingCurve !== null,
+        progress: token.progress || 0
+      }));
+      allCreatorTokens = [...allCreatorTokens, ...pumpFunTokens];
+    }
 
-    fetchTokens();
-  }, []);
+    // Only show real data from GraphQL - no fallbacks or mock data
+    setCreatorTokens(allCreatorTokens);
+  }, [salesData, salesLoading]);
 
   // Filter tokens
   const filteredTokens = creatorTokens
@@ -115,7 +98,7 @@ export default function CreatorCoins() {
       }
     });
 
-  if (loading) {
+  if (salesLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="space-y-6">
@@ -143,12 +126,12 @@ export default function CreatorCoins() {
     );
   }
 
-  if (error) {
+  if (salesError) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-red-500 mb-4">Error loading creator tokens: {error}</p>
+            <p className="text-red-500 mb-4">Error loading creator tokens: {salesError.message}</p>
             <Button onClick={() => window.location.reload()}>
               Retry
             </Button>
@@ -310,13 +293,15 @@ export default function CreatorCoins() {
                         </div>
                         <div className="flex items-center gap-2">
                           {token.address && (
-                            <Button 
-                              className="px-2 py-1 h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
-                              size="sm"
-                              data-testid={`trade-${token.id}`}
-                            >
-                              Trade
-                            </Button>
+                            <Link to={`/token/${token.address}`}>
+                              <Button 
+                                className="px-2 py-1 h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
+                                size="sm"
+                                data-testid={`trade-${token.id}`}
+                              >
+                                Trade
+                              </Button>
+                            </Link>
                           )}
                         </div>
                       </div>
@@ -379,14 +364,16 @@ export default function CreatorCoins() {
                             </span>
                           </div>
                           {token.address && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-5 px-2 text-xs text-gray-500 hover:text-purple-600"
-                              data-testid={`view-${token.id}`}
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
+                            <Link to={`/token/${token.address}`}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 px-2 text-xs text-gray-500 hover:text-purple-600"
+                                data-testid={`view-${token.id}`}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            </Link>
                           )}
                         </div>
                       </div>
