@@ -18,11 +18,8 @@ console.log("DATABASE_URL starts with:", process.env.DATABASE_URL?.substring(0, 
 // Use connection pooling for better stability with Neon
 const databaseUrl = process.env.DATABASE_URL;
 
-// Check if URL already contains 'pooler' to avoid double modification
+// Use the original database URL directly since it already contains pooler configuration
 let poolUrl = databaseUrl;
-if (databaseUrl && !databaseUrl.includes('pooler')) {
-  poolUrl = databaseUrl.replace('.us-east-1', '-pooler.us-east-1').replace('.us-east-2', '-pooler.us-east-2');
-}
 
 export const pool = new Pool({ 
   connectionString: poolUrl,
