@@ -69,6 +69,12 @@ export async function createZoraMetadata(params: {
 }): Promise<string> {
   try {
     console.log('📝 Creating Zora metadata...');
+    console.log('Input params:', {
+      name: params.name,
+      description: params.description,
+      imageUrl: params.imageUrl,
+      contentType: params.contentType
+    });
     
     const metadata = {
       name: params.name,
@@ -90,8 +96,12 @@ export async function createZoraMetadata(params: {
         : undefined
     };
 
+    console.log('📤 Uploading metadata to IPFS:', JSON.stringify(metadata, null, 2));
+    
     // Upload metadata to IPFS and return the URI
     const metadataCid = await uploadJSONToIPFS(metadata);
+    console.log('📦 Metadata uploaded with CID:', metadataCid);
+    
     const metadataUri = `https://gateway.pinata.cloud/ipfs/${metadataCid}`;
     
     console.log('✅ Metadata created successfully:', metadataUri);

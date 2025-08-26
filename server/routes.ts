@@ -1662,8 +1662,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (metadataError) {
         console.error('❌ Failed to create metadata:', metadataError);
         console.error('Metadata error details:', metadataError instanceof Error ? metadataError.stack : metadataError);
-        // Continue without metadata for now - the deployment will use simulation mode
-        console.log('⚠️  Continuing without metadata - deployment will use simulation mode');
+        // Fail the upload if metadata creation fails
+        return res.status(500).json({
+          error: "Metadata creation failed",
+          details: metadataError instanceof Error ? metadataError.message : 'Unknown error'
+        });
       }
 
       // Create creator coin in database
@@ -1752,11 +1755,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creator: coinData.creatorAddress
       });
 
+      // Check if we have valid metadata before deployment
+      if (!coinData.metadataUri) {
+        throw new Error('Cannot deploy coin without valid metadata URI. Metadata creation failed.');
+      }
+
       // Create coin using Zora SDK
       const deploymentResult = await createCreatorCoin({
         name: coinData.coinName,
         symbol: coinData.coinSymbol,
-        uri: coinData.metadataUri!,
+        uri: coinData.metadataUri,
         currency: coinData.currency,
         creatorAddress: coinData.creatorAddress
       });
