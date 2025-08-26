@@ -3,16 +3,25 @@ import { createServer, type Server } from "http";
 import multer from 'multer';
 import { storage } from "./storage";
 import { uploadFileToIPFS, uploadJSONToIPFS } from './ipfs';
+import { 
+  createZoraMetadata, 
+  createCreatorCoin, 
+  getCoinPrice, 
+  getBondingCurveProgress,
+  validateContentForTokenization,
+  generateThumbnail 
+} from './zora';
 import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema,
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
   insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
   insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema, insertWeb3ChannelSchema,
-  insertContentImportSchema, insertPadSchema, insertPadLikeSchema, insertPadCommentSchema
+  insertContentImportSchema, insertPadSchema, insertPadLikeSchema, insertPadCommentSchema,
+  insertCreatorCoinSchema, insertCreatorCoinLikeSchema, insertCreatorCoinCommentSchema, insertCreatorCoinTradeSchema
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
-import { contentImports } from "@shared/schema";
+import { eq, desc, sql } from "drizzle-orm";
+import { contentImports, creatorCoins, creatorCoinLikes, creatorCoinComments, creatorCoinTrades } from "@shared/schema";
 import { getDopplerService, type PadTokenConfig } from "./doppler";
 import { PrismaClient } from '../lib/generated/prisma/index.js';
 
@@ -1550,6 +1559,284 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: error.message,
         padId: padId
       });
+    }
+  });
+
+  // Creator Coins routes
+  app.get("/api/creator-coins", async (req, res) => {
+    try {
+      const coins = await db.select().from(creatorCoins).orderBy(desc(creatorCoins.createdAt));
+      res.json(coins);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getAllCreatorCoins"));
+    }
+  });
+
+  app.get("/api/creator-coins/:id", async (req, res) => {
+    try {
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
+      if (!coin.length) {
+        return res.status(404).json({ message: "Creator coin not found" });
+      }
+      res.json(coin[0]);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getCreatorCoin"));
+    }
+  });
+
+  app.post("/api/creator-coins/upload", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file provided" });
+      }
+
+      const { 
+        creatorAddress, title, description, contentType, 
+        coinName, coinSymbol, currency, startingMarketCap,
+        twitter, discord, website 
+      } = req.body;
+
+      // Validate required fields
+      if (!creatorAddress || !title || !coinName || !coinSymbol || !contentType) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Validate content for tokenization
+      const validation = validateContentForTokenization(contentType, req.file.size);
+      if (!validation.isValid) {
+        return res.status(400).json({ message: validation.error });
+      }
+
+      // Upload file to IPFS
+      const file = new File([req.file.buffer], req.file.originalname, {
+        type: req.file.mimetype,
+      });
+
+      const mediaCid = await uploadFileToIPFS(file);
+
+      // Generate thumbnail if needed
+      const thumbnailCid = await generateThumbnail(contentType, mediaCid);
+
+      // Create Zora metadata
+      const imageUrl = `https://gateway.pinata.cloud/ipfs/${mediaCid}`;
+      const metadataUri = await createZoraMetadata({
+        name: coinName,
+        description: description || `Creator coin for ${title}`,
+        imageUrl,
+        contentType,
+        attributes: [
+          { trait_type: 'Original Title', value: title },
+          { trait_type: 'Creator', value: creatorAddress },
+          { trait_type: 'Currency', value: currency || 'ETH' }
+        ]
+      });
+
+      // Create creator coin in database
+      const coinData = {
+        creatorAddress,
+        title,
+        description,
+        contentType,
+        mediaCid,
+        thumbnailCid,
+        metadataUri,
+        coinName,
+        coinSymbol,
+        currency: currency || 'ETH',
+        startingMarketCap: startingMarketCap || 'LOW',
+        twitter: twitter || null,
+        discord: discord || null,
+        website: website || null,
+        status: 'pending' as const
+      };
+
+      const validatedCoinData = insertCreatorCoinSchema.parse(coinData);
+      const [newCoin] = await db.insert(creatorCoins).values(validatedCoinData).returning();
+
+      res.status(201).json({
+        message: "Content uploaded successfully",
+        coin: newCoin,
+        mediaCid,
+        metadataUri
+      });
+    } catch (error) {
+      console.error("Creator coin upload error:", error);
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid coin data", errors: (error as any).errors });
+      } else {
+        res.status(500).json(handleDatabaseError(error, "uploadCreatorCoin"));
+      }
+    }
+  });
+
+  app.post("/api/creator-coins/:id/deploy", async (req, res) => {
+    try {
+      const coinId = req.params.id;
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
+      
+      if (!coin.length) {
+        return res.status(404).json({ message: "Creator coin not found" });
+      }
+
+      const coinData = coin[0];
+      
+      if (coinData.status !== 'pending') {
+        return res.status(400).json({ message: "Coin is not in pending status" });
+      }
+
+      // Update status to creating
+      await db.update(creatorCoins)
+        .set({ status: 'creating', updatedAt: new Date() })
+        .where(eq(creatorCoins.id, coinId));
+
+      // Create coin using Zora SDK
+      const deploymentResult = await createCreatorCoin({
+        name: coinData.coinName,
+        symbol: coinData.coinSymbol,
+        metadataUri: coinData.metadataUri!,
+        startingMarketCap: coinData.startingMarketCap as 'LOW' | 'HIGH',
+        currency: coinData.currency,
+        creatorAddress: coinData.creatorAddress
+      });
+
+      // Update coin with deployment info
+      const [updatedCoin] = await db.update(creatorCoins)
+        .set({
+          status: 'deployed',
+          coinAddress: deploymentResult.coinAddress,
+          zoraFactoryAddress: deploymentResult.factoryAddress,
+          deploymentTxHash: deploymentResult.txHash,
+          updatedAt: new Date()
+        })
+        .where(eq(creatorCoins.id, coinId))
+        .returning();
+
+      res.json({
+        message: "Creator coin deployed successfully!",
+        coin: updatedCoin,
+        coinAddress: deploymentResult.coinAddress,
+        txHash: deploymentResult.txHash
+      });
+    } catch (error) {
+      console.error("Creator coin deployment error:", error);
+      
+      // Mark coin as failed
+      try {
+        await db.update(creatorCoins)
+          .set({ status: 'failed', updatedAt: new Date() })
+          .where(eq(creatorCoins.id, req.params.id));
+      } catch (updateError) {
+        console.error("Failed to update coin status:", updateError);
+      }
+      
+      res.status(500).json({
+        message: "Failed to deploy creator coin",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/creator-coins/:id/price", async (req, res) => {
+    try {
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
+      
+      if (!coin.length) {
+        return res.status(404).json({ message: "Creator coin not found" });
+      }
+
+      const coinData = coin[0];
+      
+      if (!coinData.coinAddress) {
+        return res.status(400).json({ message: "Coin not yet deployed" });
+      }
+
+      const priceData = await getCoinPrice(coinData.coinAddress);
+      const bondingProgress = await getBondingCurveProgress(coinData.coinAddress);
+
+      // Update coin with latest data
+      await db.update(creatorCoins)
+        .set({
+          currentPrice: priceData.price,
+          marketCap: priceData.marketCap,
+          volume24h: priceData.volume24h,
+          holders: priceData.holders,
+          bondingCurveProgress: bondingProgress.toString(),
+          updatedAt: new Date()
+        })
+        .where(eq(creatorCoins.id, req.params.id));
+
+      res.json({
+        ...priceData,
+        bondingCurveProgress: bondingProgress
+      });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getCreatorCoinPrice"));
+    }
+  });
+
+  app.post("/api/creator-coins/:id/like", async (req, res) => {
+    try {
+      const { userAddress } = req.body;
+      const coinId = req.params.id;
+
+      if (!userAddress) {
+        return res.status(400).json({ message: "User address required" });
+      }
+
+      // Check if already liked
+      const existingLike = await db.select()
+        .from(creatorCoinLikes)
+        .where(eq(creatorCoinLikes.coinId, coinId))
+        .limit(1);
+
+      if (existingLike.length > 0) {
+        return res.status(400).json({ message: "Already liked" });
+      }
+
+      // Add like
+      await db.insert(creatorCoinLikes).values({
+        coinId,
+        userAddress
+      });
+
+      // Update like count
+      await db.update(creatorCoins)
+        .set({
+          likes: sql`${creatorCoins.likes} + 1`,
+          updatedAt: new Date()
+        })
+        .where(eq(creatorCoins.id, coinId));
+
+      res.json({ message: "Liked successfully" });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "likeCreatorCoin"));
+    }
+  });
+
+  app.delete("/api/creator-coins/:id/like", async (req, res) => {
+    try {
+      const { userAddress } = req.body;
+      const coinId = req.params.id;
+
+      if (!userAddress) {
+        return res.status(400).json({ message: "User address required" });
+      }
+
+      // Remove like
+      await db.delete(creatorCoinLikes)
+        .where(eq(creatorCoinLikes.coinId, coinId));
+
+      // Update like count
+      await db.update(creatorCoins)
+        .set({
+          likes: sql`${creatorCoins.likes} - 1`,
+          updatedAt: new Date()
+        })
+        .where(eq(creatorCoins.id, coinId));
+
+      res.json({ message: "Unliked successfully" });
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "unlikeCreatorCoin"));
     }
   });
 

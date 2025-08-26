@@ -1,0 +1,170 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import type { CreatorCoin, InsertCreatorCoin } from '@shared/schema';
+
+// Get all creator coins
+export function useCreatorCoins() {
+  return useQuery({
+    queryKey: ['/api/creator-coins'],
+    queryFn: async () => {
+      const response = await fetch('/api/creator-coins');
+      if (!response.ok) throw new Error('Failed to fetch creator coins');
+      return response.json() as Promise<CreatorCoin[]>;
+    }
+  });
+}
+
+// Get a single creator coin
+export function useCreatorCoin(id: string) {
+  return useQuery({
+    queryKey: ['/api/creator-coins', id],
+    queryFn: async () => {
+      const response = await fetch(`/api/creator-coins/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch creator coin');
+      return response.json() as Promise<CreatorCoin>;
+    },
+    enabled: !!id
+  });
+}
+
+// Upload content for creator coin
+export function useCreatorCoinUpload() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: {
+      file: File;
+      creatorAddress: string;
+      title: string;
+      description?: string;
+      contentType: string;
+      coinName: string;
+      coinSymbol: string;
+      currency?: string;
+      startingMarketCap?: string;
+      twitter?: string;
+      discord?: string;
+      website?: string;
+    }) => {
+      const formData = new FormData();
+      formData.append('file', data.file);
+      formData.append('creatorAddress', data.creatorAddress);
+      formData.append('title', data.title);
+      formData.append('contentType', data.contentType);
+      formData.append('coinName', data.coinName);
+      formData.append('coinSymbol', data.coinSymbol);
+      
+      if (data.description) formData.append('description', data.description);
+      if (data.currency) formData.append('currency', data.currency);
+      if (data.startingMarketCap) formData.append('startingMarketCap', data.startingMarketCap);
+      if (data.twitter) formData.append('twitter', data.twitter);
+      if (data.discord) formData.append('discord', data.discord);
+      if (data.website) formData.append('website', data.website);
+
+      const response = await fetch('/api/creator-coins/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Upload failed';
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins'] });
+    }
+  });
+}
+
+// Deploy creator coin
+export function useDeployCreatorCoin() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (coinId: string) => {
+      const response = await apiRequest(`/api/creator-coins/${coinId}/deploy`, {
+        method: 'POST'
+      });
+      return response;
+    },
+    onSuccess: (data, coinId) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', coinId] });
+    }
+  });
+}
+
+// Get creator coin price data
+export function useCreatorCoinPrice(coinId: string) {
+  return useQuery({
+    queryKey: ['/api/creator-coins', coinId, 'price'],
+    queryFn: async () => {
+      const response = await fetch(`/api/creator-coins/${coinId}/price`);
+      if (!response.ok) throw new Error('Failed to fetch price data');
+      return response.json();
+    },
+    enabled: !!coinId,
+    refetchInterval: 30000 // Refetch every 30 seconds
+  });
+}
+
+// Like creator coin
+export function useLikeCreatorCoin() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ coinId, userAddress }: { coinId: string; userAddress: string }) => {
+      const response = await apiRequest(`/api/creator-coins/${coinId}/like`, {
+        method: 'POST',
+        body: { userAddress }
+      });
+      return response;
+    },
+    onSuccess: (data, { coinId }) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', coinId] });
+    }
+  });
+}
+
+// Unlike creator coin
+export function useUnlikeCreatorCoin() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ coinId, userAddress }: { coinId: string; userAddress: string }) => {
+      const response = await apiRequest(`/api/creator-coins/${coinId}/like`, {
+        method: 'DELETE',
+        body: { userAddress }
+      });
+      return response;
+    },
+    onSuccess: (data, { coinId }) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', coinId] });
+    }
+  });
+}
+
+// Get creator coins by creator address
+export function useCreatorCoinsByCreator(creatorAddress: string) {
+  return useQuery({
+    queryKey: ['/api/creator-coins', 'creator', creatorAddress],
+    queryFn: async () => {
+      const response = await fetch(`/api/creator-coins?creator=${creatorAddress}`);
+      if (!response.ok) throw new Error('Failed to fetch creator coins');
+      return response.json() as Promise<CreatorCoin[]>;
+    },
+    enabled: !!creatorAddress
+  });
+}

@@ -1,0 +1,611 @@
+import { useState } from 'react';
+import { Upload, Link, FileImage, Video, Music, Palette, FileText, Loader2, Trash2, Play, Coins, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
+import { useAccount } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCreatorCoinUpload, useDeployCreatorCoin } from '@/hooks/useCreatorCoins';
+
+const contentTypes = [
+  { id: 'image', name: 'Image', icon: FileImage, description: 'JPG, PNG, GIF, SVG images', accept: 'image/*' },
+  { id: 'video', name: 'Video', icon: Video, description: 'MP4, MOV, AVI videos', accept: 'video/*' },
+  { id: 'audio', name: 'Audio', icon: Music, description: 'MP3, WAV, FLAC audio files', accept: 'audio/*' },
+  { id: 'gif', name: 'Animation', icon: Palette, description: 'GIF, WebM animations', accept: 'image/gif,video/webm' },
+  { id: 'document', name: 'Document', icon: FileText, description: 'PDF, TXT documents', accept: '.pdf,.txt' },
+];
+
+const currencies = [
+  { value: 'ETH', label: 'ETH', description: 'Ethereum' },
+  { value: 'ZORA', label: 'ZORA', description: 'Zora Protocol Token' },
+];
+
+const marketCaps = [
+  { value: 'LOW', label: 'Low ($1K)', description: 'Lower initial price, accessible entry' },
+  { value: 'HIGH', label: 'High ($10K)', description: 'Higher initial price, anti-sniping' },
+];
+
+export default function CreateContentCoin() {
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [uploadedCoin, setUploadedCoin] = useState<any>(null);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    coinName: '',
+    coinSymbol: '',
+    currency: 'ETH',
+    startingMarketCap: 'LOW',
+    twitter: '',
+    discord: '',
+    website: ''
+  });
+  
+  const { toast } = useToast();
+  const { address, isConnected } = useAccount();
+  const uploadMutation = useCreatorCoinUpload();
+  const deployMutation = useDeployCreatorCoin();
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    
+    // Determine content type based on file type
+    let contentType = 'document';
+    if (file.type.startsWith('image/')) {
+      contentType = file.type === 'image/gif' ? 'gif' : 'image';
+    } else if (file.type.startsWith('video/')) {
+      contentType = 'video';
+    } else if (file.type.startsWith('audio/')) {
+      contentType = 'audio';
+    }
+    
+    setSelectedType(contentType);
+    
+    // Generate auto coin name from filename
+    const fileName = file.name.split('.')[0].replace(/[^a-zA-Z0-9\s]/g, ' ').trim();
+    const coinSymbol = fileName.replace(/\s+/g, '').toUpperCase().slice(0, 6);
+    
+    setFormData(prev => ({
+      ...prev,
+      title: fileName,
+      coinName: fileName,
+      coinSymbol: coinSymbol
+    }));
+    
+    // Create preview URL
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
+  const handleTypeSelect = (typeId: string) => {
+    setSelectedType(typeId);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = contentTypes.find(t => t.id === typeId)?.accept || '*/*';
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    };
+    input.click();
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !address || !selectedType) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a file and connect your wallet",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.title || !formData.coinName || !formData.coinSymbol) {
+      toast({
+        title: "Missing Details",
+        description: "Please fill in the title, coin name, and symbol",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const result = await uploadMutation.mutateAsync({
+        file: selectedFile,
+        creatorAddress: address,
+        title: formData.title,
+        description: formData.description,
+        contentType: selectedType,
+        coinName: formData.coinName,
+        coinSymbol: formData.coinSymbol,
+        currency: formData.currency,
+        startingMarketCap: formData.startingMarketCap,
+        twitter: formData.twitter || undefined,
+        discord: formData.discord || undefined,
+        website: formData.website || undefined
+      });
+
+      setUploadedCoin(result.coin);
+      
+      toast({
+        title: "Content Uploaded! 🎉",
+        description: `${formData.coinName} is ready for tokenization with Zora`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload content",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeploy = async () => {
+    if (!uploadedCoin) return;
+
+    try {
+      const result = await deployMutation.mutateAsync(uploadedCoin.id);
+      
+      toast({
+        title: "Creator Coin Deployed! 🚀",
+        description: `${formData.coinName} is now live on Zora with bonding curves`,
+      });
+      
+      // Reset form
+      setSelectedFile(null);
+      setPreviewUrl('');
+      setUploadedCoin(null);
+      setSelectedType('');
+      setFormData({
+        title: '',
+        description: '',
+        coinName: '',
+        coinSymbol: '',
+        currency: 'ETH',
+        startingMarketCap: 'LOW',
+        twitter: '',
+        discord: '',
+        website: ''
+      });
+    } catch (error: any) {
+      toast({
+        title: "Deployment Failed",
+        description: error.message || "Failed to deploy creator coin",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const resetUpload = () => {
+    setSelectedFile(null);
+    setPreviewUrl('');
+    setUploadedCoin(null);
+    setSelectedType('');
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
+  if (!isConnected) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <Card className="border-purple-200 dark:border-purple-800">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Sparkles className="h-16 w-16 text-purple-500 mb-4" />
+            <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Create Content Coins with Zora
+            </h2>
+            <p className="text-muted-foreground text-center mb-6 max-w-md">
+              Transform your content into tradable creator coins powered by Zora's bonding curves and Uniswap V4 integration.
+            </p>
+            <ConnectButton />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Sparkles className="h-8 w-8 text-purple-500" />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Create Content Coins
+            </h1>
+          </div>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Upload your content and transform it into a tradable creator coin using Zora's advanced bonding curve technology
+          </p>
+        </div>
+
+        {/* Upload Progress */}
+        {!selectedFile && !uploadedCoin && (
+          <Card className="border-purple-200 dark:border-purple-800">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Choose Content Type
+              </CardTitle>
+              <CardDescription>
+                Select the type of content you want to tokenize
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {contentTypes.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <Card 
+                      key={type.id}
+                      className={`cursor-pointer transition-all hover:scale-105 ${
+                        selectedType === type.id 
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+                          : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                      }`}
+                      onClick={() => handleTypeSelect(type.id)}
+                      data-testid={`content-type-${type.id}`}
+                    >
+                      <CardContent className="p-4 text-center">
+                        <Icon className={`h-8 w-8 mx-auto mb-2 ${
+                          selectedType === type.id ? 'text-purple-600' : 'text-gray-500'
+                        }`} />
+                        <h3 className="font-medium text-sm">{type.name}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">{type.description}</p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* File Upload */}
+        {selectedType && !selectedFile && (
+          <Card className="border-purple-200 dark:border-purple-800">
+            <CardContent 
+              className={`p-8 border-2 border-dashed transition-colors ${
+                isDragging 
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+                  : 'border-gray-300 dark:border-gray-600'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <div className="text-center">
+                <Upload className="h-12 w-12 mx-auto mb-4 text-purple-500" />
+                <h3 className="text-lg font-medium mb-2">Upload Your {contentTypes.find(t => t.id === selectedType)?.name}</h3>
+                <p className="text-muted-foreground mb-4">
+                  Drag and drop your file here, or click to browse
+                </p>
+                <input
+                  type="file"
+                  accept={contentTypes.find(t => t.id === selectedType)?.accept}
+                  onChange={handleFileInput}
+                  className="hidden"
+                  id="file-upload"
+                  data-testid="file-upload-input"
+                />
+                <label htmlFor="file-upload">
+                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" data-testid="upload-button">
+                    Choose File
+                  </Button>
+                </label>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Content Preview & Form */}
+        {selectedFile && !uploadedCoin && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Preview */}
+            <Card className="border-purple-200 dark:border-purple-800">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Content Preview</span>
+                  <Button variant="ghost" size="sm" onClick={resetUpload} data-testid="reset-upload">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 mb-4">
+                  {selectedType === 'image' || selectedType === 'gif' ? (
+                    <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  ) : selectedType === 'video' ? (
+                    <video src={previewUrl} className="w-full h-full object-cover" controls />
+                  ) : selectedType === 'audio' ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <Music className="h-16 w-16 mx-auto mb-4 text-purple-500" />
+                        <audio src={previewUrl} controls className="mx-auto" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <FileText className="h-16 w-16 mx-auto mb-4 text-purple-500" />
+                        <p className="text-sm text-muted-foreground">{selectedFile.name}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">File Size:</span>
+                    <span>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Type:</span>
+                    <Badge variant="outline">{selectedType}</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Form */}
+            <Card className="border-purple-200 dark:border-purple-800">
+              <CardHeader>
+                <CardTitle>Creator Coin Details</CardTitle>
+                <CardDescription>
+                  Set up your content coin for Zora deployment
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Content Title *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="My Amazing Content"
+                    data-testid="input-title"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe your content and why it should be tokenized..."
+                    rows={3}
+                    data-testid="input-description"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="coinName">Coin Name *</Label>
+                    <Input
+                      id="coinName"
+                      value={formData.coinName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, coinName: e.target.value }))}
+                      placeholder="My Content Coin"
+                      data-testid="input-coin-name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="coinSymbol">Symbol *</Label>
+                    <Input
+                      id="coinSymbol"
+                      value={formData.coinSymbol}
+                      onChange={(e) => setFormData(prev => ({ ...prev, coinSymbol: e.target.value.toUpperCase() }))}
+                      placeholder="MCC"
+                      maxLength={6}
+                      data-testid="input-coin-symbol"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Currency</Label>
+                    <Select value={formData.currency} onValueChange={(value) => setFormData(prev => ({ ...prev, currency: value }))}>
+                      <SelectTrigger data-testid="select-currency">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map(currency => (
+                          <SelectItem key={currency.value} value={currency.value}>
+                            <div>
+                              <div className="font-medium">{currency.label}</div>
+                              <div className="text-xs text-muted-foreground">{currency.description}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="marketCap">Starting Market Cap</Label>
+                    <Select value={formData.startingMarketCap} onValueChange={(value) => setFormData(prev => ({ ...prev, startingMarketCap: value }))}>
+                      <SelectTrigger data-testid="select-market-cap">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {marketCaps.map(cap => (
+                          <SelectItem key={cap.value} value={cap.value}>
+                            <div>
+                              <div className="font-medium">{cap.label}</div>
+                              <div className="text-xs text-muted-foreground">{cap.description}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Social Links (Optional)</h4>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="twitter">Twitter/X</Label>
+                      <Input
+                        id="twitter"
+                        value={formData.twitter}
+                        onChange={(e) => setFormData(prev => ({ ...prev, twitter: e.target.value }))}
+                        placeholder="https://twitter.com/username"
+                        data-testid="input-twitter"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="discord">Discord</Label>
+                      <Input
+                        id="discord"
+                        value={formData.discord}
+                        onChange={(e) => setFormData(prev => ({ ...prev, discord: e.target.value }))}
+                        placeholder="https://discord.gg/invite"
+                        data-testid="input-discord"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="website">Website</Label>
+                      <Input
+                        id="website"
+                        value={formData.website}
+                        onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                        placeholder="https://yourwebsite.com"
+                        data-testid="input-website"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleUpload}
+                  disabled={uploadMutation.isPending || !formData.title || !formData.coinName || !formData.coinSymbol}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                  data-testid="upload-content-button"
+                >
+                  {uploadMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading to IPFS...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload & Prepare Coin
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Deployment */}
+        {uploadedCoin && (
+          <Card className="border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                <Coins className="h-5 w-5" />
+                Content Ready for Tokenization!
+              </CardTitle>
+              <CardDescription>
+                Your content has been uploaded to IPFS and is ready to be deployed as a creator coin using Zora
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Coin Name:</span>
+                  <div className="font-medium">{uploadedCoin.coinName}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Symbol:</span>
+                  <div className="font-medium">{uploadedCoin.coinSymbol}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Content Type:</span>
+                  <div className="font-medium capitalize">{uploadedCoin.contentType}</div>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Status:</span>
+                  <Badge variant="outline" className="text-green-600 border-green-600">
+                    {uploadedCoin.status}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleDeploy}
+                  disabled={deployMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                  data-testid="deploy-coin-button"
+                >
+                  {deployMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Deploying with Zora...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Deploy Creator Coin
+                    </>
+                  )}
+                </Button>
+                <Button variant="outline" onClick={resetUpload} data-testid="create-another-button">
+                  Create Another
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}

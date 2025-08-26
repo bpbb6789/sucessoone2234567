@@ -398,6 +398,90 @@ export type InsertPadLike = z.infer<typeof insertPadLikeSchema>;
 export type PadComment = typeof padComments.$inferSelect;
 export type InsertPadComment = z.infer<typeof insertPadCommentSchema>;
 
+// Creator Coins with Zora SDK - Content tokenization
+export const creatorCoins = pgTable("creator_coins", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  creatorAddress: text("creator_address").notNull(), // Wallet address of creator
+  title: text("title").notNull(),
+  description: text("description"),
+  
+  // Content Information
+  contentType: text("content_type").notNull(), // 'image', 'video', 'audio', 'gif', 'document'
+  mediaCid: text("media_cid").notNull(), // IPFS CID of the main content
+  thumbnailCid: text("thumbnail_cid"), // Thumbnail CID for videos/large files
+  metadataUri: text("metadata_uri"), // Zora metadata URI
+  
+  // Coin Information
+  coinName: text("coin_name").notNull(),
+  coinSymbol: text("coin_symbol").notNull(),
+  coinAddress: text("coin_address"), // Zora coin contract address
+  
+  // Zora Specific
+  zoraFactoryAddress: text("zora_factory_address"), // Zora factory used
+  zoraPlatform: text("zora_platform").notNull().default("zora"), // 'zora'
+  uniswapV4Pool: text("uniswap_v4_pool"), // Associated Uniswap V4 pool
+  hookAddress: text("hook_address"), // Hook contract address
+  
+  // Trading & Economics
+  currency: text("currency").notNull().default("ETH"), // 'ETH', 'ZORA', etc.
+  startingMarketCap: text("starting_market_cap").notNull().default("LOW"), // 'LOW', 'HIGH'
+  currentPrice: text("current_price").default("0.000001"),
+  marketCap: text("market_cap").default("0"),
+  bondingCurveProgress: text("bonding_curve_progress").default("0"),
+  totalSupply: text("total_supply").default("1000000000"),
+  holders: integer("holders").default(0),
+  volume24h: text("volume_24h").default("0"),
+  
+  // Social Links
+  twitter: text("twitter"),
+  discord: text("discord"),
+  website: text("website"),
+  
+  // Status & Metadata
+  status: text("status").notNull().default("pending"), // 'pending', 'creating', 'deployed', 'failed'
+  deploymentTxHash: text("deployment_tx_hash"),
+  metadata: jsonb("metadata"), // Additional Zora-specific metadata
+  tags: text("tags").array(),
+  
+  // Engagement
+  likes: integer("likes").default(0),
+  comments: integer("comments").default(0),
+  shares: integer("shares").default(0),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Creator Coin interactions
+export const creatorCoinLikes = pgTable("creator_coin_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  coinId: varchar("coin_id").references(() => creatorCoins.id).notNull(),
+  userAddress: text("user_address").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const creatorCoinComments = pgTable("creator_coin_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  coinId: varchar("coin_id").references(() => creatorCoins.id).notNull(),
+  userAddress: text("user_address").notNull(),
+  content: text("content").notNull(),
+  parentId: varchar("parent_id"), // For threaded comments
+  likes: integer("likes").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Creator coin trades
+export const creatorCoinTrades = pgTable("creator_coin_trades", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  coinId: varchar("coin_id").references(() => creatorCoins.id).notNull(),
+  userAddress: text("user_address").notNull(),
+  tradeType: text("trade_type").notNull(), // 'buy', 'sell'
+  amount: text("amount").notNull(),
+  price: text("price").notNull(),
+  transactionHash: text("transaction_hash"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Extended types with relations
 export type VideoWithChannel = Video & {
   channel: Channel;
@@ -479,3 +563,50 @@ export const insertWeb3ChannelSchema = createInsertSchema(web3Channels).omit({
   updatedAt: true,
   slug: true, // auto-generated
 });
+
+// Creator Coins insert schemas
+export const insertCreatorCoinSchema = createInsertSchema(creatorCoins).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  coinAddress: true, // Set after deployment
+  metadataUri: true, // Set after metadata upload
+  currentPrice: true, // Auto-calculated
+  marketCap: true, // Auto-calculated
+  bondingCurveProgress: true, // Auto-calculated
+  holders: true, // Auto-calculated
+  volume24h: true, // Auto-calculated
+  likes: true, // Auto-calculated
+  comments: true, // Auto-calculated
+  shares: true, // Auto-calculated
+  deploymentTxHash: true, // Set during deployment
+});
+
+export const insertCreatorCoinLikeSchema = createInsertSchema(creatorCoinLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCreatorCoinCommentSchema = createInsertSchema(creatorCoinComments).omit({
+  id: true,
+  createdAt: true,
+  likes: true, // Auto-calculated
+});
+
+export const insertCreatorCoinTradeSchema = createInsertSchema(creatorCoinTrades).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Creator Coins types
+export type CreatorCoin = typeof creatorCoins.$inferSelect;
+export type InsertCreatorCoin = z.infer<typeof insertCreatorCoinSchema>;
+
+export type CreatorCoinLike = typeof creatorCoinLikes.$inferSelect;
+export type InsertCreatorCoinLike = z.infer<typeof insertCreatorCoinLikeSchema>;
+
+export type CreatorCoinComment = typeof creatorCoinComments.$inferSelect;
+export type InsertCreatorCoinComment = z.infer<typeof insertCreatorCoinCommentSchema>;
+
+export type CreatorCoinTrade = typeof creatorCoinTrades.$inferSelect;
+export type InsertCreatorCoinTrade = z.infer<typeof insertCreatorCoinTradeSchema>;

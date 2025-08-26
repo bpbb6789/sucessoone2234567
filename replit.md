@@ -4,6 +4,17 @@ This is a cutting-edge Web3 video platform that revolutionizes content creation 
 
 ## Recent Changes (January 26, 2025)
 
+### Creator Coins Feature with Zora SDK Integration 🎨
+- **Added**: Complete content tokenization system using Zora's infrastructure
+- **Features**: Multi-media content support (images, videos, audio, GIFs, documents)
+- **Database**: New `creatorCoins` table with comprehensive metadata and social integration
+- **Frontend**: Advanced content upload interface with drag-and-drop and live preview
+- **Backend**: Zora SDK service with IPFS storage and automated thumbnail generation
+- **API**: Full CRUD endpoints for creator coin management, deployment, and price tracking
+- **Routes**: 
+  - `/create-content-coin` - Main content tokenization interface
+  - `/api/creator-coins/*` - Complete API for coin management
+
 ### Smart Contract Migration
 - **Removed**: Old `unipump-contracts-main` directory 
 - **Added**: New `EVM-Smart-Contract-main` with pump.fun clone implementation

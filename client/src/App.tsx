@@ -44,6 +44,7 @@ import Tokenize from '@/pages/Tokenize'
 import CreatePad from '@/pages/CreatePad'
 import CreateToken from '@/pages/CreateToken'
 import CreatorCoins from '@/pages/CreatorCoins'
+import CreateContentCoin from '@/pages/CreateContentCoin'
 import TokenDetail from '@/pages/TokenDetail'
 import NotFound from '@/pages/not-found'
 
@@ -100,6 +101,7 @@ function AppContent() {
               <Route path="/create" component={Create} />
               <Route path="/create-channel" component={CreateChannel} />
               <Route path="/create-pad" component={CreatePad} />
+              <Route path="/create-content-coin" component={CreateContentCoin} />
               <Route path="/creatorcoins" component={CreatorCoins} />
               <Route path="/token/:id" component={TokenDetail} />
               <Route path="/channel/:slug/manager" component={ChannelManager} />
