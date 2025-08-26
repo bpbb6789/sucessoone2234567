@@ -29,7 +29,7 @@ const mainNavItems = [
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
   { icon: Coins, label: "Tokens", href: "/tokens" },
   { icon: Upload, label: "Tokenize", href: "/tokenize" },
-  { icon: FileImage, label: "Create Pad", href: "/create-pad" },
+  { icon: Coins, label: "Create Token", href: "/createtoken" },
 ];
 
 
