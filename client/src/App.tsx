@@ -100,6 +100,7 @@ function AppContent() {
               <Route path="/create" component={Create} />
               <Route path="/create-channel" component={CreateChannel} />
               <Route path="/create-pad" component={CreatePad} />
+              <Route path="/creatorcoins" component={CreatorCoins} />
               <Route path="/token/:id" component={TokenDetail} />
               <Route path="/channel/:slug/manager" component={ChannelManager} />
               <Route path="/dashboard/import" component={ContentImport} />

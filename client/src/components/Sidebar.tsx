@@ -28,6 +28,7 @@ const mainNavItems = [
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
   { icon: Coins, label: "Tokens", href: "/tokens" },
+  { icon: Coins, label: "Creator Coins", href: "/creatorcoins" },
   { icon: Upload, label: "Tokenize", href: "/tokenize" },
   { icon: Coins, label: "Create Token", href: "/createtoken" },
 ];
