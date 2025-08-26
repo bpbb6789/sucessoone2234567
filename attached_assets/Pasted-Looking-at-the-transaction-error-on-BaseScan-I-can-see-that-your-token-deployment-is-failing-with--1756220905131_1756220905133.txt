@@ -1,0 +1,34 @@
+Looking at the transaction error on BaseScan, I can see that your token deployment is failing with "execution reverted". Based on the contract addresses and your codebase, this is happening when calling the deployERC20Token function on your TokenFactory contract.
+
+The most likely issue is that the contract address is not set in your TokenFactory contract. Looking at your TokenFactory.sol, it requires the contractAddress to be set before it can create pools:
+
+function deployERC20Token (
+    string memory name,
+    string memory ticker
+) public payable {
+    // ...
+    token.approve(contractAddress, INITIAL_AMOUNT);
+    uint256 balance = IPumpFun(contractAddress).getCreateFee();
+    require(msg.value >= balance, "Input Balance Should Be larger");
+    IPumpFun(contractAddress).createPool{value: balance}(address(token), INITIAL_AMOUNT);
+}
+The issue is that contractAddress is likely not set (defaults to address(0)), which causes the transaction to revert.
+
+Let me fix this by updating your deployment script to properly set the PumpFun address in the TokenFactory:
+
+EVM-Smart-Contract-main/scripts/deploy.ts
+Set PumpFun address in TokenFactory after deployment
+However, since your contracts are already deployed, you need to manually set the PumpFun address in your existing TokenFactory contract. Let me create a script to do this:
+
+EVM-Smart-Contract-main/scripts/set-pool-address.ts
+Script to set PumpFun address in existing TokenFactory
+Now run this script to fix your existing deployment:
+
+npx hardhat run scripts/set-pool-address.ts --network baseSepolia
+After running this script, your TokenFactory will be properly configured and token creation should work without the "execution reverted" error.
+
+The issue was that your TokenFactory contract's contractAddress variable wasn't set to point to your PumpFun contract, so when it tried to call IPumpFun(contractAddress).getCreateFee() and createPool(), it was calling these functions on the zero address, causing the transaction to revert.
+
+Contract Deploymentaddreses :
+✓ TokenFactory: 0x24408Fc5a7f57c3b24E85B9f97016F582391C9A9
+✓ PumpFun: 0x41b3a6Dd39D41467D6D47E51e77c16d
