@@ -97,12 +97,12 @@ function AppContent() {
               <Route path="/watch/:id" component={Watch} />
               <Route path="/tokens" component={Tokens} />
               <Route path="/creatorcoins" component={CreatorCoins} />
+              <Route path="/Contentcoin" component={CreatorCoins} />
               <Route path="/tokenize" component={Tokenize} />
               <Route path="/create" component={Create} />
               <Route path="/create-channel" component={CreateChannel} />
               <Route path="/create-pad" component={CreatePad} />
               <Route path="/create-content-coin" component={CreateContentCoin} />
-              <Route path="/creatorcoins" component={CreatorCoins} />
               <Route path="/token/:id" component={TokenDetail} />
               <Route path="/channel/:slug/manager" component={ChannelManager} />
               <Route path="/dashboard/import" component={ContentImport} />

@@ -1915,5 +1915,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all creator coins
+  app.get('/api/creator-coins', async (req, res) => {
+    try {
+      console.log('📋 Fetching all creator coins...');
+      
+      const allCoins = await db.select().from(creatorCoins).orderBy(sql`${creatorCoins.createdAt} DESC`);
+      
+      console.log(`✅ Found ${allCoins.length} creator coins`);
+      res.status(200).json(allCoins);
+    } catch (error) {
+      console.error('❌ Error fetching creator coins:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch creator coins',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   return httpServer;
 }

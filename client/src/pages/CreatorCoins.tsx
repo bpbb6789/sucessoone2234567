@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, TrendingUp, DollarSign, Users, BarChart3, Coins, ExternalLink, Sparkles, Zap } from "lucide-react";
+import { Search, TrendingUp, DollarSign, Users, BarChart3, Coins, ExternalLink, Sparkles, Zap, Hash, Eye } from "lucide-react";
 import { useGetAllSales } from '@/hooks/useGetAllSales';
+import { useCreatorCoins } from '@/hooks/useCreatorCoins';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
 
@@ -24,6 +25,11 @@ interface CreatorToken {
   creator: string;
   isOnBondingCurve?: boolean;
   progress?: number;
+  // Zora-specific fields
+  txHash?: string;
+  metadataUri?: string;
+  status?: string;
+  platform?: string;
 }
 
 const formatTimeAgo = (date: Date): string => {
@@ -48,11 +54,41 @@ export default function CreatorCoins() {
 
   // Get token sales data from GraphQL (PumpFun tokens)
   const { data: salesData, loading: salesLoading, error: salesError } = useGetAllSales();
+  
+  // Get real creator coins from Zora
+  const { data: zoraCoins, isLoading: zoraLoading, error: zoraError } = useCreatorCoins();
 
   React.useEffect(() => {
     let allCreatorTokens: CreatorToken[] = [];
 
-    // Add GraphQL tokens if available
+    // Add Zora creator coins (PRIORITY - show these first)
+    if (zoraCoins && Array.isArray(zoraCoins) && zoraCoins.length > 0) {
+      const zoraTokens = zoraCoins.map((coin: any) => ({
+        id: coin.id,
+        address: coin.coinAddress || 'Deploying...',
+        name: coin.coinName || coin.title,
+        symbol: coin.coinSymbol,
+        description: coin.description || `Zora creator coin for ${coin.title}`,
+        imageUri: coin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` : '',
+        createdAt: new Date(coin.createdAt),
+        creator: coin.creatorAddress,
+        price: coin.currentPrice || '0.000001',
+        marketCap: coin.marketCap || '0',
+        volume24h: coin.volume24h || '0',
+        holders: coin.holders || 0,
+        change24h: 0,
+        isOnBondingCurve: coin.status === 'deployed',
+        progress: parseFloat(coin.bondingCurveProgress || '0'),
+        // Zora-specific fields
+        txHash: coin.deploymentTxHash,
+        metadataUri: coin.metadataUri,
+        status: coin.status,
+        platform: 'Zora'
+      }));
+      allCreatorTokens = [...allCreatorTokens, ...zoraTokens];
+    }
+
+    // Add GraphQL tokens if available (PumpFun tokens)
     if (salesData && Array.isArray(salesData) && salesData.length > 0) {
       const pumpFunTokens = salesData.map((token: any) => ({
         id: token.memeTokenAddress || token.id,
@@ -69,14 +105,15 @@ export default function CreatorCoins() {
         holders: token.holders || 0,
         change24h: token.priceChange24h || 0,
         isOnBondingCurve: token.bondingCurve !== null,
-        progress: token.progress || 0
+        progress: token.progress || 0,
+        platform: 'PumpFun'
       }));
       allCreatorTokens = [...allCreatorTokens, ...pumpFunTokens];
     }
 
-    // Only show real data from GraphQL - no fallbacks or mock data
+    // Show all real data - Zora coins and PumpFun tokens
     setCreatorTokens(allCreatorTokens);
-  }, [salesData, salesLoading]);
+  }, [salesData, salesLoading, zoraCoins, zoraLoading]);
 
   // Filter tokens
   const filteredTokens = creatorTokens
@@ -99,7 +136,7 @@ export default function CreatorCoins() {
       }
     });
 
-  if (salesLoading) {
+  if (salesLoading || zoraLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="space-y-6">
@@ -127,7 +164,7 @@ export default function CreatorCoins() {
     );
   }
 
-  if (salesError) {
+  if (salesError || zoraError) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex items-center justify-center min-h-[400px]">
@@ -162,7 +199,7 @@ export default function CreatorCoins() {
               </h1>
             </div>
             <p className="text-muted-foreground">
-              Discover tokens created with pump.fun mechanics - bonding curves, fair launches, and community-driven tokens
+              Discover creator coins from Zora and pump.fun - bonding curves, content tokenization, and community-driven tokens
             </p>
           </div>
           <Link to="/createtoken">
@@ -306,7 +343,12 @@ export default function CreatorCoins() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          {token.address && (
+                          {token.platform === 'Zora' && (
+                            <Badge variant="outline" className="text-xs px-1 py-0 border-purple-500 text-purple-600">
+                              Zora
+                            </Badge>
+                          )}
+                          {token.address && token.address !== 'Deploying...' && (
                             <Link to={`/token/${token.address}`}>
                               <Button 
                                 className="px-2 py-1 h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
@@ -368,6 +410,48 @@ export default function CreatorCoins() {
                         </div>
                       </div>
 
+                      {/* Transaction Hash and Address - PROMINENT DISPLAY */}
+                      {token.platform === 'Zora' && (token.txHash || token.address) && (
+                        <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                          <div className="space-y-2">
+                            {token.address && token.address !== 'Deploying...' && (
+                              <div className="flex items-center gap-2">
+                                <Coins className="h-3 w-3 text-purple-600" />
+                                <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">Coin Address:</span>
+                                <span className="font-mono text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded border text-purple-800 dark:text-purple-200">
+                                  {token.address}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0"
+                                  onClick={() => navigator.clipboard.writeText(token.address)}
+                                >
+                                  <Hash className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                            {token.txHash && (
+                              <div className="flex items-center gap-2">
+                                <Hash className="h-3 w-3 text-green-600" />
+                                <span className="text-xs text-green-600 dark:text-green-400 font-medium">TX Hash:</span>
+                                <span className="font-mono text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded border text-green-800 dark:text-green-200">
+                                  {`${token.txHash.slice(0, 10)}...${token.txHash.slice(-8)}`}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-4 w-4 p-0"
+                                  onClick={() => window.open(`https://sepolia.basescan.org/tx/${token.txHash}`, '_blank')}
+                                >
+                                  <Eye className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Creator Info */}
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                         <div className="flex items-center justify-between text-xs">
@@ -377,7 +461,7 @@ export default function CreatorCoins() {
                               {token.creator !== 'No Creator Found' ? `${token.creator.slice(0, 6)}...${token.creator.slice(-4)}` : 'No Creator Found'}
                             </span>
                           </div>
-                          {token.address && (
+                          {token.address && token.address !== 'Deploying...' && (
                             <Link to={`/token/${token.address}`}>
                               <Button
                                 variant="ghost"
