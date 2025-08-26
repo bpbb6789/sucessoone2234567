@@ -11,8 +11,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAccount } from "@/hooks/useWallet";
-import { UNIPUMP_CREATOR_ADDRESS } from "@/lib/addresses";
-import { UniPumpCreatorAbi } from "../../../abi/UniPumpCreatorAbi";
+import { TOKEN_FACTORY_ADDRESS } from "@/lib/addresses";
+import { TOKEN_FACTORY_ABI } from "../../../abi/TokenFactoryAbi";
 import TransactionComponent from "@/components/Transaction";
 import type { LifecycleStatus } from '@coinbase/onchainkit/transaction';
 import { ChevronDown, Upload, Coins, Zap, X, ImageIcon } from "lucide-react";
@@ -229,11 +229,11 @@ export default function CreateChannel() {
           </div>
           
           <TransactionComponent
-            contractAddress={UNIPUMP_CREATOR_ADDRESS}
-            contractAbi={UniPumpCreatorAbi}
-            functionName="createTokenSale"
+            contractAddress={TOKEN_FACTORY_ADDRESS}
+            contractAbi={TOKEN_FACTORY_ABI}
+            functionName="deployERC20Token"
             cta="Deploy Channel Coin"
-            args={contractArgs}
+            args={[contractArgs[0], contractArgs[1]]} // name, ticker
             handleOnStatus2={handleTransactionSuccess}
           />
           

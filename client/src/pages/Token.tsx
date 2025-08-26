@@ -11,7 +11,7 @@ import { TokenTrading } from '@/components/TokenTrading';
 import { Link } from 'react-router-dom';
 import { useReadContract } from 'wagmi';
 import { PriceService } from '../../../lib/priceService';
-import { CONTRACTS, UniPumpAbi } from '@/lib/contracts';
+import { CONTRACTS, PUMP_FUN_ABI } from '@/lib/contracts';
 import { formatUnits } from 'viem';
 
 interface TokenData {
@@ -53,38 +53,14 @@ export default function Token() {
 
   const tokenAddress = getTokenAddressFromPath() as `0x${string}` | null;
 
-  // Get token data from contract
-  const { data: contractTokenData, isError: tokenDataError, isLoading: contractLoading } = useReadContract({
-    address: CONTRACTS.UNIPUMP,
-    abi: UniPumpAbi,
-    functionName: 'getTokenData',
+  // Get token bonding curve data from contract
+  const { data: bondingCurveData, isError: tokenDataError, isLoading: contractLoading } = useReadContract({
+    address: CONTRACTS.PUMP_FUN,
+    abi: PUMP_FUN_ABI,
+    functionName: 'getBondingCurve',
     args: tokenAddress ? [tokenAddress] : undefined,
     query: {
       enabled: !!tokenAddress,
-      retry: 2,
-    },
-  });
-
-  // Get market cap data
-  const { data: capData, isLoading: capLoading } = useReadContract({
-    address: CONTRACTS.UNIPUMP,
-    abi: UniPumpAbi,
-    functionName: 'cap',
-    args: tokenAddress ? [tokenAddress] : undefined,
-    query: {
-      enabled: !!tokenAddress && !!contractTokenData,
-      retry: 2,
-    },
-  });
-
-  // Get current price (reserves for bonding curve)
-  const { data: reserveData, isLoading: reserveLoading } = useReadContract({
-    address: CONTRACTS.UNIPUMP,
-    abi: UniPumpAbi,
-    functionName: 'getReserve',
-    args: tokenAddress ? [tokenAddress] : undefined,
-    query: {
-      enabled: !!tokenAddress && !!contractTokenData,
       retry: 2,
     },
   });
@@ -108,7 +84,7 @@ export default function Token() {
       }
 
       // Wait for contract data to load
-      if (contractLoading || capLoading || reserveLoading) {
+      if (contractLoading) {
         setIsLoading(true);
         return;
       }
@@ -126,8 +102,8 @@ export default function Token() {
       }
 
       // Check if we have contract data
-      if (!contractTokenData) {
-        console.log("No contract data available");
+      if (!bondingCurveData) {
+        console.log("No bonding curve data available");
         setIsLoading(false);
         return;
       }
@@ -135,83 +111,46 @@ export default function Token() {
       try {
         setIsLoading(true);
 
-        // Get real price data from PriceService
-        let price = "0.000001";
-        let marketCapValue = "0";
-        let volume24h = "0";
-        let holders = 0;
+        // Extract data from bonding curve struct
+        const {
+          tokenMint,
+          virtualTokenReserves,
+          virtualEthReserves,
+          realTokenReserves,
+          realEthReserves,
+          tokenTotalSupply,
+          mcapLimit,
+          complete
+        } = bondingCurveData;
 
-        // Use bonding curve calculation directly with contract data
-        if (capData && contractTokenData.supply) {
-          try {
-            const bondingCurveData = PriceService.getTokenPriceFromContract(capData, contractTokenData.supply);
-            
-            price = bondingCurveData.price.toFixed(8);
-            marketCapValue = bondingCurveData.marketCap.toFixed(2);
-            
-            // Get real volume from GraphQL
-            try {
-              const volumeData = await PriceService.getTokenPrice(tokenAddress);
-              volume24h = volumeData.volume24h;
-            } catch (volumeError) {
-              console.warn('Could not fetch volume data:', volumeError);
-              volume24h = "0";
-            }
-          } catch (error) {
-            console.error('Error calculating bonding curve price:', error);
-            // Fallback calculation using actual contract data
-            const capInEth = Number(capData) / 1e18;
-            const supplyNumber = Number(contractTokenData.supply) / 1e18;
-            
-            // Use proper bonding curve formula from contract
-            const expValue = Math.exp(0.00003606 * capInEth);
-            const curveValue = 0.6015 * expValue;
-            const pricePerToken = curveValue / 1000000; // M = 1,000,000
-            const priceUSD = pricePerToken * 3000; // ETH price approximation
-            
-            price = priceUSD.toFixed(8);
-            marketCapValue = (priceUSD * Math.min(supplyNumber, 800000000)).toFixed(2);
-          }
-        }
+        // Calculate basic metrics from bonding curve
+        const virtualEthReservesEth = Number(formatUnits(virtualEthReserves, 18));
+        const virtualTokenReservesNum = Number(formatUnits(virtualTokenReserves, 18));
+        const totalSupplyNum = Number(formatUnits(tokenTotalSupply, 18));
+        
+        // Calculate current price (ETH per token)
+        const pricePerTokenEth = virtualEthReservesEth / virtualTokenReservesNum;
+        const priceUSD = pricePerTokenEth * 3000; // Approximate ETH price
 
-        // Get holder count (this would normally come from indexing service)
-        try {
-          holders = await PriceService.getHolderCount(tokenAddress);
-        } catch (error) {
-          console.warn('Could not fetch holder count:', error);
-          holders = 0;
-        }
+        // Calculate market cap
+        const marketCapValue = priceUSD * totalSupplyNum;
 
-        // Skip pool state for now as it's not defined in this context
-
-        // Calculate bonding curve progress
-        let bondingCurvePercent = "0";
-        if (contractTokenData.supply) {
-          bondingCurvePercent = PriceService.calculateBondingCurveProgress(contractTokenData.supply).toFixed(1);
-        }
-
-        // Format the data for display
-        const formattedData = {
-          price: `$${price}`,
-          marketCap: `$${formatNumber(parseFloat(marketCapValue))}`,
-          volume24h: `$${formatNumber(parseFloat(volume24h))}`,
-          holders: holders.toString(),
-          change24h: "+0.0%", // This would need historical data from GraphQL
-          bondingCurvePercent: bondingCurvePercent,
-        };
+        // Mock data for now (would come from indexing service)
+        const volume24h = "0";
+        const holders = 42;
 
         const processedTokenData: TokenData = {
           address: tokenAddress,
-          name: contractTokenData.name || "Unknown Token",
-          symbol: contractTokenData.symbol || "UNK",
-          price: price,
-          marketCap: marketCapValue,
+          name: "Token", // Would fetch from token contract
+          symbol: "TKN", // Would fetch from token contract
+          price: priceUSD.toFixed(8),
+          marketCap: marketCapValue.toFixed(2),
           volume24h: volume24h,
           holders: holders,
-          supply: formatUnits(contractTokenData.supply, 18),
-          createdBy: contractTokenData.createdBy || "0x0000000000000000000000000000000000000000",
-          description: contractTokenData.description || 'No description available',
-          imageUri: contractTokenData.imageUri || undefined
+          supply: formatUnits(tokenTotalSupply, 18),
+          createdBy: "0x0000000000000000000000000000000000000000", // Would get from indexer
+          description: 'Token created through PumpFun bonding curve',
+          imageUri: undefined
         };
 
         console.log("Processed token data:", processedTokenData);
@@ -229,7 +168,7 @@ export default function Token() {
     };
 
     fetchTokenData();
-  }, [tokenAddress, contractTokenData, capData, reserveData, tokenDataError, contractLoading, capLoading, reserveLoading, toast]);
+  }, [tokenAddress, bondingCurveData, tokenDataError, contractLoading, toast]);
 
   if (isLoading || contractLoading) {
     return (

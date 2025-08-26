@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { formatEther, parseEther, type Address } from 'viem';
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { uniPumpConfig, CONTRACTS, UniPumpAbi } from '@/lib/contracts';
+import { pumpFunConfig, CONTRACTS, PUMP_FUN_ABI } from '@/lib/contracts';
 import { formatUnits, parseUnits } from 'viem';
 import { useWallet } from '@/hooks/useWallet';
 

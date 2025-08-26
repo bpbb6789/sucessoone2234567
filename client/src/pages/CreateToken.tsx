@@ -1,4 +1,4 @@
-import { UniPumpCreatorAbi } from "../../../abi/UniPumpCreatorAbi"
+import { TOKEN_FACTORY_ABI } from "../../../abi/TokenFactoryAbi"
 import {
     Form,
     FormControl,
@@ -8,7 +8,7 @@ import {
     FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { UNIPUMP_CREATOR_ADDRESS } from "@/lib/addresses"
+import { TOKEN_FACTORY_ADDRESS } from "@/lib/addresses"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
@@ -216,10 +216,10 @@ export default function CreateTokenPage() {
 
                             <div className="pt-4">
                                 <TransactionComponent
-                                    contractAddress={UNIPUMP_CREATOR_ADDRESS}
-                                    contractAbi={UniPumpCreatorAbi}
+                                    contractAddress={TOKEN_FACTORY_ADDRESS}
+                                    contractAbi={TOKEN_FACTORY_ABI}
                                     cta="Create Channel"
-                                    functionName="createTokenSale"
+                                    functionName="deployERC20Token"
                                     handleOnStatus2={async (status) => {
                                         queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
                                         queryClient.invalidateQueries({ queryKey: ["/api/web3-channels"] })
@@ -235,7 +235,7 @@ export default function CreateTokenPage() {
                                                 for (const log of logs) {
                                                     if (log.topics && log.topics.length > 0) {
                                                         // The token address is typically in the log data or topics
-                                                        if (log.address && log.address !== UNIPUMP_CREATOR_ADDRESS) {
+                                                        if (log.address && log.address !== TOKEN_FACTORY_ADDRESS) {
                                                             tokenAddress = log.address;
                                                             break;
                                                         }

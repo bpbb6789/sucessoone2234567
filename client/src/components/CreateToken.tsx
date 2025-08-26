@@ -1,4 +1,4 @@
-import { UniPumpCreatorAbi } from "@/abi/UniPumpCreatorAbi"
+import { TOKEN_FACTORY_ABI } from "../../../abi/TokenFactoryAbi"
 import {
     Form,
     FormControl,
@@ -8,7 +8,7 @@ import {
     FormMessage
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { UNIPUMP_CREATOR_ADDRESS } from "@/lib/addresses"
+import { TOKEN_FACTORY_ADDRESS } from "@/lib/addresses"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
@@ -200,10 +200,10 @@ const CreateToken = ({
                             <div className="h-[20px]"></div>
                             {isConnected ? (
                                 <TransactionComponent
-                                    contractAddress={UNIPUMP_CREATOR_ADDRESS}
-                                    contractAbi={UniPumpCreatorAbi}
+                                    contractAddress={TOKEN_FACTORY_ADDRESS}
+                                    contractAbi={TOKEN_FACTORY_ABI}
                                     cta="Create Token"
-                                    functionName="createTokenSale"
+                                    functionName="deployERC20Token"
                                     handleOnStatus2={() => {
                                         queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
                                     }}

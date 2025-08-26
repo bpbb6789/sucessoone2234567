@@ -1,3 +1,0 @@
-packages:
-  - "./indexer"
-  - "./docker/indexer-service"

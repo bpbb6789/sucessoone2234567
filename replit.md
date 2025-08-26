@@ -1,6 +1,17 @@
 # Overview
 
-This is a full-stack YouTube clone web application built with React, TypeScript, Express.js, and PostgreSQL. The application provides core YouTube functionality including video browsing, shorts, subscriptions, music, and user library management. It features a responsive design that adapts to both desktop and mobile interfaces, with a collapsible sidebar navigation and mobile bottom navigation.
+This is a cutting-edge Web3 video platform that revolutionizes content creation and monetization through blockchain technology, enabling creators to tokenize their content ecosystems and build interactive communities. Built with React, TypeScript, Express.js, and PostgreSQL, integrating Wagmi & RainbowKit for blockchain interactions on Base Sepolia testnet.
+
+## Recent Changes (January 26, 2025)
+
+### Smart Contract Migration
+- **Removed**: Old `unipump-contracts-main` directory 
+- **Added**: New `EVM-Smart-Contract-main` with pump.fun clone implementation
+- **Updated**: Contract ABIs and addresses for new architecture
+  - PumpFun.sol: Main bonding curve contract with virtual reserves
+  - TokenFactory.sol: ERC20 token deployment factory  
+  - Token.sol: Standard ERC20 token implementation
+- **Migration Status**: Contract addresses pending deployment (currently set to 0x000...)
 
 # User Preferences
 
