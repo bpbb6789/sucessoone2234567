@@ -570,7 +570,7 @@ export const insertCreatorCoinSchema = createInsertSchema(creatorCoins).omit({
   createdAt: true,
   updatedAt: true,
   coinAddress: true, // Set after deployment
-  metadataUri: true, // Set after metadata upload
+  // metadataUri is now included since we create it during upload
   currentPrice: true, // Auto-calculated
   marketCap: true, // Auto-calculated
   bondingCurveProgress: true, // Auto-calculated
