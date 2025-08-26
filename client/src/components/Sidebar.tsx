@@ -29,6 +29,7 @@ const mainNavItems = [
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
   { icon: Coins, label: "Tokens", href: "/tokens" },
   { icon: Coins, label: "Creator Coins", href: "/creatorcoins" },
+  { icon: FileImage, label: "Content Coins", href: "/Contentcoin" },
   { icon: Upload, label: "Tokenize", href: "/tokenize" },
   { icon: Coins, label: "Create Token", href: "/createtoken" },
   { icon: Coins, label: "Create Content Coin", href: "/create-content-coin" },
