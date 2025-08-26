@@ -417,8 +417,8 @@ export default function Tokens() {
                         </div>
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <span>📊</span>
-                          <span>0</span>
-                          <span>0</span>
+                          <span>{token.holders || 0}</span>
+                          <span>{token.volume24h || '0'}K</span>
                           {token.address && (
                             <Button className="px-2 py-1 h-5 text-xs bg-green-600 hover:bg-green-700 text-white ml-1" size="sm">
                               Trade
@@ -439,7 +439,7 @@ export default function Tokens() {
                               <span className="text-xs text-gray-500 dark:text-gray-400">MC</span>
                               <span className="text-green-500 dark:text-green-400 font-medium">${token.marketCap}K</span>
                               <span className="text-xs text-gray-500 dark:text-gray-400">TX</span>
-                              <span className="text-gray-900 dark:text-white font-medium">{Math.floor(Math.random() * 1000) + 500}</span>
+                              <span className="text-gray-900 dark:text-white font-medium">{token.holders || 0}</span>
                             </div>
                           )}
                         </div>
@@ -460,7 +460,7 @@ export default function Tokens() {
                               <div className="flex items-center gap-1">
                                 <span className="text-red-500 dark:text-red-400">📉</span>
                                 <span className={`${token.change24h && token.change24h < 0 ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>
-                                  {token.change24h ? Math.abs(token.change24h).toFixed(0) : Math.floor(Math.random() * 50) + 10}%
+                                  {token.change24h ? Math.abs(token.change24h).toFixed(1) : '0.0'}%
                                 </span>
                               </div>
                               <div className="flex items-center gap-1">

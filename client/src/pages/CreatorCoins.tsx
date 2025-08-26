@@ -59,9 +59,9 @@ export default function CreatorCoins() {
         address: token.memeTokenAddress,
         name: token.name || token.symbol || 'Unknown Token',
         symbol: token.symbol || 'UNKNOWN',
-        description: token.description || 'Created via pump.fun mechanics',
+        description: token.bio || token.description || 'Created via pump.fun mechanics',
         createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
-        creator: token.creator || 'Unknown Creator',
+        creator: token.createdBy || 'No Creator Found',
         price: token.price || '0.000001',
         marketCap: token.marketCap || '0',
         volume24h: token.volume24h || '0',
@@ -340,7 +340,7 @@ export default function CreatorCoins() {
                           <div className="flex items-center gap-1">
                             <span className="text-green-500 dark:text-green-400">📈</span>
                             <span className={`${token.change24h && token.change24h < 0 ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>
-                              {token.change24h ? Math.abs(token.change24h).toFixed(0) : Math.floor(Math.random() * 50) + 10}%
+                              {token.change24h ? Math.abs(token.change24h).toFixed(1) : '0.0'}%
                             </span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -360,7 +360,7 @@ export default function CreatorCoins() {
                           <div className="flex items-center gap-1">
                             <span className="text-gray-500 dark:text-gray-400">Creator:</span>
                             <span className="font-mono text-purple-600 dark:text-purple-400">
-                              {token.creator ? `${token.creator.slice(0, 6)}...${token.creator.slice(-4)}` : 'Unknown'}
+                              {token.creator !== 'No Creator Found' ? `${token.creator.slice(0, 6)}...${token.creator.slice(-4)}` : 'No Creator Found'}
                             </span>
                           </div>
                           {token.address && (
