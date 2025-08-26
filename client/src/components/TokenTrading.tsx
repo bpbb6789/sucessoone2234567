@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { formatEther, parseEther, type Address } from 'viem';
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { pumpFunConfig, CONTRACTS, PUMP_FUN_ABI } from '@/lib/contracts';
 import { formatUnits, parseUnits } from 'viem';
 import { useWallet } from '@/hooks/useWallet';
@@ -47,7 +47,7 @@ export function TokenTrading({
   });
 
   // Get user's token balance
-  const { isConnected, account } = useWallet();
+  const { isConnected, address: account } = useAccount();
   const { data: userBalance } = useReadContract({
     address: tokenAddress as `0x${string}`,
     abi: [
@@ -60,9 +60,9 @@ export function TokenTrading({
       },
     ],
     functionName: 'balanceOf',
-    args: isConnected && account?.address ? [account.address] : undefined,
+    args: isConnected && account ? [account] : undefined,
     query: {
-      enabled: isConnected && !!account?.address,
+      enabled: isConnected && !!account,
     },
   });
 
@@ -89,11 +89,9 @@ export function TokenTrading({
     try {
       // Call the smart contract to buy tokens
       const hash = await writeContract({
-        ...uniPumpConfig,
-        address: CONTRACTS.UNIPUMP,
-        abi: UniPumpAbi,
+        ...pumpFunConfig,
         functionName: 'buy',
-        args: [tokenAddress as `0x${string}`, 0n], // minTokensOut = 0 for now
+        args: [tokenAddress as `0x${string}`, parseUnits(buyAmount, 18), BigInt(0)], // amount in wei, minTokensOut = 0 for now
         value: parseEther(buyAmount), // Send ETH with the transaction
       });
 
@@ -140,11 +138,9 @@ export function TokenTrading({
     try {
       // Call the smart contract to sell tokens
       const hash = await writeContract({
-        ...uniPumpConfig,
-        address: CONTRACTS.UNIPUMP,
-        abi: UniPumpAbi,
+        ...pumpFunConfig,
         functionName: 'sell',
-        args: [tokenAddress as `0x${string}`, parseEther(sellAmount), 0n], // minEthOut = 0 for now
+        args: [tokenAddress as `0x${string}`, parseUnits(sellAmount, 18), BigInt(0)], // amount in wei, minEthOut = 0 for now
       });
 
       setCurrentTxHash(hash);
@@ -186,7 +182,7 @@ export function TokenTrading({
             <TrendingUp className="h-6 w-6 text-blue-600" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
-              <p className="text-lg font-bold">${formatNumber(parseFloat(marketCap))}</p>
+              <p className="text-lg font-bold">${parseFloat(marketCap).toLocaleString()}</p>
             </div>
           </CardContent>
         </Card>
