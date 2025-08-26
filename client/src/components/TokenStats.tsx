@@ -28,7 +28,7 @@ export default function TokenStats({ tokenData }: TokenStatsProps) {
     const value = typeof num === 'string' ? parseFloat(num) : num;
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-    return value.toFixed(2);
+    return value.toString();
   };
 
   const getPriceChangeColor = (change?: number) => {
