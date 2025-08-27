@@ -93,7 +93,7 @@ const mockChannelData: ChannelData[] = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("trending");
-  const [searchTerm, setSearchTerm] = useState('');
+  
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [channels, setChannels] = useState<ChannelData[]>([]);
   const [deployedPadsData, setDeployedPadsData] = useState<any[]>([]);
