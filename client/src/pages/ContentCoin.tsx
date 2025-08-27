@@ -204,63 +204,98 @@ export default function ContentCoin() {
           </div>
         </div>
 
-        {/* Trending Channels Section */}
+        {/* Now Trending Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Trending Channels</h2>
-              <p className="text-gray-400">Discover popular channels</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Now trending</h2>
             </div>
-            <Link to="/channels">
+            <div className="flex items-center gap-2">
               <Button 
-                variant="outline" 
-                className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black"
+                variant="ghost" 
+                size="icon"
+                className="text-gray-400 hover:text-white h-8 w-8"
               >
-                See All
+                <span className="text-lg">←</span>
               </Button>
-            </Link>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-gray-400 hover:text-white h-8 w-8"
+              >
+                <span className="text-lg">→</span>
+              </Button>
+            </div>
           </div>
 
-          {/* Trending Channels Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Trending Channels Cards - Horizontal Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Mock channel data - replace with real data later */}
             {[
-              { name: "Unc", symbol: "(Unc)", marketCap: "$1.3M", replies: 37, bgColor: "from-orange-500 to-red-500" },
-              { name: "Illusion of Life", symbol: "(SPARK)", marketCap: "$32.9M", replies: 830, bgColor: "from-yellow-500 to-orange-500" },
-              { name: "KEANU SLEAZE", symbol: "(SLEAZE)", marketCap: "$754.4K", replies: 318, bgColor: "from-purple-500 to-pink-500" },
-              { name: "TROLL", symbol: "(TROLL)", marketCap: "$253.4M", replies: 1095, bgColor: "from-gray-600 to-gray-800" }
+              { 
+                name: "Unc", 
+                symbol: "(Unc)", 
+                marketCap: "$1.3M", 
+                replies: 37, 
+                avatar: "/images/creator1.jpg",
+                description: "Gen Z Labels All 1900s Babies as Uncs"
+              },
+              { 
+                name: "Illusion of Life", 
+                symbol: "(SPARK)", 
+                marketCap: "$32.9M", 
+                replies: 830, 
+                avatar: "/images/creator2.jpg",
+                description: "AI Dog Donates All Creator Fees to Sesame Workshop Charity"
+              },
+              { 
+                name: "KEANU SLEAZE", 
+                symbol: "(SLEAZE)", 
+                marketCap: "$754.4K", 
+                replies: 318, 
+                avatar: "/images/creator3.jpg",
+                description: "Buss Down Keanu Meme Keeps It Flashy Across CT"
+              },
+              { 
+                name: "TROLL", 
+                symbol: "(TROLL)", 
+                marketCap: "$253.4M", 
+                replies: 1095, 
+                avatar: "/images/creator4.jpg",
+                description: "Iconic Troll Meme Surges Past $250M Market Cap"
+              }
             ].map((channel, index) => (
               <div key={index} className="group cursor-pointer">
-                <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors rounded-lg overflow-hidden">
-                  {/* Channel Banner */}
-                  <div className={`relative aspect-video bg-gradient-to-br ${channel.bgColor} flex items-center justify-center`}>
-                    <div className="text-center text-white">
-                      <h3 className="text-lg font-bold mb-1">{channel.name}</h3>
-                      <p className="text-sm opacity-90">{channel.symbol}</p>
-                    </div>
-                  </div>
-
-                  {/* Channel Info */}
-                  <div className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-white font-medium text-sm">market cap: {channel.marketCap}</p>
-                        <p className="text-gray-400 text-xs">replies: {channel.replies}</p>
+                <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-4 border border-gray-700/50">
+                  {/* Top row - Avatar, Name, Symbol, Market Cap */}
+                  <div className="flex items-start gap-3 mb-3">
+                    {/* Avatar */}
+                    <div className="relative flex-shrink-0">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <span className="text-white font-bold text-lg">{channel.name.charAt(0)}</span>
                       </div>
                     </div>
 
-                    {/* Subscribe Button */}
-                    <Button
-                      size="sm"
-                      className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log("Subscribe button clicked for:", channel.name);
-                      }}
-                    >
-                      Subscribe
-                    </Button>
+                    {/* Name, Symbol & Stats */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-1">
+                        <div>
+                          <h3 className="font-bold text-white text-sm leading-tight">{channel.name}</h3>
+                          <p className="text-gray-400 text-xs">{channel.symbol}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="text-xs text-gray-300 space-y-0.5">
+                        <p>market cap: <span className="text-green-400">{channel.marketCap}</span></p>
+                        <p>replies: <span className="text-gray-400">{channel.replies}</span></p>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Description */}
+                  <p className="text-gray-300 text-xs leading-relaxed">
+                    {channel.description}
+                  </p>
                 </div>
               </div>
             ))}
