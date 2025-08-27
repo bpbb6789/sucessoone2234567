@@ -331,13 +331,7 @@ export default function Home() {
                 <div className="text-center py-12">
                   <Coins className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <h3 className="text-lg font-semibold mb-2">No creator coins yet</h3>
-                  <p className="text-gray-400 mb-4">Create your first creator coin</p>
-                  <Link href="/creatorcoins">
-                    <Button variant="outline">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Creator Coin
-                    </Button>
-                  </Link>
+                  <p className="text-gray-400">Check back later for creator coins</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
