@@ -35,6 +35,7 @@ import { PUMP_FUN_ABI } from "../../../abi/PumpFunAbi";
 import TransactionComponent from "@/components/Transaction";
 import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
 import { useGetAllSales } from "@/hooks/useGetAllSales";
+import { useCreatorCoin } from "@/hooks/useCreatorCoins";
 
 interface ContentCoinData {
   id: string;
@@ -92,10 +93,38 @@ export default function ContentCoinDetail() {
   const [sellAmount, setSellAmount] = useState("");
   const [comment, setComment] = useState("");
 
-  // Get token data from GraphQL
+  // Try to get content coin data first (from creator coins API)
+  const { data: creatorCoin, isLoading: creatorCoinLoading } = useCreatorCoin(tokenAddress || '');
+  
+  // Get token data from GraphQL as fallback
   const { data: salesData, loading: salesLoading } = useGetAllSales();
 
   const tokenData = React.useMemo(() => {
+    // First, try to use creator coin data if available
+    if (creatorCoin) {
+      return {
+        id: creatorCoin.memeTokenAddress || creatorCoin.id,
+        address: creatorCoin.memeTokenAddress || creatorCoin.id,
+        name: creatorCoin.title || creatorCoin.coinName,
+        symbol: creatorCoin.coinSymbol,
+        description: creatorCoin.description || `${creatorCoin.coinName} content coin`,
+        creator: creatorCoin.creatorAddress,
+        price: creatorCoin.currentPrice || '0.001',
+        marketCap: '1870',
+        volume24h: '2.30', 
+        holders: 42,
+        change24h: 15.3,
+        createdAt: new Date(creatorCoin.createdAt),
+        isOnBondingCurve: creatorCoin.status === 'deployed',
+        progress: creatorCoin.status === 'deployed' ? 100 : 56,
+        bondingCurveAddress: creatorCoin.memeTokenAddress,
+        imageUrl: `https://gateway.pinata.cloud/ipfs/${creatorCoin.mediaCid}`,
+        contentType: creatorCoin.contentType as 'image' | 'video' | 'audio' | 'text',
+        creatorEarnings: '0.02'
+      } as ContentCoinData;
+    }
+
+    // Fallback to GraphQL sales data
     if (!salesData || !Array.isArray(salesData) || !tokenAddress) return null;
 
     const token = salesData.find((t: any) => 
@@ -124,7 +153,7 @@ export default function ContentCoinDetail() {
       contentType: 'image' as const,
       creatorEarnings: '0.02'
     } as ContentCoinData;
-  }, [salesData, tokenAddress]);
+  }, [creatorCoin, salesData, tokenAddress]);
 
   // Mock data for comments, holders, and activity
   const [comments] = useState<Comment[]>([
@@ -199,7 +228,7 @@ export default function ContentCoinDetail() {
     });
   };
 
-  if (salesLoading) {
+  if (creatorCoinLoading || salesLoading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
@@ -212,7 +241,7 @@ export default function ContentCoinDetail() {
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Token Not Found</h1>
-          <Link to="/Contentcoin">
+          <Link to="/contentcoin">
             <Button>Back to Content Coins</Button>
           </Link>
         </div>
@@ -224,7 +253,7 @@ export default function ContentCoinDetail() {
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <Link to="/Contentcoin">
+        <Link to="/contentcoin">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
