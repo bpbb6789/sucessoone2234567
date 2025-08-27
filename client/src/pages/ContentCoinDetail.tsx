@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -95,16 +94,16 @@ export default function ContentCoinDetail() {
 
   // Get token data from GraphQL
   const { data: salesData, loading: salesLoading } = useGetAllSales();
-  
+
   const tokenData = React.useMemo(() => {
     if (!salesData || !Array.isArray(salesData) || !tokenAddress) return null;
-    
+
     const token = salesData.find((t: any) => 
       t.memeTokenAddress?.toLowerCase() === tokenAddress.toLowerCase()
     );
-    
+
     if (!token) return null;
-    
+
     return {
       id: token.memeTokenAddress,
       address: token.memeTokenAddress,
@@ -183,7 +182,7 @@ export default function ContentCoinDetail() {
   const formatTimeAgo = (date: Date): string => {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'now';
     if (diffInMinutes < 60) return `${diffInMinutes}m`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
@@ -213,7 +212,7 @@ export default function ContentCoinDetail() {
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Token Not Found</h1>
-          <Link to="/contentcoin">
+          <Link to="/Contentcoin">
             <Button>Back to Content Coins</Button>
           </Link>
         </div>
@@ -225,7 +224,7 @@ export default function ContentCoinDetail() {
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
-        <Link to="/contentcoin">
+        <Link to="/Contentcoin">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
@@ -323,7 +322,7 @@ export default function ContentCoinDetail() {
               </div>
             </div>
             <h1 className="text-xl font-bold mb-2">{tokenData.name}</h1>
-            
+
             {/* Stats Row - Desktop */}
             <div className="hidden lg:grid grid-cols-3 gap-4 text-center mb-4">
               <div>
