@@ -24,20 +24,20 @@ interface ChannelDetail {
   slug: string
 }
 
-// Fetch real videos and content data
-const { data: channelContent } = useQuery({
-  queryKey: ['/api/channel-content', slug],
-  queryFn: async () => {
-    const response = await fetch(`/api/channel-content/${slug}`)
-    if (!response.ok) return { videos: [], shorts: [], stats: null }
-    return response.json()
-  },
-  enabled: !!slug
-})
-
 export default function ChannelDetail() {
   const { slug } = useParams()
   const [isSubscribed, setIsSubscribed] = useState(false)
+
+  // Fetch real videos and content data
+  const { data: channelContent } = useQuery({
+    queryKey: ['/api/channel-content', slug],
+    queryFn: async () => {
+      const response = await fetch(`/api/channel-content/${slug}`)
+      if (!response.ok) return { videos: [], shorts: [], stats: null }
+      return response.json()
+    },
+    enabled: !!slug
+  })
 
   const { data: channel, isLoading, error } = useQuery({
     queryKey: ['/api/web3-channels/slug', slug],
