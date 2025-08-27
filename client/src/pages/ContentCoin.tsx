@@ -232,15 +232,15 @@ export default function ContentCoin() {
                       </div>
                     )}
                     
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-black bg-opacity-60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                    {/* Play Button - Only for video/audio content */}
+                    {(coin.contentType === 'video' || coin.contentType === 'audio') && (
                       <Button
                         size="icon"
-                        className="bg-green-500 hover:bg-green-600 text-black rounded-full w-12 h-12"
+                        className="absolute bottom-2 right-2 bg-black bg-opacity-70 hover:bg-black hover:bg-opacity-90 text-white rounded-full w-8 h-8 opacity-80 hover:opacity-100 transition-all"
                       >
-                        <Play className="w-6 h-6" />
+                        <Play className="w-4 h-4" />
                       </Button>
-                    </div>
+                    )}
 
                     {/* Status Badge */}
                     <div className="absolute top-2 right-2">
@@ -269,18 +269,17 @@ export default function ContentCoin() {
 
                     {/* Blockchain Info - Only show if deployed */}
                     {coin.status === 'deployed' && (coin.coinAddress || coin.deploymentTxHash) && (
-                      <div className="space-y-2 pt-2 border-t border-gray-700">
+                      <div className="space-y-1 pt-2 border-t border-gray-700">
                         {coin.coinAddress && (
-                          <div className="flex items-center gap-2">
-                            <Hash className="w-3 h-3 text-green-400" />
-                            <span className="text-xs text-gray-400">Contract:</span>
-                            <code className="text-xs text-green-400 font-mono bg-gray-900 px-1 rounded">
+                          <div className="flex items-center gap-1">
+                            <Hash className="w-3 h-3 text-green-400 flex-shrink-0" />
+                            <code className="text-xs text-green-400 font-mono bg-gray-900 px-1 rounded flex-1 truncate">
                               {`${coin.coinAddress.slice(0, 6)}...${coin.coinAddress.slice(-4)}`}
                             </code>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-4 w-4 p-0"
+                              className="h-4 w-4 p-0 flex-shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 navigator.clipboard.writeText(coin.coinAddress!);
@@ -291,18 +290,18 @@ export default function ContentCoin() {
                           </div>
                         )}
                         {coin.deploymentTxHash && (
-                          <div className="flex items-center gap-2">
-                            <Eye className="w-3 h-3 text-blue-400" />
+                          <div className="flex items-center gap-1">
+                            <Eye className="w-3 h-3 text-blue-400 flex-shrink-0" />
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-auto p-0 text-xs text-blue-400 hover:text-blue-300"
+                              className="h-auto p-0 text-xs text-blue-400 hover:text-blue-300 truncate flex-1 justify-start"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
                               }}
                             >
-                              View on BaseScan
+                              BaseScan
                             </Button>
                           </div>
                         )}
