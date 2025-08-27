@@ -199,7 +199,7 @@ export default function ContentCoin() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {filteredContent.map((coin: ContentCoin) => (
-              <Link to={`/contentcoin/${coin.memeTokenAddress || coin.id}`} key={coin.id}>
+              <Link to={`/content/base:${coin.memeTokenAddress || coin.id}`} key={coin.id}>
                 <Card 
                   className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group relative overflow-hidden"
                 >

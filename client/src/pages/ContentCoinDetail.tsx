@@ -85,7 +85,8 @@ interface ActivityItem {
 
 export default function ContentCoinDetail() {
   const params = useParams();
-  const tokenAddress = params.id;
+  // Extract address from network:address format (e.g., "base:0x123..." -> "0x123...")
+  const tokenAddress = params.address;
   const { address } = useAccount();
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState("");

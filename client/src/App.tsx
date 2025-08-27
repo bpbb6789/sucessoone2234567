@@ -100,7 +100,7 @@ function AppContent() {
               <Route path="/tokens" component={Tokens} />
               <Route path="/creatorcoins" component={CreatorCoins} />
               <Route path="/contentcoin" component={ContentCoin} />
-              <Route path="/contentcoin/:id" component={ContentCoinDetail} />
+              <Route path="/content/:network/:address" component={ContentCoinDetail} />
               <Route path="/tokenize" component={Tokenize} />
               <Route path="/create" component={Create} />
               <Route path="/create-channel" component={CreateChannel} />
