@@ -102,13 +102,13 @@ export default function Channels() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
             {filteredChannels.map((channel) => (
               <Link to={`/channel/${channel.slug}`} key={channel.id}>
                 <Card className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group">
                   <CardContent className="p-0">
-                    {/* Channel Cover/Banner */}
-                    <div className="relative aspect-video overflow-hidden rounded-t-lg">
+                    {/* Compact Channel Cover/Banner */}
+                    <div className="relative aspect-square overflow-hidden rounded-t-lg">
                       {channel.coverUrl ? (
                         <img
                           src={channel.coverUrl?.startsWith('baf') 
@@ -119,83 +119,76 @@ export default function Channels() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
-                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=400&background=6366f1&color=fff&format=png`;
+                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=200&background=6366f1&color=fff&format=png`;
                           }}
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <span className="text-2xl font-bold text-white">{channel.name.charAt(0)}</span>
+                          <span className="text-xl font-bold text-white">{channel.name.charAt(0)}</span>
                         </div>
                       )}
-                    </div>
-
-                    {/* Channel Info */}
-                    <div className="p-4 space-y-3">
-                      {/* Avatar and Name */}
-                      <div className="flex items-center gap-3">
+                      
+                      {/* Overlay Avatar */}
+                      <div className="absolute bottom-2 left-2">
                         <img
                           src={channel.avatarUrl?.startsWith('baf') 
                             ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}` 
-                            : channel.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=40&background=6366f1&color=fff`
+                            : channel.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`
                           }
                           alt={channel.name}
-                          className="w-10 h-10 rounded-full flex-shrink-0 object-cover"
+                          className="w-6 h-6 rounded-full border border-white/50 object-cover"
                           onError={(e) => {
                             const target = e.currentTarget as HTMLImageElement;
-                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=40&background=6366f1&color=fff`;
+                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`;
                           }}
                         />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-white text-sm truncate">
-                            {channel.name}
-                          </h3>
-                          <p className="text-gray-400 text-xs">
-                            Creator: {channel.creatorUsername || 'Unknown'}
-                          </p>
-                        </div>
+                      </div>
+                    </div>
+
+                    {/* Compact Channel Info */}
+                    <div className="p-2 space-y-2">
+                      {/* Name */}
+                      <div>
+                        <h3 className="font-semibold text-white text-xs truncate">
+                          {channel.name}
+                        </h3>
+                        <p className="text-gray-400 text-xs truncate">
+                          @{channel.creatorUsername || 'unknown'}
+                        </p>
                       </div>
 
-                      {/* Description */}
-                      {channel.description && (
-                        <p className="text-gray-400 text-xs line-clamp-2">
-                          {channel.description}
-                        </p>
-                      )}
-
-                      {/* Stats */}
-                      <div className="flex items-center justify-between pt-2 text-xs">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1">
-                            <FileText className="w-3 h-3 text-gray-400" />
-                            <span className="text-gray-400">{channel.postsCount || 0} posts</span>
+                      {/* Stats with Icons */}
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-0.5">
+                            <span>📄</span>
+                            <span className="text-gray-400">{channel.postsCount || 0}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="w-3 h-3 text-gray-400" />
-                            <span className="text-gray-400">{channel.holderCount || 0} holders</span>
+                          <div className="flex items-center gap-0.5">
+                            <span>👥</span>
+                            <span className="text-gray-400">{channel.holderCount || 0}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <TrendingUp className="w-3 h-3 text-green-400" />
-                            <span className="text-gray-400">
-                              {channel.marketCap !== undefined ? `$${channel.marketCap.toLocaleString()}` : 'N/A'}
+                          <div className="flex items-center gap-0.5">
+                            <span>💎</span>
+                            <span className="text-green-400">
+                              {channel.marketCap !== undefined ? `$${Math.floor(channel.marketCap/1000)}K` : 'N/A'}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Subscribe Button */}
-                      <div className="pt-2">
-                        <Button
-                          size="sm"
-                          className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-7"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // TODO: Implement subscribe functionality
-                            console.log("Subscribe button clicked for:", channel.id);
-                          }}
-                        >
-                          Subscribe
-                        </Button>
-                      </div>
+                      {/* Subscribe Button - Compact */}
+                      <Button
+                        size="sm"
+                        className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-5 py-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: Implement subscribe functionality
+                          console.log("Subscribe button clicked for:", channel.id);
+                        }}
+                      >
+                        ➕ Sub
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

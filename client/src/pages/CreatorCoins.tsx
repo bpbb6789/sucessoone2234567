@@ -281,179 +281,99 @@ export default function CreatorCoins() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {filteredTokens.map((token) => (
                   <Card key={token.id} className="bg-white dark:bg-gray-900 border-purple-200 dark:border-purple-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                    <CardContent className="p-4">
-                      {/* Header Row */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          {/* Token Avatar */}
-                          {token.imageUri && token.imageUri.trim() !== '' ? (
-                            <img 
-                              src={token.imageUri}
-                              alt={`${token.name} logo`}
-                              className="w-10 h-10 rounded-lg object-cover"
-                              onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                const fallback = target.nextElementSibling as HTMLElement;
-                                target.style.display = 'none';
-                                if (fallback) fallback.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className={`w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-sm ${token.imageUri && token.imageUri.trim() !== '' ? 'hidden' : ''}`}>
-                            {token.symbol.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-gray-900 dark:text-white font-semibold text-sm">{token.name}</h3>
-                              <span className="text-gray-500 dark:text-gray-400 text-xs">{token.symbol}</span>
-                              <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 dark:from-purple-900 dark:to-pink-900 dark:text-purple-200 text-xs px-2 py-0">
-                                🚀 Creator
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500 text-xs">
-                              <span>{formatTimeAgo(token.createdAt)}</span>
-                              {token.isOnBondingCurve && (
-                                <Badge variant="outline" className="text-xs px-1 py-0 border-green-500 text-green-600">
-                                  Bonding
-                                </Badge>
-                              )}
-                            </div>
+                    <CardContent className="p-3">
+                      {/* Compact Header */}
+                      <div className="flex items-center gap-2 mb-2">
+                        {/* Token Avatar */}
+                        {token.imageUri && token.imageUri.trim() !== '' ? (
+                          <img 
+                            src={token.imageUri}
+                            alt={`${token.name} logo`}
+                            className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              target.style.display = 'none';
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-xs flex-shrink-0 ${token.imageUri && token.imageUri.trim() !== '' ? 'hidden' : ''}`}>
+                          {token.symbol.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-gray-900 dark:text-white font-semibold text-xs truncate">{token.name}</h3>
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-500 dark:text-gray-400 text-xs">{token.symbol}</span>
+                            {token.isOnBondingCurve && <span className="text-green-500 text-xs">🟢</span>}
+                            {token.platform === 'Zora' && <span className="text-purple-500 text-xs">🌊</span>}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {token.platform === 'Zora' && (
-                            <Badge variant="outline" className="text-xs px-1 py-0 border-purple-500 text-purple-600">
-                              Zora
-                            </Badge>
-                          )}
-                          {token.address && token.address !== 'Deploying...' && (
-                            <Link to={`/token/${token.address}`}>
-                              <Button 
-                                className="px-2 py-1 h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
-                                size="sm"
-                                data-testid={`trade-${token.id}`}
-                              >
-                                Trade
-                              </Button>
-                            </Link>
-                          )}
+                        {token.address && token.address !== 'Deploying...' && (
+                          <Link to={`/token/${token.address}`}>
+                            <Button 
+                              className="px-1.5 py-0.5 h-5 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
+                              size="sm"
+                              data-testid={`trade-${token.id}`}
+                            >
+                              📈
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+
+                      {/* Price Row with Icons */}
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <div className="flex items-center gap-1">
+                          <span>💰</span>
+                          <span className="text-purple-600 dark:text-purple-400 font-medium">${token.price}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span>📊</span>
+                          <span className="text-purple-600 dark:text-purple-400 font-medium">${token.marketCap}K</span>
                         </div>
                       </div>
 
-                      {/* Price and Stats Row */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-gray-900 dark:text-white">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Price</span>
-                            <span className="text-purple-600 dark:text-purple-400 font-medium">${token.price}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">MC</span>
-                            <span className="text-purple-600 dark:text-purple-400 font-medium">${token.marketCap}K</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Progress Bar for Bonding Curve */}
+                      {/* Progress Bar for Bonding Curve - Compact */}
                       {token.isOnBondingCurve && (
-                        <div className="mb-3">
+                        <div className="mb-2">
                           <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            <span>Bonding Curve Progress</span>
-                            <span>{token.progress}%</span>
+                            <span className="flex items-center gap-1">⚡ {token.progress}%</span>
                           </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
                             <div 
-                              className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
+                              className="bg-gradient-to-r from-purple-600 to-pink-600 h-1 rounded-full transition-all duration-300"
                               style={{ width: `${Math.min(token.progress || 0, 100)}%` }}
                             ></div>
                           </div>
                         </div>
                       )}
 
-                      {/* Stats Row */}
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1">
-                            <span className="text-green-500 dark:text-green-400">📈</span>
+                      {/* Stats Row with Icons */}
+                      <div className="flex items-center justify-between text-xs border-t border-gray-200 dark:border-gray-700 pt-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-0.5">
+                            <span className={token.change24h && token.change24h < 0 ? '📉' : '📈'}>
+                              {token.change24h && token.change24h < 0 ? '📉' : '📈'}
+                            </span>
                             <span className={`${token.change24h && token.change24h < 0 ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>
                               {token.change24h ? Math.abs(token.change24h).toFixed(1) : '0.0'}%
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-blue-500 dark:text-blue-400">👥</span>
+                          <div className="flex items-center gap-0.5">
+                            <span>👥</span>
                             <span className="text-gray-600 dark:text-gray-400">{token.holders}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-orange-500 dark:text-orange-400">💰</span>
+                          <div className="flex items-center gap-0.5">
+                            <span>💧</span>
                             <span className="text-gray-600 dark:text-gray-400">{token.volume24h || '0'}K</span>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Transaction Hash and Address - PROMINENT DISPLAY */}
-                      {token.platform === 'Zora' && (token.txHash || token.address) && (
-                        <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                          <div className="space-y-2">
-                            {token.address && token.address !== 'Deploying...' && (
-                              <div className="flex items-center gap-2">
-                                <Coins className="h-3 w-3 text-purple-600" />
-                                <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">Coin Address:</span>
-                                <span className="font-mono text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded border text-purple-800 dark:text-purple-200">
-                                  {token.address}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-4 w-4 p-0"
-                                  onClick={() => navigator.clipboard.writeText(token.address)}
-                                >
-                                  <Hash className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            )}
-                            {token.txHash && (
-                              <div className="flex items-center gap-2">
-                                <Hash className="h-3 w-3 text-green-600" />
-                                <span className="text-xs text-green-600 dark:text-green-400 font-medium">TX Hash:</span>
-                                <span className="font-mono text-xs bg-white dark:bg-gray-800 px-2 py-1 rounded border text-green-800 dark:text-green-200">
-                                  {`${token.txHash.slice(0, 10)}...${token.txHash.slice(-8)}`}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-4 w-4 p-0"
-                                  onClick={() => window.open(`https://sepolia.basescan.org/tx/${token.txHash}`, '_blank')}
-                                >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Creator Info */}
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1">
-                            <span className="text-gray-500 dark:text-gray-400">Creator:</span>
-                            <span className="font-mono text-purple-600 dark:text-purple-400">
-                              {token.creator !== 'No Creator Found' ? `${token.creator.slice(0, 6)}...${token.creator.slice(-4)}` : 'No Creator Found'}
-                            </span>
-                          </div>
-                          {token.address && token.address !== 'Deploying...' && (
-                            <Link to={`/token/${token.address}`}>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 px-2 text-xs text-gray-500 hover:text-purple-600"
-                                data-testid={`view-${token.id}`}
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                              </Button>
-                            </Link>
-                          )}
+                        <div className="text-gray-500 dark:text-gray-400">
+                          ⏰ {formatTimeAgo(token.createdAt)}
                         </div>
                       </div>
                     </CardContent>
