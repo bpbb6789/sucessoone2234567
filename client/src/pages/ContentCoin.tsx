@@ -237,38 +237,34 @@ export default function ContentCoin() {
                 symbol: "(Unc)", 
                 marketCap: "$1.3M", 
                 replies: 37, 
-                avatar: "/images/creator1.jpg",
-                description: "Gen Z Labels All 1900s Babies as Uncs"
+                avatar: "/images/creator1.jpg"
               },
               { 
                 name: "Illusion of Life", 
                 symbol: "(SPARK)", 
                 marketCap: "$32.9M", 
                 replies: 830, 
-                avatar: "/images/creator2.jpg",
-                description: "AI Dog Donates All Creator Fees to Sesame Workshop Charity"
+                avatar: "/images/creator2.jpg"
               },
               { 
                 name: "KEANU SLEAZE", 
                 symbol: "(SLEAZE)", 
                 marketCap: "$754.4K", 
                 replies: 318, 
-                avatar: "/images/creator3.jpg",
-                description: "Buss Down Keanu Meme Keeps It Flashy Across CT"
+                avatar: "/images/creator3.jpg"
               },
               { 
                 name: "TROLL", 
                 symbol: "(TROLL)", 
                 marketCap: "$253.4M", 
                 replies: 1095, 
-                avatar: "/images/creator4.jpg",
-                description: "Iconic Troll Meme Surges Past $250M Market Cap"
+                avatar: "/images/creator4.jpg"
               }
             ].map((channel, index) => (
               <div key={index} className="group cursor-pointer">
                 <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-4 border border-gray-700/50">
                   {/* Top row - Avatar, Name, Symbol, Market Cap */}
-                  <div className="flex items-start gap-3 mb-3">
+                  <div className="flex items-start gap-3">
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -291,11 +287,6 @@ export default function ContentCoin() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Description */}
-                  <p className="text-gray-300 text-xs leading-relaxed">
-                    {channel.description}
-                  </p>
                 </div>
               </div>
             ))}
