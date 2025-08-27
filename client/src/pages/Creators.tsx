@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, MoreHorizontal, Users, TrendingUp, Star, Award, Coins, MessageSquare, Heart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
-import { useCreators } from '@/hooks/useCreatorCoins';
+import { useCreators } from '@/hooks/useCreators';
 
 interface Creator {
   id: string;

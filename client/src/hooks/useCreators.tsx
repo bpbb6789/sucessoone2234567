@@ -10,7 +10,8 @@ export interface Creator {
   totalLikes: number;
   totalComments: number;
   rank: number;
-  createdAt: string;
+  memberSince: string;
+  lastActive: string;
 }
 
 // Get all creators who have deployed content coins
