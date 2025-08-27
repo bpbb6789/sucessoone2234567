@@ -16,6 +16,9 @@ export const CATEGORIES = [
   "Science",
   "Business",
   "Fashion",
+  "Pop Culture",
+  "GenZ",
+  "Skits",
   "DIY",
 ] as const;
 
@@ -31,6 +34,9 @@ export const SHORTS_CATEGORIES = [
   "Travel",
   "Art",
   "Fashion",
+  "Pop Culture",
+  "GenZ",
+  "Skits",
   "Pets",
 ] as const;
 
