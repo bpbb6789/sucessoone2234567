@@ -47,6 +47,7 @@ import CreatorCoins from '@/pages/CreatorCoins'
 import CreateContentCoin from '@/pages/CreateContentCoin'
 import ContentCoin from '@/pages/ContentCoin'
 import TokenDetail from '@/pages/TokenDetail'
+import ContentCoinDetail from "./pages/ContentCoinDetail";
 import NotFound from '@/pages/not-found'
 
 import '@rainbow-me/rainbowkit/styles.css'
@@ -98,7 +99,8 @@ function AppContent() {
               <Route path="/watch/:id" component={Watch} />
               <Route path="/tokens" component={Tokens} />
               <Route path="/creatorcoins" component={CreatorCoins} />
-              <Route path="/Contentcoin" component={ContentCoin} />
+              <Route path="/contentcoin" component={ContentCoin} />
+              <Route path="/contentcoin/:id" component={ContentCoinDetail} />
               <Route path="/tokenize" component={Tokenize} />
               <Route path="/create" component={Create} />
               <Route path="/create-channel" component={CreateChannel} />
