@@ -15,7 +15,7 @@ interface ContentCoin {
   title: string;
   coinName: string;
   coinSymbol: string;
-  description?: string;
+  description?: string | null;
   contentType: string;
   mediaCid: string;
   thumbnailCid?: string;
