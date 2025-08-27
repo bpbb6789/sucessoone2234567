@@ -117,7 +117,8 @@ export default function ContentCoin() {
   // Filter and sort content
   const filteredContent = (contentCoins || [])
     .filter((coin: ContentCoin) => {
-      const matchesSearch = coin.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = !searchTerm || 
+        coin.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         coin.coinName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         coin.coinSymbol.toLowerCase().includes(searchTerm.toLowerCase());
 
