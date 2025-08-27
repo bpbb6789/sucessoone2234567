@@ -45,14 +45,27 @@ const TokenPageComp = () => {
     );
   }
 
-  const { data: tokenData } = useReadContract({
+  const { data: tokenData, isLoading: isTokenDataLoading, error: tokenDataError } = useReadContract({
     abi: UniPumpAbi,
     address: UNIPUMP_ADDRESS,
     functionName: 'getTokenData',
     args: [tokenAddress],
   });
 
-  if (!tokenData) {
+  // Show loading state while data is being fetched
+  if (isTokenDataLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading content...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only show "not found" if loading is complete and there's no data or there's an error
+  if (!isTokenDataLoading && (!tokenData || tokenDataError)) {
     return (
       <ContentNotFound 
         title="Content Not Found"
