@@ -15,7 +15,6 @@ import { ApolloWrapper } from '../../lib/apollo-provider'
 
 // Pages
 import Home from '@/pages/Home'
-import Shorts from '@/pages/Shorts'
 import Subscriptions from '@/pages/Subscriptions'
 import Library from '@/pages/Library'
 import History from '@/pages/History'
@@ -27,8 +26,6 @@ import Search from '@/pages/Search'
 import Create from '@/pages/Create'
 import Watch from '@/pages/Watch'
 import Token from '@/pages/Token'
-import Tokens from '@/pages/Tokens'
-import Discovery from '@/pages/Discovery'
 import CreateChannel from '@/components/CreateChannel'
 import ChannelManager from '@/components/ChannelManager'
 import Notifications from '@/pages/Notifications'
@@ -82,8 +79,6 @@ function AppContent() {
           <Layout>
             <Switch>
               <Route path="/" component={ContentCoin} />
-              <Route path="/discovery" component={Discovery} />
-              <Route path="/shorts" component={Shorts} />
               <Route path="/subscriptions" component={Subscriptions} />
               <Route path="/library" component={Library} />
               <Route path="/history" component={History} />
@@ -97,7 +92,6 @@ function AppContent() {
               <Route path="/create-token" component={CreateChannel} />
               <Route path="/createtoken" component={CreateToken} />
               <Route path="/watch/:id" component={Watch} />
-              <Route path="/tokens" component={Tokens} />
               <Route path="/creatorcoins" component={CreatorCoins} />
               <Route path="/contentcoin" component={ContentCoin} />
               <Route path="/content/:network/:address" component={ContentCoinDetail} />

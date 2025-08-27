@@ -5,8 +5,7 @@ import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { icon: Home, label: "Discovery", href: "/" },
-  { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
+  { icon: Home, label: "Home", href: "/" },
   { icon: PlusCircle, label: "Create", href: "/create-token" },
   { icon: Activity, label: "Activities", href: ROUTES.ACTIVITIES },
   { icon: User, label: "Profile", href: ROUTES.PROFILE },
