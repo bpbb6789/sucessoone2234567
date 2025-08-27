@@ -852,8 +852,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
   // Web3 Channels API
+  // New Zora-based Channel Creation
+  app.post("/api/zora-channels", upload.fields([
+    { name: 'avatarFile', maxCount: 1 },
+    { name: 'coverFile', maxCount: 1 }
+  ]), async (req, res) => {
+    try {
+      const { name, ticker, category, chainId, currency, creatorAddress, description } = req.body;
+      
+      if (!creatorAddress) {
+        return res.status(400).json({ error: "Creator address required" });
+      }
+
+      console.log('🚀 Creating Zora channel:', { name, ticker, category });
+
+      // Upload avatar to IPFS if provided
+      let avatarCid: string | undefined;
+      const avatarFile = req.files?.['avatarFile']?.[0];
+      if (avatarFile) {
+        const avatar = new File([avatarFile.buffer], avatarFile.originalname, {
+          type: avatarFile.mimetype,
+        });
+        avatarCid = await uploadFileToIPFS(avatar);
+        console.log('📁 Avatar uploaded:', avatarCid);
+      }
+
+      // Upload cover to IPFS if provided
+      let coverCid: string | undefined;
+      const coverFile = req.files?.['coverFile']?.[0];
+      if (coverFile) {
+        const cover = new File([coverFile.buffer], coverFile.originalname, {
+          type: coverFile.mimetype,
+        });
+        coverCid = await uploadFileToIPFS(cover);
+        console.log('📁 Cover uploaded:', coverCid);
+      }
+
+      // Create metadata for the channel coin
+      const metadataUri = await createZoraMetadata({
+        name: name,
+        description: description || `${name} Channel Coin`,
+        imageUrl: avatarCid ? `https://gateway.pinata.cloud/ipfs/${avatarCid}` : 'https://via.placeholder.com/400',
+        contentType: 'channel',
+        attributes: [
+          { trait_type: "Category", value: category },
+          { trait_type: "Ticker", value: ticker },
+        ]
+      });
+
+      console.log('📋 Metadata created:', metadataUri);
+
+      // Deploy the channel coin using Zora SDK
+      const coinResult = await createCreatorCoin({
+        name: name,
+        symbol: ticker,
+        uri: metadataUri,
+        currency: currency || 'ETH',
+        creatorAddress: creatorAddress
+      });
+
+      console.log('✅ Zora coin deployed:', coinResult);
+
+      // Create slug from name
+      const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
+      // Save channel to database
+      const channelData = {
+        owner: creatorAddress,
+        createdBy: creatorAddress,
+        name: name,
+        slug: slug,
+        ticker: ticker,
+        coinAddress: coinResult.coinAddress,
+        chainId: parseInt(chainId) || 8453,
+        avatarCid: avatarCid,
+        coverCid: coverCid,
+        category: category,
+        description: description,
+        zoraPlatform: 'zora',
+        zoraFactoryAddress: coinResult.factoryAddress,
+        metadataUri: metadataUri,
+        currency: currency || 'ETH',
+        txHash: coinResult.txHash,
+      };
+
+      const channel = await storage.createWeb3Channel(channelData);
+      console.log('💾 Channel saved to database:', channel.id);
+
+      res.json({
+        success: true,
+        id: channel.id,
+        name: channel.name,
+        ticker: channel.ticker,
+        coinAddress: channel.coinAddress,
+        txHash: channel.txHash
+      });
+
+    } catch (error: any) {
+      console.error('❌ Zora channel creation failed:', error);
+      res.status(500).json({ 
+        error: "Failed to create Zora channel",
+        details: error.message 
+      });
+    }
+  });
+
+  // Legacy TokenFactory channel system - DEPRECATED in favor of Zora
+  // Keep for migration purposes but discourage new usage
   app.post("/api/web3-channels", async (req, res) => {
     try {
       // Generate unique slug with counter if needed
@@ -2022,5 +2128,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  const httpServer = createServer(app);
   return httpServer;
 }

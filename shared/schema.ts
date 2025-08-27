@@ -526,10 +526,11 @@ export const tokenSales = pgTable("token_sales", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Web3 Channels (Channel Coins)
+// Web3 Channels (Channel Coins) - Now Zora-based
 export const web3Channels = pgTable("web3_channels", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   owner: text("owner").notNull(), // wallet address (checksum normalized)
+  createdBy: text("created_by").notNull(), // creator wallet address
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   ticker: text("ticker").notNull().unique(),
@@ -538,7 +539,21 @@ export const web3Channels = pgTable("web3_channels", {
   avatarCid: text("avatar_cid"),
   coverCid: text("cover_cid"),
   category: text("category").notNull(), // 'Reels' | 'Podcasts' | 'Events' | 'Art' | 'Music'
+  description: text("description"),
+  
+  // Zora-specific fields
+  zoraPlatform: text("zora_platform").notNull().default("zora"), // Always 'zora' for new channels
+  zoraFactoryAddress: text("zora_factory_address"), // Zora factory used
+  metadataUri: text("metadata_uri"), // IPFS metadata URI
+  currency: text("currency").notNull().default("ETH"), // 'ETH', 'ZORA'
+  
+  // Status & Trading
   status: text("status").notNull().default("active"),
+  currentPrice: text("current_price").default("0.000001"),
+  marketCap: text("market_cap").default("0"),
+  holders: integer("holders").default(0),
+  volume24h: text("volume_24h").default("0"),
+  
   txHash: text("tx_hash"), // transaction hash from coin deployment
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -562,6 +577,10 @@ export const insertWeb3ChannelSchema = createInsertSchema(web3Channels).omit({
   createdAt: true,
   updatedAt: true,
   slug: true, // auto-generated
+  currentPrice: true, // auto-calculated
+  marketCap: true, // auto-calculated  
+  holders: true, // auto-calculated
+  volume24h: true, // auto-calculated
 });
 
 // Creator Coins insert schemas

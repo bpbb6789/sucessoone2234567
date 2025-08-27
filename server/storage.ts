@@ -683,6 +683,7 @@ export class DatabaseStorage implements IStorage {
   async createWeb3Channel(channel: InsertWeb3Channel): Promise<Web3Channel> {
     const [newChannel] = await db.insert(web3Channels).values({
       owner: channel.owner,
+      createdBy: channel.createdBy,
       name: channel.name,
       slug: channel.slug || channel.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       ticker: channel.ticker,
@@ -691,10 +692,17 @@ export class DatabaseStorage implements IStorage {
       avatarCid: channel.avatarCid,
       coverCid: channel.coverCid,
       category: channel.category,
+      description: channel.description,
+      zoraPlatform: channel.zoraPlatform || 'zora',
+      zoraFactoryAddress: channel.zoraFactoryAddress,
+      metadataUri: channel.metadataUri,
+      currency: channel.currency || 'ETH',
       status: channel.status || 'active',
+      currentPrice: channel.currentPrice,
+      marketCap: channel.marketCap,
+      holders: channel.holders,
+      volume24h: channel.volume24h,
       txHash: channel.txHash,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     }).returning();
     return newChannel;
   }

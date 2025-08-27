@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, Edit, Share2, Wallet, Upload, FileText, Radio } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import ShortsCard from "@/components/ShortsCard";
-import { useAccount, useBalance, useEnsName } from "wagmi";
+import { useAccount } from "@/hooks/useWallet";
 
 interface ProfileData {
   name: string;
@@ -17,8 +17,6 @@ interface ProfileData {
 
 export default function Profile() {
   const { address } = useAccount();
-  const { data: balance } = useBalance({ address });
-  const { data: ensName } = useEnsName({ address });
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
@@ -77,7 +75,7 @@ export default function Profile() {
     enabled: !!address,
   });
 
-  const displayName = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "");
+  const displayName = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
   const handle = address ? `@${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
   // If no wallet connected, show connect prompt
@@ -132,9 +130,6 @@ export default function Profile() {
               <span>{videos.length} videos</span>
               <span>{shorts.length} shorts</span>
               <span>{userChannels.length} channel coins</span>
-              {balance && (
-                <span>{parseFloat(balance.formatted).toFixed(4)} {balance.symbol}</span>
-              )}
             </div>
 
             {isEditing ? (
@@ -161,12 +156,18 @@ export default function Profile() {
                 </>
               ) : (
                 <>
-                  {channelData?.hasChannel ? (
-                    <Button onClick={() => window.location.href = channelData.managerPath}>
-                      Channel Manager
+                  {userChannels.length > 0 ? (
+                    <Button 
+                      onClick={() => window.location.href = '/profile'}
+                      data-testid="button-manage-channels"
+                    >
+                      Manage Channels
                     </Button>
                   ) : (
-                    <Button onClick={() => window.location.href = '/create-channel'}>
+                    <Button 
+                      onClick={() => window.location.href = '/create-channel'}
+                      data-testid="button-create-channel"
+                    >
                       Create Channel
                     </Button>
                   )}
@@ -331,18 +332,6 @@ export default function Profile() {
                         {address}
                       </div>
                     </div>
-                    {balance && (
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Balance:</span>
-                        <div className="font-medium">{parseFloat(balance.formatted).toFixed(4)} {balance.symbol}</div>
-                      </div>
-                    )}
-                    {ensName && (
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">ENS:</span>
-                        <div className="font-medium">{ensName}</div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </CardContent>

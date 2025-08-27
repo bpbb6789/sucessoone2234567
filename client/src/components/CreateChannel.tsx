@@ -11,12 +11,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAccount } from "@/hooks/useWallet";
-import { TOKEN_FACTORY_ADDRESS } from "@/lib/addresses";
-import { TOKEN_FACTORY_ABI } from "../../../abi/TokenFactoryAbi";
-import TransactionComponent from "@/components/Transaction";
-import type { LifecycleStatus } from '@coinbase/onchainkit/transaction';
-import { ChevronDown, Upload, Coins, Zap, X, ImageIcon } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
+import { ChevronDown, Upload, Coins, Zap, X, ImageIcon } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 const createChannelSchema = z.object({
@@ -25,9 +21,9 @@ const createChannelSchema = z.object({
   category: z.string().min(1, "Please select a category"),
   avatarFile: z.any().optional(),
   coverFile: z.any().optional(),
-  payoutAddress: z.string().optional(),
   chainId: z.number().default(8453), // Base mainnet
   description: z.string().optional(),
+  currency: z.string().default("ETH"),
 });
 
 type CreateChannelForm = z.infer<typeof createChannelSchema>;
@@ -41,17 +37,16 @@ const chains = [
   { id: 84532, name: "Base Sepolia", logo: "🔵" },
 ];
 
+const currencies = [
+  { id: "ETH", name: "ETH", logo: "Ξ" },
+  { id: "ZORA", name: "ZORA", logo: "⚡" },
+];
+
 export default function CreateChannel() {
   const { address } = useAccount();
   const { toast } = useToast();
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const [step, setStep] = useState<"form" | "uploading" | "deploying" | "creating" | "success">("form");
-  const [progress, setProgress] = useState("");
-  const [uploadedData, setUploadedData] = useState<{
-    avatarCid?: string;
-    coverCid?: string;
-    metadataUri: string;
-  } | null>(null);
+  const [step, setStep] = useState<"form" | "creating" | "success">("form");
 
   const form = useForm<CreateChannelForm>({
     resolver: zodResolver(createChannelSchema),
@@ -59,97 +54,56 @@ export default function CreateChannel() {
       name: "",
       ticker: "",
       category: "",
-      payoutAddress: address || "",
       chainId: 8453,
       description: "",
+      currency: "ETH",
     },
   });
 
-  // Handle IPFS uploads before blockchain transaction
-  const handleIPFSUploads = async (data: CreateChannelForm) => {
-    if (!address) throw new Error("Wallet not connected");
-
-    setStep("uploading");
-    setProgress("Uploading media to IPFS");
-
-    const avatarCid = data.avatarFile ? await uploadToIPFS(data.avatarFile) : undefined;
-    const coverCid = data.coverFile ? await uploadToIPFS(data.coverFile) : undefined;
-    
-    setProgress("Preparing metadata");
-    const metadataUri = await uploadMetadataToIPFS({
-      name: data.name,
-      description: data.description || `${data.name} Channel Coin`,
-      image: avatarCid ? `ipfs://${avatarCid}` : undefined,
-      external_url: `${window.location.origin}/channel/${data.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
-      attributes: [
-        { trait_type: "Category", value: data.category },
-        { trait_type: "Ticker", value: data.ticker },
-      ]
-    });
-
-    setUploadedData({ avatarCid, coverCid, metadataUri });
-    setStep("deploying");
-    setProgress("Ready to deploy Channel Coin");
-  };
-
-  // Handle successful blockchain transaction
-  const handleTransactionSuccess = async (status: LifecycleStatus) => {
-    if (status.statusName === 'success' && uploadedData && status.statusData) {
-      setStep("creating");
-      setProgress("Creating channel...");
-
-      try {
-        // Extract token address from transaction receipt
-        const receipt = status.statusData.transactionReceipts?.[0];
-        const tokenAddress = receipt?.logs?.[0]?.address || "0x0000000000000000000000000000000000000000";
-
-        const formData = form.getValues();
-        const channelData = {
-          owner: address,
-          createdBy: address,
-          name: formData.name,
-          ticker: formData.ticker,
-          coinAddress: tokenAddress,
-          chainId: formData.chainId,
-          avatarCid: uploadedData.avatarCid,
-          coverCid: uploadedData.coverCid,
-          category: formData.category,
-          txHash: receipt?.transactionHash || "",
-        };
-
-        const response = await apiRequest("POST", "/api/web3-channels", channelData);
-        await response.json();
-        
-        setStep("success");
-        toast({
-          title: "Channel Created!",
-          description: "Your channel coin has been deployed and channel created successfully.",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Channel Creation Failed",
-          description: error.message || "Failed to create channel record",
-          variant: "destructive",
-        });
-        setStep("form");
-        setUploadedData(null);
-      }
-    }
-  };
-
+  // Create channel using Zora SDK
   const createChannelMutation = useMutation({
-    mutationFn: handleIPFSUploads,
-    onSuccess: () => {
-      // IPFS upload complete, ready for blockchain transaction
+    mutationFn: async (data: CreateChannelForm) => {
+      if (!address) throw new Error("Wallet not connected");
+
+      setStep("creating");
+
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('ticker', data.ticker);
+      formData.append('category', data.category);
+      formData.append('chainId', data.chainId.toString());
+      formData.append('currency', data.currency);
+      formData.append('creatorAddress', address);
+      
+      if (data.description) {
+        formData.append('description', data.description);
+      }
+      
+      if (data.avatarFile) {
+        formData.append('avatarFile', data.avatarFile);
+      }
+      
+      if (data.coverFile) {
+        formData.append('coverFile', data.coverFile);
+      }
+
+      const response = await apiRequest("POST", "/api/zora-channels", formData);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setStep("success");
+      toast({
+        title: "Channel Created!",
+        description: `Your channel "${data.name}" has been created with Zora SDK.`,
+      });
     },
     onError: (error: any) => {
       toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload files. Please try again.",
+        title: "Channel Creation Failed",
+        description: error.message || "Failed to create channel. Please try again.",
         variant: "destructive",
       });
       setStep("form");
-      setUploadedData(null);
     },
   });
 
@@ -159,7 +113,7 @@ export default function CreateChannel() {
 
   if (!address) {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto" data-testid="create-channel-connect-wallet">
         <CardContent className="p-6 text-center">
           <Coins className="w-12 h-12 mx-auto mb-4 text-gray-400" />
           <h3 className="text-lg font-semibold mb-2">Connect Your Wallet</h3>
@@ -171,83 +125,21 @@ export default function CreateChannel() {
 
   if (step === "success") {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto" data-testid="create-channel-success">
         <CardContent className="p-6 text-center">
           <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-white text-xl">✓</span>
           </div>
-          <h3 className="text-lg font-semibold mb-2">Channel Created Successfully!</h3>
+          <h3 className="text-lg font-semibold mb-2">Channel Created!</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Your channel coin has been deployed on-chain and your channel is ready.
+            Your Zora-based channel is ready and your coin has been deployed.
           </p>
-          <Button onClick={() => window.location.href = "/profile"}>
-            Open Channel Manager
+          <Button 
+            onClick={() => window.location.href = "/profile"}
+            data-testid="button-open-profile"
+          >
+            View Profile
           </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (step === "uploading") {
-    return (
-      <Card className="w-full max-w-md mx-auto">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Uploading to IPFS</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{progress}</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (step === "deploying" && uploadedData) {
-    const formData = form.getValues();
-    const contractArgs = [
-      formData.name,
-      formData.ticker,
-      "", // twitter (optional)
-      "", // discord (optional) 
-      formData.description || `${formData.name} Channel`,
-      `ipfs://${uploadedData.metadataUri}`
-    ];
-
-    return (
-      <Card className="w-full max-w-md mx-auto">
-        <CardContent className="p-6">
-          <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Coins className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Deploy Your Channel Coin</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Files uploaded successfully! Now deploy your channel coin on-chain.
-            </p>
-          </div>
-          
-          <TransactionComponent
-            contractAddress={TOKEN_FACTORY_ADDRESS}
-            contractAbi={TOKEN_FACTORY_ABI}
-            functionName="deployERC20Token"
-            cta="Deploy Channel Coin"
-            args={[contractArgs[0], contractArgs[1]]} // name, ticker
-            handleOnStatus2={handleTransactionSuccess}
-          />
-          
-          <div className="mt-4 text-center">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setStep("form");
-                setUploadedData(null);
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
         </CardContent>
       </Card>
     );
@@ -255,14 +147,16 @@ export default function CreateChannel() {
 
   if (step === "creating") {
     return (
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md mx-auto" data-testid="create-channel-creating">
         <CardContent className="p-6">
           <div className="text-center">
             <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
               <Zap className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Creating Channel Record</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">{progress}</p>
+            <h3 className="text-lg font-semibold mb-2">Creating Channel</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Deploying your channel coin with Zora SDK...
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -270,7 +164,7 @@ export default function CreateChannel() {
   }
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-2">
+    <div className="w-full max-w-md mx-auto space-y-2" data-testid="create-channel-form">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Create Channel</CardTitle>
@@ -278,7 +172,6 @@ export default function CreateChannel() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-              {/* Required Fields */}
               <FormField
                 control={form.control}
                 name="name"
@@ -286,7 +179,11 @@ export default function CreateChannel() {
                   <FormItem>
                     <FormLabel>Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Channel name" {...field} />
+                      <Input 
+                        placeholder="Channel name" 
+                        {...field} 
+                        data-testid="input-channel-name"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -305,6 +202,7 @@ export default function CreateChannel() {
                         {...field} 
                         onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                         maxLength={8}
+                        data-testid="input-channel-ticker"
                       />
                     </FormControl>
                     <FormMessage />
@@ -320,7 +218,7 @@ export default function CreateChannel() {
                     <FormLabel>Category *</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger data-testid="select-category">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                       </FormControl>
@@ -345,11 +243,7 @@ export default function CreateChannel() {
                     <FormItem>
                       <FormLabel className="text-sm">Avatar</FormLabel>
                       <FormControl>
-                        <AvatarUploadField 
-                          field={field} 
-                          uploadProgress={progress}
-                          isUploading={step === "uploading" || step === "creating"}
-                        />
+                        <AvatarUploadField field={field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -363,11 +257,7 @@ export default function CreateChannel() {
                     <FormItem>
                       <FormLabel className="text-sm">Cover</FormLabel>
                       <FormControl>
-                        <CoverUploadField 
-                          field={field} 
-                          uploadProgress={progress}
-                          isUploading={step === "uploading" || step === "creating"}
-                        />
+                        <CoverUploadField field={field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -375,10 +265,13 @@ export default function CreateChannel() {
                 />
               </div>
 
-              {/* Advanced Settings */}
               <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
                 <CollapsibleTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-between"
+                    data-testid="button-advanced-toggle"
+                  >
                     Advanced Settings
                     <ChevronDown className={`h-4 w-4 transition-transform ${isAdvancedOpen ? "rotate-180" : ""}`} />
                   </Button>
@@ -386,15 +279,26 @@ export default function CreateChannel() {
                 <CollapsibleContent className="space-y-2 pt-2">
                   <FormField
                     control={form.control}
-                    name="payoutAddress"
+                    name="currency"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Payout Address</FormLabel>
-                        <FormControl>
-                          <Input placeholder={address} {...field} />
-                        </FormControl>
+                        <FormLabel>Currency</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-currency">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {currencies.map((currency) => (
+                              <SelectItem key={currency.id} value={currency.id}>
+                                {currency.logo} {currency.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormDescription>
-                          Defaults to your connected wallet
+                          ETH for most use cases
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -409,7 +313,7 @@ export default function CreateChannel() {
                         <FormLabel>Chain</FormLabel>
                         <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={String(field.value)}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger data-testid="select-chain">
                               <SelectValue />
                             </SelectTrigger>
                           </FormControl>
@@ -422,7 +326,7 @@ export default function CreateChannel() {
                           </SelectContent>
                         </Select>
                         <FormDescription>
-                          Zora default; Doppler later toggle
+                          Base network for Zora integration
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -434,12 +338,13 @@ export default function CreateChannel() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Tell people about your channel..."
                             {...field}
                             rows={3}
+                            data-testid="input-description"
                           />
                         </FormControl>
                         <FormMessage />
@@ -454,8 +359,9 @@ export default function CreateChannel() {
                 className="w-full mt-3" 
                 size="default"
                 disabled={createChannelMutation.isPending}
+                data-testid="button-create-channel"
               >
-                Create Channel
+                {createChannelMutation.isPending ? "Creating..." : "Create Channel"}
               </Button>
               
             </form>
@@ -466,47 +372,7 @@ export default function CreateChannel() {
   );
 }
 
-// Real IPFS upload functions
-async function uploadToIPFS(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append('file', file);
-  
-  const response = await fetch('/api/upload/file', {
-    method: 'POST',
-    body: formData
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to upload file to IPFS');
-  }
-  
-  const data = await response.json();
-  return data.cid;
-}
-
-async function uploadMetadataToIPFS(metadata: any): Promise<string> {
-  const response = await fetch('/api/upload/json', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(metadata)
-  });
-  
-  if (!response.ok) {
-    throw new Error('Failed to upload metadata to IPFS');
-  }
-  
-  const data = await response.json();
-  return data.cid;
-}
-
-// Compact Avatar Upload Component
-function AvatarUploadField({ field, uploadProgress, isUploading }: {
-  field: any;
-  uploadProgress: string;
-  isUploading: boolean;
-}) {
+function AvatarUploadField({ field }: { field: any }) {
   const [previewImage, setPreviewImage] = useState<string>("");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -515,7 +381,6 @@ function AvatarUploadField({ field, uploadProgress, isUploading }: {
 
     field.onChange(file);
     
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewImage(e.target?.result as string);
@@ -530,38 +395,22 @@ function AvatarUploadField({ field, uploadProgress, isUploading }: {
 
   if (!previewImage) {
     return (
-      <div className={`border-2 border-dashed rounded-lg p-2 text-center transition-colors ${
-        isUploading ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' : 
-        'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-      }`}>
+      <div className="border-2 border-dashed rounded-lg p-2 text-center transition-colors border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500">
         <label className="cursor-pointer block">
           <input
             type="file"
             accept="image/*"
             onChange={handleFileChange}
             className="hidden"
-            disabled={isUploading}
+            data-testid="input-avatar-file"
           />
           <div className="flex flex-col items-center space-y-1">
-            {isUploading ? (
-              <Upload className="h-4 w-4 text-blue-500 animate-pulse" />
-            ) : (
-              <ImageIcon className="h-4 w-4 text-gray-400" />
-            )}
+            <ImageIcon className="h-4 w-4 text-gray-400" />
             <div className="text-xs">
-              {isUploading ? (
-                <span className="text-blue-600 font-medium">Uploading...</span>
-              ) : (
-                <span className="font-medium text-blue-600">Upload Avatar</span>
-              )}
+              <span className="font-medium text-blue-600">Upload Avatar</span>
             </div>
           </div>
         </label>
-        {isUploading && (
-          <div className="mt-2">
-            <div className="text-xs text-blue-600">{uploadProgress}</div>
-          </div>
-        )}
       </div>
     );
   }
@@ -572,32 +421,21 @@ function AvatarUploadField({ field, uploadProgress, isUploading }: {
         src={previewImage} 
         alt="Avatar Preview" 
         className="w-full h-16 rounded-lg object-cover"
+        data-testid="img-avatar-preview"
       />
       <button
         type="button"
         onClick={clearImage}
         className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
+        data-testid="button-clear-avatar"
       >
         <X className="h-3 w-3" />
       </button>
-      {isUploading && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-          <div className="text-white text-xs text-center">
-            <Upload className="h-4 w-4 mx-auto animate-pulse mb-1" />
-            <div>{uploadProgress}</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
-// Compact Cover Upload Component
-function CoverUploadField({ field, uploadProgress, isUploading }: {
-  field: any;
-  uploadProgress: string;
-  isUploading: boolean;
-}) {
+function CoverUploadField({ field }: { field: any }) {
   const [previewImage, setPreviewImage] = useState<string>("");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -606,7 +444,6 @@ function CoverUploadField({ field, uploadProgress, isUploading }: {
 
     field.onChange(file);
     
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewImage(e.target?.result as string);
@@ -621,38 +458,22 @@ function CoverUploadField({ field, uploadProgress, isUploading }: {
 
   if (!previewImage) {
     return (
-      <div className={`border-2 border-dashed rounded-lg p-2 text-center transition-colors ${
-        isUploading ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' : 
-        'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-      }`}>
+      <div className="border-2 border-dashed rounded-lg p-2 text-center transition-colors border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500">
         <label className="cursor-pointer block">
           <input
             type="file"
             accept="image/*,video/*"
             onChange={handleFileChange}
             className="hidden"
-            disabled={isUploading}
+            data-testid="input-cover-file"
           />
           <div className="flex flex-col items-center space-y-1">
-            {isUploading ? (
-              <Upload className="h-4 w-4 text-blue-500 animate-pulse" />
-            ) : (
-              <ImageIcon className="h-4 w-4 text-gray-400" />
-            )}
+            <ImageIcon className="h-4 w-4 text-gray-400" />
             <div className="text-xs">
-              {isUploading ? (
-                <span className="text-blue-600 font-medium">Uploading...</span>
-              ) : (
-                <span className="font-medium text-blue-600">Upload Cover</span>
-              )}
+              <span className="font-medium text-blue-600">Upload Cover</span>
             </div>
           </div>
         </label>
-        {isUploading && (
-          <div className="mt-2">
-            <div className="text-xs text-blue-600">{uploadProgress}</div>
-          </div>
-        )}
       </div>
     );
   }
@@ -663,22 +484,16 @@ function CoverUploadField({ field, uploadProgress, isUploading }: {
         src={previewImage} 
         alt="Cover Preview" 
         className="w-full h-16 rounded-lg object-cover"
+        data-testid="img-cover-preview"
       />
       <button
         type="button"
         onClick={clearImage}
         className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 transition-colors"
+        data-testid="button-clear-cover"
       >
         <X className="h-3 w-3" />
       </button>
-      {isUploading && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-          <div className="text-white text-xs text-center">
-            <Upload className="h-4 w-4 mx-auto animate-pulse mb-1" />
-            <div>{uploadProgress}</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
