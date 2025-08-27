@@ -7,6 +7,8 @@ import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy } from "lu
 import { useCreatorCoins } from '@/hooks/useCreatorCoins';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
+import { CategoryChips } from "@/components/CategoryChips";
+import { CATEGORIES } from "@/lib/constants";
 
 interface ContentCoin {
   id: string;
@@ -51,7 +53,7 @@ const getContentUrl = (mediaCid: string): string => {
 
 export default function ContentCoin() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   // Get creator coins from API
   const { data: contentCoins, isLoading, error } = useCreatorCoins();
@@ -63,11 +65,11 @@ export default function ContentCoin() {
         coin.coinName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         coin.coinSymbol.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesFilter = selectedFilter === 'all' || 
-        selectedFilter === coin.contentType ||
-        (selectedFilter === 'deployed' && coin.status === 'deployed');
+      const matchesCategory = selectedCategory === 'All' || 
+        coin.contentType.toLowerCase().includes(selectedCategory.toLowerCase()) ||
+        (selectedCategory === 'Deployed' && coin.status === 'deployed');
 
-      return matchesSearch && matchesFilter;
+      return matchesSearch && matchesCategory;
     })
     .sort((a: ContentCoin, b: ContentCoin) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -132,7 +134,7 @@ export default function ContentCoin() {
           </div>
 
           {/* Search and Filters */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4">
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -144,40 +146,11 @@ export default function ContentCoin() {
               />
             </div>
 
-            <div className="flex gap-2">
-              <Button
-                variant={selectedFilter === 'all' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => setSelectedFilter('all')}
-                className={selectedFilter === 'all' ? 'bg-white text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}
-              >
-                All
-              </Button>
-              <Button
-                variant={selectedFilter === 'image' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => setSelectedFilter('image')}
-                className={selectedFilter === 'image' ? 'bg-white text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}
-              >
-                Images
-              </Button>
-              <Button
-                variant={selectedFilter === 'video' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => setSelectedFilter('video')}
-                className={selectedFilter === 'video' ? 'bg-white text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}
-              >
-                Videos
-              </Button>
-              <Button
-                variant={selectedFilter === 'deployed' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => setSelectedFilter('deployed')}
-                className={selectedFilter === 'deployed' ? 'bg-white text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}
-              >
-                Deployed
-              </Button>
-            </div>
+            {/* Category Filter Chips */}
+            <CategoryChips 
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
           </div>
         </div>
 
