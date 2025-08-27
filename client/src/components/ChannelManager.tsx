@@ -70,17 +70,27 @@ export default function ChannelManager() {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center">
-        <div className="animate-pulse">Loading channel data...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-pulse text-lg">Loading channel data...</div>
+        </div>
       </div>
     );
   }
 
   if (!channel) {
     return (
-      <div className="p-8 text-center">
-        <h2 className="text-xl font-semibold mb-2">Channel not found</h2>
-        <p className="text-gray-600 dark:text-gray-400">This channel does not exist or has been removed.</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Channel not found</h2>
+          <p className="text-gray-600 dark:text-gray-400">This channel does not exist or has been removed.</p>
+          <Button 
+            onClick={() => window.location.href = '/profile'}
+            className="mt-4"
+          >
+            Back to Profile
+          </Button>
+        </div>
       </div>
     );
   }

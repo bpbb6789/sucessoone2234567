@@ -69,7 +69,8 @@ export default function Profile() {
       if (!response.ok) return [];
       const allChannels = await response.json();
       return allChannels.filter((channel: any) => 
-        channel.owner?.toLowerCase() === address.toLowerCase()
+        channel.owner?.toLowerCase() === address.toLowerCase() ||
+        channel.createdBy?.toLowerCase() === address.toLowerCase()
       );
     },
     enabled: !!address,
@@ -158,7 +159,7 @@ export default function Profile() {
                 <>
                   {userChannels.length > 0 ? (
                     <Button 
-                      onClick={() => window.location.href = '/profile'}
+                      onClick={() => window.location.href = `/channel/${userChannels[0].slug}/manager`}
                       data-testid="button-manage-channels"
                     >
                       Manage Channels
