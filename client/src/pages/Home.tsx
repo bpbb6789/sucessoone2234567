@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useGetAllSales } from '@/hooks/useGetAllSales';
+import { CategoryChips } from "@/components/CategoryChips";
+import { CATEGORIES } from "@/lib/constants";
 
 // Token interface from Tokens page
 interface Token {
@@ -92,7 +94,7 @@ const mockChannelData: ChannelData[] = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState("trending");
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [channels, setChannels] = useState<ChannelData[]>([]);
   const [deployedPadsData, setDeployedPadsData] = useState<any[]>([]);
   const [creatorTokens, setCreatorTokens] = useState<CreatorToken[]>([]);
@@ -199,7 +201,6 @@ export default function Home() {
     }
   }, [channelsData, channelsLoading, processedChannels]); // Depend on channelsData and channelsLoading
 
-  const musicCategories = ["Music", "Podcasts"];
 
   // Filter tracks for podcasts
   const podcastTracks = tracks.filter(track => track.genre?.toLowerCase().includes('podcast'));
@@ -227,9 +228,31 @@ export default function Home() {
       tokenDataLoading: false
     })) : [];
 
+  // Filter data based on selected category
+  const filterByCategory = (items: any[], categoryField: string = 'category') => {
+    if (selectedCategory === 'All') return items;
+    return items.filter(item => {
+      const itemCategory = item[categoryField] || item.contentType || '';
+      return itemCategory.toLowerCase().includes(selectedCategory.toLowerCase());
+    });
+  };
+
+  // Apply category filtering to all data sources
+  const filteredCreatorTokens = filterByCategory(creatorTokens, 'category');
+  const filteredChannels = filterByCategory(channels, 'category');
+  const filteredTokens = filterByCategory(tokens, 'contentType');
+  const filteredPodcastTracks = filterByCategory(podcastTracks, 'genre');
+  const filteredMusicTracks = filterByCategory(musicTracks, 'genre');
+
   return (
     <div className="min-h-screen text-white dark:text-white text-gray-900 dark:text-white" data-testid="page-home">
       <div className="p-4 md:p-6">
+        {/* Category Filter Chips */}
+        <CategoryChips 
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+        
         <Tabs defaultValue="pads" className="w-full">
           <TabsList className="inline-flex w-auto bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50 h-8 p-0.5 rounded-lg">
             <TabsTrigger
@@ -287,7 +310,10 @@ export default function Home() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl md:text-2xl font-bold">Creator Coins</h2>
-                <p className="text-sm text-gray-400">{creatorTokens.length} creator coins available</p>
+                <p className="text-sm text-gray-400">
+                  {filteredCreatorTokens.length} creator coins available
+                  {selectedCategory !== 'All' && ` in ${selectedCategory}`}
+                </p>
               </div>
 
               {isLoadingData || salesLoading ? (
@@ -301,7 +327,7 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-              ) : creatorTokens.length === 0 ? (
+              ) : filteredCreatorTokens.length === 0 ? (
                 <div className="text-center py-12">
                   <Coins className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <h3 className="text-lg font-semibold mb-2">No creator coins yet</h3>
@@ -315,7 +341,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {creatorTokens.slice(0, 6).map((token) => (
+                  {filteredCreatorTokens.slice(0, 6).map((token) => (
                     <Card key={token.id} className="bg-white dark:bg-gray-900 border-purple-200 dark:border-purple-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
                       <CardContent className="p-4">
                         {/* Header Row */}
@@ -791,7 +817,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              ) : channels.length === 0 ? (
+              ) : filteredChannels.length === 0 ? (
                 <div className="text-center py-12">
                   <Coins className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <h3 className="text-lg font-semibold mb-2">No channels found</h3>
@@ -810,7 +836,7 @@ export default function Home() {
 
                     {/* Desktop Grid - Compact Spotify-like cards */}
                     <div className="hidden md:grid md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                      {channels.slice(0, 8).map((channel: any) => (
+                      {filteredChannels.slice(0, 8).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
                           <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-3 transition-colors">
                             <div className="relative mb-3">
@@ -845,7 +871,7 @@ export default function Home() {
 
                     {/* Mobile Horizontal Scroll */}
                     <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
-                      {channels.slice(0, 8).map((channel: any) => (
+                      {filteredChannels.slice(0, 8).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
                           <div className="flex-shrink-0 w-24 group cursor-pointer">
                             <div className="relative mb-2">
@@ -887,7 +913,7 @@ export default function Home() {
 
                     {/* Desktop Grid */}
                     <div className="hidden md:grid md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                      {channels.slice(4, 12).map((channel: any) => (
+                      {filteredChannels.slice(4, 12).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
                           <div className="group cursor-pointer bg-gray-900/40 hover:bg-gray-800/60 rounded-lg p-3 transition-colors">
                             <div className="relative mb-3">
@@ -922,7 +948,7 @@ export default function Home() {
 
                     {/* Mobile Horizontal Scroll */}
                     <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
-                      {channels.slice(4, 12).map((channel: any) => (
+                      {filteredChannels.slice(4, 12).map((channel: any) => (
                         <Link key={channel.id} href={`/channel/${channel.id}`}>
                           <div className="flex-shrink-0 w-24 group cursor-pointer">
                             <div className="relative mb-2">
