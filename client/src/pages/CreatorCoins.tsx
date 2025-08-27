@@ -8,6 +8,7 @@ import { useGetAllSales } from '@/hooks/useGetAllSales';
 import { useCreatorCoins } from '@/hooks/useCreatorCoins';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
+import { useCreators } from '@/hooks/useCreators';
 
 interface CreatorToken {
   id: string;
@@ -52,9 +53,12 @@ export default function CreatorCoins() {
 
   // Get token sales data from GraphQL (PumpFun tokens)
   const { data: salesData, loading: salesLoading, error: salesError } = useGetAllSales();
-  
+
   // Get real creator coins from Zora
   const { data: zoraCoins, isLoading: zoraLoading, error: zoraError } = useCreatorCoins();
+
+  // Get creators data from the creators page API
+  const { data: creatorsData, isLoading: creatorsLoading, error: creatorsError } = useCreators();
 
   React.useEffect(() => {
     let allCreatorTokens: CreatorToken[] = [];
@@ -128,7 +132,7 @@ export default function CreatorCoins() {
       }
     });
 
-  if (salesLoading || zoraLoading) {
+  if (salesLoading || zoraLoading || creatorsLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="space-y-6">
@@ -156,12 +160,12 @@ export default function CreatorCoins() {
     );
   }
 
-  if (salesError || zoraError) {
+  if (salesError || zoraError || creatorsError) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-red-500 mb-4">Error loading creator tokens: {salesError}</p>
+            <p className="text-red-500 mb-4">Error loading data: {salesError || zoraError || creatorsError}</p>
             <Button onClick={() => window.location.reload()}>
               Retry
             </Button>
@@ -177,6 +181,8 @@ export default function CreatorCoins() {
   const totalHolders = filteredTokens.reduce((sum, token) => sum + (token.holders || 0), 0);
   const total24hVolume = filteredTokens.reduce((sum, token) => sum + parseFloat(token.volume24h || '0'), 0);
   const bondingCurveTokens = filteredTokens.filter(t => t.isOnBondingCurve).length;
+
+  const creators = creatorsData ? creatorsData.creators : []; // Assuming creatorsData has a 'creators' array
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -248,6 +254,81 @@ export default function CreatorCoins() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Top Creators Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Top Creators</h2>
+              <p className="text-gray-400">Discover trending content creators</p>
+            </div>
+            <Link to="/creators">
+              <Button 
+                variant="outline" 
+                className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black"
+              >
+                See All
+              </Button>
+            </Link>
+          </div>
+
+          {/* Top Creators Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {creatorsLoading ? (
+              // Loading skeletons
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <div className="aspect-square bg-gray-600 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-gray-600 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-600 rounded w-2/3 mb-3"></div>
+                    <div className="h-8 bg-gray-600 rounded"></div>
+                  </div>
+                </div>
+              ))
+            ) : creators && creators.length > 0 ? (
+              // Real creator data - show top 4
+              creators.slice(0, 4).map((creator: any) => (
+                <div key={creator.id} className="group cursor-pointer">
+                  <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors rounded-lg p-4">
+                    <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <span className="text-2xl font-bold text-white">{creator.name.charAt(0)}</span>
+                      </div>
+                      {creator.rank <= 3 && (
+                        <div className="absolute top-2 right-2">
+                          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">#{creator.rank}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-white font-semibold mb-1">{creator.name}</h3>
+                      <p className="text-gray-400 text-sm mb-1">{creator.contentCoins} content coins</p>
+                      <p className="text-gray-400 text-xs mb-3">{creator.totalLikes} likes • {creator.totalComments} comments</p>
+                      <Link to={`/creators/${creator.address}`}>
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                        >
+                          View Profile
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              // No creators available
+              <div className="col-span-full text-center py-8">
+                <Users className="w-12 h-12 mx-auto mb-4 text-gray-500" />
+                <h3 className="text-lg font-semibold text-white mb-2">No creators yet</h3>
+                <p className="text-gray-400">Be the first to create content coins</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Tokens List */}
