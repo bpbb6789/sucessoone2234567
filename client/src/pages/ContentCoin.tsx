@@ -257,27 +257,27 @@ export default function ContentCoin() {
                   avatar: "/images/creator4.jpg"
                 }
               ].map((channel, index) => (
-                <div key={`mobile-${index}`} className="flex-shrink-0 w-72 group cursor-pointer">
-                  <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-4 border border-gray-700/50">
+                <div key={`mobile-${index}`} className="flex-shrink-0 w-56 group cursor-pointer">
+                  <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-2 border border-gray-700/50">
                     {/* Top row - Avatar, Name, Symbol, Market Cap */}
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2">
                       {/* Avatar */}
                       <div className="relative flex-shrink-0">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">{channel.name.charAt(0)}</span>
+                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">{channel.name.charAt(0)}</span>
                         </div>
                       </div>
 
                       {/* Name, Symbol & Stats */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-1">
+                        <div className="flex items-start justify-between mb-0.5">
                           <div>
-                            <h3 className="font-bold text-white text-sm leading-tight">{channel.name}</h3>
+                            <h3 className="font-bold text-white text-xs leading-tight">{channel.name}</h3>
                             <p className="text-gray-400 text-xs">{channel.symbol}</p>
                           </div>
                         </div>
                         
-                        <div className="text-xs text-gray-300 space-y-0.5">
+                        <div className="text-xs text-gray-300">
                           <p>market cap: <span className="text-green-400">{channel.marketCap}</span></p>
                           <p>replies: <span className="text-gray-400">{channel.replies}</span></p>
                         </div>
@@ -321,26 +321,26 @@ export default function ContentCoin() {
                 }
               ].map((channel, index) => (
                 <div key={`desktop-${index}`} className="group cursor-pointer">
-                  <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-4 border border-gray-700/50">
+                  <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-2 border border-gray-700/50">
                     {/* Top row - Avatar, Name, Symbol, Market Cap */}
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2">
                       {/* Avatar */}
                       <div className="relative flex-shrink-0">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">{channel.name.charAt(0)}</span>
+                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">{channel.name.charAt(0)}</span>
                         </div>
                       </div>
 
                       {/* Name, Symbol & Stats */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-1">
+                        <div className="flex items-start justify-between mb-0.5">
                           <div>
-                            <h3 className="font-bold text-white text-sm leading-tight">{channel.name}</h3>
+                            <h3 className="font-bold text-white text-xs leading-tight">{channel.name}</h3>
                             <p className="text-gray-400 text-xs">{channel.symbol}</p>
                           </div>
                         </div>
                         
-                        <div className="text-xs text-gray-300 space-y-0.5">
+                        <div className="text-xs text-gray-300">
                           <p>market cap: <span className="text-green-400">{channel.marketCap}</span></p>
                           <p>replies: <span className="text-gray-400">{channel.replies}</span></p>
                         </div>
