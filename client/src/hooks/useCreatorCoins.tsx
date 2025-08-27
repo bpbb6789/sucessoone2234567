@@ -160,3 +160,45 @@ export function useCreatorCoinsByCreator(creatorAddress: string) {
     enabled: !!creatorAddress
   });
 }
+
+// Get creator coin comments
+export function useCreatorCoinComments(coinId: string) {
+  return useQuery({
+    queryKey: ['/api/creator-coins', coinId, 'comments'],
+    queryFn: async () => {
+      const response = await fetch(`/api/creator-coins/${coinId}/comments`);
+      if (!response.ok) throw new Error('Failed to fetch comments');
+      return response.json();
+    },
+    enabled: !!coinId,
+    refetchInterval: 30000 // Refetch every 30 seconds
+  });
+}
+
+// Get creator coin trades/activity
+export function useCreatorCoinTrades(coinId: string) {
+  return useQuery({
+    queryKey: ['/api/creator-coins', coinId, 'trades'],
+    queryFn: async () => {
+      const response = await fetch(`/api/creator-coins/${coinId}/trades`);
+      if (!response.ok) throw new Error('Failed to fetch trades');
+      return response.json();
+    },
+    enabled: !!coinId,
+    refetchInterval: 30000 // Refetch every 30 seconds
+  });
+}
+
+// Get creator coin holders
+export function useCreatorCoinHolders(coinId: string) {
+  return useQuery({
+    queryKey: ['/api/creator-coins', coinId, 'holders'],
+    queryFn: async () => {
+      const response = await fetch(`/api/creator-coins/${coinId}/holders`);
+      if (!response.ok) throw new Error('Failed to fetch holders');
+      return response.json();
+    },
+    enabled: !!coinId,
+    refetchInterval: 60000 // Refetch every 60 seconds
+  });
+}

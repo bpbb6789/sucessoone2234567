@@ -1915,6 +1915,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get creator coin comments
+  app.get('/api/creator-coins/:coinId/comments', async (req, res) => {
+    try {
+      const { coinId } = req.params;
+      const comments = await db.select()
+        .from(creatorCoinComments)
+        .where(eq(creatorCoinComments.coinId, coinId))
+        .orderBy(desc(creatorCoinComments.createdAt));
+      res.json(comments);
+    } catch (error) {
+      console.error('Error fetching creator coin comments:', error);
+      res.status(500).json({ error: 'Failed to fetch comments' });
+    }
+  });
+
+  // Get creator coin trades/activity
+  app.get('/api/creator-coins/:coinId/trades', async (req, res) => {
+    try {
+      const { coinId } = req.params;
+      const trades = await db.select()
+        .from(creatorCoinTrades)
+        .where(eq(creatorCoinTrades.coinId, coinId))
+        .orderBy(desc(creatorCoinTrades.createdAt));
+      res.json(trades);
+    } catch (error) {
+      console.error('Error fetching creator coin trades:', error);
+      res.status(500).json({ error: 'Failed to fetch trades' });
+    }
+  });
+
+  // Get creator coin holders (mock for now, would need blockchain data)
+  app.get('/api/creator-coins/:coinId/holders', async (req, res) => {
+    try {
+      const { coinId } = req.params;
+      // For now return empty array since this requires blockchain data
+      // In a real implementation, you'd query the token contract for holder balances
+      res.json([]);
+    } catch (error) {
+      console.error('Error fetching creator coin holders:', error);
+      res.status(500).json({ error: 'Failed to fetch holders' });
+    }
+  });
+
   // Get all creator coins
   app.get('/api/creator-coins', async (req, res) => {
     try {

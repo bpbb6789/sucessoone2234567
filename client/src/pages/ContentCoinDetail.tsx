@@ -35,7 +35,7 @@ import { PUMP_FUN_ABI } from "../../../abi/PumpFunAbi";
 import TransactionComponent from "@/components/Transaction";
 import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
 import { useGetAllSales } from "@/hooks/useGetAllSales";
-import { useCreatorCoin } from "@/hooks/useCreatorCoins";
+import { useCreatorCoin, useCreatorCoinComments, useCreatorCoinTrades, useCreatorCoinHolders } from "@/hooks/useCreatorCoins";
 
 interface ContentCoinData {
   id: string;
@@ -96,6 +96,11 @@ export default function ContentCoinDetail() {
   // Try to get content coin data first (from creator coins API)
   const { data: creatorCoin, isLoading: creatorCoinLoading } = useCreatorCoin(tokenAddress || '');
   
+  // Get real data for comments, trades, and holders
+  const { data: comments, isLoading: commentsLoading } = useCreatorCoinComments(tokenAddress || '');
+  const { data: trades, isLoading: tradesLoading } = useCreatorCoinTrades(tokenAddress || '');
+  const { data: holders, isLoading: holdersLoading } = useCreatorCoinHolders(tokenAddress || '');
+  
   // Get token data from GraphQL as fallback
   const { data: salesData, loading: salesLoading } = useGetAllSales();
 
@@ -110,17 +115,17 @@ export default function ContentCoinDetail() {
         description: creatorCoin.description || `${creatorCoin.coinName} content coin`,
         creator: creatorCoin.creatorAddress,
         price: creatorCoin.currentPrice || '0.001',
-        marketCap: '1870',
-        volume24h: '2.30', 
-        holders: 42,
-        change24h: 15.3,
+        marketCap: creatorCoin.marketCap || '0',
+        volume24h: creatorCoin.volume24h || '0', 
+        holders: creatorCoin.holders || 0,
+        change24h: 0, // Calculate from price history
         createdAt: new Date(creatorCoin.createdAt),
         isOnBondingCurve: creatorCoin.status === 'deployed',
-        progress: creatorCoin.status === 'deployed' ? 100 : 56,
+        progress: parseInt(creatorCoin.bondingCurveProgress || '0'),
         bondingCurveAddress: creatorCoin.memeTokenAddress,
         imageUrl: `https://gateway.pinata.cloud/ipfs/${creatorCoin.mediaCid}`,
         contentType: creatorCoin.contentType as 'image' | 'video' | 'audio' | 'text',
-        creatorEarnings: '0.02'
+        creatorEarnings: '0' // Calculate from trades
       } as ContentCoinData;
     }
 
@@ -141,61 +146,24 @@ export default function ContentCoinDetail() {
       description: token.bio || token.description || 'Created via pump.fun mechanics',
       creator: token.createdBy || 'No Creator Found',
       price: '0.00187076',
-      marketCap: '1870',
-      volume24h: '2.30',
-      holders: 42,
-      change24h: 15.3,
+      marketCap: '0',
+      volume24h: '0',
+      holders: 0,
+      change24h: 0,
       createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
       isOnBondingCurve: true,
-      progress: 56,
+      progress: 0,
       bondingCurveAddress: token.bondingCurve,
       imageUrl: token.imageUri || '/placeholder-content.png',
       contentType: 'image' as const,
-      creatorEarnings: '0.02'
+      creatorEarnings: '0'
     } as ContentCoinData;
   }, [creatorCoin, salesData, tokenAddress]);
 
-  // Mock data for comments, holders, and activity
-  const [comments] = useState<Comment[]>([
-    {
-      id: '1',
-      user: 'cryptowhale',
-      message: 'This is going to the moon! 🚀',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000),
-      avatar: '/placeholder-avatar.png'
-    },
-    {
-      id: '2',
-      user: 'diamondhands',
-      message: 'Just bought more, love this project',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000)
-    }
-  ]);
-
-  const [holders] = useState<Holder[]>([
-    { address: '0x742d35Cc6ab6C', balance: '1,234,567', percentage: 12.3 },
-    { address: '0x8f3b2c1e9d7a5', balance: '987,654', percentage: 9.8 },
-    { address: '0x5a9c8e2f1b4d7', balance: '765,432', percentage: 7.6 }
-  ]);
-
-  const [activities] = useState<ActivityItem[]>([
-    {
-      id: '1',
-      type: 'buy',
-      user: '0x742d35Cc6ab6C',
-      amount: '0.1',
-      price: '$0.00187',
-      timestamp: new Date(Date.now() - 10 * 60 * 1000)
-    },
-    {
-      id: '2',
-      type: 'sell',
-      user: '0x8f3b2c1e9d7a5',
-      amount: '0.05',
-      price: '$0.00185',
-      timestamp: new Date(Date.now() - 20 * 60 * 1000)
-    }
-  ]);
+  // Process real data for display
+  const processedComments = comments || [];
+  const processedHolders = holders || [];
+  const processedActivities = trades || [];
 
   // Get user's token balance
   const { data: tokenBalance } = useReadContract({
@@ -228,7 +196,7 @@ export default function ContentCoinDetail() {
     });
   };
 
-  if (creatorCoinLoading || salesLoading) {
+  if (creatorCoinLoading || salesLoading || commentsLoading || tradesLoading || holdersLoading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
@@ -441,7 +409,7 @@ export default function ContentCoinDetail() {
                 Comments
               </TabsTrigger>
               <TabsTrigger value="holders" className="flex-1 text-xs">
-                Holders {holders.length}
+                Holders {processedHolders.length}
               </TabsTrigger>
               <TabsTrigger value="activity" className="flex-1 text-xs">
                 Activity
@@ -452,65 +420,88 @@ export default function ContentCoinDetail() {
             </TabsList>
 
             <TabsContent value="comments" className="p-4 space-y-4">
-              {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-3">
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarImage src={comment.avatar} />
-                    <AvatarFallback>{comment.user.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-sm">{comment.user}</p>
-                      <p className="text-xs text-gray-400">{formatTimeAgo(comment.timestamp)}</p>
-                    </div>
-                    <p className="text-sm">{comment.message}</p>
-                  </div>
+              {processedComments.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <MessageCircle className="w-8 h-8 mx-auto mb-2" />
+                  <p>No comments yet. Be the first to comment!</p>
                 </div>
-              ))}
+              ) : (
+                processedComments.map((comment: any) => (
+                  <div key={comment.id} className="flex gap-3">
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.userAddress}`} />
+                      <AvatarFallback>{comment.userAddress?.slice(2, 4) || '?'}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium text-sm">
+                          {comment.userAddress?.slice(0, 6)}...{comment.userAddress?.slice(-4)}
+                        </p>
+                        <p className="text-xs text-gray-400">{formatTimeAgo(new Date(comment.createdAt))}</p>
+                      </div>
+                      <p className="text-sm">{comment.content}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </TabsContent>
 
             <TabsContent value="holders" className="p-4 space-y-3">
-              {holders.map((holder, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address}`} />
-                      <AvatarFallback>{index + 1}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {holder.address.slice(0, 6)}...{holder.address.slice(-4)}
-                      </p>
-                      <p className="text-xs text-gray-400">{holder.percentage}%</p>
-                    </div>
-                  </div>
-                  <p className="text-sm font-medium">{holder.balance}</p>
+              {processedHolders.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <Users className="w-8 h-8 mx-auto mb-2" />
+                  <p>No holders data available yet</p>
                 </div>
-              ))}
+              ) : (
+                processedHolders.map((holder: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address}`} />
+                        <AvatarFallback>{index + 1}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {holder.address?.slice(0, 6)}...{holder.address?.slice(-4)}
+                        </p>
+                        <p className="text-xs text-gray-400">{holder.percentage || 0}%</p>
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium">{holder.balance || '0'}</p>
+                  </div>
+                ))
+              )}
             </TabsContent>
 
             <TabsContent value="activity" className="p-4 space-y-3">
-              {activities.map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                      activity.type === 'buy' ? "bg-green-500 text-black" : "bg-red-500 text-white"
-                    )}>
-                      {activity.type === 'buy' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">
-                        {activity.user.slice(0, 6)}...{activity.user.slice(-4)}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {activity.type} {activity.amount} ETH at {activity.price}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-400">{formatTimeAgo(activity.timestamp)}</p>
+              {processedActivities.length === 0 ? (
+                <div className="text-center text-gray-400 py-8">
+                  <Activity className="w-8 h-8 mx-auto mb-2" />
+                  <p>No trading activity yet</p>
                 </div>
-              ))}
+              ) : (
+                processedActivities.map((activity: any) => (
+                  <div key={activity.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                        activity.tradeType === 'buy' ? "bg-green-500 text-black" : "bg-red-500 text-white"
+                      )}>
+                        {activity.tradeType === 'buy' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {activity.userAddress?.slice(0, 6)}...{activity.userAddress?.slice(-4)}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {activity.tradeType} {activity.amount} at ${activity.price}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400">{formatTimeAgo(new Date(activity.createdAt))}</p>
+                  </div>
+                ))
+              )}
             </TabsContent>
 
             <TabsContent value="details" className="p-4 space-y-4">
