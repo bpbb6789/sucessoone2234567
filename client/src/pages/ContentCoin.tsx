@@ -117,7 +117,7 @@ export default function ContentCoin() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-white mb-2">
-                Content Coins
+                Now Trending
               </h1>
               <p className="text-gray-400 text-lg">
                 Your tokenized content collection • {filteredContent.length} items
@@ -154,11 +154,11 @@ export default function ContentCoin() {
           </div>
         </div>
 
-        {/* Now Trending Section */}
+        {/* Top Channels Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Now trending</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">Top Channels</h2>
             </div>
             <div className="flex items-center gap-2">
               <Button 
@@ -178,68 +178,134 @@ export default function ContentCoin() {
             </div>
           </div>
 
-          {/* Trending Channels Cards - Horizontal Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Top Channels Cards - Mobile: Horizontal Scroll, Desktop: Grid */}
+          <div className="md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
+            {/* Mobile: Horizontal Scroll */}
+            <div className="flex md:hidden space-x-4 overflow-x-auto scrollbar-hide pb-4">
             {/* Mock channel data - replace with real data later */}
-            {[
-              { 
-                name: "Unc", 
-                symbol: "(Unc)", 
-                marketCap: "$1.3M", 
-                replies: 37, 
-                avatar: "/images/creator1.jpg"
-              },
-              { 
-                name: "Illusion of Life", 
-                symbol: "(SPARK)", 
-                marketCap: "$32.9M", 
-                replies: 830, 
-                avatar: "/images/creator2.jpg"
-              },
-              { 
-                name: "KEANU SLEAZE", 
-                symbol: "(SLEAZE)", 
-                marketCap: "$754.4K", 
-                replies: 318, 
-                avatar: "/images/creator3.jpg"
-              },
-              { 
-                name: "TROLL", 
-                symbol: "(TROLL)", 
-                marketCap: "$253.4M", 
-                replies: 1095, 
-                avatar: "/images/creator4.jpg"
-              }
-            ].map((channel, index) => (
-              <div key={index} className="group cursor-pointer">
-                <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-4 border border-gray-700/50">
-                  {/* Top row - Avatar, Name, Symbol, Market Cap */}
-                  <div className="flex items-start gap-3">
-                    {/* Avatar */}
-                    <div className="relative flex-shrink-0">
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">{channel.name.charAt(0)}</span>
-                      </div>
-                    </div>
-
-                    {/* Name, Symbol & Stats */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-1">
-                        <div>
-                          <h3 className="font-bold text-white text-sm leading-tight">{channel.name}</h3>
-                          <p className="text-gray-400 text-xs">{channel.symbol}</p>
+              {[
+                { 
+                  name: "Unc", 
+                  symbol: "(Unc)", 
+                  marketCap: "$1.3M", 
+                  replies: 37, 
+                  avatar: "/images/creator1.jpg"
+                },
+                { 
+                  name: "Illusion of Life", 
+                  symbol: "(SPARK)", 
+                  marketCap: "$32.9M", 
+                  replies: 830, 
+                  avatar: "/images/creator2.jpg"
+                },
+                { 
+                  name: "KEANU SLEAZE", 
+                  symbol: "(SLEAZE)", 
+                  marketCap: "$754.4K", 
+                  replies: 318, 
+                  avatar: "/images/creator3.jpg"
+                },
+                { 
+                  name: "TROLL", 
+                  symbol: "(TROLL)", 
+                  marketCap: "$253.4M", 
+                  replies: 1095, 
+                  avatar: "/images/creator4.jpg"
+                }
+              ].map((channel, index) => (
+                <div key={`mobile-${index}`} className="flex-shrink-0 w-72 group cursor-pointer">
+                  <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-4 border border-gray-700/50">
+                    {/* Top row - Avatar, Name, Symbol, Market Cap */}
+                    <div className="flex items-start gap-3">
+                      {/* Avatar */}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">{channel.name.charAt(0)}</span>
                         </div>
                       </div>
-                      
-                      <div className="text-xs text-gray-300 space-y-0.5">
-                        <p>market cap: <span className="text-green-400">{channel.marketCap}</span></p>
-                        <p>replies: <span className="text-gray-400">{channel.replies}</span></p>
+
+                      {/* Name, Symbol & Stats */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-1">
+                          <div>
+                            <h3 className="font-bold text-white text-sm leading-tight">{channel.name}</h3>
+                            <p className="text-gray-400 text-xs">{channel.symbol}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="text-xs text-gray-300 space-y-0.5">
+                          <p>market cap: <span className="text-green-400">{channel.marketCap}</span></p>
+                          <p>replies: <span className="text-gray-400">{channel.replies}</span></p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Desktop: Grid Layout */}
+            <div className="hidden md:contents">
+              {[
+                { 
+                  name: "Unc", 
+                  symbol: "(Unc)", 
+                  marketCap: "$1.3M", 
+                  replies: 37, 
+                  avatar: "/images/creator1.jpg"
+                },
+                { 
+                  name: "Illusion of Life", 
+                  symbol: "(SPARK)", 
+                  marketCap: "$32.9M", 
+                  replies: 830, 
+                  avatar: "/images/creator2.jpg"
+                },
+                { 
+                  name: "KEANU SLEAZE", 
+                  symbol: "(SLEAZE)", 
+                  marketCap: "$754.4K", 
+                  replies: 318, 
+                  avatar: "/images/creator3.jpg"
+                },
+                { 
+                  name: "TROLL", 
+                  symbol: "(TROLL)", 
+                  marketCap: "$253.4M", 
+                  replies: 1095, 
+                  avatar: "/images/creator4.jpg"
+                }
+              ].map((channel, index) => (
+                <div key={`desktop-${index}`} className="group cursor-pointer">
+                  <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-4 border border-gray-700/50">
+                    {/* Top row - Avatar, Name, Symbol, Market Cap */}
+                    <div className="flex items-start gap-3">
+                      {/* Avatar */}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">{channel.name.charAt(0)}</span>
+                        </div>
+                      </div>
+
+                      {/* Name, Symbol & Stats */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-1">
+                          <div>
+                            <h3 className="font-bold text-white text-sm leading-tight">{channel.name}</h3>
+                            <p className="text-gray-400 text-xs">{channel.symbol}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="text-xs text-gray-300 space-y-0.5">
+                          <p>market cap: <span className="text-green-400">{channel.marketCap}</span></p>
+                          <p>replies: <span className="text-gray-400">{channel.replies}</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
