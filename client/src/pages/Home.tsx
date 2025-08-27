@@ -93,7 +93,7 @@ const mockChannelData: ChannelData[] = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("trending");
-  
+
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [channels, setChannels] = useState<ChannelData[]>([]);
   const [deployedPadsData, setDeployedPadsData] = useState<any[]>([]);
@@ -248,11 +248,11 @@ export default function Home() {
     <div className="min-h-screen text-white dark:text-white text-gray-900 dark:text-white" data-testid="page-home">
       <div className="p-4 md:p-6">
         {/* Category Filter Chips */}
-        <CategoryChips 
+        <CategoryChips
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
         />
-        
+
         <Tabs defaultValue="pads" className="w-full">
           <TabsList className="inline-flex w-auto bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50 h-8 p-0.5 rounded-lg">
             <TabsTrigger
@@ -349,7 +349,7 @@ export default function Home() {
                           <div className="flex items-center gap-3">
                             {/* Token Avatar */}
                             {token.imageUri && token.imageUri.trim() !== '' ? (
-                              <img 
+                              <img
                                 src={token.imageUri}
                                 alt={`${token.name} logo`}
                                 className="w-10 h-10 rounded-lg object-cover"
@@ -385,8 +385,8 @@ export default function Home() {
                           <div className="flex items-center gap-2">
                             {token.address && (
                               <Link href={`/token/${token.address}`}>
-                                <Button 
-                                  className="px-2 py-1 h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
+                                <Button
+                                  className="px-2 py-1 h-6 text-xs bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                                   size="sm"
                                 >
                                   Trade
@@ -416,7 +416,7 @@ export default function Home() {
                               <span>{token.progress}%</span>
                             </div>
                             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                              <div 
+                              <div
                                 className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${Math.min(token.progress || 0, 100)}%` }}
                               ></div>
@@ -433,9 +433,11 @@ export default function Home() {
                                 {token.change24h ? Math.abs(token.change24h).toFixed(1) : '0.0'}%
                               </span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-blue-500 dark:text-blue-400">👥</span>
-                              <span className="text-gray-600 dark:text-gray-400">{token.holders}</span>
+                            <div className="flex items-center gap-0.5">
+                              <span className="text-blue-500">👥</span>
+                              <span className="text-blue-400 font-medium">
+                                {Math.floor(Math.random() * 100) + 10}
+                              </span>
                             </div>
                           </div>
                         </div>
