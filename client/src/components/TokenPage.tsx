@@ -14,6 +14,7 @@ import { useSearch } from 'wouter';
 import { TradingViewChartMain } from '@/components/TradingViewChart';
 import useGetAllSales from '@/hooks/useGetAllSales';
 import { ChartingLibraryWidgetOptions, ResolutionString } from '@/public/static/charting_library/charting_library';
+import ContentNotFound from '@/components/ContentNotFound';
 
 const defaultWidgetProps: Partial<ChartingLibraryWidgetOptions> = {
     symbol: 'METH',
@@ -33,7 +34,15 @@ const TokenPageComp = () => {
   const tokenAddress = searchParams.get('address') as `0x${string}` | null;
 
   if (!tokenAddress) {
-    return <div className="min-h-screen flex items-center justify-center">Invalid token address</div>;
+    return (
+      <ContentNotFound 
+        title="Invalid Token Address"
+        description="Please provide a valid token address to view content details."
+        linkText="Browse Tokens"
+        linkPath="/"
+        showBackButton={true}
+      />
+    );
   }
 
   const { data: tokenData } = useReadContract({
@@ -44,7 +53,15 @@ const TokenPageComp = () => {
   });
 
   if (!tokenData) {
-    return <div className="min-h-screen flex items-center justify-center">Token not found</div>;
+    return (
+      <ContentNotFound 
+        title="Content Not Found"
+        description="The content you're looking for doesn't exist or has been removed."
+        linkText="Go to My Content"
+        linkPath="/my-content"
+        showBackButton={true}
+      />
+    );
   }
 
   const { data: capData } = useReadContract({
