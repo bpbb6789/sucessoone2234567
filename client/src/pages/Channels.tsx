@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Users, TrendingUp } from "lucide-react";
+import { Search, Users, TrendingUp, MoreHorizontal, Plus, Filter, FileText } from "lucide-react";
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
@@ -151,7 +150,7 @@ export default function Channels() {
                             {channel.name}
                           </h3>
                           <p className="text-gray-400 text-xs">
-                            Channel
+                            Creator: {channel.creatorUsername || 'Unknown'}
                           </p>
                         </div>
                       </div>
@@ -167,12 +166,18 @@ export default function Channels() {
                       <div className="flex items-center justify-between pt-2 text-xs">
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-1">
+                            <FileText className="w-3 h-3 text-gray-400" />
+                            <span className="text-gray-400">{channel.postsCount || 0} posts</span>
+                          </div>
+                          <div className="flex items-center gap-1">
                             <Users className="w-3 h-3 text-gray-400" />
-                            <span className="text-gray-400">0 subs</span>
+                            <span className="text-gray-400">{channel.holderCount || 0} holders</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <TrendingUp className="w-3 h-3 text-green-400" />
-                            <span className="text-green-400">Trending</span>
+                            <span className="text-gray-400">
+                              {channel.marketCap !== undefined ? `$${channel.marketCap.toLocaleString()}` : 'N/A'}
+                            </span>
                           </div>
                         </div>
                       </div>
