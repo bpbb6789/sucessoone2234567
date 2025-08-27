@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Upload,
   FileImage,
+  Trophy,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -25,6 +26,7 @@ import { useGetAllChannels } from "@/hooks/useGetAllChannels";
 
 const mainNavItems = [
   { icon: FileImage, label: "Discover", href: "/" },
+  { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
   { icon: Coins, label: "Creator Coins", href: "/creatorcoins" },
   { icon: Upload, label: "Tokenize", href: "/tokenize" },
