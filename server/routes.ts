@@ -1027,6 +1027,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/web3-channels/slug/:slug", async (req, res) => {
+    try {
+      const channels = await storage.getAllWeb3Channels();
+      const channel = channels.find(c => c.slug === req.params.slug);
+      
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
+      }
+      
+      // Transform channel data similar to the main channels endpoint
+      const transformedChannel = {
+        id: channel.id,
+        name: channel.name,
+        description: channel.description || '',
+        avatarUrl: channel.avatarCid ? (channel.avatarCid.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.avatarCid}` : channel.avatarCid) : null,
+        coverUrl: channel.coverCid ? (channel.coverCid.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.coverCid}` : channel.coverCid) : null,
+        coinAddress: channel.coinAddress,
+        metadataUri: channel.metadataUri || '',
+        transactionHash: channel.txHash || '',
+        owner: channel.owner || channel.createdBy,
+        ticker: channel.ticker || channel.name.toUpperCase().slice(0, 8),
+        category: channel.category || 'General',
+        chainId: channel.chainId || 8453,
+        slug: channel.slug || channel.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        createdAt: channel.createdAt,
+        updatedAt: channel.updatedAt
+      };
+      
+      res.json(transformedChannel);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch channel by slug' });
+    }
+  });
+
   app.get("/api/web3-channels/owner/:owner", async (req, res) => {
     try {
       const channel = await storage.getWeb3ChannelByOwner(req.params.owner);

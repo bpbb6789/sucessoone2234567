@@ -109,7 +109,7 @@ function AppContent() {
               <Route path="/dashboard/import" component={ContentImport} />
               <Route path="/my-content" component={MyContent} />
               <Route path="/content/:id" component={ContentDetail} />
-              <Route path="/channel/:id" component={ChannelDetail} />
+              <Route path="/channel/:slug" component={ChannelDetail} />
               <Route path="/:type/:id" component={PostDetail} />
               <Route path="/doc" component={Doc} />
               <Route path="/faq" component={FAQ} />

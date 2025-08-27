@@ -1,15 +1,13 @@
 import { useState } from 'react'
 import { useParams, Link } from 'wouter'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Copy } from 'lucide-react'
+import { ArrowLeft, Settings, Bell, BellRing, Play, Users, Video, Grid3X3, Music, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { LineChart, Line, ResponsiveContainer } from 'recharts'
+import { Card, CardContent } from '@/components/ui/card'
+import TradingModal from '@/components/TradingModal'
 
 interface ChannelDetail {
   id: string
@@ -23,136 +21,122 @@ interface ChannelDetail {
   chainId: number
   createdAt: string
   description?: string
+  slug: string
 }
 
-interface TokenData {
-  price: string
-  marketCap: string
-  volume24h: string
-  holders: number
-  change24h: number
-}
+// Mock data for videos until we have real video content
+const mockVideos = [
+  {
+    id: 1,
+    title: "Welcome to My Channel",
+    thumbnail: "https://via.placeholder.com/320x180?text=Video+1",
+    views: "1.2K views",
+    timeAgo: "2 days ago",
+    duration: "3:45"
+  },
+  {
+    id: 2,
+    title: "Channel Update & Future Plans",
+    thumbnail: "https://via.placeholder.com/320x180?text=Video+2", 
+    views: "856 views",
+    timeAgo: "5 days ago",
+    duration: "8:22"
+  },
+  {
+    id: 3,
+    title: "Behind the Scenes",
+    thumbnail: "https://via.placeholder.com/320x180?text=Video+3",
+    views: "432 views", 
+    timeAgo: "1 week ago",
+    duration: "5:17"
+  }
+]
 
-// Mock chart data for now
-const chartData = [
-  { time: '1H', value: 650 },
-  { time: '6H', value: 700 },
-  { time: '12H', value: 680 },
-  { time: '1D', value: 757 },
+const mockShorts = [
+  {
+    id: 1,
+    title: "Quick Tip #1",
+    thumbnail: "https://via.placeholder.com/180x320?text=Short+1",
+    views: "2.1K views"
+  },
+  {
+    id: 2,
+    title: "Daily Motivation",
+    thumbnail: "https://via.placeholder.com/180x320?text=Short+2", 
+    views: "1.8K views"
+  },
+  {
+    id: 3,
+    title: "Fun Fact",
+    thumbnail: "https://via.placeholder.com/180x320?text=Short+3",
+    views: "943 views"
+  }
 ]
 
 export default function ChannelDetail() {
-  const { id } = useParams()
-  const [tradeAmount, setTradeAmount] = useState('')
-  const [comment, setComment] = useState('')
-  
+  const { slug } = useParams()
+  const [isSubscribed, setIsSubscribed] = useState(false)
 
-  const { data: channelsData = [], isLoading } = useQuery({
-    queryKey: ['/api/web3-channels'],
+  const { data: channel, isLoading, error } = useQuery({
+    queryKey: ['/api/web3-channels/slug', slug],
     queryFn: async () => {
-      const response = await fetch('/api/web3-channels')
-      if (!response.ok) throw new Error('Failed to fetch channels')
+      const response = await fetch(`/api/web3-channels/slug/${slug}`)
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Channel not found')
+        }
+        throw new Error('Failed to fetch channel')
+      }
       return response.json()
     },
-    enabled: !!id
+    enabled: !!slug
   })
 
-  // Fetch token data from external API
-  const { data: tokenData } = useQuery({
-    queryKey: ['/api/token-data', id],
-    queryFn: async () => {
-      const channel = channelsData.find((c: any) => c.id === id)
-      if (!channel?.coinAddress) return null
-      
-      try {
-        // Try to fetch real token data
-        const [holdersRes, creationRes] = await Promise.all([
-          fetch('/api/token-holders', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tokenAddress: channel.coinAddress })
-          }),
-          fetch('/api/token-creation-time', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tokenAddress: channel.coinAddress })
-          })
-        ])
+  // Mock subscriber count and video count
+  const subscriberCount = 14200 // Would come from blockchain/analytics data
+  const videoCount = mockVideos.length
 
-        const [holdersData, creationData] = await Promise.all([
-          holdersRes.ok ? holdersRes.json() : { holderCount: 0 },
-          creationRes.ok ? creationRes.json() : null
-        ])
-
-        return {
-          price: '0.000001',
-          marketCap: '0.00',
-          volume24h: '0.00',
-          holders: holdersData.holderCount || 0,
-          change24h: 0,
-          creationTime: creationData?.creationTime
-        }
-      } catch (error) {
-        return {
-          price: '0.000001',
-          marketCap: '0.00', 
-          volume24h: '0.00',
-          holders: 0,
-          change24h: 0
-        }
-      }
-    },
-    enabled: !!channelsData.length && !!id
-  })
-
-  // Find the specific channel and transform data
-  const channel = channelsData.find((c: any) => c.id === id)
-  const transformedChannel = channel ? {
-    ...channel,
-    avatarUrl: channel.avatarUrl || (channel.avatarCid ? `https://gateway.pinata.cloud/ipfs/${channel.avatarCid}` : '/placeholder-avatar.png'),
-    coverUrl: channel.coverUrl || (channel.coverCid ? `https://gateway.pinata.cloud/ipfs/${channel.coverCid}` : undefined)
-  } : null
-
-  const formatTimeAgo = (date: Date) => {
-    const now = new Date()
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
-    
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`
-    return `${Math.floor(diffInMinutes / 1440)}d ago`
-  }
-
-  const copyAddress = (address: string) => {
-    navigator.clipboard.writeText(address)
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+    return num.toString()
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black text-white p-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-700 rounded w-32 mb-6"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 h-96 bg-gray-700 rounded-lg"></div>
-              <div className="space-y-4">
-                <div className="h-6 bg-gray-700 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-                <div className="h-32 bg-gray-700 rounded"></div>
-              </div>
+      <div className="min-h-screen bg-background">
+        <div className="animate-pulse p-4">
+          <div className="h-8 bg-muted rounded w-32 mb-4"></div>
+          <div className="h-48 bg-muted rounded mb-4"></div>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-20 h-20 bg-muted rounded-full"></div>
+            <div>
+              <div className="h-6 bg-muted rounded w-48 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-32 mb-2"></div>
+              <div className="h-4 bg-muted rounded w-64"></div>
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="aspect-video bg-muted rounded"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
     )
   }
 
-  if (!transformedChannel) {
+  if (error || !channel) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Channel not found</h1>
-          <p className="text-gray-400 mb-4">The channel you're looking for doesn't exist.</p>
-          <Link href="/tokens">
+          <p className="text-muted-foreground mb-4">The channel you're looking for doesn't exist.</p>
+          <Link href="/contentcoin">
             <Button variant="outline">Go to Discovery</Button>
           </Link>
         </div>
@@ -161,155 +145,315 @@ export default function ChannelDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-7xl mx-auto p-4">
-        {/* Header */}
-        <div className="flex items-center mb-4">
-          <Link href="/tokens">
-            <Button variant="ghost" size="sm" className="mr-3">
-              <ArrowLeft className="w-4 h-4" />
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/contentcoin">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            </Link>
+            <h1 className="text-lg font-semibold">{channel.name}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm">
+              <Share2 className="w-4 h-4" />
             </Button>
-          </Link>
-          <h1 className="text-lg font-semibold">Channel Details</h1>
+            <Button variant="ghost" size="sm">
+              <Settings className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left side - Chart */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-gray-900 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
+      <div className="max-w-7xl mx-auto">
+        {/* Channel Banner */}
+        {channel.coverUrl && (
+          <div className="aspect-[6/1] bg-gradient-to-r from-blue-500 to-purple-600 relative overflow-hidden">
+            <img 
+              src={channel.coverUrl} 
+              alt={`${channel.name} banner`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Channel Info */}
+        <div className="p-6">
+          <div className="flex flex-col md:flex-row gap-6 mb-6">
+            <div className="flex gap-4">
+              <Avatar className="w-20 h-20 md:w-32 md:h-32 border-4 border-background shadow-lg">
+                <AvatarImage src={channel.avatarUrl || undefined} />
+                <AvatarFallback className="text-2xl md:text-4xl font-bold">
+                  {channel.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 md:hidden">
+                <h2 className="text-2xl font-bold mb-1">{channel.name}</h2>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div>@{channel.slug}</div>
+                  <div>{formatNumber(subscriberCount)} subscribers • {videoCount} videos</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex-1 hidden md:block">
+              <h2 className="text-3xl font-bold mb-2">{channel.name}</h2>
+              <div className="text-muted-foreground mb-2">
+                <span>@{channel.slug}</span> • 
+                <span className="ml-1">{formatNumber(subscriberCount)} subscribers</span> • 
+                <span className="ml-1">{videoCount} videos</span>
+              </div>
+              {channel.description && (
+                <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+                  {channel.description}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Button 
+                size="lg"
+                variant={isSubscribed ? "secondary" : "default"}
+                onClick={() => setIsSubscribed(!isSubscribed)}
+                className="min-w-[120px]"
+                data-testid="button-subscribe"
+              >
+                {isSubscribed ? (
+                  <>
+                    <BellRing className="w-4 h-4 mr-2" />
+                    Subscribed
+                  </>
+                ) : (
+                  <>
+                    <Bell className="w-4 h-4 mr-2" />
+                    Subscribe
+                  </>
+                )}
+              </Button>
+              
+              <TradingModal
+                coinAddress={channel.coinAddress}
+                coinName={channel.name}
+                ticker={channel.ticker}
+              >
+                <Button variant="outline" size="lg" className="min-w-[120px]">
+                  Trade {channel.ticker}
+                </Button>
+              </TradingModal>
+            </div>
+          </div>
+
+          {/* Channel Description for Mobile */}
+          {channel.description && (
+            <div className="md:hidden mb-6">
+              <p className="text-sm text-muted-foreground">
+                {channel.description}
+              </p>
+            </div>
+          )}
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-primary">{formatNumber(subscriberCount)}</div>
+                <div className="text-sm text-muted-foreground">Subscribers</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-primary">{videoCount}</div>
+                <div className="text-sm text-muted-foreground">Videos</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-primary">{mockShorts.length}</div>
+                <div className="text-sm text-muted-foreground">Shorts</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-primary">{channel.category}</div>
+                <div className="text-sm text-muted-foreground">Category</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Content Tabs */}
+          <Tabs defaultValue="home" className="w-full">
+            <TabsList className="grid grid-cols-5 w-full max-w-md">
+              <TabsTrigger value="home" className="gap-2">
+                <div className="w-4 h-4 rounded bg-current opacity-20"></div>
+                Home
+              </TabsTrigger>
+              <TabsTrigger value="videos" className="gap-2">
+                <Video className="w-4 h-4" />
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="shorts" className="gap-2">
+                <Play className="w-4 h-4" />
+                Shorts  
+              </TabsTrigger>
+              <TabsTrigger value="playlists" className="gap-2">
+                <Music className="w-4 h-4" />
+                Playlists
+              </TabsTrigger>
+              <TabsTrigger value="about" className="gap-2">
+                <Users className="w-4 h-4" />
+                About
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="home" className="mt-6">
+              <div className="space-y-6">
+                {/* Featured Video */}
+                {mockVideos.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Featured</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="aspect-video bg-muted rounded-lg overflow-hidden group cursor-pointer">
+                        <img 
+                          src={mockVideos[0].thumbnail} 
+                          alt={mockVideos[0].title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="text-xl font-semibold">{mockVideos[0].title}</h4>
+                        <p className="text-muted-foreground">{mockVideos[0].views} • {mockVideos[0].timeAgo}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Welcome to my channel! This is where I share my journey and connect with amazing people.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent Videos */}
                 <div>
-                  <h2 className="text-xl font-bold">Market cap</h2>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold">${tokenData?.marketCap || '0.00'}</span>
-                    <span className="text-green-500 text-sm font-medium">+{tokenData?.change24h || 0}%</span>
+                  <h3 className="text-lg font-semibold mb-4">Recent videos</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {mockVideos.slice(1).map((video) => (
+                      <div key={video.id} className="group cursor-pointer">
+                        <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-3 relative">
+                          <img 
+                            src={video.thumbnail} 
+                            alt={video.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
+                            {video.duration}
+                          </div>
+                        </div>
+                        <h4 className="font-medium text-sm mb-1 line-clamp-2">{video.title}</h4>
+                        <p className="text-xs text-muted-foreground">{video.views} • {video.timeAgo}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-              
-              <div className="h-48 mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#10b981" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="flex justify-center space-x-4">
-                {['1H', '1D', '1W', '1M', 'All'].map((period) => (
-                  <button 
-                    key={period}
-                    className="px-3 py-1 text-sm text-gray-400 hover:text-white"
-                  >
-                    {period}
-                  </button>
+            </TabsContent>
+
+            <TabsContent value="videos" className="mt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {mockVideos.map((video) => (
+                  <div key={video.id} className="group cursor-pointer">
+                    <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-3 relative">
+                      <img 
+                        src={video.thumbnail} 
+                        alt={video.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
+                        {video.duration}
+                      </div>
+                    </div>
+                    <h4 className="font-medium text-sm mb-1 line-clamp-2">{video.title}</h4>
+                    <p className="text-xs text-muted-foreground">{video.views} • {video.timeAgo}</p>
+                  </div>
                 ))}
               </div>
-            </div>
-          </div>
+            </TabsContent>
 
-          {/* Right side - Trading Interface */}
-          <div className="space-y-4">
-            {/* Token Info Header */}
-            <div className="flex items-center space-x-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={transformedChannel.avatarUrl} />
-                <AvatarFallback>{transformedChannel.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg">{transformedChannel.name}</h3>
-                <p className="text-sm text-gray-400">{transformedChannel.ticker || transformedChannel.name.slice(0, 6)}</p>
+            <TabsContent value="shorts" className="mt-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {mockShorts.map((short) => (
+                  <div key={short.id} className="group cursor-pointer">
+                    <div className="aspect-[9/16] bg-muted rounded-lg overflow-hidden mb-2">
+                      <img 
+                        src={short.thumbnail} 
+                        alt={short.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </div>
+                    <h4 className="font-medium text-xs mb-1 line-clamp-2">{short.title}</h4>
+                    <p className="text-xs text-muted-foreground">{short.views}</p>
+                  </div>
+                ))}
               </div>
-            </div>
+            </TabsContent>
 
-            {/* Market Stats Grid */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-gray-400">Market Cap</p>
-                <p className="font-semibold">${tokenData?.marketCap || '0.00'}</p>
+            <TabsContent value="playlists" className="mt-6">
+              <div className="text-center py-12">
+                <Music className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No playlists yet</h3>
+                <p className="text-muted-foreground">This channel hasn't created any playlists.</p>
               </div>
-              <div>
-                <p className="text-gray-400">24H Volume</p>
-                <p className="font-semibold">${tokenData?.volume24h || '0.00'}</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Creator Earnings</p>
-                <p className="font-semibold">$0.00</p>
-              </div>
-              <div>
-                <p className="text-gray-400">Holders</p>
-                <p className="font-semibold">{tokenData?.holders || 0}</p>
-              </div>
-            </div>
+            </TabsContent>
 
-            {/* Buy/Sell Buttons */}
-            <div className="flex space-x-2">
-              <Button className="flex-1 bg-green-500 hover:bg-green-600 text-black font-semibold">
-                Buy
-              </Button>
-              <Button variant="outline" className="flex-1">
-                Sell
-              </Button>
-            </div>
-
-            {/* Balance */}
-            <div className="text-right">
-              <p className="text-sm text-gray-400">Balance: <span className="text-white">0 ETH</span></p>
-            </div>
-
-            {/* Trading Input */}
-            <div className="space-y-3">
-              <div className="relative">
-                <Input
-                  type="number"
-                  placeholder="0.000111"
-                  value={tradeAmount}
-                  onChange={(e) => setTradeAmount(e.target.value)}
-                  className="pr-16 bg-gray-900 border-gray-700 h-10"
-                />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <span className="text-sm font-medium">ETH</span>
+            <TabsContent value="about" className="mt-6">
+              <div className="max-w-2xl space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Channel Details</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-sm text-muted-foreground">Description</div>
+                      <div className="mt-1">
+                        {channel.description || "No description available."}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Category</div>
+                      <div className="mt-1">
+                        <Badge variant="secondary">{channel.category}</Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Channel Coin</div>
+                      <div className="mt-1 font-mono text-sm">
+                        {channel.ticker} • {channel.coinAddress}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">Created</div>
+                      <div className="mt-1">
+                        {new Date(channel.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Stats</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold">{formatNumber(subscriberCount)}</div>
+                      <div className="text-sm text-muted-foreground">subscribers</div>
+                    </div>
+                    <div className="p-4 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold">{videoCount}</div>
+                      <div className="text-sm text-muted-foreground">videos</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              {/* Quick amounts */}
-              <div className="flex space-x-2">
-                {['0.001 ETH', '0.01 ETH', '0.1 ETH', 'Max'].map((amount) => (
-                  <Button
-                    key={amount}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 flex-1"
-                    onClick={() => setTradeAmount(amount.replace(' ETH', ''))}
-                  >
-                    {amount}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Comment */}
-              <Textarea
-                placeholder="Add a comment..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="bg-gray-900 border-gray-700 resize-none h-10"
-              />
-
-              {/* Buy Button */}
-              <Button className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold h-10">
-                Buy
-              </Button>
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
-
-        
       </div>
     </div>
   )
