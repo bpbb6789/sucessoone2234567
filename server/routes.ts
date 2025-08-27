@@ -860,7 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   ]), async (req, res) => {
     try {
       const { name, ticker, category, chainId, currency, creatorAddress, description } = req.body;
-      
+
       if (!creatorAddress) {
         return res.status(400).json({ error: "Creator address required" });
       }
@@ -1027,15 +1027,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/web3-channels/slug/:slug", async (req, res) => {
+  // Get channel content (videos, shorts, stats)
+  app.get('/api/channel-content/:slug', async (req, res) => {
+    try {
+      const { slug } = req.params;
+
+      // Get the channel first
+      const channel = await db.channel.findUnique({
+        where: { slug }
+      });
+
+      if (!channel) {
+        return res.status(404).json({ error: 'Channel not found' });
+      }
+
+      // For now, return empty arrays since we don't have content management yet
+      // In the future, this would fetch from a content database table
+      const response = {
+        videos: [],
+        shorts: [],
+        stats: {
+          subscriberCount: 0,
+          totalViews: 0,
+          totalVideos: 0,
+          totalShorts: 0
+        }
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Error fetching channel content:', error);
+      res.status(500).json({ error: 'Failed to fetch channel content' });
+    }
+  });
+
+  // Get a single channel by slug
+  app.get('/api/web3-channels/slug/:slug', async (req, res) => {
     try {
       const channels = await storage.getAllWeb3Channels();
       const channel = channels.find(c => c.slug === req.params.slug);
-      
+
       if (!channel) {
         return res.status(404).json({ message: "Channel not found" });
       }
-      
+
       // Transform channel data similar to the main channels endpoint
       const transformedChannel = {
         id: channel.id,
@@ -1054,7 +1089,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: channel.createdAt,
         updatedAt: channel.updatedAt
       };
-      
+
       res.json(transformedChannel);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch channel by slug' });
@@ -1406,12 +1441,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ==================== PAD ROUTES (pump.fun style tokens) ====================
-  
+
   // Get all pads (with optional deployed filter)
   app.get("/api/pads", async (req, res) => {
     try {
       let pads = await storage.getAllPads();
-      
+
       // Filter for deployed pads if requested
       if (req.query.deployed === 'true') {
         pads = pads.filter(pad => 
@@ -1420,7 +1455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (pad.tokenAddress && pad.deploymentTxHash)
         );
       }
-      
+
       res.json(pads);
     } catch (error) {
       res.status(500).json(handleDatabaseError(error, "getAllPads"));
@@ -1458,7 +1493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // TODO: Integrate Doppler V4 SDK for token deployment
       // For now, we'll set status to pending and deploy later
-      
+
       res.status(201).json(pad);
     } catch (error) {
       if (error.name === 'ZodError') {
@@ -1512,7 +1547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userAddress) {
         return res.status(400).json({ message: "User address required" });
       }
-      
+
       await storage.likePad(req.params.id, userAddress);
       res.json({ message: "Pad liked successfully" });
     } catch (error) {
@@ -1527,7 +1562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userAddress) {
         return res.status(400).json({ message: "User address required" });
       }
-      
+
       await storage.unlikePad(req.params.id, userAddress);
       res.json({ message: "Pad unliked successfully" });
     } catch (error) {
@@ -1574,7 +1609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         padId: req.params.id
       });
-      
+
       const comment = await storage.createPadComment(validatedData);
       res.status(201).json(comment);
     } catch (error) {
@@ -1601,10 +1636,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Deploy pad token using Doppler V4 SDK
   app.post("/api/pads/:id/deploy", async (req, res) => {
     let padId = req.params.id;
-    
+
     try {
       console.log(`Starting deployment for pad ${padId}`);
-      
+
       const pad = await storage.getPad(padId);
       if (!pad) {
         return res.status(404).json({ message: "Pad not found" });
@@ -1637,9 +1672,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if we have a deployer private key
       const hasDeployerKey = !!process.env.DEPLOYER_PRIVATE_KEY;
-      
+
       let deploymentResult;
-      
+
       if (hasDeployerKey) {
         console.log('🚀 Real deployment using Doppler V4 SDK...');
         deploymentResult = await dopplerService.deployPadToken(tokenConfig);
@@ -1662,7 +1697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const deploymentMethod = deploymentResult.deploymentMethod || 'unknown';
-      
+
       let message = "Pad token deployed successfully!";
       if (deploymentMethod === 'doppler') {
         message = "Pad token deployed successfully using Doppler V4 protocol!";
@@ -1682,7 +1717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error(`❌ Pad ${padId} deployment failed:`, error);
       console.error("Full error details:", error.message, error.stack);
-      
+
       // Mark pad as failed if deployment fails
       try {
         await storage.updatePad(padId, {
@@ -1691,7 +1726,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (updateError) {
         console.error("Failed to update pad status to failed:", updateError);
       }
-      
+
       res.status(500).json({
         success: false,
         error: true,
@@ -1784,7 +1819,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create Zora metadata 
       console.log('📝 Creating Zora metadata...');
       const imageUrl = `https://gateway.pinata.cloud/ipfs/${mediaCid}`;
-      
+
       let metadataUri: string | null = null;
       try {
         metadataUri = await createZoraMetadata({
@@ -1843,7 +1878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("❌ Creator coin upload error:", error);
       console.error("Full error details:", error instanceof Error ? error.stack : error);
-      
+
       if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
         console.error('Validation errors:', (error as any).errors);
         res.status(400).json({ message: "Invalid coin data", errors: (error as any).errors });
@@ -1856,10 +1891,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/creator-coins/:id/deploy", async (req, res) => {
     const coinId = req.params.id;
     console.log(`🚀 Starting deployment for creator coin: ${coinId}`);
-    
+
     try {
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
-      
+
       if (!coin.length) {
         console.error(`❌ Creator coin not found: ${coinId}`);
         return res.status(404).json({ message: "Creator coin not found" });
@@ -1873,7 +1908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: coinData.status,
         creator: coinData.creatorAddress
       });
-      
+
       if (coinData.status !== 'pending') {
         console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending`);
         return res.status(400).json({ message: `Coin is not in pending status (current: ${coinData.status})` });
@@ -1934,7 +1969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Creator coin deployment error:", error);
-      
+
       // Mark coin as failed
       try {
         await db.update(creatorCoins)
@@ -1943,7 +1978,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (updateError) {
         console.error("Failed to update coin status:", updateError);
       }
-      
+
       res.status(500).json({
         message: "Failed to deploy creator coin",
         error: error instanceof Error ? error.message : "Unknown error"
@@ -1954,13 +1989,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/creator-coins/:id/price", async (req, res) => {
     try {
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
-      
+
       if (!coin.length) {
         return res.status(404).json({ message: "Creator coin not found" });
       }
 
       const coinData = coin[0];
-      
+
       if (!coinData.coinAddress) {
         return res.status(400).json({ message: "Coin not yet deployed" });
       }
@@ -2102,7 +2137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/creators', async (req, res) => {
     try {
       console.log('📋 Fetching creators from content coins...');
-      
+
       // Get unique creators with their stats
       const creatorsData = await db
         .select({
@@ -2148,9 +2183,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/creator-coins', async (req, res) => {
     try {
       console.log('📋 Fetching all creator coins...');
-      
+
       const allCoins = await db.select().from(creatorCoins).orderBy(sql`${creatorCoins.createdAt} DESC`);
-      
+
       console.log(`✅ Found ${allCoins.length} creator coins`);
       res.status(200).json(allCoins);
     } catch (error) {

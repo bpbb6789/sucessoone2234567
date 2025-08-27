@@ -24,54 +24,16 @@ interface ChannelDetail {
   slug: string
 }
 
-// Mock data for videos until we have real video content
-const mockVideos = [
-  {
-    id: 1,
-    title: "Welcome to My Channel",
-    thumbnail: "https://via.placeholder.com/320x180?text=Video+1",
-    views: "1.2K views",
-    timeAgo: "2 days ago",
-    duration: "3:45"
+// Fetch real videos and content data
+const { data: channelContent } = useQuery({
+  queryKey: ['/api/channel-content', slug],
+  queryFn: async () => {
+    const response = await fetch(`/api/channel-content/${slug}`)
+    if (!response.ok) return { videos: [], shorts: [], stats: null }
+    return response.json()
   },
-  {
-    id: 2,
-    title: "Channel Update & Future Plans",
-    thumbnail: "https://via.placeholder.com/320x180?text=Video+2", 
-    views: "856 views",
-    timeAgo: "5 days ago",
-    duration: "8:22"
-  },
-  {
-    id: 3,
-    title: "Behind the Scenes",
-    thumbnail: "https://via.placeholder.com/320x180?text=Video+3",
-    views: "432 views", 
-    timeAgo: "1 week ago",
-    duration: "5:17"
-  }
-]
-
-const mockShorts = [
-  {
-    id: 1,
-    title: "Quick Tip #1",
-    thumbnail: "https://via.placeholder.com/180x320?text=Short+1",
-    views: "2.1K views"
-  },
-  {
-    id: 2,
-    title: "Daily Motivation",
-    thumbnail: "https://via.placeholder.com/180x320?text=Short+2", 
-    views: "1.8K views"
-  },
-  {
-    id: 3,
-    title: "Fun Fact",
-    thumbnail: "https://via.placeholder.com/180x320?text=Short+3",
-    views: "943 views"
-  }
-]
+  enabled: !!slug
+})
 
 export default function ChannelDetail() {
   const { slug } = useParams()
@@ -92,9 +54,10 @@ export default function ChannelDetail() {
     enabled: !!slug
   })
 
-  // Mock subscriber count and video count
-  const subscriberCount = 14200 // Would come from blockchain/analytics data
-  const videoCount = mockVideos.length
+  // Get real subscriber count and video count
+  const subscriberCount = channelContent?.stats?.subscriberCount || 0
+  const videoCount = channelContent?.videos?.length || 0
+  const shortsCount = channelContent?.shorts?.length || 0
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
@@ -271,7 +234,7 @@ export default function ChannelDetail() {
             </Card>
             <Card>
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary">{mockShorts.length}</div>
+                <div className="text-2xl font-bold text-primary">{shortsCount}</div>
                 <div className="text-sm text-muted-foreground">Shorts</div>
               </CardContent>
             </Card>
@@ -311,22 +274,22 @@ export default function ChannelDetail() {
             <TabsContent value="home" className="mt-6">
               <div className="space-y-6">
                 {/* Featured Video */}
-                {mockVideos.length > 0 && (
+                {channelContent?.videos && channelContent.videos.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Featured</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="aspect-video bg-muted rounded-lg overflow-hidden group cursor-pointer">
                         <img 
-                          src={mockVideos[0].thumbnail} 
-                          alt={mockVideos[0].title}
+                          src={channelContent.videos[0].thumbnail || "https://via.placeholder.com/320x180?text=No+Thumbnail"} 
+                          alt={channelContent.videos[0].title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />
                       </div>
                       <div className="space-y-2">
-                        <h4 className="text-xl font-semibold">{mockVideos[0].title}</h4>
-                        <p className="text-muted-foreground">{mockVideos[0].views} • {mockVideos[0].timeAgo}</p>
+                        <h4 className="text-xl font-semibold">{channelContent.videos[0].title}</h4>
+                        <p className="text-muted-foreground">{channelContent.videos[0].views || "0 views"} • {channelContent.videos[0].timeAgo || "Recently"}</p>
                         <p className="text-sm text-muted-foreground">
-                          Welcome to my channel! This is where I share my journey and connect with amazing people.
+                          {channelContent.videos[0].description || channel.description || "No description available."}
                         </p>
                       </div>
                     </div>
@@ -334,67 +297,98 @@ export default function ChannelDetail() {
                 )}
 
                 {/* Recent Videos */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Recent videos</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {mockVideos.slice(1).map((video) => (
-                      <div key={video.id} className="group cursor-pointer">
-                        <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-3 relative">
-                          <img 
-                            src={video.thumbnail} 
-                            alt={video.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
-                            {video.duration}
+                {channelContent?.videos && channelContent.videos.length > 1 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Recent videos</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {channelContent.videos.slice(1).map((video) => (
+                        <div key={video.id} className="group cursor-pointer">
+                          <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-3 relative">
+                            <img 
+                              src={video.thumbnail || "https://via.placeholder.com/320x180?text=No+Thumbnail"} 
+                              alt={video.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            />
+                            {video.duration && (
+                              <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
+                                {video.duration}
+                              </div>
+                            )}
                           </div>
+                          <h4 className="font-medium text-sm mb-1 line-clamp-2">{video.title}</h4>
+                          <p className="text-xs text-muted-foreground">{video.views || "0 views"} • {video.timeAgo || "Recently"}</p>
                         </div>
-                        <h4 className="font-medium text-sm mb-1 line-clamp-2">{video.title}</h4>
-                        <p className="text-xs text-muted-foreground">{video.views} • {video.timeAgo}</p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* No content message */}
+                {(!channelContent?.videos || channelContent.videos.length === 0) && (
+                  <div className="text-center py-12">
+                    <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No videos yet</h3>
+                    <p className="text-muted-foreground">This channel hasn't uploaded any videos.</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
 
             <TabsContent value="videos" className="mt-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {mockVideos.map((video) => (
-                  <div key={video.id} className="group cursor-pointer">
-                    <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-3 relative">
-                      <img 
-                        src={video.thumbnail} 
-                        alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
-                      <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
-                        {video.duration}
+              {channelContent?.videos && channelContent.videos.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {channelContent.videos.map((video) => (
+                    <div key={video.id} className="group cursor-pointer">
+                      <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-3 relative">
+                        <img 
+                          src={video.thumbnail || "https://via.placeholder.com/320x180?text=No+Thumbnail"} 
+                          alt={video.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                        {video.duration && (
+                          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-1 py-0.5 rounded">
+                            {video.duration}
+                          </div>
+                        )}
                       </div>
+                      <h4 className="font-medium text-sm mb-1 line-clamp-2">{video.title}</h4>
+                      <p className="text-xs text-muted-foreground">{video.views || "0 views"} • {video.timeAgo || "Recently"}</p>
                     </div>
-                    <h4 className="font-medium text-sm mb-1 line-clamp-2">{video.title}</h4>
-                    <p className="text-xs text-muted-foreground">{video.views} • {video.timeAgo}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No videos yet</h3>
+                  <p className="text-muted-foreground">This channel hasn't uploaded any videos.</p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="shorts" className="mt-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {mockShorts.map((short) => (
-                  <div key={short.id} className="group cursor-pointer">
-                    <div className="aspect-[9/16] bg-muted rounded-lg overflow-hidden mb-2">
-                      <img 
-                        src={short.thumbnail} 
-                        alt={short.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
+              {channelContent?.shorts && channelContent.shorts.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {channelContent.shorts.map((short) => (
+                    <div key={short.id} className="group cursor-pointer">
+                      <div className="aspect-[9/16] bg-muted rounded-lg overflow-hidden mb-2">
+                        <img 
+                          src={short.thumbnail || "https://via.placeholder.com/180x320?text=No+Thumbnail"} 
+                          alt={short.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <h4 className="font-medium text-xs mb-1 line-clamp-2">{short.title}</h4>
+                      <p className="text-xs text-muted-foreground">{short.views || "0 views"}</p>
                     </div>
-                    <h4 className="font-medium text-xs mb-1 line-clamp-2">{short.title}</h4>
-                    <p className="text-xs text-muted-foreground">{short.views}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Play className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No shorts yet</h3>
+                  <p className="text-muted-foreground">This channel hasn't created any shorts.</p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="playlists" className="mt-6">
