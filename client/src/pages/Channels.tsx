@@ -134,9 +134,14 @@ export default function Channels() {
                     <div className="p-2 space-y-2">
                       {/* Name */}
                       <div>
-                        <h3 className="font-semibold text-white text-xs truncate">
-                          {channel.name}
-                        </h3>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <h3 className="font-semibold text-white text-xs truncate">
+                            {channel.name}
+                          </h3>
+                          <span className="text-green-400 text-xs font-mono">
+                            ${channel.ticker}
+                          </span>
+                        </div>
                         <p className="text-gray-400 text-xs truncate">
                           @{channel.creatorUsername || 'unknown'}
                         </p>
