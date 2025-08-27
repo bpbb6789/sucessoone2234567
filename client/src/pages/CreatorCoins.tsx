@@ -49,7 +49,6 @@ const formatTimeAgo = (date: Date): string => {
 
 export default function CreatorCoins() {
   const [creatorTokens, setCreatorTokens] = useState<CreatorToken[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Get token sales data from GraphQL (PumpFun tokens)
@@ -117,12 +116,6 @@ export default function CreatorCoins() {
 
   // Filter tokens
   const filteredTokens = creatorTokens
-    .filter(token => {
-      const matchesSearch = token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        token.symbol.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      return matchesSearch;
-    })
     .sort((a, b) => {
       switch (selectedCategory) {
         case 'marketCap':
@@ -210,19 +203,7 @@ export default function CreatorCoins() {
           </Link>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search creator coins by name or symbol..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-              data-testid="input-search-creator-tokens"
-            />
-          </div>
-        </div>
+        
 
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -289,7 +270,7 @@ export default function CreatorCoins() {
                   <Sparkles className="h-12 w-12 text-purple-500 mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No creator tokens found</h3>
                   <p className="text-muted-foreground text-center mb-4">
-                    {searchTerm ? `No creator tokens match "${searchTerm}"` : 'No creator tokens have been created yet'}
+                    No creator tokens have been created yet
                   </p>
                   <Link to="/createtoken">
                     <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
