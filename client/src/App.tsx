@@ -49,8 +49,7 @@ import ContentCoinDetail from "./pages/ContentCoinDetail";
 import NotFound from '@/pages/not-found'
 import Channels from "./pages/Channels";
 
-// Lazy load Creators page
-const Creators = lazy(() => import('@/pages/Creators'));
+import Creators from '@/pages/Creators';
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'

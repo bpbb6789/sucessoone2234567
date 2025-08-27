@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy } from "lucide-react";
-import { useCreatorCoins } from '@/hooks/useCreatorCoins';
+import { useCreatorCoins, useCreators } from '@/hooks/useCreatorCoins';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
 import { CategoryChips } from "@/components/CategoryChips";
@@ -50,6 +50,62 @@ const formatTimeAgo = (dateString: string): string => {
 const getContentUrl = (mediaCid: string): string => {
   return `https://gateway.pinata.cloud/ipfs/${mediaCid}`;
 };
+
+// Top Creators Section Component
+function TopCreatorsSection() {
+  const { data: creators, isLoading, error } = useCreators();
+  
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error || !creators || creators.length === 0) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="col-span-full text-center py-8">
+          <p className="text-gray-400">No creators found</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show top 4 creators
+  const topCreators = creators.slice(0, 4);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {topCreators.map((creator: any, index: number) => (
+        <Link key={creator.id} to={`/creators/${creator.address}`}>
+          <div className="group cursor-pointer">
+            <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors rounded-lg p-4">
+              <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
+                <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">{creator.name.charAt(0)}</span>
+                </div>
+                {/* Show rank in top right corner */}
+                <div className="absolute top-2 right-2">
+                  <div className="w-6 h-6 bg-black/50 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">#{creator.rank}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-white font-semibold text-lg mb-1">{creator.name}</h3>
+                <p className="text-gray-400 text-sm">{creator.contentCoins} Content Coins</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 export default function ContentCoin() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -133,20 +189,8 @@ export default function ContentCoin() {
             </Link>
           </div>
 
-          {/* Search and Filters */}
+          {/* Category Filter Chips */}
           <div className="flex flex-col gap-4">
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search content coins..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-                data-testid="input-search-content"
-              />
-            </div>
-
-            {/* Category Filter Chips */}
             <CategoryChips 
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
@@ -587,36 +631,7 @@ export default function ContentCoin() {
           </div>
 
           {/* Top Creators Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Mock creator data - replace with real data later */}
-            {[
-              { name: "ATRIP", releases: 22, image: "/images/creator1.jpg", verified: true },
-              { name: "jigitz", releases: 20, image: "/images/creator2.jpg", verified: false },
-              { name: "Daniel Allan", releases: 19, image: "/images/creator3.jpg", verified: true },
-              { name: "33 Below", releases: 19, image: "/images/creator4.jpg", verified: false }
-            ].map((creator, index) => (
-              <div key={index} className="group cursor-pointer">
-                <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors rounded-lg p-4">
-                  <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">{creator.name.charAt(0)}</span>
-                    </div>
-                    {creator.verified && (
-                      <div className="absolute top-2 right-2">
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs">✓</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-white font-semibold text-lg mb-1">{creator.name}</h3>
-                    <p className="text-gray-400 text-sm">{creator.releases} Releases</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TopCreatorsSection />
         </div>
       </div>
     </div>
