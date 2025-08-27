@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Edit, Share2, Wallet, Upload, FileText, Radio } from "lucide-react";
+import { Settings, Edit, Share2, Wallet, Upload, FileText, Radio, Coins } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import ShortsCard from "@/components/ShortsCard";
 import { useAccount } from "@/hooks/useWallet";
@@ -190,7 +190,19 @@ export default function Profile() {
             {/* Content Management Dashboard */}
             <div className="mt-6 p-4 bg-muted/50 rounded-lg">
               <h3 className="text-lg font-semibold mb-4">Content Dashboard</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  onClick={() => window.location.href = '/create-channel'}
+                  data-testid="button-create-channel"
+                >
+                  <Coins className="h-6 w-6" />
+                  <div className="text-center">
+                    <div className="font-medium">Create Channel</div>
+                    <div className="text-xs text-muted-foreground">Launch new Zora channel</div>
+                  </div>
+                </Button>
                 <Button
                   variant="outline"
                   className="h-auto p-4 flex flex-col items-center gap-2"
