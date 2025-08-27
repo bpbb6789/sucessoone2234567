@@ -1,21 +1,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Users, TrendingUp, MoreHorizontal, Plus, Filter, FileText } from "lucide-react";
+import { Users, TrendingUp, MoreHorizontal, Plus, Filter, FileText } from "lucide-react";
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
 
 export default function Channels() {
-  const [searchTerm, setSearchTerm] = useState('');
   const { data: channels, isLoading, error } = useGetAllChannels();
 
-  // Filter channels based on search
-  const filteredChannels = (channels || []).filter((channel) =>
-    channel.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredChannels = channels || [];
 
   if (isLoading) {
     return (
@@ -73,17 +68,6 @@ export default function Channels() {
               </Button>
             </Link>
           </div>
-
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search channels..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-            />
-          </div>
         </div>
 
         {/* Channels Grid */}
@@ -92,7 +76,7 @@ export default function Channels() {
             <div className="text-center">
               <h3 className="text-xl font-semibold text-white mb-2">No channels found</h3>
               <p className="text-gray-400 mb-6">
-                {searchTerm ? `No channels match "${searchTerm}"` : 'No channels available yet'}
+                No channels available yet
               </p>
               <Link to="/create-channel">
                 <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-3 rounded-full">
