@@ -6,6 +6,7 @@ import { Users, TrendingUp, MoreHorizontal, Plus, Filter, FileText } from "lucid
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
+import { SubscribeButton } from "@/components/SubscribeButton";
 
 export default function Channels() {
   const { data: channels, isLoading, error } = useGetAllChannels();
@@ -111,7 +112,7 @@ export default function Channels() {
                           <span className="text-xl font-bold text-white">{channel.name.charAt(0)}</span>
                         </div>
                       )}
-                      
+
                       {/* Overlay Avatar */}
                       <div className="absolute bottom-2 left-2">
                         <img
@@ -162,17 +163,7 @@ export default function Channels() {
                       </div>
 
                       {/* Subscribe Button - Compact */}
-                      <Button
-                        size="sm"
-                        className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-5 py-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // TODO: Implement subscribe functionality
-                          console.log("Subscribe button clicked for:", channel.id);
-                        }}
-                      >
-                        ➕ Sub
-                      </Button>
+                      <SubscribeButton channelId={channel.id} />
                     </div>
                   </CardContent>
                 </Card>

@@ -1032,10 +1032,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { slug } = req.params;
 
-      // Get the channel first
-      const channel = await db.channel.findUnique({
-        where: { slug }
-      });
+      // Get the channel first from web3 channels
+      const channels = await storage.getAllWeb3Channels();
+      const channel = channels.find(c => c.slug === slug);
 
       if (!channel) {
         return res.status(404).json({ error: 'Channel not found' });
