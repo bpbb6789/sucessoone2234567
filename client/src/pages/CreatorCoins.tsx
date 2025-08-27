@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, TrendingUp, DollarSign, Users, BarChart3, Coins, ExternalLink, Sparkles, Zap, Hash, Eye } from "lucide-react";
+import { TrendingUp, DollarSign, Users, BarChart3, Coins, ExternalLink, Sparkles, Zap, Hash, Eye } from "lucide-react";
 import { useGetAllSales } from '@/hooks/useGetAllSales';
 import { useCreatorCoins } from '@/hooks/useCreatorCoins';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -202,8 +201,6 @@ export default function CreatorCoins() {
             </Button>
           </Link>
         </div>
-
-        
 
         {/* Stats Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
