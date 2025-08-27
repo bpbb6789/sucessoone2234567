@@ -204,6 +204,69 @@ export default function ContentCoin() {
           </div>
         </div>
 
+        {/* Trending Channels Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Trending Channels</h2>
+              <p className="text-gray-400">Discover popular channels</p>
+            </div>
+            <Link to="/channels">
+              <Button 
+                variant="outline" 
+                className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black"
+              >
+                See All
+              </Button>
+            </Link>
+          </div>
+
+          {/* Trending Channels Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Mock channel data - replace with real data later */}
+            {[
+              { name: "Unc", symbol: "(Unc)", marketCap: "$1.3M", replies: 37, bgColor: "from-orange-500 to-red-500" },
+              { name: "Illusion of Life", symbol: "(SPARK)", marketCap: "$32.9M", replies: 830, bgColor: "from-yellow-500 to-orange-500" },
+              { name: "KEANU SLEAZE", symbol: "(SLEAZE)", marketCap: "$754.4K", replies: 318, bgColor: "from-purple-500 to-pink-500" },
+              { name: "TROLL", symbol: "(TROLL)", marketCap: "$253.4M", replies: 1095, bgColor: "from-gray-600 to-gray-800" }
+            ].map((channel, index) => (
+              <div key={index} className="group cursor-pointer">
+                <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors rounded-lg overflow-hidden">
+                  {/* Channel Banner */}
+                  <div className={`relative aspect-video bg-gradient-to-br ${channel.bgColor} flex items-center justify-center`}>
+                    <div className="text-center text-white">
+                      <h3 className="text-lg font-bold mb-1">{channel.name}</h3>
+                      <p className="text-sm opacity-90">{channel.symbol}</p>
+                    </div>
+                  </div>
+
+                  {/* Channel Info */}
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white font-medium text-sm">market cap: {channel.marketCap}</p>
+                        <p className="text-gray-400 text-xs">replies: {channel.replies}</p>
+                      </div>
+                    </div>
+
+                    {/* Subscribe Button */}
+                    <Button
+                      size="sm"
+                      className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-7"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log("Subscribe button clicked for:", channel.name);
+                      }}
+                    >
+                      Subscribe
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Content Grid */}
         {filteredContent.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">

@@ -47,6 +47,7 @@ import ContentCoin from '@/pages/ContentCoin'
 import TokenDetail from '@/pages/TokenDetail'
 import ContentCoinDetail from "./pages/ContentCoinDetail";
 import NotFound from '@/pages/not-found'
+import Channels from "./pages/Channels";
 
 // Lazy load Creators page
 const Creators = lazy(() => import('@/pages/Creators'));
@@ -114,6 +115,7 @@ function AppContent() {
               <Route path="/doc" component={Doc} />
               <Route path="/faq" component={FAQ} />
               <Route path="/creators" component={Creators} /> {/* New route for Creators page */}
+              <Route path="/channels" component={Channels} />
               <Route component={NotFound} />
             </Switch>
           </Layout>

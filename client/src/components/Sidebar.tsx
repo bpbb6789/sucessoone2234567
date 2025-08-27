@@ -33,6 +33,7 @@ const mainNavItems = [
   { icon: Coins, label: "Create Token", href: "/createtoken" },
   { icon: Coins, label: "Create Content Coin", href: "/create-content-coin" },
   { icon: Trophy, label: "Creators", href: "/creators" },
+  { icon: Radio, label: "Channels", href: "/channels" },
 ];
 
 
