@@ -154,56 +154,6 @@ export default function ContentCoin() {
           </div>
         </div>
 
-        {/* Top Creators Section */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Top Creators</h2>
-              <p className="text-gray-400">Discover trending content creators</p>
-            </div>
-            <Link to="/creators">
-              <Button 
-                variant="outline" 
-                className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black"
-              >
-                See All
-              </Button>
-            </Link>
-          </div>
-
-          {/* Top Creators Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Mock creator data - replace with real data later */}
-            {[
-              { name: "ATRIP", releases: 22, image: "/images/creator1.jpg", verified: true },
-              { name: "jigitz", releases: 20, image: "/images/creator2.jpg", verified: false },
-              { name: "Daniel Allan", releases: 19, image: "/images/creator3.jpg", verified: true },
-              { name: "33 Below", releases: 19, image: "/images/creator4.jpg", verified: false }
-            ].map((creator, index) => (
-              <div key={index} className="group cursor-pointer">
-                <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors rounded-lg p-4">
-                  <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">{creator.name.charAt(0)}</span>
-                    </div>
-                    {creator.verified && (
-                      <div className="absolute top-2 right-2">
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs">✓</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-white font-semibold text-lg mb-1">{creator.name}</h3>
-                    <p className="text-gray-400 text-sm">{creator.releases} Releases</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Now Trending Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -430,6 +380,56 @@ export default function ContentCoin() {
             ))}
           </div>
         )}
+
+        {/* Top Creators Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Top Creators</h2>
+              <p className="text-gray-400">Discover trending content creators</p>
+            </div>
+            <Link to="/creators">
+              <Button 
+                variant="outline" 
+                className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black"
+              >
+                See All
+              </Button>
+            </Link>
+          </div>
+
+          {/* Top Creators Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Mock creator data - replace with real data later */}
+            {[
+              { name: "ATRIP", releases: 22, image: "/images/creator1.jpg", verified: true },
+              { name: "jigitz", releases: 20, image: "/images/creator2.jpg", verified: false },
+              { name: "Daniel Allan", releases: 19, image: "/images/creator3.jpg", verified: true },
+              { name: "33 Below", releases: 19, image: "/images/creator4.jpg", verified: false }
+            ].map((creator, index) => (
+              <div key={index} className="group cursor-pointer">
+                <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors rounded-lg p-4">
+                  <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white">{creator.name.charAt(0)}</span>
+                    </div>
+                    {creator.verified && (
+                      <div className="absolute top-2 right-2">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">✓</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-white font-semibold text-lg mb-1">{creator.name}</h3>
+                    <p className="text-gray-400 text-sm">{creator.releases} Releases</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
