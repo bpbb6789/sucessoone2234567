@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import { OnchainKitProvider } from '@coinbase/onchainkit'
-import { WagmiConfig } from 'wagmi'
+import { WagmiProvider } from 'wagmi'
 import { baseSepolia } from 'wagmi/chains'
 import { Route, Switch } from 'wouter'
 import { Toaster } from '@/components/ui/toaster'
@@ -60,7 +60,7 @@ function WagmiApp() {
   const config = useWagmiConfig()
 
   return (
-    <WagmiConfig config={config}>
+    <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <OnchainKitProvider
           apiKey={import.meta.env.VITE_NEXT_PUBLIC_ONCHAINKIT_API_KEY}
@@ -71,7 +71,7 @@ function WagmiApp() {
           </RainbowKitProvider>
         </OnchainKitProvider>
       </QueryClientProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   )
 }
 
