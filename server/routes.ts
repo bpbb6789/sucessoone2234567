@@ -1958,6 +1958,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all creators who have deployed content coins
+  app.get('/api/creators', async (req, res) => {
+    try {
+      console.log('📋 Fetching creators from content coins...');
+      
+      // Get unique creators with their stats
+      const creatorsData = await db
+        .select({
+          creatorAddress: creatorCoins.creatorAddress,
+          creatorCoinsCount: sql`COUNT(*)`.as('creator_coins_count'),
+          totalLikes: sql`SUM(COALESCE(${creatorCoins.likes}, 0))`.as('total_likes'),
+          totalComments: sql`SUM(COALESCE(${creatorCoins.comments}, 0))`.as('total_comments'),
+          firstCreated: sql`MIN(${creatorCoins.createdAt})`.as('first_created'),
+          latestCreated: sql`MAX(${creatorCoins.createdAt})`.as('latest_created')
+        })
+        .from(creatorCoins)
+        .where(sql`${creatorCoins.creatorAddress} IS NOT NULL AND ${creatorCoins.creatorAddress} != ''`)
+        .groupBy(creatorCoins.creatorAddress)
+        .orderBy(sql`COUNT(*) DESC`);
+
+      console.log(`✅ Found ${creatorsData.length} unique creators`);
+
+      // Transform the data for frontend
+      const creators = creatorsData.map((creator, index) => ({
+        id: creator.creatorAddress,
+        address: creator.creatorAddress,
+        name: `Creator ${creator.creatorAddress.slice(0, 6)}...${creator.creatorAddress.slice(-4)}`,
+        username: `@${creator.creatorAddress.slice(0, 8)}`,
+        contentCoins: parseInt(creator.creatorCoinsCount as string),
+        totalLikes: parseInt(creator.totalLikes as string) || 0,
+        totalComments: parseInt(creator.totalComments as string) || 0,
+        memberSince: creator.firstCreated,
+        lastActive: creator.latestCreated,
+        rank: index + 1
+      }));
+
+      res.json(creators);
+    } catch (error) {
+      console.error('❌ Error fetching creators:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch creators',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Get all creator coins
   app.get('/api/creator-coins', async (req, res) => {
     try {
