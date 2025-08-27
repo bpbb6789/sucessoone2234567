@@ -1011,12 +1011,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadataUri: channel.metadataUri || '',
         transactionHash: channel.txHash || '',
         owner: channel.owner || channel.createdBy,
+        creatorUsername: channel.owner ? `${channel.owner.slice(0, 6)}...${channel.owner.slice(-4)}` : 'creator',
         ticker: channel.ticker || channel.name.toUpperCase().slice(0, 8),
         category: channel.category || 'General',
         chainId: channel.chainId || 8453,
         slug: channel.slug || channel.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         createdAt: channel.createdAt,
-        updatedAt: channel.updatedAt
+        updatedAt: channel.updatedAt,
+        postsCount: 0, // Will be populated when content management is implemented
+        holderCount: 0, // Will be populated from blockchain data
+        marketCap: 0 // Will be populated from price data
       }));
 
       console.log(`Returning ${transformedChannels.length} channels with coin addresses:`, transformedChannels.map(c => ({ name: c.name, coinAddress: c.coinAddress, avatarUrl: c.avatarUrl, coverUrl: c.coverUrl })));
@@ -1081,12 +1085,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadataUri: channel.metadataUri || '',
         transactionHash: channel.txHash || '',
         owner: channel.owner || channel.createdBy,
+        creatorUsername: channel.owner ? `${channel.owner.slice(0, 6)}...${channel.owner.slice(-4)}` : 'creator',
         ticker: channel.ticker || channel.name.toUpperCase().slice(0, 8),
         category: channel.category || 'General',
         chainId: channel.chainId || 8453,
         slug: channel.slug || channel.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         createdAt: channel.createdAt,
-        updatedAt: channel.updatedAt
+        updatedAt: channel.updatedAt,
+        postsCount: 0,
+        holderCount: 0,
+        marketCap: 0
       };
 
       res.json(transformedChannel);
