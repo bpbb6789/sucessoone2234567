@@ -1,56 +1,78 @@
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/hooks/useSubscription";
-import { Bell, BellRing } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Bell, BellOff, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface SubscribeButtonProps {
-  subscriberChannelId: string;
+  subscriberChannelId?: string;
   subscribedToChannelId: string;
-  subscriberCount?: number;
   className?: string;
+  showIcon?: boolean;
 }
 
 export function SubscribeButton({ 
   subscriberChannelId, 
   subscribedToChannelId, 
-  subscriberCount,
-  className 
+  className,
+  showIcon = false
 }: SubscribeButtonProps) {
-  const { isSubscribed, toggleSubscription, isToggling } = useSubscription(
-    subscriberChannelId,
-    subscribedToChannelId
-  );
+  const { 
+    isSubscribed, 
+    isLoading, 
+    toggleSubscription, 
+    isToggling,
+    subscribeError,
+    unsubscribeError
+  } = useSubscription(subscriberChannelId, subscribedToChannelId);
+
+  const [showError, setShowError] = useState(false);
+
+  // Don't show button if user is not logged in or trying to subscribe to themselves
+  if (!subscriberChannelId || subscriberChannelId === subscribedToChannelId) {
+    return null;
+  }
+
+  const handleClick = async () => {
+    setShowError(false);
+    try {
+      await toggleSubscription();
+    } catch (error) {
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+    }
+  };
+
+  const error = subscribeError || unsubscribeError;
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className="flex flex-col items-center gap-1">
       <Button
-        onClick={toggleSubscription}
-        disabled={isToggling}
+        onClick={handleClick}
+        disabled={isLoading || isToggling}
         variant={isSubscribed ? "outline" : "default"}
+        className={className}
         size="sm"
-        className={cn(
-          "px-4 py-2 rounded-full transition-all",
-          isSubscribed 
-            ? "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600" 
-            : "bg-red-600 text-white hover:bg-red-700"
-        )}
-        data-testid={isSubscribed ? "button-unsubscribe" : "button-subscribe"}
       >
         {isToggling ? (
-          "..."
-        ) : isSubscribed ? (
-          <>
-            <BellRing className="w-4 h-4 mr-1" />
-            Subscribed
-          </>
-        ) : (
-          "Subscribe"
-        )}
+          <Loader2 className="h-4 w-4 animate-spin mr-1" />
+        ) : showIcon ? (
+          isSubscribed ? (
+            <Bell className="h-4 w-4 mr-1" />
+          ) : (
+            <BellOff className="h-4 w-4 mr-1" />
+          )
+        ) : null}
+        {isToggling 
+          ? (isSubscribed ? "Unsubscribing..." : "Subscribing...") 
+          : isSubscribed 
+            ? "Subscribed" 
+            : "Subscribe"
+        }
       </Button>
-      
-      {subscriberCount !== undefined && (
-        <span className="text-sm text-gray-600 dark:text-gray-400" data-testid="subscriber-count">
-          {subscriberCount.toLocaleString()} subscribers
+
+      {showError && error && (
+        <span className="text-xs text-red-500 text-center max-w-xs">
+          {error}
         </span>
       )}
     </div>

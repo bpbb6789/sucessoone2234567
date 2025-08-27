@@ -1,17 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { VideoCard } from "@/components/VideoCard";
+import { useUserSubscriptions, useSubscriptionFeed } from "@/hooks/useSubscription";
 import { type VideoWithChannel, type Channel } from "@shared/schema";
 
 export default function Subscriptions() {
-  const { data: videos = [], isLoading: videosLoading } = useQuery<VideoWithChannel[]>({
-    queryKey: ["/api/videos"],
-  });
+  // For demo purposes, using a mock user channel ID
+  // In a real app, this would come from user authentication/context
+  const currentUserChannelId = "user-channel-1"; // This should come from auth context
+  
+  const { data: userSubscriptions = [], isLoading: subscriptionsLoading } = useUserSubscriptions(currentUserChannelId);
+  const { data: subscriptionFeed = [], isLoading: feedLoading } = useSubscriptionFeed(currentUserChannelId);
 
-  const { data: channels = [], isLoading: channelsLoading } = useQuery<Channel[]>({
-    queryKey: ["/api/channels"],
-  });
-
-  const isLoading = videosLoading || channelsLoading;
+  const isLoading = subscriptionsLoading || feedLoading;
+  
+  // Extract channels from subscription data
+  const channels = userSubscriptions.map((sub: any) => sub.channel).filter(Boolean);
+  const videos = subscriptionFeed;
 
   return (
     <div className="p-4" data-testid="page-subscriptions">

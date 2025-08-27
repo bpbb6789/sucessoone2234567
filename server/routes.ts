@@ -368,22 +368,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscriptions = await storage.getSubscriptionsByChannel(req.params.channelId);
       res.json(subscriptions);
     } catch (error) {
-      // res.status(500).json({ message: "Failed to fetch subscriptions" });
       res.status(500).json(handleDatabaseError(error, "getSubscriptionsByChannel"));
+    }
+  });
+
+  // Get user's subscriptions (channels they follow)
+  app.get("/api/user/:channelId/subscriptions", async (req, res) => {
+    try {
+      const subscriptions = await storage.getUserSubscriptions(req.params.channelId);
+      res.json(subscriptions);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getUserSubscriptions"));
+    }
+  });
+
+  // Get subscription feed (videos from subscribed channels)
+  app.get("/api/user/:channelId/feed", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const feed = await storage.getSubscriptionFeed(req.params.channelId, limit, offset);
+      res.json(feed);
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getSubscriptionFeed"));
     }
   });
 
   app.post("/api/subscriptions", async (req, res) => {
     try {
       const validatedData = insertSubscriptionSchema.parse(req.body);
+      
+      // Prevent self-subscription
+      if (validatedData.subscriberChannelId === validatedData.subscribedToChannelId) {
+        return res.status(400).json({ message: "Cannot subscribe to yourself" });
+      }
+
       const subscription = await storage.createSubscription(validatedData);
       res.status(201).json(subscription);
-    } catch (error) {
-      // res.status(400).json({ message: "Invalid subscription data" });
+    } catch (error: any) {
       if (error.name === 'ZodError') {
         res.status(400).json({ message: "Invalid subscription data", errors: error.errors });
+      } else if (error.message === 'Already subscribed to this channel') {
+        res.status(409).json({ message: error.message });
       } else {
-        res.status(400).json(handleDatabaseError(error, "createSubscription"));
+        res.status(500).json(handleDatabaseError(error, "createSubscription"));
       }
     }
   });
@@ -391,10 +420,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/subscriptions", async (req, res) => {
     try {
       const { subscriberChannelId, subscribedToChannelId } = req.body;
+      
+      if (!subscriberChannelId || !subscribedToChannelId) {
+        return res.status(400).json({ message: "Missing required parameters" });
+      }
+
       await storage.deleteSubscription(subscriberChannelId, subscribedToChannelId);
-      res.json({ message: "Subscription deleted" });
+      res.json({ message: "Subscription deleted successfully" });
     } catch (error) {
-      // res.status(500).json({ message: "Failed to delete subscription" });
       res.status(500).json(handleDatabaseError(error, "deleteSubscription"));
     }
   });

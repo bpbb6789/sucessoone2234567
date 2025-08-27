@@ -237,6 +237,17 @@ export default function Profile() {
                     <div className="text-xs text-muted-foreground">Manage your subscriptions</div>
                   </div>
                 </Button>
+                <Button
+                  variant="outline"
+                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  onClick={() => window.location.href = '/profile/subscribers'}
+                >
+                  <Users className="h-6 w-6" />
+                  <div className="text-center">
+                    <div className="font-medium">Subscribers</div>
+                    <div className="text-xs text-muted-foreground">View your subscribers</div>
+                  </div>
+                </Button>
               </div>
             </div>
           </div>

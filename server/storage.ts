@@ -83,6 +83,10 @@ export interface IStorage {
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   deleteSubscription(subscriberChannelId: string, subscribedToChannelId: string): Promise<void>;
   isSubscribed(subscriberChannelId: string, subscribedToChannelId: string): Promise<boolean>;
+  getUserSubscriptions(subscriberChannelId: string): Promise<Subscription[]>;
+  getSubscriptionCount(channelId: string): Promise<number>;
+  getSubscriptionFeed(subscriberChannelId: string, limit?: number, offset?: number): Promise<VideoWithChannel[]>;
+
 
   // Likes
   likeVideo(videoId: string, channelId: string, isLike: boolean): Promise<void>;
@@ -148,38 +152,23 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // Initialize client here if it's not already done or passed in constructor
-  private client: any; // Assuming 'client' is a property that holds the database connection client
-
-  constructor() {
-    // Assuming 'db' is initialized elsewhere and accessible.
-    // If 'client' needs to be explicitly set, you might need to inject it or initialize it here.
-    // For this example, we'll assume 'db' can be used directly or has a client property.
-    // If 'db' is a Drizzle client, it might not have a 'query' method directly like this.
-    // The following implementation assumes a different client structure based on the provided snippet.
-    // Let's adapt to use Drizzle's client if possible, or stick to the provided structure.
-
-    // If the intention is to use Drizzle's `db` object for inserts:
-    // We will adapt the `createWeb3Channel` to use Drizzle's insert method.
-    // If the provided snippet implies a different client (e.g., pg client), then this needs adjustment.
-
-    // For now, let's assume the provided snippet's `this.client.query` was a placeholder
-    // and we should use Drizzle's `db` object as shown in other methods.
-  }
+  // Assuming 'db' is initialized elsewhere and accessible.
+  // The following implementation assumes Drizzle's 'db' object is available.
+  private db = db;
 
   // Channel methods
   async getChannel(id: string): Promise<Channel | undefined> {
-    const [channel] = await db.select().from(channels).where(eq(channels.id, id));
+    const [channel] = await this.db.select().from(channels).where(eq(channels.id, id));
     return channel || undefined;
   }
 
   async getChannelByHandle(handle: string): Promise<Channel | undefined> {
-    const [channel] = await db.select().from(channels).where(eq(channels.handle, handle));
+    const [channel] = await this.db.select().from(channels).where(eq(channels.handle, handle));
     return channel || undefined;
   }
 
   async createChannel(channel: InsertChannel): Promise<Channel> {
-    const [newChannel] = await db.insert(channels).values({
+    const [newChannel] = await this.db.insert(channels).values({
       id: randomUUID(),
       subscriberCount: 0,
       verified: false,
@@ -190,11 +179,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllChannels(): Promise<Channel[]> {
-    return await db.select().from(channels);
+    return await this.db.select().from(channels);
   }
 
   async updateChannel(id: string, updates: Partial<InsertChannel>): Promise<Channel | undefined> {
-    const [channel] = await db.update(channels)
+    const [channel] = await this.db.update(channels)
       .set(updates)
       .where(eq(channels.id, id))
       .returning();
@@ -203,7 +192,7 @@ export class DatabaseStorage implements IStorage {
 
   // Video methods
   async getVideo(id: string): Promise<VideoWithChannel | undefined> {
-    const [video] = await db.select({
+    const [video] = await this.db.select({
       id: videos.id,
       title: videos.title,
       description: videos.description,
@@ -239,7 +228,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllVideos(): Promise<VideoWithChannel[]> {
-    return await db.select({
+    return await this.db.select({
       id: videos.id,
       title: videos.title,
       description: videos.description,
@@ -273,7 +262,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVideosByCategory(category: string): Promise<VideoWithChannel[]> {
-    return await db.select({
+    return await this.db.select({
       id: videos.id,
       title: videos.title,
       description: videos.description,
@@ -308,7 +297,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVideosByChannel(channelId: string): Promise<VideoWithChannel[]> {
-    return await db.select({
+    return await this.db.select({
       id: videos.id,
       title: videos.title,
       description: videos.description,
@@ -343,7 +332,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createVideo(video: InsertVideo): Promise<Video> {
-    const [newVideo] = await db.insert(videos).values({
+    const [newVideo] = await this.db.insert(videos).values({
       id: randomUUID(),
       viewCount: 0,
       likeCount: 0,
@@ -358,13 +347,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateVideoViews(id: string): Promise<void> {
-    await db.update(videos)
+    await this.db.update(videos)
       .set({ viewCount: sql`${videos.viewCount} + 1` })
       .where(eq(videos.id, id));
   }
 
   async searchVideos(query: string): Promise<VideoWithChannel[]> {
-    return await db.select({
+    return await this.db.select({
       id: videos.id,
       title: videos.title,
       description: videos.description,
@@ -403,16 +392,16 @@ export class DatabaseStorage implements IStorage {
 
   // Music Album methods
   async getMusicAlbum(id: string): Promise<MusicAlbum | undefined> {
-    const [album] = await db.select().from(musicAlbums).where(eq(musicAlbums.id, id));
+    const [album] = await this.db.select().from(musicAlbums).where(eq(musicAlbums.id, id));
     return album || undefined;
   }
 
   async getAllMusicAlbums(): Promise<MusicAlbum[]> {
-    return await db.select().from(musicAlbums).orderBy(desc(musicAlbums.createdAt));
+    return await this.db.select().from(musicAlbums).orderBy(desc(musicAlbums.createdAt));
   }
 
   async createMusicAlbum(album: InsertMusicAlbum): Promise<MusicAlbum> {
-    const [newAlbum] = await db.insert(musicAlbums).values({
+    const [newAlbum] = await this.db.insert(musicAlbums).values({
       id: randomUUID(),
       createdAt: new Date(),
       ...album,
@@ -422,22 +411,22 @@ export class DatabaseStorage implements IStorage {
 
   // Music Track methods
   async getMusicTrack(id: string): Promise<MusicTrack | undefined> {
-    const [track] = await db.select().from(musicTracks).where(eq(musicTracks.id, id));
+    const [track] = await this.db.select().from(musicTracks).where(eq(musicTracks.id, id));
     return track || undefined;
   }
 
   async getAllMusicTracks(): Promise<MusicTrack[]> {
-    return await db.select().from(musicTracks).orderBy(desc(musicTracks.createdAt));
+    return await this.db.select().from(musicTracks).orderBy(desc(musicTracks.createdAt));
   }
 
   async getTracksByAlbum(albumId: string): Promise<MusicTrack[]> {
-    return await db.select().from(musicTracks)
+    return await this.db.select().from(musicTracks)
       .where(eq(musicTracks.albumId, albumId))
       .orderBy(musicTracks.trackNumber);
   }
 
   async createMusicTrack(track: InsertMusicTrack): Promise<MusicTrack> {
-    const [newTrack] = await db.insert(musicTracks).values({
+    const [newTrack] = await this.db.insert(musicTracks).values({
       id: randomUUID(),
       createdAt: new Date(),
       ...track,
@@ -447,18 +436,18 @@ export class DatabaseStorage implements IStorage {
 
   // Content Import methods
   async getContentImport(id: string): Promise<ContentImport | undefined> {
-    const [content] = await db.select().from(contentImports).where(eq(contentImports.id, id));
+    const [content] = await this.db.select().from(contentImports).where(eq(contentImports.id, id));
     return content || undefined;
   }
 
   async getContentImportsByChannel(channelId: string): Promise<ContentImport[]> {
-    return await db.select().from(contentImports)
+    return await this.db.select().from(contentImports)
       .where(eq(contentImports.channelId, channelId))
       .orderBy(desc(contentImports.createdAt));
   }
 
   async createContentImport(content: InsertContentImport): Promise<ContentImport> {
-    const [newContent] = await db.insert(contentImports).values({
+    const [newContent] = await this.db.insert(contentImports).values({
       id: randomUUID(),
       createdAt: new Date(),
       ...content,
@@ -467,7 +456,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateContentImport(id: string, updates: Partial<InsertContentImport>): Promise<ContentImport | undefined> {
-    const [content] = await db.update(contentImports)
+    const [content] = await this.db.update(contentImports)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(contentImports.id, id))
       .returning();
@@ -475,31 +464,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteContentImport(id: string): Promise<void> {
-    await db.delete(contentImports).where(eq(contentImports.id, id));
+    await this.db.delete(contentImports).where(eq(contentImports.id, id));
   }
 
   async getAllContentImports(): Promise<ContentImport[]> {
-    return await db.select().from(contentImports).orderBy(desc(contentImports.createdAt));
+    return await this.db.select().from(contentImports).orderBy(desc(contentImports.createdAt));
   }
 
   // Pad methods
   async getPad(id: string): Promise<Pad | undefined> {
-    const [pad] = await db.select().from(pads).where(eq(pads.id, id));
+    const [pad] = await this.db.select().from(pads).where(eq(pads.id, id));
     return pad || undefined;
   }
 
   async getAllPads(): Promise<Pad[]> {
-    return await db.select().from(pads).orderBy(desc(pads.createdAt));
+    return await this.db.select().from(pads).orderBy(desc(pads.createdAt));
   }
 
   async getPadsByCreator(creatorAddress: string): Promise<Pad[]> {
-    return await db.select().from(pads)
+    return await this.db.select().from(pads)
       .where(eq(pads.creatorAddress, creatorAddress))
       .orderBy(desc(pads.createdAt));
   }
 
   async createPad(pad: InsertPad): Promise<Pad> {
-    const [newPad] = await db.insert(pads).values({
+    const [newPad] = await this.db.insert(pads).values({
       id: randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -509,7 +498,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updatePad(id: string, updates: Partial<InsertPad>): Promise<Pad | undefined> {
-    const [pad] = await db.update(pads)
+    const [pad] = await this.db.update(pads)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(pads.id, id))
       .returning();
@@ -517,11 +506,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePad(id: string): Promise<void> {
-    await db.delete(pads).where(eq(pads.id, id));
+    await this.db.delete(pads).where(eq(pads.id, id));
   }
 
   async searchPads(query: string): Promise<Pad[]> {
-    return await db.select().from(pads)
+    return await this.db.select().from(pads)
       .where(or(
         ilike(pads.title, `%${query}%`),
         ilike(pads.description, `%${query}%`),
@@ -537,7 +526,7 @@ export class DatabaseStorage implements IStorage {
     const existingLike = await this.getUserPadLike(padId, userAddress);
     if (existingLike) return;
 
-    await db.insert(padLikes).values({
+    await this.db.insert(padLikes).values({
       id: randomUUID(),
       padId,
       userAddress,
@@ -545,55 +534,55 @@ export class DatabaseStorage implements IStorage {
     });
 
     // Update like count in pads table
-    await db.update(pads)
+    await this.db.update(pads)
       .set({ likes: sql`${pads.likes} + 1` })
       .where(eq(pads.id, padId));
   }
 
   async unlikePad(padId: string, userAddress: string): Promise<void> {
-    const result = await db.delete(padLikes)
+    const result = await this.db.delete(padLikes)
       .where(and(eq(padLikes.padId, padId), eq(padLikes.userAddress, userAddress)))
       .returning();
 
     if (result.length > 0) {
       // Update like count in pads table
-      await db.update(pads)
+      await this.db.update(pads)
         .set({ likes: sql`${pads.likes} - 1` })
         .where(eq(pads.id, padId));
     }
   }
 
   async getPadLikes(padId: string): Promise<PadLike[]> {
-    return await db.select().from(padLikes).where(eq(padLikes.padId, padId));
+    return await this.db.select().from(padLikes).where(eq(padLikes.padId, padId));
   }
 
   async getUserPadLike(padId: string, userAddress: string): Promise<PadLike | undefined> {
-    const [like] = await db.select().from(padLikes)
+    const [like] = await this.db.select().from(padLikes)
       .where(and(eq(padLikes.padId, padId), eq(padLikes.userAddress, userAddress)));
     return like || undefined;
   }
 
   // Pad comment methods
   async getPadComment(id: string): Promise<PadComment | undefined> {
-    const [comment] = await db.select().from(padComments).where(eq(padComments.id, id));
+    const [comment] = await this.db.select().from(padComments).where(eq(padComments.id, id));
     return comment || undefined;
   }
 
   async getPadComments(padId: string): Promise<PadComment[]> {
-    return await db.select().from(padComments)
+    return await this.db.select().from(padComments)
       .where(eq(padComments.padId, padId))
       .orderBy(desc(padComments.createdAt));
   }
 
   async createPadComment(comment: InsertPadComment): Promise<PadComment> {
-    const [newComment] = await db.insert(padComments).values({
+    const [newComment] = await this.db.insert(padComments).values({
       id: randomUUID(),
       createdAt: new Date(),
       ...comment,
     }).returning();
 
     // Update comment count in pads table
-    await db.update(pads)
+    await this.db.update(pads)
       .set({ comments: sql`${pads.comments} + 1` })
       .where(eq(pads.id, comment.padId));
 
@@ -601,17 +590,199 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePadComment(id: string): Promise<void> {
-    const [deletedComment] = await db.delete(padComments)
+    const [deletedComment] = await this.db.delete(padComments)
       .where(eq(padComments.id, id))
       .returning();
 
     if (deletedComment) {
       // Update comment count in pads table
-      await db.update(pads)
+      await this.db.update(pads)
         .set({ comments: sql`${pads.comments} - 1` })
         .where(eq(pads.id, deletedComment.padId));
     }
   }
+
+  // Subscription methods
+  async createSubscription(data: InsertSubscription): Promise<Subscription> {
+    try {
+      // Check if subscription already exists
+      const existing = await this.isSubscribed(data.subscriberChannelId, data.subscribedToChannelId);
+      if (existing) {
+        throw new Error('Already subscribed to this channel');
+      }
+
+      const [subscription] = await this.db.insert(subscriptions).values(data).returning();
+
+      // Update subscriber count for the channel being subscribed to
+      await this.db.update(channels)
+        .set({
+          subscriberCount: sql`${channels.subscriberCount} + 1`
+        })
+        .where(eq(channels.id, data.subscribedToChannelId));
+
+      return subscription;
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      throw error;
+    }
+  }
+
+  async deleteSubscription(subscriberChannelId: string, subscribedToChannelId: string): Promise<Subscription[]> {
+    try {
+      const result = await this.db.delete(subscriptions)
+        .where(
+          and(
+            eq(subscriptions.subscriberChannelId, subscriberChannelId),
+            eq(subscriptions.subscribedToChannelId, subscribedToChannelId)
+          )
+        )
+        .returning();
+
+      if (result.length > 0) {
+        // Update subscriber count for the channel being unsubscribed from
+        await this.db.update(channels)
+          .set({
+            subscriberCount: sql`GREATEST(${channels.subscriberCount} - 1, 0)`
+          })
+          .where(eq(channels.id, subscribedToChannelId));
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error deleting subscription:', error);
+      throw error;
+    }
+  }
+
+  async getSubscriptionsByChannel(channelId: string): Promise<any[]> {
+    try {
+      return await this.db.select({
+        id: subscriptions.id,
+        subscriberChannelId: subscriptions.subscriberChannelId,
+        subscribedToChannelId: subscriptions.subscribedToChannelId,
+        createdAt: subscriptions.createdAt,
+        subscriber: {
+          id: channels.id,
+          name: channels.name,
+          handle: channels.handle,
+          avatarUrl: channels.avatarUrl
+        }
+      })
+      .from(subscriptions)
+      .leftJoin(channels, eq(subscriptions.subscriberChannelId, channels.id))
+      .where(eq(subscriptions.subscribedToChannelId, channelId))
+      .orderBy(desc(subscriptions.createdAt));
+    } catch (error) {
+      console.error('Error getting subscriptions by channel:', error);
+      throw error;
+    }
+  }
+
+  async getUserSubscriptions(subscriberChannelId: string): Promise<any[]> {
+    try {
+      return await this.db.select({
+        id: subscriptions.id,
+        subscriberChannelId: subscriptions.subscriberChannelId,
+        subscribedToChannelId: subscriptions.subscribedToChannelId,
+        createdAt: subscriptions.createdAt,
+        channel: {
+          id: channels.id,
+          name: channels.name,
+          handle: channels.handle,
+          avatarUrl: channels.avatarUrl,
+          subscriberCount: channels.subscriberCount,
+          verified: channels.verified
+        }
+      })
+      .from(subscriptions)
+      .leftJoin(channels, eq(subscriptions.subscribedToChannelId, channels.id))
+      .where(eq(subscriptions.subscriberChannelId, subscriberChannelId))
+      .orderBy(desc(subscriptions.createdAt));
+    } catch (error) {
+      console.error('Error getting user subscriptions:', error);
+      throw error;
+    }
+  }
+
+  async isSubscribed(subscriberChannelId: string, subscribedToChannelId: string): Promise<boolean> {
+    try {
+      if (!subscriberChannelId || !subscribedToChannelId) {
+        return false;
+      }
+
+      const result = await this.db.select().from(subscriptions)
+        .where(
+          and(
+            eq(subscriptions.subscriberChannelId, subscriberChannelId),
+            eq(subscriptions.subscribedToChannelId, subscribedToChannelId)
+          )
+        )
+        .limit(1);
+
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      return false;
+    }
+  }
+
+  async getSubscriptionCount(channelId: string): Promise<number> {
+    try {
+      const result = await this.db.select({ count: sql<number>`count(*)` })
+        .from(subscriptions)
+        .where(eq(subscriptions.subscribedToChannelId, channelId));
+
+      return result[0]?.count || 0;
+    } catch (error) {
+      console.error('Error getting subscription count:', error);
+      return 0;
+    }
+  }
+
+  async getSubscriptionFeed(subscriberChannelId: string, limit: number = 20, offset: number = 0): Promise<VideoWithChannel[]> {
+    try {
+      // Get videos from subscribed channels
+      const feedVideos = await this.db.select({
+        id: videos.id,
+        title: videos.title,
+        description: videos.description,
+        thumbnailUrl: videos.thumbnailUrl,
+        videoUrl: videos.videoUrl,
+        duration: videos.duration,
+        viewCount: videos.viewCount,
+        likeCount: videos.likeCount,
+        dislikeCount: videos.dislikeCount,
+        commentCount: videos.commentCount,
+        category: videos.category,
+        tags: videos.tags,
+        publishedAt: videos.publishedAt,
+        createdAt: videos.createdAt,
+        channel: {
+          id: channels.id,
+          name: channels.name,
+          handle: channels.handle,
+          avatarUrl: channels.avatarUrl,
+          verified: channels.verified
+        }
+      })
+      .from(videos)
+      .leftJoin(channels, eq(videos.channelId, channels.id))
+      .leftJoin(subscriptions, and(
+        eq(subscriptions.subscribedToChannelId, videos.channelId),
+        eq(subscriptions.subscriberChannelId, subscriberChannelId)
+      ))
+      .where(sql`${subscriptions.id} IS NOT NULL`)
+      .orderBy(desc(videos.publishedAt))
+      .limit(limit)
+      .offset(offset);
+
+      return feedVideos;
+    } catch (error) {
+      console.error('Error getting subscription feed:', error);
+      throw error;
+    }
+  }
+
 
   // Placeholder implementations for remaining methods
   async getShorts(): Promise<ShortsWithChannel | undefined> { return undefined; }
@@ -632,12 +803,6 @@ export class DatabaseStorage implements IStorage {
   async likeComment(): Promise<void> { }
   async unlikeComment(): Promise<void> { }
 
-  async getSubscription(): Promise<Subscription | undefined> { return undefined; }
-  async getSubscriptionsByChannel(): Promise<Subscription[]> { return []; }
-  async createSubscription(): Promise<Subscription> { throw new Error('Not implemented'); }
-  async deleteSubscription(): Promise<void> { }
-  async isSubscribed(): Promise<boolean> { return false; }
-
   async likeVideo(): Promise<void> { }
   async unlikeVideo(): Promise<void> { }
   async likeShorts(): Promise<void> { }
@@ -655,7 +820,7 @@ export class DatabaseStorage implements IStorage {
   async searchAll(query: string): Promise<{videos: VideoWithChannel[], shorts: ShortsWithChannel[], channels: Channel[]}> {
     const videos = await this.searchVideos(query);
     const shorts: ShortsWithChannel[] = [];
-    const channelResults = await db.select().from(channels)
+    const channelResults = await this.db.select().from(channels)
       .where(or(
         ilike(channels.name, `%${query}%`),
         ilike(channels.description, `%${query}%`)
@@ -669,19 +834,19 @@ export class DatabaseStorage implements IStorage {
   async createToken(): Promise<Token> { throw new Error('Not implemented'); }
 
   async getWeb3Channel(id: string): Promise<Web3Channel | undefined> {
-    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.id, id));
+    const [channel] = await this.db.select().from(web3Channels).where(eq(web3Channels.id, id));
     return channel || undefined;
   }
   async getWeb3ChannelByOwner(owner: string): Promise<Web3Channel | undefined> {
-    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.owner, owner));
+    const [channel] = await this.db.select().from(web3Channels).where(eq(web3Channels.owner, owner));
     return channel || undefined;
   }
   async getWeb3ChannelByCoinAddress(coinAddress: string): Promise<Web3Channel | undefined> {
-    const [channel] = await db.select().from(web3Channels).where(eq(web3Channels.coinAddress, coinAddress));
+    const [channel] = await this.db.select().from(web3Channels).where(eq(web3Channels.coinAddress, coinAddress));
     return channel || undefined;
   }
   async createWeb3Channel(channel: InsertWeb3Channel): Promise<Web3Channel> {
-    const [newChannel] = await db.insert(web3Channels).values({
+    const [newChannel] = await this.db.insert(web3Channels).values({
       owner: channel.owner,
       createdBy: channel.createdBy,
       name: channel.name,
@@ -707,7 +872,7 @@ export class DatabaseStorage implements IStorage {
     return newChannel;
   }
   async getAllWeb3Channels(): Promise<Web3Channel[]> {
-    return await db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
+    return await this.db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
   }
 }
 

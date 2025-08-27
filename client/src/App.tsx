@@ -17,6 +17,7 @@ import { lazy } from 'react'
 // Pages
 import Home from '@/pages/Home'
 import Subscriptions from '@/pages/Subscriptions'
+import Subscribers from "@/pages/Subscribers";
 import Library from '@/pages/Library'
 import History from '@/pages/History'
 import LikedVideos from '@/pages/LikedVideos'
@@ -84,6 +85,7 @@ function AppContent() {
             <Switch>
               <Route path="/" component={ContentCoin} />
               <Route path="/subscriptions" component={Subscriptions} />
+              <Route path="/profile/subscribers" element={<Subscribers />} />
               <Route path="/library" component={Library} />
               <Route path="/history" component={History} />
               <Route path="/liked" component={LikedVideos} />
