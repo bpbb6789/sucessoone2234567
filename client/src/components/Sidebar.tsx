@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useGetAllChannels } from "@/hooks/useGetAllChannels";
 
 const mainNavItems = [
-  { icon: FileImage, label: "Content Coins", href: "/" },
+  { icon: FileImage, label: "Discover", href: "/" },
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
   { icon: Coins, label: "Creator Coins", href: "/creatorcoins" },
   { icon: Upload, label: "Tokenize", href: "/tokenize" },
