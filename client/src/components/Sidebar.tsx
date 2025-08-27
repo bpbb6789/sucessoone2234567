@@ -24,12 +24,12 @@ import { cn } from "@/lib/utils";
 import { useGetAllChannels } from "@/hooks/useGetAllChannels";
 
 const mainNavItems = [
-  { icon: Home, label: "Discovery", href: "/" },
+  { icon: FileImage, label: "Content Coins", href: "/" },
+  { icon: Home, label: "Discovery", href: "/discovery" },
   { icon: Play, label: "Shorts", href: ROUTES.SHORTS },
   { icon: Coins, label: "Launch Channel", href: "/create-token" },
   { icon: Coins, label: "Tokens", href: "/tokens" },
   { icon: Coins, label: "Creator Coins", href: "/creatorcoins" },
-  { icon: FileImage, label: "Content Coins", href: "/contentcoin" },
   { icon: Upload, label: "Tokenize", href: "/tokenize" },
   { icon: Coins, label: "Create Token", href: "/createtoken" },
   { icon: Coins, label: "Create Content Coin", href: "/create-content-coin" },
