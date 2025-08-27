@@ -12,6 +12,7 @@ import { SidebarProvider } from '@/hooks/use-sidebar'
 import { queryClient } from '@/lib/queryClient'
 import { useWagmiConfig } from '../../wagmi'
 import { ApolloWrapper } from '../../lib/apollo-provider'
+import { lazy } from 'react'
 
 // Pages
 import Home from '@/pages/Home'
@@ -46,6 +47,9 @@ import ContentCoin from '@/pages/ContentCoin'
 import TokenDetail from '@/pages/TokenDetail'
 import ContentCoinDetail from "./pages/ContentCoinDetail";
 import NotFound from '@/pages/not-found'
+
+// Lazy load Creators page
+const Creators = lazy(() => import('@/pages/Creators'));
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -109,6 +113,7 @@ function AppContent() {
               <Route path="/:type/:id" component={PostDetail} />
               <Route path="/doc" component={Doc} />
               <Route path="/faq" component={FAQ} />
+              <Route path="/creators" component={Creators} /> {/* New route for Creators page */}
               <Route component={NotFound} />
             </Switch>
           </Layout>
