@@ -267,63 +267,49 @@ export default function ContentCoin() {
                       </p>
                     </div>
 
-                    {/* Blockchain Info - Only show if deployed */}
-                    {coin.status === 'deployed' && (coin.coinAddress || coin.deploymentTxHash) && (
-                      <div className="space-y-1 pt-2 border-t border-gray-700">
-                        {coin.coinAddress && (
+                    {/* Compact Info Row */}
+                    <div className="flex items-center justify-between pt-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        {coin.status === 'deployed' && coin.coinAddress && (
                           <div className="flex items-center gap-1">
-                            <Hash className="w-3 h-3 text-green-400 flex-shrink-0" />
-                            <code className="text-xs text-green-400 font-mono bg-gray-900 px-1 rounded flex-1 truncate">
-                              {`${coin.coinAddress.slice(0, 6)}...${coin.coinAddress.slice(-4)}`}
+                            <Hash className="w-3 h-3 text-green-400" />
+                            <code className="text-green-400 font-mono">
+                              {`${coin.coinAddress.slice(0, 4)}...${coin.coinAddress.slice(-2)}`}
                             </code>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 w-4 p-0 flex-shrink-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigator.clipboard.writeText(coin.coinAddress!);
-                              }}
-                            >
-                              <Copy className="w-3 h-3" />
-                            </Button>
                           </div>
                         )}
                         {coin.deploymentTxHash && (
-                          <div className="flex items-center gap-1">
-                            <Eye className="w-3 h-3 text-blue-400 flex-shrink-0" />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto p-0 text-xs text-blue-400 hover:text-blue-300 truncate flex-1 justify-start"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
-                              }}
-                            >
-                              BaseScan
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-4 p-1 text-xs text-blue-400 hover:text-blue-300"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
+                            }}
+                          >
+                            <Eye className="w-3 h-3" />
+                          </Button>
                         )}
                       </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-white">
-                          <Heart className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-white">
-                          <Share2 className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-gray-400 hover:text-white">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-gray-400">
                         ${coin.currentPrice}
                       </div>
+                    </div>
+
+                    {/* BUY Button */}
+                    <div className="pt-2">
+                      <Button
+                        size="sm"
+                        className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: Implement buy functionality
+                          console.log("Buy button clicked for:", coin.id);
+                        }}
+                      >
+                        BUY
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
