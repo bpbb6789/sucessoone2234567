@@ -309,143 +309,265 @@ export default function ContentCoin() {
           </div>
         </div>
 
-        {/* Content Grid */}
-        {filteredContent.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold text-white mb-2">No content coins found</h3>
-              <p className="text-gray-400 mb-6">
-                {searchTerm ? `No content matches "${searchTerm}"` : 'Start creating your first content coin'}
-              </p>
-              <Link to="/create-content-coin">
-                <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-3 rounded-full">
-                  Create Your First Content Coin
-                </Button>
-              </Link>
+        {/* Content Coins Section - Now Trending */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">Now Trending</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-gray-400 hover:text-white h-8 w-8"
+              >
+                <span className="text-lg">←</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="text-gray-400 hover:text-white h-8 w-8"
+              >
+                <span className="text-lg">→</span>
+              </Button>
             </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredContent.map((coin: ContentCoin) => (
-              <Link to={`/content/base/${coin.memeTokenAddress || coin.id}`} key={coin.id}>
-                <Card 
-                  className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group relative overflow-hidden"
-                >
-                  <CardContent className="p-0">
-                    {/* Content Image/Thumbnail */}
-                    <div className="relative aspect-square overflow-hidden">
-                      {coin.contentType === 'image' ? (
-                        <img
-                          src={getContentUrl(coin.mediaCid)}
-                          alt={coin.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.src = `data:image/svg+xml,${encodeURIComponent(`
-                              <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-                                <rect width="200" height="200" fill="#374151"/>
-                                <text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9CA3AF" font-family="Arial" font-size="16">
-                                  ${coin.contentType.toUpperCase()}
-                                </text>
-                              </svg>
-                            `)}`;
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <div className="text-center text-white">
-                            <Play className="w-12 h-12 mx-auto mb-2" />
-                            <p className="text-sm font-medium">{coin.contentType.toUpperCase()}</p>
-                          </div>
-                        </div>
-                      )}
 
-                      {/* Play Button - Only for video/audio content */}
-                      {(coin.contentType === 'video' || coin.contentType === 'audio') && (
-                        <Button
-                          size="icon"
-                          className="absolute bottom-2 right-2 bg-black bg-opacity-70 hover:bg-black hover:bg-opacity-90 text-white rounded-full w-8 h-8 opacity-80 hover:opacity-100 transition-all"
-                        >
-                          <Play className="w-4 h-4" />
-                        </Button>
-                      )}
-
-                      {/* Status Badge */}
-                      <div className="absolute top-2 right-2">
-                        <Badge 
-                          variant={coin.status === 'deployed' ? 'default' : 'secondary'}
-                          className={coin.status === 'deployed' 
-                            ? 'bg-green-500 text-black' 
-                            : 'bg-yellow-500 text-black'
-                          }
-                        >
-                          {coin.status === 'deployed' ? '✓ Deployed' : '⏳ Pending'}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Content Info */}
-                    <div className="p-4 space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-white text-sm line-clamp-2 mb-1">
-                          {coin.title}
-                        </h3>
-                        <p className="text-gray-400 text-xs">
-                          {coin.coinSymbol} • {formatTimeAgo(coin.createdAt)}
-                        </p>
-                      </div>
-
-                      {/* Compact Info Row */}
-                      <div className="flex items-center justify-between pt-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          {coin.status === 'deployed' && coin.coinAddress && (
-                            <div className="flex items-center gap-1">
-                              <Hash className="w-3 h-3 text-green-400" />
-                              <code className="text-green-400 font-mono">
-                                {`${coin.coinAddress.slice(0, 4)}...${coin.coinAddress.slice(-2)}`}
-                              </code>
+          {filteredContent.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-white mb-2">No content coins found</h3>
+                <p className="text-gray-400 mb-6">
+                  {searchTerm ? `No content matches "${searchTerm}"` : 'Start creating your first content coin'}
+                </p>
+                <Link to="/create-content-coin">
+                  <Button className="bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-3 rounded-full">
+                    Create Your First Content Coin
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {/* Mobile: 2 per row grid */}
+              <div className="grid md:hidden grid-cols-2 gap-4">
+                {filteredContent.slice(0, 6).map((coin: ContentCoin) => (
+                  <Link to={`/content/base/${coin.memeTokenAddress || coin.id}`} key={`mobile-${coin.id}`}>
+                    <Card 
+                      className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group relative overflow-hidden"
+                    >
+                      <CardContent className="p-0">
+                        {/* Content Image/Thumbnail */}
+                        <div className="relative aspect-square overflow-hidden">
+                          {coin.contentType === 'image' ? (
+                            <img
+                              src={getContentUrl(coin.mediaCid)}
+                              alt={coin.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.src = `data:image/svg+xml,${encodeURIComponent(`
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+                                    <rect width="200" height="200" fill="#374151"/>
+                                    <text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9CA3AF" font-family="Arial" font-size="16">
+                                      ${coin.contentType.toUpperCase()}
+                                    </text>
+                                  </svg>
+                                `)}`;
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                              <div className="text-center text-white">
+                                <Play className="w-8 h-8 mx-auto mb-1" />
+                                <p className="text-xs font-medium">{coin.contentType.toUpperCase()}</p>
+                              </div>
                             </div>
                           )}
-                          {coin.deploymentTxHash && (
+
+                          {/* Play Button - Only for video/audio content */}
+                          {(coin.contentType === 'video' || coin.contentType === 'audio') && (
                             <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 p-1 text-xs text-blue-400 hover:text-blue-300"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
-                              }}
+                              size="icon"
+                              className="absolute bottom-2 right-2 bg-black bg-opacity-70 hover:bg-black hover:bg-opacity-90 text-white rounded-full w-6 h-6 opacity-80 hover:opacity-100 transition-all"
                             >
-                              <Eye className="w-3 h-3" />
+                              <Play className="w-3 h-3" />
                             </Button>
                           )}
-                        </div>
-                        <div className="text-gray-400">
-                          ${coin.currentPrice}
-                        </div>
-                      </div>
 
-                      {/* BUY Button */}
-                      <div className="pt-2">
-                        <Button
-                          size="sm"
-                          className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-7"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // TODO: Implement buy functionality
-                            console.log("Buy button clicked for:", coin.id);
-                          }}
-                        >
-                          BUY
-                        </Button>
-                      </div>
+                          {/* Status Badge */}
+                          <div className="absolute top-2 right-2">
+                            <Badge 
+                              variant={coin.status === 'deployed' ? 'default' : 'secondary'}
+                              className={`text-xs ${coin.status === 'deployed' 
+                                ? 'bg-green-500 text-black' 
+                                : 'bg-yellow-500 text-black'
+                              }`}
+                            >
+                              {coin.status === 'deployed' ? '✓' : '⏳'}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Content Info */}
+                        <div className="p-3 space-y-2">
+                          <div>
+                            <h3 className="font-semibold text-white text-xs line-clamp-2 mb-1">
+                              {coin.title}
+                            </h3>
+                            <p className="text-gray-400 text-xs">
+                              {coin.coinSymbol}
+                            </p>
+                          </div>
+
+                          {/* Price */}
+                          <div className="text-gray-400 text-xs">
+                            ${coin.currentPrice}
+                          </div>
+
+                          {/* BUY Button */}
+                          <Button
+                            size="sm"
+                            className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log("Buy button clicked for:", coin.id);
+                            }}
+                          >
+                            BUY
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Desktop: Horizontal Scroll */}
+              <div className="hidden md:flex space-x-6 overflow-x-auto scrollbar-hide pb-4">
+                {filteredContent.map((coin: ContentCoin) => (
+                  <Link to={`/content/base/${coin.memeTokenAddress || coin.id}`} key={`desktop-${coin.id}`}>
+                    <div className="flex-shrink-0 w-48 group cursor-pointer">
+                      <Card 
+                        className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group relative overflow-hidden"
+                      >
+                        <CardContent className="p-0">
+                          {/* Content Image/Thumbnail */}
+                          <div className="relative aspect-square overflow-hidden">
+                            {coin.contentType === 'image' ? (
+                              <img
+                                src={getContentUrl(coin.mediaCid)}
+                                alt={coin.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.src = `data:image/svg+xml,${encodeURIComponent(`
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+                                      <rect width="200" height="200" fill="#374151"/>
+                                      <text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9CA3AF" font-family="Arial" font-size="16">
+                                        ${coin.contentType.toUpperCase()}
+                                      </text>
+                                    </svg>
+                                  `)}`;
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                                <div className="text-center text-white">
+                                  <Play className="w-12 h-12 mx-auto mb-2" />
+                                  <p className="text-sm font-medium">{coin.contentType.toUpperCase()}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Play Button - Only for video/audio content */}
+                            {(coin.contentType === 'video' || coin.contentType === 'audio') && (
+                              <Button
+                                size="icon"
+                                className="absolute bottom-2 right-2 bg-black bg-opacity-70 hover:bg-black hover:bg-opacity-90 text-white rounded-full w-8 h-8 opacity-80 hover:opacity-100 transition-all"
+                              >
+                                <Play className="w-4 h-4" />
+                              </Button>
+                            )}
+
+                            {/* Status Badge */}
+                            <div className="absolute top-2 right-2">
+                              <Badge 
+                                variant={coin.status === 'deployed' ? 'default' : 'secondary'}
+                                className={coin.status === 'deployed' 
+                                  ? 'bg-green-500 text-black' 
+                                  : 'bg-yellow-500 text-black'
+                                }
+                              >
+                                {coin.status === 'deployed' ? '✓ Deployed' : '⏳ Pending'}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Content Info */}
+                          <div className="p-4 space-y-3">
+                            <div>
+                              <h3 className="font-semibold text-white text-sm line-clamp-2 mb-1">
+                                {coin.title}
+                              </h3>
+                              <p className="text-gray-400 text-xs">
+                                {coin.coinSymbol} • {formatTimeAgo(coin.createdAt)}
+                              </p>
+                            </div>
+
+                            {/* Compact Info Row */}
+                            <div className="flex items-center justify-between pt-2 text-xs">
+                              <div className="flex items-center gap-2">
+                                {coin.status === 'deployed' && coin.coinAddress && (
+                                  <div className="flex items-center gap-1">
+                                    <Hash className="w-3 h-3 text-green-400" />
+                                    <code className="text-green-400 font-mono">
+                                      {`${coin.coinAddress.slice(0, 4)}...${coin.coinAddress.slice(-2)}`}
+                                    </code>
+                                  </div>
+                                )}
+                                {coin.deploymentTxHash && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 p-1 text-xs text-blue-400 hover:text-blue-300"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
+                                    }}
+                                  >
+                                    <Eye className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </div>
+                              <div className="text-gray-400">
+                                ${coin.currentPrice}
+                              </div>
+                            </div>
+
+                            {/* BUY Button */}
+                            <div className="pt-2">
+                              <Button
+                                size="sm"
+                                className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-7"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log("Buy button clicked for:", coin.id);
+                                }}
+                              >
+                                BUY
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Top Creators Section */}
         <div className="space-y-6">
