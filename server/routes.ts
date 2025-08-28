@@ -105,6 +105,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertChannelSchema.parse(req.body);
       const channel = await storage.createChannel(validatedData);
+
+      // Send Telegram notification for new channel
+      const telegramService = getTelegramService();
+      if (telegramService) {
+        await telegramService.notifyNewChannel({
+          name: channel.name,
+          creator: channel.createdBy || 'Unknown',
+          coinAddress: undefined
+        }).catch(err => console.log('Telegram notification failed:', err));
+      }
+
       res.status(201).json(channel);
     } catch (error) {
       // res.status(400).json({ message: "Invalid channel data" });
@@ -1032,6 +1043,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       const validatedData = insertWeb3ChannelSchema.parse(bodyWithSlug);
       const channel = await storage.createWeb3Channel(validatedData);
+
+      // Send Telegram notification for new channel
+      const telegramService = getTelegramService();
+      if (telegramService) {
+        await telegramService.notifyNewChannel({
+          name: channel.name,
+          creator: channel.createdBy || channel.owner || 'Unknown',
+          coinAddress: channel.coinAddress || undefined
+        }).catch(err => console.log('Telegram notification failed:', err));
+      }
+
       res.status(201).json(channel);
     } catch (error: any) {
       if (error.name === 'ZodError') {
