@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy } from "lucide-react";
 import { useCreatorCoins, useCreators } from '@/hooks/useCreatorCoins';
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
@@ -19,8 +20,8 @@ interface ContentCoin {
   description?: string | null;
   contentType: string;
   mediaCid: string;
-  thumbnailCid?: string;
-  metadataUri?: string;
+  thumbnailCid?: string | null;
+  metadataUri?: string | null;
   coinAddress?: string;
   deploymentTxHash?: string;
   creatorAddress: string;
@@ -209,79 +210,84 @@ export default function ContentCoin() {
             </Link>
           </div>
 
-          {/* Top Channels Cards - Widget Style Layout */}
-          <div className="space-y-3">
+          {/* Top Channels Carousel - 3 per slide */}
+          <div className="relative px-12">
             {channelsLoading ? (
               // Loading state
-              <>
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-48 w-full rounded-xl" />
                 ))}
-              </>
+              </div>
             ) : channelsError || !channels || channels.length === 0 ? (
               // Error or empty state
               <div className="text-center py-8">
                 <p className="text-gray-400">No channels found</p>
               </div>
             ) : (
-              // Widget Card Layout
-              <>
-                {channels.slice(0, 4).map((channel, index) => (
-                  <Link key={channel.id} to={`/channels/${channel.slug}`}>
-                    <div className="group cursor-pointer">
-                      <Card className="bg-gray-900/60 hover:bg-gray-800/80 border-gray-700/50 transition-all duration-200 overflow-hidden">
-                        <CardContent className="p-0">
-                          <div className="flex items-center gap-4 p-4">
-                            {/* Thumbnail/Avatar - Left Side */}
-                            <div className="relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden">
-                              {channel.coverUrl || channel.avatarUrl ? (
-                                <img
-                                  src={
-                                    (channel.coverUrl?.startsWith('baf') 
-                                      ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}` 
-                                      : channel.coverUrl) ||
-                                    (channel.avatarUrl?.startsWith('baf')
-                                      ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
-                                      : channel.avatarUrl)
-                                  }
-                                  alt={channel.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                  onError={(e) => {
-                                    const target = e.currentTarget as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    target.nextElementSibling?.classList.remove('hidden');
-                                  }}
-                                />
-                              ) : null}
-                              <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${(channel.coverUrl || channel.avatarUrl) ? 'hidden' : ''}`}>
-                                <span className="text-white font-bold text-xl">{channel.name.charAt(0)}</span>
-                              </div>
-                            </div>
-
-                            {/* Content Details - Right Side */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-bold text-white text-base leading-tight mb-1 truncate">
-                                    {channel.name}
-                                  </h3>
-                                  <p className="text-gray-400 text-sm">
-                                    {channel.category || 'Entertainment'} • {channel.name.slice(0, 8).toUpperCase()}
-                                  </p>
+              // Carousel Layout
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                  slidesToScroll: 3
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-6">
+                  {channels.map((channel, index) => (
+                    <CarouselItem key={channel.id} className="pl-6 basis-1/3">
+                      <Link to={`/channels/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
+                        <div className="group cursor-pointer h-full">
+                          <Card className="bg-gray-900/60 hover:bg-gray-800/80 border-gray-700/50 transition-all duration-200 overflow-hidden h-full">
+                            <CardContent className="p-0 h-full flex flex-col">
+                              {/* Channel Header */}
+                              <div className="relative h-24 overflow-hidden">
+                                {channel.coverUrl || channel.avatarUrl ? (
+                                  <img
+                                    src={
+                                      (channel.coverUrl?.startsWith('baf') 
+                                        ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}` 
+                                        : channel.coverUrl) ||
+                                      (channel.avatarUrl?.startsWith('baf')
+                                        ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
+                                        : channel.avatarUrl)
+                                    }
+                                    alt={channel.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    onError={(e) => {
+                                      const target = e.currentTarget as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      target.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : null}
+                                <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${(channel.coverUrl || channel.avatarUrl) ? 'hidden' : ''}`}>
+                                  <span className="text-white font-bold text-2xl">{channel.name.charAt(0)}</span>
                                 </div>
                                 
-                                {/* Rating/Score */}
-                                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                                  <span className="text-yellow-400">⭐</span>
-                                  <span className="text-white font-semibold text-sm">
+                                {/* Rating/Score in top right */}
+                                <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/50 rounded-full px-2 py-1">
+                                  <span className="text-yellow-400 text-xs">⭐</span>
+                                  <span className="text-white font-semibold text-xs">
                                     {(4.2 + Math.random() * 0.7).toFixed(1)}
                                   </span>
                                 </div>
                               </div>
 
-                              {/* Stats Row */}
-                              <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center gap-4">
+                              {/* Channel Details */}
+                              <div className="p-4 flex-1 flex flex-col">
+                                <div className="mb-3">
+                                  <h3 className="font-bold text-white text-lg leading-tight mb-1 truncate">
+                                    {channel.name}
+                                  </h3>
+                                  <p className="text-gray-400 text-sm">
+                                    {'Entertainment'} • {channel.name.slice(0, 8).toUpperCase()}
+                                  </p>
+                                </div>
+
+                                {/* Stats Grid */}
+                                <div className="grid grid-cols-2 gap-2 text-xs mt-auto">
                                   <div className="flex items-center gap-1">
                                     <span className="text-green-400">💰</span>
                                     <span className="text-gray-300">
@@ -300,20 +306,21 @@ export default function ContentCoin() {
                                       {Math.floor(Math.random() * 50 + 5)} videos
                                     </span>
                                   </div>
-                                </div>
-                                
-                                <div className="text-gray-500 text-xs">
-                                  Created {Math.floor(Math.random() * 30 + 1)}d ago
+                                  <div className="text-gray-500 text-xs">
+                                    {Math.floor(Math.random() * 30 + 1)}d ago
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </Link>
-                ))}
-              </>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </Link>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="-left-6" />
+                <CarouselNext className="-right-6" />
+              </Carousel>
             )}
           </div>
         </div>
