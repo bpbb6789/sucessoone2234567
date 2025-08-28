@@ -87,47 +87,91 @@ export default function Admin() {
   };
 
   // Fetch admin stats
-  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
-    queryKey: ['/api/admin/stats'],
+  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery<AdminStats>({
+    queryKey: ['admin-stats'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/stats');
-      if (!response.ok) throw new Error('Failed to fetch stats');
-      return response.json();
+      const response = await fetch('/api/admin/stats', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch stats: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Admin stats fetched:', data);
+      return data;
     },
-    enabled: isAuthenticated
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    retry: 3
   });
 
   // Fetch users
-  const { data: users = [], isLoading: usersLoading } = useQuery<AdminUser[]>({
-    queryKey: ['/api/admin/users'],
+  const { data: users = [], isLoading: usersLoading, refetch: refetchUsers } = useQuery<AdminUser[]>({
+    queryKey: ['admin-users'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/users');
-      if (!response.ok) throw new Error('Failed to fetch users');
-      return response.json();
+      const response = await fetch('/api/admin/users', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch users: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Admin users fetched:', data);
+      return data;
     },
-    enabled: isAuthenticated
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    retry: 3
   });
 
   // Fetch channels
-  const { data: channels = [], isLoading: channelsLoading } = useQuery<AdminChannel[]>({
-    queryKey: ['/api/admin/channels'],
+  const { data: channels = [], isLoading: channelsLoading, refetch: refetchChannels } = useQuery<AdminChannel[]>({
+    queryKey: ['admin-channels'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/channels');
-      if (!response.ok) throw new Error('Failed to fetch channels');
-      return response.json();
+      const response = await fetch('/api/admin/channels', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch channels: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Admin channels fetched:', data);
+      return data;
     },
-    enabled: isAuthenticated
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    retry: 3
   });
 
   // Fetch content coins
-  const { data: contentCoins = [], isLoading: coinsLoading } = useQuery<AdminContentCoin[]>({
-    queryKey: ['/api/admin/content-coins'],
+  const { data: contentCoins = [], isLoading: coinsLoading, refetch: refetchCoins } = useQuery<AdminContentCoin[]>({
+    queryKey: ['admin-content-coins'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/content-coins');
-      if (!response.ok) throw new Error('Failed to fetch content coins');
-      return response.json();
+      const response = await fetch('/api/admin/content-coins', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch content coins: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Admin content coins fetched:', data);
+      return data;
     },
-    enabled: isAuthenticated
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+    retry: 3
   });
 
   // Withdraw fees mutation
@@ -188,26 +232,54 @@ export default function Admin() {
             <h1 className="text-3xl font-bold text-white">Admin Dashboard</h1>
             <p className="text-gray-400">Manage your Web3 platform</p>
           </div>
-          <Button
-            onClick={() => {
-              setIsAuthenticated(false);
-              setAdminPassword('');
-            }}
-            variant="outline"
-          >
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                refetchStats();
+                refetchUsers();
+                refetchChannels();
+                refetchCoins();
+                toast.success('Data refreshed');
+              }}
+              variant="outline"
+              size="sm"
+            >
+              Refresh
+            </Button>
+            <Button
+              onClick={() => {
+                setIsAuthenticated(false);
+                setAdminPassword('');
+              }}
+              variant="outline"
+            >
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Stats Overview */}
-        {stats && (
+        {statsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-600 rounded w-20 mb-2"></div>
+                    <div className="h-8 bg-gray-600 rounded w-16"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : stats ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Total Users</p>
-                    <p className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</p>
+                    <p className="text-2xl font-bold">{(stats.totalUsers || 0).toLocaleString()}</p>
                   </div>
                   <Users className="h-8 w-8 text-blue-500" />
                 </div>
@@ -219,7 +291,7 @@ export default function Admin() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Total Channels</p>
-                    <p className="text-2xl font-bold">{stats.totalChannels.toLocaleString()}</p>
+                    <p className="text-2xl font-bold">{(stats.totalChannels || 0).toLocaleString()}</p>
                   </div>
                   <Activity className="h-8 w-8 text-green-500" />
                 </div>
@@ -231,7 +303,7 @@ export default function Admin() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Content Coins</p>
-                    <p className="text-2xl font-bold">{stats.totalContentCoins.toLocaleString()}</p>
+                    <p className="text-2xl font-bold">{(stats.totalContentCoins || 0).toLocaleString()}</p>
                   </div>
                   <Coins className="h-8 w-8 text-purple-500" />
                 </div>
@@ -243,12 +315,16 @@ export default function Admin() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-400">Total Revenue</p>
-                    <p className="text-2xl font-bold">{stats.totalRevenue} ETH</p>
+                    <p className="text-2xl font-bold">{stats.totalRevenue || '0'} ETH</p>
                   </div>
                   <DollarSign className="h-8 w-8 text-yellow-500" />
                 </div>
               </CardContent>
             </Card>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-400">Failed to load stats. Please refresh.</p>
           </div>
         )}
 
@@ -294,20 +370,35 @@ export default function Admin() {
                   <CardTitle>System Health</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span>Active Users (24h)</span>
-                      <Badge variant="outline">{stats?.monthlyActiveUsers || 0}</Badge>
+                  {statsLoading ? (
+                    <div className="space-y-4">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <div className="h-4 bg-gray-600 rounded w-24 animate-pulse"></div>
+                          <div className="h-6 bg-gray-600 rounded w-16 animate-pulse"></div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span>Platform Fees</span>
-                      <Badge variant="outline">{stats?.totalFees || '0'} ETH</Badge>
+                  ) : stats ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span>Active Users (24h)</span>
+                        <Badge variant="outline">{stats.monthlyActiveUsers || 0}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Platform Fees</span>
+                        <Badge variant="outline">{stats.totalFees || '0'} ETH</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Pending Withdrawals</span>
+                        <Badge variant="outline">{stats.pendingWithdrawals || '0'} ETH</Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span>Pending Withdrawals</span>
-                      <Badge variant="outline">{stats?.pendingWithdrawals || '0'} ETH</Badge>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-gray-400 text-sm">Unable to load system health data</p>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -336,33 +427,52 @@ export default function Admin() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-mono">
-                          {user.address.slice(0, 6)}...{user.address.slice(-4)}
-                        </TableCell>
-                        <TableCell>{user.channelsCreated}</TableCell>
-                        <TableCell>{user.coinsCreated}</TableCell>
-                        <TableCell>{user.totalVolume} ETH</TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={user.status === 'active' ? 'default' : 'destructive'}
-                          >
-                            {user.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
+                    {usersLoading ? (
+                      Array.from({ length: 3 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><div className="h-4 bg-gray-600 rounded w-24 animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-600 rounded w-8 animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-600 rounded w-8 animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-600 rounded w-16 animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-600 rounded w-12 animate-pulse"></div></TableCell>
+                          <TableCell><div className="h-4 bg-gray-600 rounded w-16 animate-pulse"></div></TableCell>
+                        </TableRow>
+                      ))
+                    ) : users.length > 0 ? (
+                      users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-mono">
+                            {user.address.slice(0, 6)}...{user.address.slice(-4)}
+                          </TableCell>
+                          <TableCell>{user.channelsCreated || 0}</TableCell>
+                          <TableCell>{user.coinsCreated || 0}</TableCell>
+                          <TableCell>{user.totalVolume || '0'} ETH</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={user.status === 'active' ? 'default' : 'destructive'}
+                            >
+                              {user.status || 'active'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-400">
+                          No users found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

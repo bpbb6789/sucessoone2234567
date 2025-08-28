@@ -2205,6 +2205,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get admin dashboard stats
   app.get('/api/admin/stats', async (req, res) => {
     try {
+      console.log('🔍 Fetching admin stats...');
+      
       // In production, add proper admin authentication middleware
       
       // Get total users (unique creator addresses)
@@ -2220,24 +2222,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Mock revenue data (implement with actual blockchain data)
       const stats = {
         totalUsers: parseInt(totalUsers[0]?.count as string) || 0,
-        totalChannels: totalChannels.length,
-        totalContentCoins: totalContentCoins.length,
+        totalChannels: totalChannels.length || 0,
+        totalContentCoins: totalContentCoins.length || 0,
         totalRevenue: "15.7", // ETH - from trading fees
         totalFees: "3.2", // ETH - platform fees
         monthlyActiveUsers: 142,
         pendingWithdrawals: "0.8"
       };
 
+      console.log('✅ Admin stats fetched successfully:', stats);
       res.json(stats);
     } catch (error) {
-      console.error('Error fetching admin stats:', error);
-      res.status(500).json({ error: 'Failed to fetch admin stats' });
+      console.error('❌ Error fetching admin stats:', error);
+      res.status(500).json({ error: 'Failed to fetch admin stats', details: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
   // Get all users for admin management
   app.get('/api/admin/users', async (req, res) => {
     try {
+      console.log('🔍 Fetching admin users...');
+      
       // Get unique creators with their stats
       const users = await db
         .select({
@@ -2250,10 +2255,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(sql`${creatorCoins.creatorAddress} IS NOT NULL AND ${creatorCoins.creatorAddress} != ''`)
         .groupBy(creatorCoins.creatorAddress);
 
+      console.log(`Found ${users.length} unique users from creator coins`);
+
       // Get channel count per user
       const channels = await storage.getAllWeb3Channels();
       const channelsByOwner = channels.reduce((acc: any, channel: any) => {
-        acc[channel.owner] = (acc[channel.owner] || 0) + 1;
+        if (channel.owner) {
+          acc[channel.owner] = (acc[channel.owner] || 0) + 1;
+        }
         return acc;
       }, {});
 
@@ -2267,10 +2276,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         joinedAt: user.joinedAt
       }));
 
+      console.log('✅ Admin users fetched successfully:', adminUsers.length);
       res.json(adminUsers);
     } catch (error) {
-      console.error('Error fetching admin users:', error);
-      res.status(500).json({ error: 'Failed to fetch users' });
+      console.error('❌ Error fetching admin users:', error);
+      res.status(500).json({ error: 'Failed to fetch users', details: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 
