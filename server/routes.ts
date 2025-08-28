@@ -26,6 +26,7 @@ import { eq, desc, sql } from "drizzle-orm";
 import { contentImports, creatorCoins, creatorCoinLikes, creatorCoinComments, creatorCoinTrades } from "@shared/schema";
 import { getDopplerService, type PadTokenConfig } from "./doppler";
 import { PrismaClient } from '../lib/generated/prisma/index.js';
+import { getTelegramService } from "./services/telegramService";
 
 const prisma = new PrismaClient();
 
@@ -974,6 +975,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const channel = await storage.createWeb3Channel(channelData);
       console.log('💾 Channel saved to database:', channel.id);
+
+      // Send Telegram notification for new channel
+      const telegramService = getTelegramService();
+      if (telegramService) {
+        await telegramService.notifyNewChannel({
+          name: channel.name,
+          creator: channel.createdBy,
+          coinAddress: channel.coinAddress || undefined
+        }).catch(err => console.log('Telegram notification failed:', err));
+      }
 
       res.json({
         success: true,
@@ -2038,6 +2049,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [newCoin] = await db.insert(creatorCoins).values(validatedCoinData).returning();
 
       console.log('✅ Upload completed successfully:', newCoin);
+
+      // Send Telegram notification for new content coin
+      const telegramService = getTelegramService();
+      if (telegramService) {
+        await telegramService.notifyNewContentCoin({
+          title: newCoin.title,
+          coinSymbol: newCoin.coinSymbol,
+          creator: newCoin.creatorAddress,
+          contentType: newCoin.contentType,
+          coinAddress: newCoin.coinAddress || undefined
+        }).catch(err => console.log('Telegram notification failed:', err));
+      }
 
       res.status(201).json({
         message: "Content uploaded successfully",

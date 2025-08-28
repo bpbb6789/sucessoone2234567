@@ -7,7 +7,7 @@ export interface TelegramConfig {
 
 export class TelegramService {
   private bot: TelegramBot | null = null;
-  private channelId: string;
+  private channelId: string = '';
 
   constructor(config: TelegramConfig) {
     if (config.botToken && config.channelId) {

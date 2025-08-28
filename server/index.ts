@@ -4,6 +4,7 @@ dotenv.config();
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { initializeTelegramService } from "./services/telegramService";
 
 const app = express();
 app.use(express.json());
@@ -47,6 +48,9 @@ app.use((req, res, next) => {
   if (!dbConnected) {
     log("Warning: Database connection failed, but continuing startup...");
   }
+
+  // Initialize Telegram service
+  initializeTelegramService();
 
   const server = await registerRoutes(app);
 
