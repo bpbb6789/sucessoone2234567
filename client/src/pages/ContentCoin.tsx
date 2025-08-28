@@ -277,29 +277,30 @@ export default function ContentCoin() {
                                     </h3>
                                   </div>
                                   
-                                  {/* Creator with Icon - Only show if we have real creator data */}
-                                  {channel.creatorAddress && (
-                                    <div className="flex items-center gap-2 text-gray-300 text-sm mb-1">
-                                      <User className="w-3 h-3" />
-                                      <span>{channel.creatorAddress.slice(0, 6)}...{channel.creatorAddress.slice(-4)}</span>
-                                    </div>
-                                  )}
+                                  {/* Creator with Icon */}
+                                  <div className="flex items-center gap-2 text-gray-300 text-sm mb-1">
+                                    <User className="w-3 h-3" />
+                                    <span>
+                                      {channel.creatorAddress 
+                                        ? `${channel.creatorAddress.slice(0, 6)}...${channel.creatorAddress.slice(-4)}` 
+                                        : 'Unknown Creator'
+                                      }
+                                    </span>
+                                  </div>
                                   
-                                  {/* Market Cap with Coin Icon - Only show if we have real market cap data */}
-                                  {channel.marketCap && (
-                                    <div className="flex items-center gap-2 text-sm mb-1">
-                                      <DollarSign className="w-3 h-3 text-green-400" />
-                                      <span className="text-green-400 font-semibold">${channel.marketCap}</span>
-                                    </div>
-                                  )}
+                                  {/* Market Cap with Coin Icon */}
+                                  <div className="flex items-center gap-2 text-sm mb-1">
+                                    <DollarSign className="w-3 h-3 text-green-400" />
+                                    <span className="text-green-400 font-semibold">
+                                      ${channel.marketCap || '0'}
+                                    </span>
+                                  </div>
                                   
-                                  {/* Posts with Icon - Only show if we have real posts data */}
-                                  {channel.postsCount && (
-                                    <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                      <FileText className="w-3 h-3" />
-                                      <span>{channel.postsCount}</span>
-                                    </div>
-                                  )}
+                                  {/* Posts with Icon */}
+                                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                                    <FileText className="w-3 h-3" />
+                                    <span>{channel.postsCount || '0'}</span>
+                                  </div>
                                 </div>
                               </div>
                             </CardContent>
