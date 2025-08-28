@@ -2126,15 +2126,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creator: coinData.creatorAddress
       });
 
-      if (coinData.status !== 'pending') {
-        console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending`);
-        return res.status(400).json({ message: `Coin is not in pending status (current: ${coinData.status})` });
+      // Allow redeployment of failed coins
+      if (coinData.status !== 'pending' && coinData.status !== 'failed') {
+        console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending or failed`);
+        return res.status(400).json({ message: `Coin cannot be deployed (current status: ${coinData.status}). Only pending or failed coins can be deployed.` });
       }
 
       console.log(`⏳ Updating coin status to 'creating'...`);
-      // Update status to creating
+      // Update status to creating and clear any previous error info
       await db.update(creatorCoins)
-        .set({ status: 'creating', updatedAt: new Date() })
+        .set({ 
+          status: 'creating', 
+          updatedAt: new Date(),
+          deploymentTxHash: null // Clear previous failed tx hash if any
+        })
         .where(eq(creatorCoins.id, coinId));
 
       console.log(`🔧 Creating coin with Zora SDK...`);

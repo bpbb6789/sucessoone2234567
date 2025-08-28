@@ -149,6 +149,28 @@ export async function createCreatorCoin(params: {
       throw new Error(`Deployer wallet ${walletClient.account.address} has no ETH balance. Please add testnet ETH to deploy.`);
     }
 
+    // Validate metadata URI before deployment
+    console.log('🔍 Validating metadata URI:', params.uri);
+    try {
+      const metadataResponse = await fetch(params.uri, { 
+        method: 'HEAD',
+        timeout: 10000 // 10 second timeout
+      });
+      if (!metadataResponse.ok) {
+        console.warn('⚠️ Metadata URI returned non-200 status:', metadataResponse.status);
+        // Wait a bit and try again
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retryResponse = await fetch(params.uri, { method: 'HEAD', timeout: 10000 });
+        if (!retryResponse.ok) {
+          throw new Error(`Metadata URI not accessible: ${metadataResponse.status}`);
+        }
+      }
+      console.log('✅ Metadata URI is accessible');
+    } catch (fetchError) {
+      console.error('❌ Metadata validation failed:', fetchError);
+      throw new Error(`Metadata fetch failed: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}. Please wait and try again.`);
+    }
+
     // Map our currency to Zora's actual DeployCurrency enum
     let zoraCurrency = DeployCurrency.ETH; // Default to ETH
     switch (params.currency) {
@@ -173,8 +195,8 @@ export async function createCreatorCoin(params: {
 
     console.log('📋 Zora coin creation args:', coinArgs);
 
-    // Deploy using actual Zora SDK API
-    const result = await createCoin(
+    // Deploy using actual Zora SDK API with timeout
+    const deployPromise = createCoin(
       coinArgs,
       walletClient,
       publicClient,
@@ -182,6 +204,13 @@ export async function createCreatorCoin(params: {
         gasMultiplier: 1.2
       }
     );
+
+    // Add timeout to the deployment
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Deployment timeout after 60 seconds')), 60000)
+    );
+
+    const result = await Promise.race([deployPromise, timeoutPromise]);
 
     console.log('✅ Zora Creator Coin deployed successfully:', result);
 
@@ -205,8 +234,18 @@ export async function createCreatorCoin(params: {
       if ('data' in error) console.error('Error data:', error.data);
     }
     
-    // Re-throw the actual error instead of falling back to simulation
-    throw error;
+    // Provide more helpful error messages
+    let friendlyError = error instanceof Error ? error.message : 'Unknown deployment error';
+    
+    if (friendlyError.includes('Metadata fetch failed')) {
+      friendlyError = 'Unable to access metadata on IPFS. This is usually temporary - please wait a few minutes and try again.';
+    } else if (friendlyError.includes('timeout')) {
+      friendlyError = 'Deployment timed out. Please check your transaction and try again if needed.';
+    } else if (friendlyError.includes('gas')) {
+      friendlyError = 'Transaction failed due to gas estimation issues. Please try again.';
+    }
+    
+    throw new Error(friendlyError);
   }
 }
 
