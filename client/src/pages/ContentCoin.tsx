@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy } from "lucide-react";
+import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy, User, DollarSign, FileText } from "lucide-react";
 import { useCreatorCoins, useCreators } from '@/hooks/useCreatorCoins';
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -271,25 +271,28 @@ export default function ContentCoin() {
                                 {/* Channel Content */}
                                 <div className="flex-1 min-w-0">
                                   {/* Channel Name with Coin Symbol */}
-                                  <div className="mb-1">
+                                  <div className="mb-2">
                                     <h3 className="font-bold text-white text-base leading-tight truncate">
                                       {channel.name} ({channel.name.slice(0, 4).toUpperCase()})
                                     </h3>
                                   </div>
                                   
-                                  {/* Creator Name */}
-                                  <div className="text-gray-300 text-sm mb-1">
-                                    Creator: {channel.name.split(' ')[0]} {channel.name.split(' ')[1] || 'Team'}
+                                  {/* Creator with Icon */}
+                                  <div className="flex items-center gap-2 text-gray-300 text-sm mb-1">
+                                    <User className="w-3 h-3" />
+                                    <span>{channel.name.split(' ')[0]} {channel.name.split(' ')[1] || 'Team'}</span>
                                   </div>
                                   
-                                  {/* Market Cap */}
-                                  <div className="text-gray-300 text-sm mb-1">
-                                    Market cap: <span className="text-green-400 font-semibold">${(Math.random() * 500 + 50).toFixed(1)}M</span>
+                                  {/* Market Cap with Coin Icon */}
+                                  <div className="flex items-center gap-2 text-sm mb-1">
+                                    <DollarSign className="w-3 h-3 text-green-400" />
+                                    <span className="text-green-400 font-semibold">$157.3M</span>
                                   </div>
                                   
-                                  {/* Posts Count */}
-                                  <div className="text-gray-400 text-sm">
-                                    Posts: {Math.floor(Math.random() * 500 + 50)}
+                                  {/* Posts with Icon */}
+                                  <div className="flex items-center gap-2 text-gray-400 text-sm">
+                                    <FileText className="w-3 h-3" />
+                                    <span>247</span>
                                   </div>
                                 </div>
                               </div>
