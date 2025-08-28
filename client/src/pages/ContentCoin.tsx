@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy } from "lucide-react";
 import { useCreatorCoins, useCreators } from '@/hooks/useCreatorCoins';
+import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
 import { CategoryChips } from "@/components/CategoryChips";
@@ -113,6 +114,9 @@ export default function ContentCoin() {
 
   // Get creator coins from API
   const { data: contentCoins, isLoading, error } = useCreatorCoins();
+  
+  // Get real channels data
+  const { data: channels, isLoading: channelsLoading, error: channelsError } = useGetAllChannels();
 
   // Filter and sort content
   const filteredContent = (contentCoins || [])
@@ -225,132 +229,124 @@ export default function ContentCoin() {
 
           {/* Top Channels Cards - Mobile: Horizontal Scroll, Desktop: Grid */}
           <div className="md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
-            {/* Mobile: Horizontal Scroll */}
-            <div className="flex md:hidden space-x-4 overflow-x-auto scrollbar-hide pb-4">
-            {/* Mock channel data - replace with real data later */}
-              {[
-                { 
-                  name: "Unc", 
-                  symbol: "(Unc)", 
-                  marketCap: "$1.3M", 
-                  replies: 37, 
-                  avatar: "/images/creator1.jpg"
-                },
-                { 
-                  name: "Illusion of Life", 
-                  symbol: "(SPARK)", 
-                  marketCap: "$32.9M", 
-                  replies: 830, 
-                  avatar: "/images/creator2.jpg"
-                },
-                { 
-                  name: "KEANU SLEAZE", 
-                  symbol: "(SLEAZE)", 
-                  marketCap: "$754.4K", 
-                  replies: 318, 
-                  avatar: "/images/creator3.jpg"
-                },
-                { 
-                  name: "TROLL", 
-                  symbol: "(TROLL)", 
-                  marketCap: "$253.4M", 
-                  replies: 1095, 
-                  avatar: "/images/creator4.jpg"
-                }
-              ].map((channel, index) => (
-                <div key={`mobile-${index}`} className="flex-shrink-0 w-56 group cursor-pointer">
-                  <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-2 border border-gray-700/50">
-                    {/* Top row - Avatar, Name, Symbol, Market Cap */}
-                    <div className="flex items-start gap-2">
-                      {/* Avatar */}
-                      <div className="relative flex-shrink-0">
-                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">{channel.name.charAt(0)}</span>
-                        </div>
-                      </div>
+            {channelsLoading ? (
+              // Loading state
+              <>
+                <div className="flex md:hidden space-x-4 overflow-x-auto scrollbar-hide pb-4">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="flex-shrink-0 w-56 h-20" />
+                  ))}
+                </div>
+                <div className="hidden md:contents">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              </>
+            ) : channelsError || !channels || channels.length === 0 ? (
+              // Error or empty state
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-400">No channels found</p>
+              </div>
+            ) : (
+              <>
+                {/* Mobile: Horizontal Scroll */}
+                <div className="flex md:hidden space-x-4 overflow-x-auto scrollbar-hide pb-4">
+                  {channels.slice(0, 4).map((channel, index) => (
+                    <Link key={`mobile-${channel.id}`} to={`/channels/${channel.slug}`}>
+                      <div className="flex-shrink-0 w-56 group cursor-pointer">
+                        <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-2 border border-gray-700/50">
+                          {/* Top row - Avatar, Name, Symbol, Market Cap */}
+                          <div className="flex items-start gap-2">
+                            {/* Avatar */}
+                            <div className="relative flex-shrink-0">
+                              {channel.avatarUrl ? (
+                                <img
+                                  src={channel.avatarUrl}
+                                  alt={channel.name}
+                                  className="w-8 h-8 rounded-lg object-cover"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <div className={`w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${channel.avatarUrl ? 'hidden' : ''}`}>
+                                <span className="text-white font-bold text-sm">{channel.name.charAt(0)}</span>
+                              </div>
+                            </div>
 
-                      {/* Name, Symbol & Stats */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-0.5">
-                          <div>
-                            <h3 className="font-bold text-white text-xs leading-tight">{channel.name}</h3>
-                            <p className="text-gray-400 text-xs">{channel.symbol}</p>
+                            {/* Name, Symbol & Stats */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-0.5">
+                                <div>
+                                  <h3 className="font-bold text-white text-xs leading-tight">{channel.name}</h3>
+                                  <p className="text-gray-400 text-xs">({channel.name.slice(0, 6)})</p>
+                                </div>
+                              </div>
+                              
+                              <div className="text-xs text-gray-300">
+                                <p>market cap: <span className="text-green-400">$0.00</span></p>
+                                <p>holders: <span className="text-gray-400">0</span></p>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        
-                        <div className="text-xs text-gray-300">
-                          <p>market cap: <span className="text-green-400">{channel.marketCap}</span></p>
-                          <p>replies: <span className="text-gray-400">{channel.replies}</span></p>
-                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </Link>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Desktop: Grid Layout */}
-            <div className="hidden md:contents">
-              {[
-                { 
-                  name: "Unc", 
-                  symbol: "(Unc)", 
-                  marketCap: "$1.3M", 
-                  replies: 37, 
-                  avatar: "/images/creator1.jpg"
-                },
-                { 
-                  name: "Illusion of Life", 
-                  symbol: "(SPARK)", 
-                  marketCap: "$32.9M", 
-                  replies: 830, 
-                  avatar: "/images/creator2.jpg"
-                },
-                { 
-                  name: "KEANU SLEAZE", 
-                  symbol: "(SLEAZE)", 
-                  marketCap: "$754.4K", 
-                  replies: 318, 
-                  avatar: "/images/creator3.jpg"
-                },
-                { 
-                  name: "TROLL", 
-                  symbol: "(TROLL)", 
-                  marketCap: "$253.4M", 
-                  replies: 1095, 
-                  avatar: "/images/creator4.jpg"
-                }
-              ].map((channel, index) => (
-                <div key={`desktop-${index}`} className="group cursor-pointer">
-                  <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-2 border border-gray-700/50">
-                    {/* Top row - Avatar, Name, Symbol, Market Cap */}
-                    <div className="flex items-start gap-2">
-                      {/* Avatar */}
-                      <div className="relative flex-shrink-0">
-                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">{channel.name.charAt(0)}</span>
-                        </div>
-                      </div>
+                {/* Desktop: Grid Layout */}
+                <div className="hidden md:contents">
+                  {channels.slice(0, 4).map((channel, index) => (
+                    <Link key={`desktop-${channel.id}`} to={`/channels/${channel.slug}`}>
+                      <div className="group cursor-pointer">
+                        <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-2 border border-gray-700/50">
+                          {/* Top row - Avatar, Name, Symbol, Market Cap */}
+                          <div className="flex items-start gap-2">
+                            {/* Avatar */}
+                            <div className="relative flex-shrink-0">
+                              {channel.avatarUrl ? (
+                                <img
+                                  src={channel.avatarUrl}
+                                  alt={channel.name}
+                                  className="w-8 h-8 rounded-lg object-cover"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <div className={`w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${channel.avatarUrl ? 'hidden' : ''}`}>
+                                <span className="text-white font-bold text-sm">{channel.name.charAt(0)}</span>
+                              </div>
+                            </div>
 
-                      {/* Name, Symbol & Stats */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-0.5">
-                          <div>
-                            <h3 className="font-bold text-white text-xs leading-tight">{channel.name}</h3>
-                            <p className="text-gray-400 text-xs">{channel.symbol}</p>
+                            {/* Name, Symbol & Stats */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-0.5">
+                                <div>
+                                  <h3 className="font-bold text-white text-xs leading-tight">{channel.name}</h3>
+                                  <p className="text-gray-400 text-xs">({channel.name.slice(0, 6)})</p>
+                                </div>
+                              </div>
+                              
+                              <div className="text-xs text-gray-300">
+                                <p>market cap: <span className="text-green-400">$0.00</span></p>
+                                <p>holders: <span className="text-gray-400">0</span></p>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        
-                        <div className="text-xs text-gray-300">
-                          <p>market cap: <span className="text-green-400">{channel.marketCap}</span></p>
-                          <p>replies: <span className="text-gray-400">{channel.replies}</span></p>
-                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </Link>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </div>
 
