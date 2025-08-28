@@ -1354,7 +1354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // URL Import endpoint
+  // Enhanced URL Import endpoint for shorts content
   app.post("/api/content-imports/import-url", async (req, res) => {
     try {
       const { url, channelId, contentType, title, description, coinName, coinSymbol } = req.body;
@@ -1363,72 +1363,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields: url, contentType, title, coinName, coinSymbol" });
       }
 
-      // Create metadata for URL import
-      const metadata = {
-        title,
-        description: description || '',
-        contentType,
-        originalUrl: url,
-        importedAt: new Date().toISOString()
-      };
+      // Import the shorts processor
+      const { shortsProcessor } = await import('./shortsProcessor');
+      
+      // For reel/video content, use enhanced processing
+      if (contentType === 'reel') {
+        console.log(`Processing shorts content from: ${url}`);
+        
+        // Process the video URL
+        const processResult = await shortsProcessor.processShorts(url);
+        
+        if (!processResult.success) {
+          return res.status(400).json({ 
+            message: processResult.error || "Failed to process shorts content" 
+          });
+        }
 
-      // Upload metadata to IPFS
-      const metadataCid = await uploadJSONToIPFS(metadata);
+        const { videoInfo, videoCid, thumbnailCid } = processResult;
 
-      // For public imports, don't save to database, just return IPFS data
-      if (!channelId || channelId === 'public') {
+        // Create comprehensive metadata
+        const metadata = {
+          title: videoInfo?.title || title,
+          description: videoInfo?.description || description || '',
+          contentType,
+          originalUrl: url,
+          platform: videoInfo?.platform,
+          duration: videoInfo?.duration,
+          importedAt: new Date().toISOString(),
+          videoCid,
+          thumbnailCid
+        };
+
+        // Upload metadata to IPFS
+        const metadataCid = await uploadJSONToIPFS(metadata);
+
+        // For public imports, don't save to database, just return IPFS data
+        if (!channelId || channelId === 'public') {
+          res.json({
+            success: true,
+            content: {
+              id: `public-${Date.now()}`,
+              title: videoInfo?.title || title,
+              description: videoInfo?.description || description,
+              contentType,
+              originalUrl: url,
+              ipfsCid: metadataCid,
+              mediaCid: videoCid,
+              thumbnailCid,
+              metadata,
+              status: 'ready',
+              coinName,
+              coinSymbol,
+              createdAt: new Date()
+            },
+            metadataCid,
+            videoCid,
+            thumbnailCid
+          });
+          return;
+        }
+
+        // Save content import record with media CIDs
+        const contentData = {
+          channelId,
+          title: videoInfo?.title || title,
+          description: videoInfo?.description || description,
+          contentType,
+          originalUrl: url,
+          ipfsCid: metadataCid,
+          mediaCid: videoCid,
+          thumbnailCid,
+          metadata,
+          status: 'ready' as const,
+          coinName,
+          coinSymbol
+        };
+
+        const content = await storage.createContentImport(contentData);
+
         res.json({
           success: true,
-          content: {
-            id: `public-${Date.now()}`,
-            title,
-            description,
-            contentType,
-            originalUrl: url,
-            ipfsCid: metadataCid,
-            metadata,
-            status: 'tokenizing',
-            createdAt: new Date()
-          },
+          content,
+          metadataCid,
+          videoCid,
+          thumbnailCid,
+          videoInfo
+        });
+
+      } else {
+        // For non-video content, use basic metadata processing
+        const metadata = {
+          title,
+          description: description || '',
+          contentType,
+          originalUrl: url,
+          importedAt: new Date().toISOString()
+        };
+
+        const metadataCid = await uploadJSONToIPFS(metadata);
+
+        if (!channelId || channelId === 'public') {
+          res.json({
+            success: true,
+            content: {
+              id: `public-${Date.now()}`,
+              title,
+              description,
+              contentType,
+              originalUrl: url,
+              ipfsCid: metadataCid,
+              metadata,
+              status: 'ready',
+              coinName,
+              coinSymbol,
+              createdAt: new Date()
+            },
+            metadataCid
+          });
+          return;
+        }
+
+        const contentData = {
+          channelId,
+          title,
+          description,
+          contentType,
+          originalUrl: url,
+          ipfsCid: metadataCid,
+          metadata,
+          status: 'ready' as const,
+          coinName,
+          coinSymbol
+        };
+
+        const content = await storage.createContentImport(contentData);
+
+        res.json({
+          success: true,
+          content,
           metadataCid
         });
-        return;
       }
 
-      // Save content import record only if valid channelId provided
-      const contentData = {
-        channelId,
-        title,
-        description,
-        contentType,
-        originalUrl: url,
-        ipfsCid: metadataCid,
-        metadata,
-        status: 'tokenizing' as const,
-        coinName,
-        coinSymbol
-      };
-
-      const content = await storage.createContentImport(contentData);
-
-      // Auto-tokenize content after creation
-      setTimeout(async () => {
-        try {
-          await storage.updateContentImport(content.id, {
-            status: 'tokenized',
-            tokenizedAt: new Date()
-          });
-        } catch (error) {
-          console.error("Auto-tokenization error:", error);
-          await storage.updateContentImport(content.id, { status: 'failed' });
-        }
-      }, 2000);
-
-      res.json({
-        success: true,
-        content,
-        metadataCid
-      });
     } catch (error) {
       console.error("URL import error:", error);
       res.status(500).json({ message: "Failed to import content from URL" });

@@ -142,6 +142,18 @@ export default function ContentImport() {
 
     try {
       const hostname = new URL(importUrl).hostname
+      
+      // Show different loading messages for different content types
+      const isReel = selectedType === 'reel'
+      const loadingMessage = isReel 
+        ? "Processing shorts content... Downloading and extracting thumbnail (5-10s)" 
+        : "Importing content..."
+
+      toast({
+        title: "Import Started",
+        description: loadingMessage
+      })
+
       await urlImportMutation.mutateAsync({
         url: importUrl,
         channelId,
@@ -155,12 +167,15 @@ export default function ContentImport() {
       setImportUrl('')
       toast({
         title: "Import Complete",
-        description: "Content has been imported and uploaded to IPFS successfully."
+        description: isReel 
+          ? "Short video has been processed and uploaded to IPFS successfully!" 
+          : "Content has been imported and uploaded to IPFS successfully."
       })
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to import content"
       toast({
         title: "Import Failed",
-        description: error instanceof Error ? error.message : "Failed to import content",
+        description: errorMessage,
         variant: "destructive"
       })
     }
@@ -451,6 +466,7 @@ export default function ContentImport() {
                       <p className="text-xs text-muted-foreground mb-3">
                         {!selectedType ? 'Select a content type first' :
                          !coinName || !coinSymbol ? 'Set coin name and symbol first' :
+                         selectedType === 'reel' ? `Upload short videos (under 90s) to create ${coinSymbol} coin` :
                          `Upload ${contentTypes.find(t => t.id === selectedType)?.name} files to create ${coinSymbol} coin`
                         }
                       </p>
@@ -492,7 +508,7 @@ export default function ContentImport() {
                         <div className="flex gap-2 mt-1">
                           <Input
                             id="import-url"
-                            placeholder="https://youtube.com/watch?v=..."
+                            placeholder="https://youtube.com/shorts/... or https://tiktok.com/@user/video/..."
                             value={importUrl}
                             onChange={(e) => setImportUrl(e.target.value)}
                             disabled={!selectedType}
@@ -502,27 +518,40 @@ export default function ContentImport() {
                           <Button 
                             size="sm"
                             onClick={handleUrlImport}
-                            disabled={!selectedType || !importUrl}
+                            disabled={!selectedType || !importUrl || !coinName || !coinSymbol || urlImportMutation.isPending}
                             data-testid="import-url-button"
                           >
-                            <Link className="w-3 h-3 mr-1" />
-                            Import
+                            {urlImportMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                {selectedType === 'reel' ? 'Processing...' : 'Importing...'}
+                              </>
+                            ) : (
+                              <>
+                                <Link className="w-3 h-3 mr-1" />
+                                Import
+                              </>
+                            )}
                           </Button>
                         </div>
                       </div>
                       
-                      <div className="flex gap-4 text-xs text-muted-foreground">
+                      <div className="flex gap-3 text-xs text-muted-foreground flex-wrap">
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 bg-red-500 rounded"></div>
-                          YouTube
+                          YouTube Shorts
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 bg-black rounded"></div>
                           TikTok
                         </div>
                         <div className="flex items-center gap-1">
-                          <div className="w-3 h-3 bg-green-500 rounded"></div>
-                          Spotify
+                          <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded"></div>
+                          Instagram Reels
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                          Twitter/X
                         </div>
                       </div>
                     </div>
