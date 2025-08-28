@@ -236,7 +236,7 @@ export default function ContentCoin() {
               >
                 <CarouselContent className="-ml-4">
                   {channels.map((channel, index) => (
-                    <CarouselItem key={channel.id} className="pl-4 basis-1/3">
+                    <CarouselItem key={channel.id} className="pl-4 basis-full md:basis-1/3">
                       <Link to={`/channels/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
                         <div className="group cursor-pointer">
                           <Card className="bg-gray-900/80 hover:bg-gray-800/90 border-gray-700/30 transition-all duration-300 overflow-hidden rounded-2xl">
