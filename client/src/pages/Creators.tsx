@@ -223,92 +223,91 @@ export default function Creators() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredCreators.map((creator: Creator) => (
-              <Card key={creator.id} className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors group" data-testid={`creator-card-${creator.id}`}>
-                <CardContent className="p-0">
-                  {/* Cover Image */}
-                  <div className="relative h-32 bg-gradient-to-r from-purple-500 to-pink-500">
-                    <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                    <div className="absolute top-4 right-4">
-                      <Badge variant="secondary" className="bg-black/50 text-white text-xs">
+            {filteredCreators.map((creator: Creator, index: number) => {
+              // Generate vibrant gradient colors for each creator
+              const gradients = [
+                'from-orange-400 via-red-500 to-pink-500',
+                'from-lime-400 via-green-500 to-emerald-500', 
+                'from-blue-400 via-purple-500 to-pink-500',
+                'from-yellow-400 via-orange-500 to-red-500',
+                'from-cyan-400 via-blue-500 to-purple-500',
+                'from-emerald-400 via-teal-500 to-cyan-500',
+                'from-pink-400 via-rose-500 to-red-500',
+                'from-indigo-400 via-purple-500 to-pink-500'
+              ];
+              const gradientClass = gradients[index % gradients.length];
+              
+              return (
+                <div key={creator.id} className="group cursor-pointer" data-testid={`creator-card-${creator.id}`}>
+                  <div className={`relative bg-gradient-to-br ${gradientClass} rounded-2xl p-6 h-80 overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl`}>
+                    {/* Rank Badge */}
+                    <div className="absolute top-4 right-4 z-10">
+                      <div className="bg-black/30 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full">
                         #{creator.rank}
-                      </Badge>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Avatar and Info */}
-                  <div className="relative px-6 pb-6">
-                    {/* Avatar */}
-                    <div className="absolute -top-8 left-6">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full border-4 border-gray-800 flex items-center justify-center">
-                        <span className="text-xl font-bold text-white">
+                    {/* Creator Avatar */}
+                    <div className="flex justify-center mb-4">
+                      <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full border-4 border-white/30 flex items-center justify-center shadow-lg">
+                        <span className="text-2xl font-bold text-white">
                           {creator.name.charAt(0)}
                         </span>
                       </div>
                     </div>
 
-                    {/* Creator Info */}
-                    <div className="pt-10 space-y-3">
+                    {/* Creator Content */}
+                    <div className="text-center text-white space-y-3">
                       <div>
-                        <h3 className="font-bold text-white text-lg group-hover:text-purple-400 transition-colors">
-                          {creator.name}
+                        <h3 className="text-xl font-bold mb-1 group-hover:scale-105 transition-transform">
+                          /{creator.name}
                         </h3>
-                        <p className="text-gray-400 text-sm font-mono">{creator.username}</p>
+                        <p className="text-white/80 text-sm">{creator.username}</p>
                       </div>
 
-                      <div className="text-gray-300 text-sm">
-                        <p className="mb-2">Wallet: <span className="font-mono text-xs bg-gray-700 px-2 py-1 rounded">{creator.address.slice(0, 8)}...{creator.address.slice(-6)}</span></p>
-                        <p>Member since: {formatTimeAgo(creator.memberSince)}</p>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="grid grid-cols-3 gap-2 pt-3">
-                        <div className="text-center">
-                          <div className="flex items-center justify-center mb-1">
-                            <Coins className="h-4 w-4 text-purple-400 mr-1" />
-                          </div>
-                          <p className="text-white font-semibold">{creator.contentCoins}</p>
-                          <p className="text-gray-400 text-xs">Content Coins</p>
+                      {/* Stats Grid */}
+                      <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/80 text-sm">Content Coins</span>
+                          <span className="text-white font-bold">{creator.contentCoins}</span>
                         </div>
-                        <div className="text-center">
-                          <div className="flex items-center justify-center mb-1">
-                            <Heart className="h-4 w-4 text-red-400 mr-1" />
-                          </div>
-                          <p className="text-white font-semibold">{creator.totalLikes}</p>
-                          <p className="text-gray-400 text-xs">Likes</p>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/80 text-sm">Total Likes</span>
+                          <span className="text-white font-bold">{creator.totalLikes}</span>
                         </div>
-                        <div className="text-center">
-                          <div className="flex items-center justify-center mb-1">
-                            <MessageSquare className="h-4 w-4 text-blue-400 mr-1" />
-                          </div>
-                          <p className="text-white font-semibold">{creator.totalComments}</p>
-                          <p className="text-gray-400 text-xs">Comments</p>
+                        <div className="flex justify-between items-center">
+                          <span className="text-white/80 text-sm">Comments</span>
+                          <span className="text-white font-bold">{creator.totalComments}</span>
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex justify-between items-center pt-3">
-                        <Badge 
-                          variant="secondary" 
-                          className="bg-gray-700 text-gray-300"
-                        >
-                          Creator
-                        </Badge>
-                        <Link to={`/creators/${creator.address}`}>
-                          <Button 
-                            size="sm" 
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
-                            data-testid={`view-creator-${creator.id}`}
-                          >
-                            View Profile
-                          </Button>
-                        </Link>
+                      {/* Member Info */}
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
+                        <p className="text-white/80 text-xs">
+                          Member since {formatTimeAgo(creator.memberSince)}
+                        </p>
                       </div>
                     </div>
+
+                    {/* View Profile Button */}
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <Link to={`/creators/${creator.address}`}>
+                        <Button 
+                          className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 font-semibold transition-all duration-300 hover:scale-105"
+                          data-testid={`view-creator-${creator.id}`}
+                        >
+                          View Profile
+                        </Button>
+                      </Link>
+                    </div>
+
+                    {/* Decorative Elements */}
+                    <div className="absolute -top-10 -right-10 w-20 h-20 bg-white/10 rounded-full"></div>
+                    <div className="absolute -bottom-5 -left-5 w-15 h-15 bg-white/5 rounded-full"></div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
