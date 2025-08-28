@@ -2,7 +2,7 @@ export const CATEGORIES = [
   "All",
   "Image",
   "Video",
-  "Audio",
+  "Music",
   "GIF",
   "Anime",
   "Events",
@@ -13,17 +13,17 @@ export const CATEGORIES = [
 ];
 
 export const CATEGORY_ICONS = {
-  "All": "🌐",
-  "Image": "🖼️",
-  "Video": "🎥",
-  "Audio": "🎵",
-  "GIF": "🎞️",
-  "Anime": "🌸",
-  "Events": "📅",
+  All: "🌐",
+  Image: "🖼️",
+  Video: "🎥",
+  Music: "🎵",
+  GIF: "🎞️",
+  Anime: "🌸",
+  Events: "📅",
   "Shorts films": "🎬",
-  "Podcasts": "🎧",
-  "Books": "📚",
-  "Deployed": "🚀",
+  Podcasts: "🎧",
+  Books: "📚",
+  Deployed: "🚀",
 } as const;
 
 export const SHORTS_CATEGORIES = [
