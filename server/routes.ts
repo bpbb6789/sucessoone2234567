@@ -2197,6 +2197,284 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/creator-coins/:id/like", async (req, res) => {
     try {
       const { userAddress } = req.body;
+
+  // ====================
+  // ADMIN SYSTEM API ENDPOINTS
+  // ====================
+
+  // Get admin dashboard stats
+  app.get('/api/admin/stats', async (req, res) => {
+    try {
+      // In production, add proper admin authentication middleware
+      
+      // Get total users (unique creator addresses)
+      const totalUsers = await db.select({ count: sql`COUNT(DISTINCT ${creatorCoins.creatorAddress})` })
+        .from(creatorCoins);
+
+      // Get total channels
+      const totalChannels = await storage.getAllWeb3Channels();
+
+      // Get total content coins
+      const totalContentCoins = await db.select().from(creatorCoins);
+
+      // Mock revenue data (implement with actual blockchain data)
+      const stats = {
+        totalUsers: parseInt(totalUsers[0]?.count as string) || 0,
+        totalChannels: totalChannels.length,
+        totalContentCoins: totalContentCoins.length,
+        totalRevenue: "15.7", // ETH - from trading fees
+        totalFees: "3.2", // ETH - platform fees
+        monthlyActiveUsers: 142,
+        pendingWithdrawals: "0.8"
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      res.status(500).json({ error: 'Failed to fetch admin stats' });
+    }
+  });
+
+  // Get all users for admin management
+  app.get('/api/admin/users', async (req, res) => {
+    try {
+      // Get unique creators with their stats
+      const users = await db
+        .select({
+          creatorAddress: creatorCoins.creatorAddress,
+          coinsCreated: sql`COUNT(*)`.as('coins_created'),
+          totalLikes: sql`SUM(COALESCE(${creatorCoins.likes}, 0))`.as('total_likes'),
+          joinedAt: sql`MIN(${creatorCoins.createdAt})`.as('joined_at')
+        })
+        .from(creatorCoins)
+        .where(sql`${creatorCoins.creatorAddress} IS NOT NULL AND ${creatorCoins.creatorAddress} != ''`)
+        .groupBy(creatorCoins.creatorAddress);
+
+      // Get channel count per user
+      const channels = await storage.getAllWeb3Channels();
+      const channelsByOwner = channels.reduce((acc: any, channel: any) => {
+        acc[channel.owner] = (acc[channel.owner] || 0) + 1;
+        return acc;
+      }, {});
+
+      const adminUsers = users.map((user: any) => ({
+        id: user.creatorAddress,
+        address: user.creatorAddress,
+        channelsCreated: channelsByOwner[user.creatorAddress] || 0,
+        coinsCreated: parseInt(user.coinsCreated as string) || 0,
+        totalVolume: (Math.random() * 10).toFixed(2), // Mock data
+        status: 'active' as const,
+        joinedAt: user.joinedAt
+      }));
+
+      res.json(adminUsers);
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
+  // Get all channels for admin management
+  app.get('/api/admin/channels', async (req, res) => {
+    try {
+      const channels = await storage.getAllWeb3Channels();
+      
+      const adminChannels = channels.map((channel: any) => ({
+        id: channel.id,
+        name: channel.name,
+        ticker: channel.ticker,
+        owner: channel.owner,
+        coinAddress: channel.coinAddress,
+        status: channel.status || 'active',
+        holders: channel.holders || 0,
+        marketCap: channel.marketCap || '0',
+        createdAt: channel.createdAt
+      }));
+
+      res.json(adminChannels);
+    } catch (error) {
+      console.error('Error fetching admin channels:', error);
+      res.status(500).json({ error: 'Failed to fetch channels' });
+    }
+  });
+
+  // Get all content coins for admin management
+  app.get('/api/admin/content-coins', async (req, res) => {
+    try {
+      const coins = await db.select().from(creatorCoins).orderBy(desc(creatorCoins.createdAt));
+
+      const adminCoins = coins.map((coin: any) => ({
+        id: coin.id,
+        title: coin.title,
+        coinName: coin.coinName,
+        coinSymbol: coin.coinSymbol,
+        creatorAddress: coin.creatorAddress,
+        status: coin.status,
+        likes: coin.likes || 0,
+        comments: coin.comments || 0,
+        deploymentTxHash: coin.deploymentTxHash,
+        createdAt: coin.createdAt
+      }));
+
+      res.json(adminCoins);
+    } catch (error) {
+      console.error('Error fetching admin content coins:', error);
+      res.status(500).json({ error: 'Failed to fetch content coins' });
+    }
+  });
+
+  // Admin create channel
+  app.post('/api/admin/channels', async (req, res) => {
+    try {
+      const { name, ticker, ownerAddress, category = 'General' } = req.body;
+
+      if (!name || !ticker || !ownerAddress) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Create slug
+      const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
+      // Mock coin address (in production, deploy actual contract)
+      const mockCoinAddress = `0x${Math.random().toString(16).substr(2, 40)}`;
+
+      const channelData = {
+        owner: ownerAddress,
+        createdBy: ownerAddress,
+        name: name,
+        slug: slug,
+        ticker: ticker,
+        coinAddress: mockCoinAddress,
+        chainId: 8453,
+        category: category,
+        description: `Admin created channel: ${name}`,
+        zoraPlatform: 'admin',
+        currency: 'ETH',
+        txHash: `0x${Math.random().toString(16).substr(2, 64)}`
+      };
+
+      const channel = await storage.createWeb3Channel(channelData);
+      res.status(201).json({ success: true, channel });
+    } catch (error) {
+      console.error('Error creating admin channel:', error);
+      res.status(500).json({ error: 'Failed to create channel' });
+    }
+  });
+
+  // Admin delete channel
+  app.delete('/api/admin/channels/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Delete from web3_channels table
+      await db.delete(web3Channels).where(eq(web3Channels.id, id));
+      
+      res.json({ success: true, message: 'Channel deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting channel:', error);
+      res.status(500).json({ error: 'Failed to delete channel' });
+    }
+  });
+
+  // Admin delete content coin
+  app.delete('/api/admin/content-coins/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Delete from creator_coins table
+      await db.delete(creatorCoins).where(eq(creatorCoins.id, id));
+      
+      res.json({ success: true, message: 'Content coin deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting content coin:', error);
+      res.status(500).json({ error: 'Failed to delete content coin' });
+    }
+  });
+
+  // Admin withdraw fees
+  app.post('/api/admin/withdraw-fees', async (req, res) => {
+    try {
+      const { amount } = req.body;
+
+      if (!amount || parseFloat(amount) <= 0) {
+        return res.status(400).json({ error: 'Invalid withdrawal amount' });
+      }
+
+      // In production, implement actual fee withdrawal logic
+      // This would involve:
+      // 1. Check contract balance
+      // 2. Call withdraw function on contracts
+      // 3. Transfer fees to admin wallet
+      
+      console.log(`Admin withdrawing ${amount} ETH in fees`);
+      
+      // Mock successful withdrawal
+      res.json({ 
+        success: true, 
+        message: `Successfully withdrew ${amount} ETH`,
+        txHash: `0x${Math.random().toString(16).substr(2, 64)}`
+      });
+    } catch (error) {
+      console.error('Error withdrawing fees:', error);
+      res.status(500).json({ error: 'Failed to withdraw fees' });
+    }
+  });
+
+  // Admin update user status
+  app.patch('/api/admin/users/:address/status', async (req, res) => {
+    try {
+      const { address } = req.params;
+      const { status } = req.body; // 'active', 'suspended', 'banned'
+
+      if (!['active', 'suspended', 'banned'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+      }
+
+      // In production, implement user status management
+      // This could involve updating a users table or blacklist
+      
+      console.log(`Admin updated user ${address} status to ${status}`);
+      
+      res.json({ success: true, message: `User status updated to ${status}` });
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      res.status(500).json({ error: 'Failed to update user status' });
+    }
+  });
+
+  // Admin platform settings
+  app.get('/api/admin/settings', async (req, res) => {
+    try {
+      // In production, store these in database
+      const settings = {
+        channelCreationFee: '0.05',
+        tradingFeePercentage: '2.5',
+        maxFileSize: 10, // MB
+        allowedFileTypes: ['image', 'video', 'audio', 'gif'],
+        platformStatus: 'active'
+      };
+
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching admin settings:', error);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  app.post('/api/admin/settings', async (req, res) => {
+    try {
+      const settings = req.body;
+      
+      // In production, save to database
+      console.log('Admin updated platform settings:', settings);
+      
+      res.json({ success: true, message: 'Settings updated successfully' });
+    } catch (error) {
+      console.error('Error updating admin settings:', error);
+      res.status(500).json({ error: 'Failed to update settings' });
+    }
+  });
+
       const coinId = req.params.id;
 
       if (!userAddress) {

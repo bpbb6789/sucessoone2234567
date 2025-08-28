@@ -16,6 +16,7 @@ import {
   Upload,
   FileImage,
   Trophy,
+  Shield,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -37,6 +38,7 @@ const additionalItems = [
   { icon: FileText, label: "Doc", href: "/doc" },
   { icon: Activity, label: "Activities", href: "/activities" },
   { icon: HelpCircle, label: "FAQ", href: "/faq" },
+  { icon: Shield, label: "Admin", href: "/admin" },
 ];
 
 export function Sidebar() {

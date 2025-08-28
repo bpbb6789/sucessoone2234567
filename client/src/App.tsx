@@ -52,6 +52,8 @@ import Channels from "./pages/Channels";
 
 import Creators from '@/pages/Creators';
 import Leaderboard from './pages/Leaderboard';
+import Admin from "./pages/Admin";
+
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -104,6 +106,7 @@ function AppContent() {
               <Route path="/content/:network/:address" component={ContentCoinDetail} />
               <Route path="/tokenize" component={Tokenize} />
               <Route path="/create" component={Create} />
+              <Route path="/admin" component={Admin} />
               <Route path="/create-channel" component={CreateChannel} />
               <Route path="/create-pad" component={CreatePad} />
               <Route path="/create-content-coin" component={CreateContentCoin} />
