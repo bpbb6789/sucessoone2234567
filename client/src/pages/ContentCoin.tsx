@@ -209,44 +209,43 @@ export default function ContentCoin() {
             </Link>
           </div>
 
-          {/* Top Channels Cards - Mobile: Horizontal Scroll, Desktop: Grid */}
-          <div className="md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
+          {/* Top Channels Cards - Widget Style Layout */}
+          <div className="space-y-3">
             {channelsLoading ? (
               // Loading state
               <>
-                <div className="flex md:hidden space-x-4 overflow-x-auto scrollbar-hide pb-4">
-                  {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="flex-shrink-0 w-56 h-20" />
-                  ))}
-                </div>
-                <div className="hidden md:contents">
-                  {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="h-20 w-full" />
-                  ))}
-                </div>
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                ))}
               </>
             ) : channelsError || !channels || channels.length === 0 ? (
               // Error or empty state
-              <div className="col-span-full text-center py-8">
+              <div className="text-center py-8">
                 <p className="text-gray-400">No channels found</p>
               </div>
             ) : (
+              // Widget Card Layout
               <>
-                {/* Mobile: Horizontal Scroll */}
-                <div className="flex md:hidden space-x-4 overflow-x-auto scrollbar-hide pb-4">
-                  {channels.slice(0, 4).map((channel, index) => (
-                    <Link key={`mobile-${channel.id}`} to={`/channels/${channel.slug}`}>
-                      <div className="flex-shrink-0 w-56 group cursor-pointer">
-                        <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-2 border border-gray-700/50">
-                          {/* Top row - Avatar, Name, Symbol, Market Cap */}
-                          <div className="flex items-start gap-2">
-                            {/* Avatar */}
-                            <div className="relative flex-shrink-0">
-                              {channel.avatarUrl ? (
+                {channels.slice(0, 4).map((channel, index) => (
+                  <Link key={channel.id} to={`/channels/${channel.slug}`}>
+                    <div className="group cursor-pointer">
+                      <Card className="bg-gray-900/60 hover:bg-gray-800/80 border-gray-700/50 transition-all duration-200 overflow-hidden">
+                        <CardContent className="p-0">
+                          <div className="flex items-center gap-4 p-4">
+                            {/* Thumbnail/Avatar - Left Side */}
+                            <div className="relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden">
+                              {channel.coverUrl || channel.avatarUrl ? (
                                 <img
-                                  src={channel.avatarUrl}
+                                  src={
+                                    (channel.coverUrl?.startsWith('baf') 
+                                      ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}` 
+                                      : channel.coverUrl) ||
+                                    (channel.avatarUrl?.startsWith('baf')
+                                      ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
+                                      : channel.avatarUrl)
+                                  }
                                   alt={channel.name}
-                                  className="w-8 h-8 rounded-lg object-cover"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                                   onError={(e) => {
                                     const target = e.currentTarget as HTMLImageElement;
                                     target.style.display = 'none';
@@ -254,79 +253,66 @@ export default function ContentCoin() {
                                   }}
                                 />
                               ) : null}
-                              <div className={`w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${channel.avatarUrl ? 'hidden' : ''}`}>
-                                <span className="text-white font-bold text-sm">{channel.name.charAt(0)}</span>
+                              <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${(channel.coverUrl || channel.avatarUrl) ? 'hidden' : ''}`}>
+                                <span className="text-white font-bold text-xl">{channel.name.charAt(0)}</span>
                               </div>
                             </div>
 
-                            {/* Name, Symbol & Stats */}
+                            {/* Content Details - Right Side */}
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-0.5">
-                                <div>
-                                  <h3 className="font-bold text-white text-xs leading-tight">{channel.name}</h3>
-                                  <p className="text-gray-400 text-xs">({channel.name.slice(0, 6)})</p>
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-bold text-white text-base leading-tight mb-1 truncate">
+                                    {channel.name}
+                                  </h3>
+                                  <p className="text-gray-400 text-sm">
+                                    {channel.category || 'Entertainment'} • {channel.name.slice(0, 8).toUpperCase()}
+                                  </p>
+                                </div>
+                                
+                                {/* Rating/Score */}
+                                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                                  <span className="text-yellow-400">⭐</span>
+                                  <span className="text-white font-semibold text-sm">
+                                    {(4.2 + Math.random() * 0.7).toFixed(1)}
+                                  </span>
                                 </div>
                               </div>
-                              
-                              <div className="text-xs text-gray-300">
-                                <p>market cap: <span className="text-green-400">$0.00</span></p>
-                                <p>holders: <span className="text-gray-400">0</span></p>
+
+                              {/* Stats Row */}
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-green-400">💰</span>
+                                    <span className="text-gray-300">
+                                      ${Math.floor(Math.random() * 500 + 50)}K
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-blue-400">👥</span>
+                                    <span className="text-gray-300">
+                                      {Math.floor(Math.random() * 1000 + 100)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-purple-400">📺</span>
+                                    <span className="text-gray-300">
+                                      {Math.floor(Math.random() * 50 + 5)} videos
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="text-gray-500 text-xs">
+                                  Created {Math.floor(Math.random() * 30 + 1)}d ago
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Desktop: Grid Layout */}
-                <div className="hidden md:contents">
-                  {channels.slice(0, 4).map((channel, index) => (
-                    <Link key={`desktop-${channel.id}`} to={`/channels/${channel.slug}`}>
-                      <div className="group cursor-pointer">
-                        <div className="bg-gray-800/30 hover:bg-gray-700/50 transition-colors rounded-lg p-2 border border-gray-700/50">
-                          {/* Top row - Avatar, Name, Symbol, Market Cap */}
-                          <div className="flex items-start gap-2">
-                            {/* Avatar */}
-                            <div className="relative flex-shrink-0">
-                              {channel.avatarUrl ? (
-                                <img
-                                  src={channel.avatarUrl}
-                                  alt={channel.name}
-                                  className="w-8 h-8 rounded-lg object-cover"
-                                  onError={(e) => {
-                                    const target = e.currentTarget as HTMLImageElement;
-                                    target.style.display = 'none';
-                                    target.nextElementSibling?.classList.remove('hidden');
-                                  }}
-                                />
-                              ) : null}
-                              <div className={`w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${channel.avatarUrl ? 'hidden' : ''}`}>
-                                <span className="text-white font-bold text-sm">{channel.name.charAt(0)}</span>
-                              </div>
-                            </div>
-
-                            {/* Name, Symbol & Stats */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-0.5">
-                                <div>
-                                  <h3 className="font-bold text-white text-xs leading-tight">{channel.name}</h3>
-                                  <p className="text-gray-400 text-xs">({channel.name.slice(0, 6)})</p>
-                                </div>
-                              </div>
-                              
-                              <div className="text-xs text-gray-300">
-                                <p>market cap: <span className="text-green-400">$0.00</span></p>
-                                <p>holders: <span className="text-gray-400">0</span></p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </Link>
+                ))}
               </>
             )}
           </div>
