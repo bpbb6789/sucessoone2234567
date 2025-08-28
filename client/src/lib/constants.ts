@@ -1,20 +1,21 @@
 export const CATEGORIES = [
-  'All',
-  'Image',
-  'Video', 
-  'Audio',
-  'GIF',
-  'Document',
-  'Events',
-  'Podcasts',
-  'Books',
-  'Deployed'
+  "All",
+  "Image",
+  "Video",
+  "Audio",
+  "GIF",
+  "Anime",
+  "Events",
+  "Shorts films",
+  "Podcasts",
+  "Books",
+  "Deployed",
 ];
 
 export const SHORTS_CATEGORIES = [
   "For you",
   "Following",
-  "Music", 
+  "Music",
   "Gaming",
   "Comedy",
   "Sports",
@@ -32,21 +33,21 @@ export const SHORTS_CATEGORIES = [
 export const MOBILE_BREAKPOINT = 768;
 
 export const ROUTES = {
-  HOME: '/',
-  DISCOVERY: '/',
-  PROFILE: '/profile',
-  SHORTS: '/shorts',
-  SUBSCRIPTIONS: '/subscriptions',
-  ACTIVITIES: '/activities',
-  LIKED_VIDEOS: '/liked',
-  WATCH_LATER: '/watch-later',
-  LIBRARY: '/library',
-  HISTORY: '/history',
-  MUSIC: '/music',
-  SEARCH: '/search',
-  CREATE: '/create',
-  WATCH: '/watch',
-  NOTIFICATIONS: '/notifications'
+  HOME: "/",
+  DISCOVERY: "/",
+  PROFILE: "/profile",
+  SHORTS: "/shorts",
+  SUBSCRIPTIONS: "/subscriptions",
+  ACTIVITIES: "/activities",
+  LIKED_VIDEOS: "/liked",
+  WATCH_LATER: "/watch-later",
+  LIBRARY: "/library",
+  HISTORY: "/history",
+  MUSIC: "/music",
+  SEARCH: "/search",
+  CREATE: "/create",
+  WATCH: "/watch",
+  NOTIFICATIONS: "/notifications",
 } as const;
 
 export const formatViewCount = (count: number): string => {
@@ -64,16 +65,16 @@ export const formatDuration = (seconds: number): string => {
   const secs = seconds % 60;
 
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   }
-  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
 export const formatTimeAgo = (date: Date | string | null): string => {
   if (!date) return "Unknown";
 
   const now = new Date();
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
 
   if (isNaN(dateObj.getTime())) return "Unknown";
 
@@ -83,21 +84,21 @@ export const formatTimeAgo = (date: Date | string | null): string => {
     return "Just now";
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
   } else if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
   } else if (diffInSeconds < 604800) {
     const days = Math.floor(diffInSeconds / 86400);
-    return `${days} day${days > 1 ? 's' : ''} ago`;
+    return `${days} day${days > 1 ? "s" : ""} ago`;
   } else if (diffInSeconds < 2419200) {
     const weeks = Math.floor(diffInSeconds / 604800);
-    return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
   } else if (diffInSeconds < 29030400) {
     const months = Math.floor(diffInSeconds / 2419200);
-    return `${months} month${months > 1 ? 's' : ''} ago`;
+    return `${months} month${months > 1 ? "s" : ""} ago`;
   } else {
     const years = Math.floor(diffInSeconds / 29030400);
-    return `${years} year${years > 1 ? 's' : ''} ago`;
+    return `${years} year${years > 1 ? "s" : ""} ago`;
   }
 };
