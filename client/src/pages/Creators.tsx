@@ -74,9 +74,9 @@ export default function Creators() {
               <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => (
-              <Skeleton key={i} className="h-80 w-full" />
+              <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
             ))}
           </div>
         </div>
@@ -106,19 +106,19 @@ export default function Creators() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">
-                Content Creators ({creators?.length || 0})
-              </h1>
+              <div className="flex items-center gap-2 mb-2">
+                <h1 className="text-4xl font-bold text-white">
+                  Artists ({creators?.length || 0})
+                </h1>
+                <div className="flex items-center gap-4 text-gray-400 text-sm ml-auto">
+                  <span>Releases: {creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
+                  <span>Mints: {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalLikes, 0) || 0}</span>
+                </div>
+              </div>
               <p className="text-gray-400 text-lg">
                 Discover creators who have deployed content coins on the platform
               </p>
             </div>
-            <Link to="/create-content-coin">
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
-                <Coins className="mr-2 h-4 w-4" />
-                Create Content Coin
-              </Button>
-            </Link>
           </div>
 
           {/* Stats */}
@@ -222,7 +222,7 @@ export default function Creators() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredCreators.map((creator: Creator, index: number) => {
               // Generate vibrant gradient colors for each creator
               const gradients = [
@@ -240,51 +240,50 @@ export default function Creators() {
               return (
                 <Link key={creator.id} to={`/creators/${creator.address}`}>
                   <div className="group cursor-pointer" data-testid={`creator-card-${creator.id}`}>
-                    <div className={`relative bg-gradient-to-br ${gradientClass} rounded-2xl aspect-[3/4] overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl`}>
-                      {/* Rank Badge */}
-                      <div className="absolute top-3 right-3 z-10">
-                        <div className="bg-black/30 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full">
-                          #{creator.rank}
+                    <div className={`relative bg-gradient-to-br ${gradientClass} rounded-2xl aspect-[3/4] overflow-hidden transform transition-all duration-300 hover:scale-105`}>
+                      {/* Background Pattern/Texture */}
+                      <div className="absolute inset-0 bg-black/20"></div>
+                      
+                      {/* Content Container */}
+                      <div className="relative h-full flex flex-col justify-end p-4">
+                        {/* Artist Name */}
+                        <div className="space-y-1">
+                          <h3 className="text-white font-bold text-lg leading-tight">
+                            {creator.name}
+                          </h3>
+                          <p className="text-white/80 text-sm">
+                            {creator.contentCoins} Releases
+                          </p>
                         </div>
                       </div>
 
-                      {/* Main Content */}
-                      <div className="flex flex-col h-full p-4">
-                        {/* Creator Avatar - Main Highlight */}
-                        <div className="flex-1 flex items-center justify-center">
-                          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full border-3 border-white/40 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <span className="text-xl font-bold text-white">
+                      {/* Hover Overlay with Additional Info */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center p-4">
+                        <div className="text-center space-y-2">
+                          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 flex items-center justify-center mb-2">
+                            <span className="text-lg font-bold text-white">
                               {creator.name.charAt(0)}
                             </span>
                           </div>
-                        </div>
-
-                        {/* Creator Info - Bottom Section */}
-                        <div className="text-center text-white space-y-2">
-                          <div>
-                            <h3 className="text-sm font-bold truncate">
-                              {creator.name}
-                            </h3>
-                            <p className="text-white/70 text-xs truncate">{creator.username}</p>
-                          </div>
-
-                          {/* Compact Stats */}
-                          <div className="bg-black/20 backdrop-blur-sm rounded-lg p-2 space-y-1">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-white/70">Coins</span>
-                              <span className="text-white font-semibold">{creator.contentCoins}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-white/70">Likes</span>
-                              <span className="text-white font-semibold">{creator.totalLikes}</span>
-                            </div>
+                          <h3 className="text-white font-bold text-lg">
+                            {creator.name}
+                          </h3>
+                          <p className="text-white/80 text-sm">{creator.username}</p>
+                          <div className="space-y-1 text-xs text-white/70">
+                            <p>{creator.totalLikes} Likes • {creator.totalComments} Comments</p>
+                            <p>Rank #{creator.rank}</p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Decorative Elements */}
-                      <div className="absolute -top-8 -right-8 w-16 h-16 bg-white/10 rounded-full"></div>
-                      <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-white/5 rounded-full"></div>
+                      {/* Top Right Badge for High Performers */}
+                      {creator.rank <= 3 && (
+                        <div className="absolute top-3 right-3">
+                          <div className="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">
+                            TOP {creator.rank}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Link>
