@@ -197,24 +197,16 @@ export default function ContentCoin() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Top Channels</h2>
+              <h2 className="text-xl font-bold text-white mb-2">Top Channels</h2>
             </div>
-            <div className="flex items-center gap-2">
+            <Link to="/channels">
               <Button 
                 variant="ghost" 
-                size="icon"
-                className="text-gray-400 hover:text-white h-8 w-8"
+                className="text-green-400 hover:text-green-300 text-sm"
               >
-                <span className="text-lg">←</span>
+                See All
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="text-gray-400 hover:text-white h-8 w-8"
-              >
-                <span className="text-lg">→</span>
-              </Button>
-            </div>
+            </Link>
           </div>
 
           {/* Top Channels Cards - Mobile: Horizontal Scroll, Desktop: Grid */}
@@ -344,24 +336,16 @@ export default function ContentCoin() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Now Trending</h2>
+              <h2 className="text-xl font-bold text-white mb-2">Now Trending</h2>
             </div>
-            <div className="flex items-center gap-2">
+            <Link to="/create-content-coin">
               <Button 
                 variant="ghost" 
-                size="icon"
-                className="text-gray-400 hover:text-white h-8 w-8"
+                className="text-green-400 hover:text-green-300 text-sm"
               >
-                <span className="text-lg">←</span>
+                See All
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="text-gray-400 hover:text-white h-8 w-8"
-              >
-                <span className="text-lg">→</span>
-              </Button>
-            </div>
+            </Link>
           </div>
 
           {filteredContent.length === 0 ? (
@@ -604,13 +588,13 @@ export default function ContentCoin() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">Top Creators</h2>
+              <h2 className="text-xl font-bold text-white mb-2">Top Creators</h2>
               <p className="text-gray-400">Discover trending content creators</p>
             </div>
             <Link to="/creators">
               <Button 
-                variant="outline" 
-                className="text-green-400 border-green-400 hover:bg-green-400 hover:text-black"
+                variant="ghost" 
+                className="text-green-400 hover:text-green-300 text-sm"
               >
                 See All
               </Button>
