@@ -28,20 +28,16 @@ const mainNavItems = [
   { icon: FileImage, label: "Discover", href: "/" },
   { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
   { icon: Radio, label: "Create Channel", href: "/create-channel" },
-  { icon: Coins, label: "Create Content Coin", href: "/create-content-coin" },
+  { icon: Coins, label: "Submit Content", href: "/create-content-coin" },
   { icon: Trophy, label: "Creators", href: "/creators" },
   { icon: Radio, label: "Channels", href: "/channels" },
 ];
-
-
 
 const additionalItems = [
   { icon: FileText, label: "Doc", href: "/doc" },
   { icon: Activity, label: "Activities", href: "/activities" },
   { icon: HelpCircle, label: "FAQ", href: "/faq" },
 ];
-
-
 
 export function Sidebar() {
   const { isExpanded } = useSidebar();
@@ -91,7 +87,7 @@ export function Sidebar() {
             {/* Top Trending Channels Section */}
             <div className="px-3 mb-4">
               <h3 className="sidebar-text text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 px-3">
-                Top Trending Channels
+                Trending Channels
               </h3>
               {channelsLoading ? (
                 <div className="space-y-2">
@@ -117,7 +113,12 @@ export function Sidebar() {
                         data-testid={`nav-item-${channel.name.toLowerCase().replace(/\s+/g, "-")}`}
                       >
                         <img
-                          src={channel.avatarUrl?.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}` : channel.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`}
+                          src={
+                            channel.avatarUrl?.startsWith("baf")
+                              ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
+                              : channel.avatarUrl ||
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`
+                          }
                           alt={channel.name}
                           className="w-6 h-6 rounded-md flex-shrink-0 object-cover"
                           onError={(e) => {
@@ -125,15 +126,21 @@ export function Sidebar() {
                           }}
                         />
                         <div className="sidebar-text flex flex-col flex-1 min-w-0">
-                          <span className="text-sm truncate">{channel.name}</span>
+                          <span className="text-sm truncate">
+                            {channel.name}
+                          </span>
                           <div className="flex items-center gap-2 mt-1">
                             <div className="flex items-center gap-1">
                               <span className="text-xs text-green-400">💰</span>
-                              <span className="text-xs text-gray-400">${Math.floor(Math.random() * 500) + 50}K</span>
+                              <span className="text-xs text-gray-400">
+                                ${Math.floor(Math.random() * 500) + 50}K
+                              </span>
                             </div>
                             <div className="flex items-center gap-1">
                               <span className="text-xs text-blue-400">👥</span>
-                              <span className="text-xs text-gray-400">{Math.floor(Math.random() * 1000) + 100}</span>
+                              <span className="text-xs text-gray-400">
+                                {Math.floor(Math.random() * 1000) + 100}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -147,17 +154,17 @@ export function Sidebar() {
                 </div>
               )}
             </div>
-
-
           </>
         )}
 
         {/* Additional Items */}
         <div className={cn("space-y-1", isExpanded ? "px-3" : "px-2")}>
-          <h3 className={cn(
-            "mb-2 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider",
-            !isExpanded && "hidden"
-          )}>
+          <h3
+            className={cn(
+              "mb-2 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider",
+              !isExpanded && "hidden",
+            )}
+          >
             More
           </h3>
           {additionalItems.map((item) => {
@@ -168,10 +175,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={cn(
-                  "nav-item",
-                  isActive && "active"
-                )}
+                className={cn("nav-item", isActive && "active")}
               >
                 <Icon className="w-6 h-6 flex-shrink-0" />
                 {isExpanded && (
