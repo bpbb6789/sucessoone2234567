@@ -601,6 +601,91 @@ export const insertCreatorCoinSchema = createInsertSchema(creatorCoins).omit({
   deploymentTxHash: true, // Set during deployment
 });
 
+// Notifications system for all platform activities
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  recipientAddress: text("recipient_address").notNull(), // Wallet address who receives the notification
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull(), // 'subscription', 'trade', 'like', 'comment', 'token_launch', 'follow', 'content_coin'
+  entityType: text("entity_type"), // 'channel', 'token', 'content_coin', 'pad', 'comment'
+  entityId: text("entity_id"), // ID of the related entity
+  actorAddress: text("actor_address"), // Wallet address who triggered the notification
+  actorName: text("actor_name"), // Display name of the actor
+  actorAvatar: text("actor_avatar"), // Avatar URL of the actor
+  metadata: jsonb("metadata"), // Additional data (token price, amounts, etc.)
+  read: boolean("read").default(false),
+  actionUrl: text("action_url"), // URL to navigate when notification is clicked
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Channel Analytics - Track subscriber counts and metrics
+export const channelAnalytics = pgTable("channel_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  channelId: varchar("channel_id").references(() => channels.id),
+  web3ChannelId: varchar("web3_channel_id").references(() => web3Channels.id),
+  subscriberCount: integer("subscriber_count").default(0),
+  totalViews: integer("total_views").default(0),
+  totalLikes: integer("total_likes").default(0),
+  totalComments: integer("total_comments").default(0),
+  totalShares: integer("total_shares").default(0),
+  engagementRate: text("engagement_rate").default("0"), // Calculated percentage
+  averageViewDuration: integer("average_view_duration").default(0), // in seconds
+  topContentType: text("top_content_type"), // 'video', 'shorts', 'content_coin'
+  revenueGenerated: text("revenue_generated").default("0"), // in ETH/USD
+  date: timestamp("date").defaultNow(), // Daily snapshots
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Enhanced subscriptions with notification preferences
+export const enhancedSubscriptions = pgTable("enhanced_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  subscriberAddress: text("subscriber_address").notNull(), // Wallet address of subscriber
+  channelId: varchar("channel_id").references(() => channels.id),
+  web3ChannelId: varchar("web3_channel_id").references(() => web3Channels.id),
+  notifyOnNewContent: boolean("notify_on_new_content").default(true),
+  notifyOnLiveStreams: boolean("notify_on_live_streams").default(true),
+  notifyOnTokenUpdates: boolean("notify_on_token_updates").default(false),
+  notifyOnMajorAnnouncements: boolean("notify_on_major_announcements").default(true),
+  subscriptionTier: text("subscription_tier").default("free"), // 'free', 'premium', 'vip'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Channel Comments Integration
+export const channelComments = pgTable("channel_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  channelId: varchar("channel_id").references(() => channels.id),
+  web3ChannelId: varchar("web3_channel_id").references(() => web3Channels.id),
+  authorAddress: text("author_address").notNull(),
+  authorName: text("author_name"),
+  authorAvatar: text("author_avatar"),
+  content: text("content").notNull(),
+  parentId: varchar("parent_id"), // For threaded replies
+  likes: integer("likes").default(0),
+  replyCount: integer("reply_count").default(0),
+  isPinned: boolean("is_pinned").default(false),
+  isEdited: boolean("is_edited").default(false),
+  editedAt: timestamp("edited_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Search filters and preferences
+export const searchFilters = pgTable("search_filters", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userAddress: text("user_address").notNull(),
+  searchQuery: text("search_query").notNull(),
+  filterType: text("filter_type").notNull(), // 'channel', 'token', 'content', 'user'
+  categoryFilter: text("category_filter"), // 'Reels', 'Podcasts', etc.
+  priceRangeMin: text("price_range_min"),
+  priceRangeMax: text("price_range_max"),
+  marketCapMin: text("market_cap_min"),
+  marketCapMax: text("market_cap_max"),
+  sortBy: text("sort_by").default("relevance"), // 'relevance', 'newest', 'price', 'market_cap'
+  resultsFound: integer("results_found").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertCreatorCoinLikeSchema = createInsertSchema(creatorCoinLikes).omit({
   id: true,
   createdAt: true,
@@ -629,3 +714,50 @@ export type InsertCreatorCoinComment = z.infer<typeof insertCreatorCoinCommentSc
 
 export type CreatorCoinTrade = typeof creatorCoinTrades.$inferSelect;
 export type InsertCreatorCoinTrade = z.infer<typeof insertCreatorCoinTradeSchema>;
+
+// Notification system types
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+export type ChannelAnalytics = typeof channelAnalytics.$inferSelect;
+export type InsertChannelAnalytics = typeof channelAnalytics.$inferInsert;
+
+export type EnhancedSubscription = typeof enhancedSubscriptions.$inferSelect;
+export type InsertEnhancedSubscription = typeof enhancedSubscriptions.$inferInsert;
+
+export type ChannelComment = typeof channelComments.$inferSelect;
+export type InsertChannelComment = typeof channelComments.$inferInsert;
+
+export type SearchFilter = typeof searchFilters.$inferSelect;
+export type InsertSearchFilter = typeof searchFilters.$inferInsert;
+
+// Insert schemas for new tables
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertChannelAnalyticsSchema = createInsertSchema(channelAnalytics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertEnhancedSubscriptionSchema = createInsertSchema(enhancedSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertChannelCommentSchema = createInsertSchema(channelComments).omit({
+  id: true,
+  createdAt: true,
+  likes: true, // Auto-calculated
+  replyCount: true, // Auto-calculated
+  editedAt: true, // Set when edited
+});
+
+export const insertSearchFilterSchema = createInsertSchema(searchFilters).omit({
+  id: true,
+  createdAt: true,
+  resultsFound: true, // Auto-calculated
+});

@@ -19,10 +19,16 @@ import {
   type Pad, type InsertPad,
   type PadLike, type InsertPadLike,
   type PadComment, type InsertPadComment,
+  type Notification, type InsertNotification,
+  type ChannelAnalytics, type InsertChannelAnalytics,
+  type EnhancedSubscription, type InsertEnhancedSubscription,
+  type ChannelComment, type InsertChannelComment,
+  type SearchFilter, type InsertSearchFilter,
   type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel,
   channels, videos, shorts, playlists, musicAlbums, comments, subscriptions,
   videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles,
-  tokens, tokenSales, web3Channels, contentImports, pads, padLikes, padComments
+  tokens, tokenSales, web3Channels, contentImports, pads, padLikes, padComments,
+  notifications, channelAnalytics, enhancedSubscriptions, channelComments, searchFilters
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -149,6 +155,39 @@ export interface IStorage {
   getPadComments(padId: string): Promise<PadComment[]>;
   createPadComment(comment: InsertPadComment): Promise<PadComment>;
   deletePadComment(id: string): Promise<void>;
+
+  // Notifications System
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotifications(recipientAddress: string, limit?: number, unreadOnly?: boolean): Promise<Notification[]>;
+  markNotificationAsRead(id: string): Promise<void>;
+  markAllNotificationsAsRead(recipientAddress: string): Promise<void>;
+  deleteNotification(id: string): Promise<void>;
+  getUnreadNotificationCount(recipientAddress: string): Promise<number>;
+
+  // Channel Analytics
+  createChannelAnalytics(analytics: InsertChannelAnalytics): Promise<ChannelAnalytics>;
+  getChannelAnalytics(channelId?: string, web3ChannelId?: string): Promise<ChannelAnalytics[]>;
+  updateChannelAnalytics(channelId: string, updates: Partial<InsertChannelAnalytics>): Promise<void>;
+  getChannelSubscriberCount(channelId?: string, web3ChannelId?: string): Promise<number>;
+
+  // Enhanced Subscriptions
+  createEnhancedSubscription(subscription: InsertEnhancedSubscription): Promise<EnhancedSubscription>;
+  getEnhancedSubscription(subscriberAddress: string, channelId?: string, web3ChannelId?: string): Promise<EnhancedSubscription | undefined>;
+  deleteEnhancedSubscription(subscriberAddress: string, channelId?: string, web3ChannelId?: string): Promise<void>;
+  updateSubscriptionPreferences(id: string, preferences: Partial<InsertEnhancedSubscription>): Promise<void>;
+  getSubscriptionsByAddress(subscriberAddress: string): Promise<EnhancedSubscription[]>;
+
+  // Channel Comments
+  createChannelComment(comment: InsertChannelComment): Promise<ChannelComment>;
+  getChannelComments(channelId?: string, web3ChannelId?: string): Promise<ChannelComment[]>;
+  likeChannelComment(commentId: string): Promise<void>;
+  deleteChannelComment(id: string): Promise<void>;
+  pinChannelComment(id: string, isPinned: boolean): Promise<void>;
+
+  // Search Filters & Advanced Search
+  saveSearchFilter(filter: InsertSearchFilter): Promise<SearchFilter>;
+  getUserSearchHistory(userAddress: string): Promise<SearchFilter[]>;
+  searchChannelsAdvanced(query: string, filters?: Partial<InsertSearchFilter>): Promise<Web3Channel[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -873,6 +912,271 @@ export class DatabaseStorage implements IStorage {
   }
   async getAllWeb3Channels(): Promise<Web3Channel[]> {
     return await this.db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
+  }
+
+  // Content Imports - Placeholder implementations
+  async getContentImport(): Promise<ContentImport | undefined> { return undefined; }
+  async getContentImportsByChannel(): Promise<ContentImport[]> { return []; }
+  async createContentImport(): Promise<ContentImport> { throw new Error('Not implemented'); }
+  async updateContentImport(): Promise<ContentImport | undefined> { return undefined; }
+  async deleteContentImport(): Promise<void> { }
+  async getAllContentImports(): Promise<ContentImport[]> { return []; }
+
+  // Pads - Placeholder implementations
+  async getPad(): Promise<Pad | undefined> { return undefined; }
+  async getAllPads(): Promise<Pad[]> { return []; }
+  async getPadsByCreator(): Promise<Pad[]> { return []; }
+  async createPad(): Promise<Pad> { throw new Error('Not implemented'); }
+  async updatePad(): Promise<Pad | undefined> { return undefined; }
+  async deletePad(): Promise<void> { }
+  async searchPads(): Promise<Pad[]> { return []; }
+
+  // Pad Interactions - Placeholder implementations
+  async likePad(): Promise<void> { }
+  async unlikePad(): Promise<void> { }
+  async getPadLikes(): Promise<PadLike[]> { return []; }
+  async getUserPadLike(): Promise<PadLike | undefined> { return undefined; }
+
+  // Pad Comments - Placeholder implementations
+  async getPadComment(): Promise<PadComment | undefined> { return undefined; }
+  async getPadComments(): Promise<PadComment[]> { return []; }
+  async createPadComment(): Promise<PadComment> { throw new Error('Not implemented'); }
+  async deletePadComment(): Promise<void> { }
+
+  // Notifications System Implementation
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await this.db.insert(notifications).values({
+      id: randomUUID(),
+      createdAt: new Date(),
+      ...notification,
+    }).returning();
+    return newNotification;
+  }
+
+  async getNotifications(recipientAddress: string, limit: number = 50, unreadOnly: boolean = false): Promise<Notification[]> {
+    let query = this.db.select().from(notifications)
+      .where(eq(notifications.recipientAddress, recipientAddress));
+    
+    if (unreadOnly) {
+      query = query.where(eq(notifications.read, false));
+    }
+    
+    return await query.orderBy(desc(notifications.createdAt)).limit(limit);
+  }
+
+  async markNotificationAsRead(id: string): Promise<void> {
+    await this.db.update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, id));
+  }
+
+  async markAllNotificationsAsRead(recipientAddress: string): Promise<void> {
+    await this.db.update(notifications)
+      .set({ read: true })
+      .where(and(
+        eq(notifications.recipientAddress, recipientAddress),
+        eq(notifications.read, false)
+      ));
+  }
+
+  async deleteNotification(id: string): Promise<void> {
+    await this.db.delete(notifications).where(eq(notifications.id, id));
+  }
+
+  async getUnreadNotificationCount(recipientAddress: string): Promise<number> {
+    const result = await this.db.select({ count: count() })
+      .from(notifications)
+      .where(and(
+        eq(notifications.recipientAddress, recipientAddress),
+        eq(notifications.read, false)
+      ));
+    return result[0]?.count || 0;
+  }
+
+  // Channel Analytics Implementation
+  async createChannelAnalytics(analytics: InsertChannelAnalytics): Promise<ChannelAnalytics> {
+    const [newAnalytics] = await this.db.insert(channelAnalytics).values({
+      id: randomUUID(),
+      createdAt: new Date(),
+      ...analytics,
+    }).returning();
+    return newAnalytics;
+  }
+
+  async getChannelAnalytics(channelId?: string, web3ChannelId?: string): Promise<ChannelAnalytics[]> {
+    let query = this.db.select().from(channelAnalytics);
+    
+    if (channelId) {
+      query = query.where(eq(channelAnalytics.channelId, channelId));
+    } else if (web3ChannelId) {
+      query = query.where(eq(channelAnalytics.web3ChannelId, web3ChannelId));
+    }
+    
+    return await query.orderBy(desc(channelAnalytics.date));
+  }
+
+  async updateChannelAnalytics(channelId: string, updates: Partial<InsertChannelAnalytics>): Promise<void> {
+    await this.db.update(channelAnalytics)
+      .set(updates)
+      .where(eq(channelAnalytics.channelId, channelId));
+  }
+
+  async getChannelSubscriberCount(channelId?: string, web3ChannelId?: string): Promise<number> {
+    if (web3ChannelId) {
+      const result = await this.db.select({ count: count() })
+        .from(enhancedSubscriptions)
+        .where(eq(enhancedSubscriptions.web3ChannelId, web3ChannelId));
+      return result[0]?.count || 0;
+    } else if (channelId) {
+      const result = await this.db.select({ count: count() })
+        .from(subscriptions)
+        .where(eq(subscriptions.subscribedToChannelId, channelId));
+      return result[0]?.count || 0;
+    }
+    return 0;
+  }
+
+  // Enhanced Subscriptions Implementation
+  async createEnhancedSubscription(subscription: InsertEnhancedSubscription): Promise<EnhancedSubscription> {
+    const [newSubscription] = await this.db.insert(enhancedSubscriptions).values({
+      id: randomUUID(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...subscription,
+    }).returning();
+    return newSubscription;
+  }
+
+  async getEnhancedSubscription(subscriberAddress: string, channelId?: string, web3ChannelId?: string): Promise<EnhancedSubscription | undefined> {
+    let query = this.db.select().from(enhancedSubscriptions)
+      .where(eq(enhancedSubscriptions.subscriberAddress, subscriberAddress));
+    
+    if (channelId) {
+      query = query.where(eq(enhancedSubscriptions.channelId, channelId));
+    } else if (web3ChannelId) {
+      query = query.where(eq(enhancedSubscriptions.web3ChannelId, web3ChannelId));
+    }
+    
+    const [subscription] = await query;
+    return subscription || undefined;
+  }
+
+  async deleteEnhancedSubscription(subscriberAddress: string, channelId?: string, web3ChannelId?: string): Promise<void> {
+    let query = this.db.delete(enhancedSubscriptions)
+      .where(eq(enhancedSubscriptions.subscriberAddress, subscriberAddress));
+    
+    if (channelId) {
+      await this.db.delete(enhancedSubscriptions)
+        .where(and(
+          eq(enhancedSubscriptions.subscriberAddress, subscriberAddress),
+          eq(enhancedSubscriptions.channelId, channelId)
+        ));
+    } else if (web3ChannelId) {
+      await this.db.delete(enhancedSubscriptions)
+        .where(and(
+          eq(enhancedSubscriptions.subscriberAddress, subscriberAddress),
+          eq(enhancedSubscriptions.web3ChannelId, web3ChannelId)
+        ));
+    }
+  }
+
+  async updateSubscriptionPreferences(id: string, preferences: Partial<InsertEnhancedSubscription>): Promise<void> {
+    await this.db.update(enhancedSubscriptions)
+      .set({ ...preferences, updatedAt: new Date() })
+      .where(eq(enhancedSubscriptions.id, id));
+  }
+
+  async getSubscriptionsByAddress(subscriberAddress: string): Promise<EnhancedSubscription[]> {
+    return await this.db.select().from(enhancedSubscriptions)
+      .where(eq(enhancedSubscriptions.subscriberAddress, subscriberAddress))
+      .orderBy(desc(enhancedSubscriptions.createdAt));
+  }
+
+  // Channel Comments Implementation
+  async createChannelComment(comment: InsertChannelComment): Promise<ChannelComment> {
+    const [newComment] = await this.db.insert(channelComments).values({
+      id: randomUUID(),
+      createdAt: new Date(),
+      likes: 0,
+      replyCount: 0,
+      ...comment,
+    }).returning();
+    return newComment;
+  }
+
+  async getChannelComments(channelId?: string, web3ChannelId?: string): Promise<ChannelComment[]> {
+    let query = this.db.select().from(channelComments);
+    
+    if (channelId) {
+      query = query.where(eq(channelComments.channelId, channelId));
+    } else if (web3ChannelId) {
+      query = query.where(eq(channelComments.web3ChannelId, web3ChannelId));
+    }
+    
+    return await query.orderBy(desc(channelComments.createdAt));
+  }
+
+  async likeChannelComment(commentId: string): Promise<void> {
+    await this.db.update(channelComments)
+      .set({ likes: sql`${channelComments.likes} + 1` })
+      .where(eq(channelComments.id, commentId));
+  }
+
+  async deleteChannelComment(id: string): Promise<void> {
+    await this.db.delete(channelComments).where(eq(channelComments.id, id));
+  }
+
+  async pinChannelComment(id: string, isPinned: boolean): Promise<void> {
+    await this.db.update(channelComments)
+      .set({ isPinned })
+      .where(eq(channelComments.id, id));
+  }
+
+  // Search Filters & Advanced Search Implementation
+  async saveSearchFilter(filter: InsertSearchFilter): Promise<SearchFilter> {
+    const [newFilter] = await this.db.insert(searchFilters).values({
+      id: randomUUID(),
+      createdAt: new Date(),
+      resultsFound: 0,
+      ...filter,
+    }).returning();
+    return newFilter;
+  }
+
+  async getUserSearchHistory(userAddress: string): Promise<SearchFilter[]> {
+    return await this.db.select().from(searchFilters)
+      .where(eq(searchFilters.userAddress, userAddress))
+      .orderBy(desc(searchFilters.createdAt))
+      .limit(20);
+  }
+
+  async searchChannelsAdvanced(query: string, filters?: Partial<InsertSearchFilter>): Promise<Web3Channel[]> {
+    let dbQuery = this.db.select().from(web3Channels);
+    
+    // Basic text search
+    if (query) {
+      dbQuery = dbQuery.where(or(
+        ilike(web3Channels.name, `%${query}%`),
+        ilike(web3Channels.description, `%${query}%`),
+        ilike(web3Channels.ticker, `%${query}%`)
+      ));
+    }
+    
+    // Apply filters
+    if (filters?.categoryFilter) {
+      dbQuery = dbQuery.where(eq(web3Channels.category, filters.categoryFilter));
+    }
+    
+    // Sort by criteria
+    if (filters?.sortBy === 'newest') {
+      dbQuery = dbQuery.orderBy(desc(web3Channels.createdAt));
+    } else if (filters?.sortBy === 'market_cap') {
+      dbQuery = dbQuery.orderBy(desc(web3Channels.marketCap));
+    } else {
+      dbQuery = dbQuery.orderBy(desc(web3Channels.createdAt)); // default to newest
+    }
+    
+    return await dbQuery;
   }
 }
 

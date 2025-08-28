@@ -17,7 +17,9 @@ import {
   insertVideoLikeSchema, insertShortsLikeSchema, insertShareSchema,
   insertMusicTrackSchema, insertUserProfileSchema, insertTokenSchema, insertWeb3ChannelSchema,
   insertContentImportSchema, insertPadSchema, insertPadLikeSchema, insertPadCommentSchema,
-  insertCreatorCoinSchema, insertCreatorCoinLikeSchema, insertCreatorCoinCommentSchema, insertCreatorCoinTradeSchema
+  insertCreatorCoinSchema, insertCreatorCoinLikeSchema, insertCreatorCoinCommentSchema, insertCreatorCoinTradeSchema,
+  insertNotificationSchema, insertChannelAnalyticsSchema, insertEnhancedSubscriptionSchema,
+  insertChannelCommentSchema, insertSearchFilterSchema
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -2234,6 +2236,424 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: 'Failed to fetch creator coins',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // ====================
+  // NOTIFICATIONS SYSTEM API
+  // ====================
+  
+  // Get user notifications
+  app.get('/api/notifications/:userAddress', async (req, res) => {
+    try {
+      const { userAddress } = req.params;
+      const { limit = 50, unreadOnly = false } = req.query;
+      
+      const notifications = await storage.getNotifications(
+        userAddress, 
+        parseInt(limit as string), 
+        unreadOnly === 'true'
+      );
+      
+      res.json(notifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+  });
+
+  // Create notification (triggered by system events)
+  app.post('/api/notifications', async (req, res) => {
+    try {
+      const validatedData = insertNotificationSchema.parse(req.body);
+      const notification = await storage.createNotification(validatedData);
+      res.status(201).json(notification);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid notification data", errors: error.errors });
+      } else {
+        res.status(500).json({ error: 'Failed to create notification' });
+      }
+    }
+  });
+
+  // Mark notification as read
+  app.patch('/api/notifications/:id/read', async (req, res) => {
+    try {
+      await storage.markNotificationAsRead(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to mark notification as read' });
+    }
+  });
+
+  // Mark all notifications as read for user
+  app.patch('/api/notifications/:userAddress/read-all', async (req, res) => {
+    try {
+      await storage.markAllNotificationsAsRead(req.params.userAddress);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to mark all notifications as read' });
+    }
+  });
+
+  // Get unread notification count
+  app.get('/api/notifications/:userAddress/unread-count', async (req, res) => {
+    try {
+      const count = await storage.getUnreadNotificationCount(req.params.userAddress);
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get unread count' });
+    }
+  });
+
+  // Delete notification
+  app.delete('/api/notifications/:id', async (req, res) => {
+    try {
+      await storage.deleteNotification(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete notification' });
+    }
+  });
+
+  // ====================
+  // ENHANCED SUBSCRIPTIONS API  
+  // ====================
+
+  // Subscribe to channel with preferences
+  app.post('/api/subscriptions/enhanced', async (req, res) => {
+    try {
+      const validatedData = insertEnhancedSubscriptionSchema.parse(req.body);
+      
+      // Check if subscription already exists
+      const existing = await storage.getEnhancedSubscription(
+        validatedData.subscriberAddress,
+        validatedData.channelId,
+        validatedData.web3ChannelId
+      );
+      
+      if (existing) {
+        return res.status(409).json({ error: 'Subscription already exists' });
+      }
+      
+      const subscription = await storage.createEnhancedSubscription(validatedData);
+      
+      // Create notification for channel owner
+      const channelId = validatedData.channelId || validatedData.web3ChannelId;
+      if (channelId) {
+        await storage.createNotification({
+          recipientAddress: validatedData.subscriberAddress, // This would actually be the channel owner
+          title: 'New Subscriber',
+          message: `${validatedData.subscriberAddress.slice(0, 6)}...${validatedData.subscriberAddress.slice(-4)} subscribed to your channel`,
+          type: 'subscription',
+          entityType: validatedData.channelId ? 'channel' : 'web3_channel',
+          entityId: channelId,
+          actorAddress: validatedData.subscriberAddress,
+          actionUrl: validatedData.channelId ? `/channels/${validatedData.channelId}` : `/channel/${channelId}`
+        });
+      }
+      
+      res.status(201).json(subscription);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid subscription data", errors: error.errors });
+      } else {
+        res.status(500).json({ error: 'Failed to create subscription' });
+      }
+    }
+  });
+
+  // Unsubscribe from channel
+  app.delete('/api/subscriptions/enhanced', async (req, res) => {
+    try {
+      const { subscriberAddress, channelId, web3ChannelId } = req.query;
+      
+      await storage.deleteEnhancedSubscription(
+        subscriberAddress as string,
+        channelId as string,
+        web3ChannelId as string
+      );
+      
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to unsubscribe' });
+    }
+  });
+
+  // Get user's subscriptions
+  app.get('/api/subscriptions/:userAddress', async (req, res) => {
+    try {
+      const subscriptions = await storage.getSubscriptionsByAddress(req.params.userAddress);
+      res.json(subscriptions);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch subscriptions' });
+    }
+  });
+
+  // Update subscription preferences
+  app.patch('/api/subscriptions/:id/preferences', async (req, res) => {
+    try {
+      await storage.updateSubscriptionPreferences(req.params.id, req.body);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update preferences' });
+    }
+  });
+
+  // ====================
+  // CHANNEL ANALYTICS API
+  // ====================
+
+  // Get channel analytics
+  app.get('/api/analytics/channel', async (req, res) => {
+    try {
+      const { channelId, web3ChannelId } = req.query;
+      
+      const analytics = await storage.getChannelAnalytics(
+        channelId as string,
+        web3ChannelId as string
+      );
+      
+      res.json(analytics);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+  });
+
+  // Get real subscriber count
+  app.get('/api/analytics/subscribers', async (req, res) => {
+    try {
+      const { channelId, web3ChannelId } = req.query;
+      
+      const count = await storage.getChannelSubscriberCount(
+        channelId as string,
+        web3ChannelId as string
+      );
+      
+      res.json({ subscriberCount: count });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch subscriber count' });
+    }
+  });
+
+  // Create/update channel analytics
+  app.post('/api/analytics/channel', async (req, res) => {
+    try {
+      const validatedData = insertChannelAnalyticsSchema.parse(req.body);
+      const analytics = await storage.createChannelAnalytics(validatedData);
+      res.status(201).json(analytics);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid analytics data", errors: error.errors });
+      } else {
+        res.status(500).json({ error: 'Failed to create analytics' });
+      }
+    }
+  });
+
+  // ====================
+  // CHANNEL COMMENTS API
+  // ====================
+
+  // Get channel comments
+  app.get('/api/channel-comments', async (req, res) => {
+    try {
+      const { channelId, web3ChannelId } = req.query;
+      
+      const comments = await storage.getChannelComments(
+        channelId as string,
+        web3ChannelId as string
+      );
+      
+      res.json(comments);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch comments' });
+    }
+  });
+
+  // Create channel comment
+  app.post('/api/channel-comments', async (req, res) => {
+    try {
+      const validatedData = insertChannelCommentSchema.parse(req.body);
+      const comment = await storage.createChannelComment(validatedData);
+      
+      // Create notification for channel owner
+      const channelId = validatedData.channelId || validatedData.web3ChannelId;
+      if (channelId && validatedData.authorAddress) {
+        await storage.createNotification({
+          recipientAddress: validatedData.authorAddress, // Would be channel owner in real implementation
+          title: 'New Comment',
+          message: `${validatedData.authorName || 'Someone'} commented on your channel`,
+          type: 'comment',
+          entityType: validatedData.channelId ? 'channel' : 'web3_channel',
+          entityId: channelId,
+          actorAddress: validatedData.authorAddress,
+          actorName: validatedData.authorName,
+          actorAvatar: validatedData.authorAvatar,
+          actionUrl: validatedData.channelId ? `/channels/${validatedData.channelId}` : `/channel/${channelId}`
+        });
+      }
+      
+      res.status(201).json(comment);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        res.status(400).json({ message: "Invalid comment data", errors: error.errors });
+      } else {
+        res.status(500).json({ error: 'Failed to create comment' });
+      }
+    }
+  });
+
+  // Like channel comment
+  app.post('/api/channel-comments/:id/like', async (req, res) => {
+    try {
+      await storage.likeChannelComment(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to like comment' });
+    }
+  });
+
+  // Pin/unpin channel comment
+  app.patch('/api/channel-comments/:id/pin', async (req, res) => {
+    try {
+      const { isPinned } = req.body;
+      await storage.pinChannelComment(req.params.id, isPinned);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to pin comment' });
+    }
+  });
+
+  // Delete channel comment
+  app.delete('/api/channel-comments/:id', async (req, res) => {
+    try {
+      await storage.deleteChannelComment(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete comment' });
+    }
+  });
+
+  // ====================
+  // ADVANCED SEARCH API
+  // ====================
+
+  // Advanced channel search with filters
+  app.get('/api/search/channels', async (req, res) => {
+    try {
+      const { 
+        q: query = '', 
+        category, 
+        sortBy = 'relevance',
+        userAddress 
+      } = req.query;
+      
+      const filters = {
+        categoryFilter: category as string,
+        sortBy: sortBy as string,
+        filterType: 'channel'
+      };
+      
+      const results = await storage.searchChannelsAdvanced(query as string, filters);
+      
+      // Save search filter for analytics if user address provided
+      if (userAddress) {
+        await storage.saveSearchFilter({
+          userAddress: userAddress as string,
+          searchQuery: query as string,
+          filterType: 'channel',
+          categoryFilter: category as string,
+          sortBy: sortBy as string,
+          resultsFound: results.length
+        });
+      }
+      
+      res.json({
+        query,
+        filters,
+        results,
+        count: results.length
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to search channels' });
+    }
+  });
+
+  // Get user search history
+  app.get('/api/search/history/:userAddress', async (req, res) => {
+    try {
+      const history = await storage.getUserSearchHistory(req.params.userAddress);
+      res.json(history);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch search history' });
+    }
+  });
+
+  // ====================
+  // TRIGGER NOTIFICATIONS FOR PLATFORM EVENTS
+  // ====================
+
+  // Helper function to trigger notifications for various platform events
+  async function triggerNotification(type: string, data: any) {
+    try {
+      switch (type) {
+        case 'token_trade':
+          await storage.createNotification({
+            recipientAddress: data.recipientAddress,
+            title: data.tradeType === 'buy' ? 'Token Purchase' : 'Token Sale',
+            message: `${data.amount} ${data.tokenSymbol} ${data.tradeType === 'buy' ? 'bought' : 'sold'} for ${data.price} ETH`,
+            type: 'trade',
+            entityType: 'token',
+            entityId: data.tokenId,
+            actorAddress: data.traderAddress,
+            metadata: { amount: data.amount, price: data.price, tradeType: data.tradeType },
+            actionUrl: `/token/${data.tokenId}`
+          });
+          break;
+          
+        case 'content_coin_launch':
+          await storage.createNotification({
+            recipientAddress: data.recipientAddress,
+            title: 'New Content Coin',
+            message: `${data.creatorName} launched a new content coin: ${data.coinName}`,
+            type: 'content_coin',
+            entityType: 'content_coin',
+            entityId: data.coinId,
+            actorAddress: data.creatorAddress,
+            actorName: data.creatorName,
+            actionUrl: `/content-coin/${data.coinId}`
+          });
+          break;
+          
+        case 'follow':
+          await storage.createNotification({
+            recipientAddress: data.recipientAddress,
+            title: 'New Follower',
+            message: `${data.followerName} started following you`,
+            type: 'follow',
+            entityType: 'user',
+            entityId: data.followerId,
+            actorAddress: data.followerAddress,
+            actorName: data.followerName,
+            actionUrl: `/profile/${data.followerAddress}`
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Failed to trigger notification:', error);
+    }
+  }
+
+  // Notification trigger endpoint (for system use)
+  app.post('/api/notifications/trigger', async (req, res) => {
+    try {
+      const { type, data } = req.body;
+      await triggerNotification(type, data);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to trigger notification' });
     }
   });
 
