@@ -222,7 +222,7 @@ export default function Creators() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {filteredCreators.map((creator: Creator, index: number) => {
               // Generate vibrant gradient colors for each creator
               const gradients = [
@@ -238,74 +238,56 @@ export default function Creators() {
               const gradientClass = gradients[index % gradients.length];
               
               return (
-                <div key={creator.id} className="group cursor-pointer" data-testid={`creator-card-${creator.id}`}>
-                  <div className={`relative bg-gradient-to-br ${gradientClass} rounded-2xl p-6 h-80 overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl`}>
-                    {/* Rank Badge */}
-                    <div className="absolute top-4 right-4 z-10">
-                      <div className="bg-black/30 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full">
-                        #{creator.rank}
-                      </div>
-                    </div>
-
-                    {/* Creator Avatar */}
-                    <div className="flex justify-center mb-4">
-                      <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full border-4 border-white/30 flex items-center justify-center shadow-lg">
-                        <span className="text-2xl font-bold text-white">
-                          {creator.name.charAt(0)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Creator Content */}
-                    <div className="text-center text-white space-y-3">
-                      <div>
-                        <h3 className="text-xl font-bold mb-1 group-hover:scale-105 transition-transform">
-                          /{creator.name}
-                        </h3>
-                        <p className="text-white/80 text-sm">{creator.username}</p>
-                      </div>
-
-                      {/* Stats Grid */}
-                      <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/80 text-sm">Content Coins</span>
-                          <span className="text-white font-bold">{creator.contentCoins}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/80 text-sm">Total Likes</span>
-                          <span className="text-white font-bold">{creator.totalLikes}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-white/80 text-sm">Comments</span>
-                          <span className="text-white font-bold">{creator.totalComments}</span>
+                <Link key={creator.id} to={`/creators/${creator.address}`}>
+                  <div className="group cursor-pointer" data-testid={`creator-card-${creator.id}`}>
+                    <div className={`relative bg-gradient-to-br ${gradientClass} rounded-2xl aspect-[3/4] overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl`}>
+                      {/* Rank Badge */}
+                      <div className="absolute top-3 right-3 z-10">
+                        <div className="bg-black/30 backdrop-blur-sm text-white text-xs font-bold px-2 py-1 rounded-full">
+                          #{creator.rank}
                         </div>
                       </div>
 
-                      {/* Member Info */}
-                      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                        <p className="text-white/80 text-xs">
-                          Member since {formatTimeAgo(creator.memberSince)}
-                        </p>
+                      {/* Main Content */}
+                      <div className="flex flex-col h-full p-4">
+                        {/* Creator Avatar - Main Highlight */}
+                        <div className="flex-1 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full border-3 border-white/40 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <span className="text-xl font-bold text-white">
+                              {creator.name.charAt(0)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Creator Info - Bottom Section */}
+                        <div className="text-center text-white space-y-2">
+                          <div>
+                            <h3 className="text-sm font-bold truncate">
+                              {creator.name}
+                            </h3>
+                            <p className="text-white/70 text-xs truncate">{creator.username}</p>
+                          </div>
+
+                          {/* Compact Stats */}
+                          <div className="bg-black/20 backdrop-blur-sm rounded-lg p-2 space-y-1">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-white/70">Coins</span>
+                              <span className="text-white font-semibold">{creator.contentCoins}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-white/70">Likes</span>
+                              <span className="text-white font-semibold">{creator.totalLikes}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* View Profile Button */}
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <Link to={`/creators/${creator.address}`}>
-                        <Button 
-                          className="w-full bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border border-white/30 font-semibold transition-all duration-300 hover:scale-105"
-                          data-testid={`view-creator-${creator.id}`}
-                        >
-                          View Profile
-                        </Button>
-                      </Link>
+                      {/* Decorative Elements */}
+                      <div className="absolute -top-8 -right-8 w-16 h-16 bg-white/10 rounded-full"></div>
+                      <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-white/5 rounded-full"></div>
                     </div>
-
-                    {/* Decorative Elements */}
-                    <div className="absolute -top-10 -right-10 w-20 h-20 bg-white/10 rounded-full"></div>
-                    <div className="absolute -bottom-5 -left-5 w-15 h-15 bg-white/5 rounded-full"></div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
