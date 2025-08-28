@@ -51,6 +51,7 @@ import NotFound from '@/pages/not-found'
 import Channels from "./pages/Channels";
 
 import Creators from '@/pages/Creators';
+import Leaderboard from './pages/Leaderboard';
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -117,6 +118,7 @@ function AppContent() {
               <Route path="/faq" component={FAQ} />
               <Route path="/creators" component={Creators} /> {/* New route for Creators page */}
               <Route path="/channels" component={Channels} />
+              <Route path="/leaderboard" component={Leaderboard} />
               <Route component={NotFound} />
             </Switch>
           </Layout>
