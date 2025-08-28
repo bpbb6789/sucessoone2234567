@@ -28,7 +28,6 @@ const mainNavItems = [
   { icon: FileImage, label: "Discover", href: "/" },
   { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
   { icon: Radio, label: "Create Channel", href: "/create-channel" },
-  { icon: Upload, label: "Tokenize", href: "/tokenize" },
   { icon: Coins, label: "Create Content Coin", href: "/create-content-coin" },
   { icon: Trophy, label: "Creators", href: "/creators" },
   { icon: Radio, label: "Channels", href: "/channels" },
