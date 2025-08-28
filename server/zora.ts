@@ -149,26 +149,66 @@ export async function createCreatorCoin(params: {
       throw new Error(`Deployer wallet ${walletClient.account.address} has no ETH balance. Please add testnet ETH to deploy.`);
     }
 
-    // Validate metadata URI before deployment
+    // Validate metadata URI before deployment with robust retry logic
     console.log('🔍 Validating metadata URI:', params.uri);
-    try {
-      const metadataResponse = await fetch(params.uri, { 
-        method: 'HEAD',
-        timeout: 10000 // 10 second timeout
-      });
-      if (!metadataResponse.ok) {
-        console.warn('⚠️ Metadata URI returned non-200 status:', metadataResponse.status);
-        // Wait a bit and try again
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const retryResponse = await fetch(params.uri, { method: 'HEAD', timeout: 10000 });
-        if (!retryResponse.ok) {
-          throw new Error(`Metadata URI not accessible: ${metadataResponse.status}`);
+    let metadataValidated = false;
+    let lastError: any = null;
+    
+    // Try validation with exponential backoff
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      try {
+        console.log(`📡 Metadata validation attempt ${attempt}/4...`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        
+        const metadataResponse = await fetch(params.uri, { 
+          method: 'HEAD',
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (metadataResponse.ok) {
+          console.log('✅ Metadata URI is accessible');
+          metadataValidated = true;
+          break;
+        } else if (metadataResponse.status === 429) {
+          // Rate limited - wait longer before retry
+          const waitTime = Math.min(2000 * Math.pow(2, attempt - 1), 10000); // Exponential backoff, max 10s
+          console.warn(`⚠️ Rate limited (429), waiting ${waitTime}ms before retry ${attempt}/4...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          lastError = new Error(`Rate limited by IPFS gateway (attempt ${attempt})`);
+        } else {
+          console.warn(`⚠️ Metadata URI returned status ${metadataResponse.status} on attempt ${attempt}`);
+          lastError = new Error(`HTTP ${metadataResponse.status} from metadata URI`);
+          if (attempt < 4) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Linear backoff for other errors
+          }
+        }
+      } catch (fetchError) {
+        console.warn(`⚠️ Metadata validation attempt ${attempt} failed:`, fetchError);
+        lastError = fetchError;
+        if (attempt < 4) {
+          const waitTime = 1000 * attempt; // Linear backoff for network errors
+          await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
-      console.log('✅ Metadata URI is accessible');
-    } catch (fetchError) {
-      console.error('❌ Metadata validation failed:', fetchError);
-      throw new Error(`Metadata fetch failed: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}. Please wait and try again.`);
+    }
+    
+    if (!metadataValidated) {
+      console.error('❌ All metadata validation attempts failed');
+      
+      // For IPFS gateway issues, allow deployment to proceed with a warning
+      if (lastError && (
+        lastError.message?.includes('429') || 
+        lastError.message?.includes('Rate limited') ||
+        lastError.message?.includes('timeout')
+      )) {
+        console.warn('⚠️ IPFS gateway issues detected, proceeding with deployment (metadata will be available once IPFS propagates)');
+      } else {
+        throw new Error(`Metadata validation failed after 4 attempts: ${lastError instanceof Error ? lastError.message : 'Unknown error'}. Please check your metadata URI.`);
+      }
     }
 
     // Map our currency to Zora's actual DeployCurrency enum

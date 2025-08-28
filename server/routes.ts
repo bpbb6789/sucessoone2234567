@@ -2157,14 +2157,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error('Cannot deploy coin without valid metadata URI. Metadata creation failed.');
       }
 
-      // Create coin using Zora SDK
-      const deploymentResult = await createCreatorCoin({
-        name: coinData.coinName,
-        symbol: coinData.coinSymbol,
-        uri: coinData.metadataUri,
-        currency: coinData.currency,
-        creatorAddress: coinData.creatorAddress
-      });
+      // Create coin using Zora SDK with retry logic for IPFS issues
+      let deploymentResult;
+      try {
+        deploymentResult = await createCreatorCoin({
+          name: coinData.coinName,
+          symbol: coinData.coinSymbol,
+          uri: coinData.metadataUri,
+          currency: coinData.currency,
+          creatorAddress: coinData.creatorAddress
+        });
+      } catch (error: any) {
+        // If it's an IPFS/metadata issue, try one more time after a delay
+        if (error.message?.includes('Metadata fetch failed') || error.message?.includes('429')) {
+          console.log('🔄 Retrying deployment after IPFS gateway issue...');
+          await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+          
+          deploymentResult = await createCreatorCoin({
+            name: coinData.coinName,
+            symbol: coinData.coinSymbol,
+            uri: coinData.metadataUri,
+            currency: coinData.currency,
+            creatorAddress: coinData.creatorAddress
+          });
+        } else {
+          throw error;
+        }
+      }
 
       console.log(`✅ Zora deployment successful:`, deploymentResult);
 
