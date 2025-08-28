@@ -270,22 +270,26 @@ export default function ContentCoin() {
 
                                 {/* Channel Content */}
                                 <div className="flex-1 min-w-0">
-                                  {/* Title and Rating Row */}
-                                  <div className="flex items-start justify-between mb-2">
-                                    <h3 className="font-bold text-white text-base leading-tight truncate pr-2">
-                                      {channel.name}
+                                  {/* Channel Name with Coin Symbol */}
+                                  <div className="mb-1">
+                                    <h3 className="font-bold text-white text-base leading-tight truncate">
+                                      {channel.name} ({channel.name.slice(0, 4).toUpperCase()})
                                     </h3>
-                                    <div className="flex items-center gap-1 flex-shrink-0">
-                                      <span className="text-pink-400 text-sm">⭐</span>
-                                      <span className="text-white font-semibold text-sm">
-                                        {(4.2 + Math.random() * 0.7).toFixed(2)}
-                                      </span>
-                                    </div>
                                   </div>
                                   
-                                  {/* Details Row - Year • Category • Runtime */}
+                                  {/* Creator Name */}
+                                  <div className="text-gray-300 text-sm mb-1">
+                                    Creator: {channel.name.split(' ')[0]} {channel.name.split(' ')[1] || 'Team'}
+                                  </div>
+                                  
+                                  {/* Market Cap */}
+                                  <div className="text-gray-300 text-sm mb-1">
+                                    Market cap: <span className="text-green-400 font-semibold">${(Math.random() * 500 + 50).toFixed(1)}M</span>
+                                  </div>
+                                  
+                                  {/* Posts Count */}
                                   <div className="text-gray-400 text-sm">
-                                    {2022 + Math.floor(Math.random() * 3)} • Entertainment • Runtime • {Math.floor(Math.random() * 3 + 1)}h {Math.floor(Math.random() * 60)}m
+                                    Posts: {Math.floor(Math.random() * 500 + 50)}
                                   </div>
                                 </div>
                               </div>
