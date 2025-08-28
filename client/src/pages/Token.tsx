@@ -135,9 +135,9 @@ export default function Token() {
         // Calculate market cap
         const marketCapValue = priceUSD * totalSupplyNum;
 
-        // Mock data for now (would come from indexing service)
+        // Real data will be fetched from indexing service when available
         const volume24h = "0";
-        const holders = 42;
+        const holders = 0;
 
         const processedTokenData: TokenData = {
           address: tokenAddress,

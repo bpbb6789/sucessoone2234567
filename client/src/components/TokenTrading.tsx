@@ -182,7 +182,7 @@ export function TokenTrading({
             <TrendingUp className="h-6 w-6 text-blue-600" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
-              <p className="text-lg font-bold">${parseFloat(marketCap).toLocaleString()}</p>
+              <p className="text-lg font-bold">$0</p>
             </div>
           </CardContent>
         </Card>
@@ -192,7 +192,7 @@ export function TokenTrading({
             <Users className="h-6 w-6 text-purple-600" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">Holders</p>
-              <p className="text-lg font-bold">{holders}</p>
+              <p className="text-lg font-bold">0</p>
             </div>
           </CardContent>
         </Card>

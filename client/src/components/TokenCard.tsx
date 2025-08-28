@@ -80,6 +80,9 @@ export const TokenCard = ({ token, userAddress, heldOnly, createdOnly }: { token
             <span className="text-xs bg-stone-800 px-2 py-1 rounded text-stone-300">{token.symbol}</span>
           </div>
           <div className="text-stone-400 text-xs mb-1 truncate text-center">{token.bio}</div>
+          <div className="text-stone-400 text-xs mb-1 text-center">
+            Market Cap: $0
+          </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-stone-400 mb-1 justify-center">
             <span>Creator:</span>
             <span className="bg-stone-800 px-2 py-1 rounded text-white">

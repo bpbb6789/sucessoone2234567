@@ -26,6 +26,7 @@ interface TokenStatsProps {
 export default function TokenStats({ tokenData }: TokenStatsProps) {
   const formatNumber = (num: string | number): string => {
     const value = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(value) || value === 0) return '0';
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
     return value.toString();

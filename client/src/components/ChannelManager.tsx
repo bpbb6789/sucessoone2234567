@@ -186,9 +186,9 @@ export default function ChannelManager() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{tokenData?.holders || 0}</div>
+                  <div className="text-2xl font-bold">0</div>
                   <p className="text-xs text-muted-foreground">
-                    {tokenData?.holders > 0 ? 'Total token holders' : 'No holders yet'}
+                    No holders yet
                   </p>
                 </CardContent>
               </Card>
@@ -199,8 +199,8 @@ export default function ChannelManager() {
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${tokenData?.marketCap || '0.00'}</div>
-                  <p className="text-xs text-muted-foreground">Volume: ${tokenData?.volume24h || '0.00'} (24h)</p>
+                  <div className="text-2xl font-bold">$0.00</div>
+                  <p className="text-xs text-muted-foreground">Volume: $0.00 (24h)</p>
                 </CardContent>
               </Card>
             </div>
