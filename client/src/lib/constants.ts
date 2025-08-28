@@ -12,6 +12,20 @@ export const CATEGORIES = [
   "Deployed",
 ];
 
+export const CATEGORY_ICONS = {
+  "All": "🌐",
+  "Image": "🖼️",
+  "Video": "🎥",
+  "Audio": "🎵",
+  "GIF": "🎞️",
+  "Anime": "🌸",
+  "Events": "📅",
+  "Shorts films": "🎬",
+  "Podcasts": "🎧",
+  "Books": "📚",
+  "Deployed": "🚀",
+} as const;
+
 export const SHORTS_CATEGORIES = [
   "For you",
   "Following",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES, CATEGORY_ICONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface CategoryChipsProps {
@@ -21,6 +21,7 @@ export function CategoryChips({ selectedCategory, onCategoryChange }: CategoryCh
             )}
             data-testid={`category-chip-${category.toLowerCase()}`}
           >
+            <span className="text-sm mr-1.5">{CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS]}</span>
             {category}
           </button>
         ))}
