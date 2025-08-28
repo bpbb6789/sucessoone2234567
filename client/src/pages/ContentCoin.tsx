@@ -238,12 +238,13 @@ export default function ContentCoin() {
                   {channels.map((channel, index) => (
                     <CarouselItem key={channel.id} className="pl-4 basis-full md:basis-1/3">
                       <Link to={`/channels/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
-                        <div className="group cursor-pointer">
-                          <Card className="bg-gray-900/80 hover:bg-gray-800/90 border-gray-700/30 transition-all duration-300 overflow-hidden rounded-2xl">
-                            <CardContent className="p-0">
-                              <div className="flex items-center gap-4 p-4">
+                        <div className="group cursor-pointer h-full">
+                          <Card className="bg-gray-900/80 hover:bg-gray-800/90 border-gray-700/30 transition-all duration-300 overflow-hidden rounded-2xl h-full">
+                            <CardContent className="p-0 h-full flex flex-col">
+                              {/* Channel Header with Image and Title */}
+                              <div className="flex items-center gap-3 p-4 border-b border-gray-700/30">
                                 {/* Channel Image - Large Rounded */}
-                                <div className="relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden">
+                                <div className="relative flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden">
                                   {channel.coverUrl || channel.avatarUrl ? (
                                     <img
                                       src={
@@ -264,42 +265,46 @@ export default function ContentCoin() {
                                     />
                                   ) : null}
                                   <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${(channel.coverUrl || channel.avatarUrl) ? 'hidden' : ''}`}>
-                                    <span className="text-white font-bold text-xl">{channel.name.charAt(0)}</span>
+                                    <span className="text-white font-bold text-lg">{channel.name.charAt(0)}</span>
                                   </div>
                                 </div>
 
-                                {/* Channel Content */}
+                                {/* Channel Name */}
                                 <div className="flex-1 min-w-0">
-                                  {/* Channel Name with Coin Symbol */}
-                                  <div className="mb-2">
-                                    <h3 className="font-bold text-white text-base leading-tight truncate">
-                                      {channel.name} ({channel.name.slice(0, 4).toUpperCase()})
-                                    </h3>
-                                  </div>
-                                  
-                                  {/* Creator with Icon */}
-                                  <div className="flex items-center gap-2 text-gray-300 text-sm mb-1">
-                                    <User className="w-3 h-3" />
-                                    <span>
+                                  <h3 className="font-bold text-white text-sm leading-tight truncate">
+                                    {channel.name} ({channel.name.slice(0, 4).toUpperCase()})
+                                  </h3>
+                                </div>
+                              </div>
+
+                              {/* Stats Section - Side by Side */}
+                              <div className="p-4 flex-1 flex flex-col justify-center">
+                                <div className="grid grid-cols-3 gap-3 text-xs">
+                                  {/* Creator */}
+                                  <div className="flex flex-col items-center text-center">
+                                    <User className="w-4 h-4 text-gray-400 mb-1" />
+                                    <span className="text-gray-300 text-xs truncate w-full">
                                       {channel.creatorAddress 
-                                        ? `${channel.creatorAddress.slice(0, 6)}...${channel.creatorAddress.slice(-4)}` 
-                                        : 'Unknown Creator'
+                                        ? `${channel.creatorAddress.slice(0, 4)}...` 
+                                        : 'Unknown'
                                       }
                                     </span>
                                   </div>
                                   
-                                  {/* Market Cap with Coin Icon */}
-                                  <div className="flex items-center gap-2 text-sm mb-1">
-                                    <DollarSign className="w-3 h-3 text-green-400" />
-                                    <span className="text-green-400 font-semibold">
+                                  {/* Market Cap */}
+                                  <div className="flex flex-col items-center text-center">
+                                    <DollarSign className="w-4 h-4 text-green-400 mb-1" />
+                                    <span className="text-green-400 font-semibold text-xs">
                                       ${channel.marketCap || '0'}
                                     </span>
                                   </div>
                                   
-                                  {/* Posts with Icon */}
-                                  <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                    <FileText className="w-3 h-3" />
-                                    <span>{channel.postsCount || '0'}</span>
+                                  {/* Posts */}
+                                  <div className="flex flex-col items-center text-center">
+                                    <FileText className="w-4 h-4 text-gray-400 mb-1" />
+                                    <span className="text-gray-300 text-xs">
+                                      {channel.postsCount || '0'}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
