@@ -953,7 +953,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('📋 Metadata created:', metadataUri);
 
-      // Deploy the channel coin using Zora SDK
+      // Deploy the channel coin using Zora SDK - this will throw if deployment fails
+      console.log('🚀 Deploying channel coin with Zora SDK...');
       const coinResult = await createCreatorCoin({
         name: name,
         symbol: ticker,
@@ -962,7 +963,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creatorAddress: creatorAddress
       });
 
-      console.log('✅ Zora coin deployed:', coinResult);
+      console.log('✅ Zora coin deployed successfully:', coinResult);
 
       // Create slug from name
       const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');

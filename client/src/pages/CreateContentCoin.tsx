@@ -238,51 +238,27 @@ export default function CreateContentCoin() {
   };
 
   const handleDeploy = async () => {
-    if (!uploadedCoin) {
-      console.error('❌ No uploaded coin found for deployment');
+    console.log('🚀 Starting coin deployment...', { coinId: uploadedCoin?.id, coinName: uploadedCoin?.coinName });
+
+    if (!uploadedCoin?.id) {
+      toast({
+        title: "Error",
+        description: "No uploaded content to deploy",
+        variant: "destructive",
+      });
       return;
     }
 
-    console.log('🚀 Starting coin deployment...', { coinId: uploadedCoin.id, coinName: formData.coinName });
-
-    try {
-      console.log('📡 Calling deployment API...');
-      const result = await deployMutation.mutateAsync(uploadedCoin.id);
-
-      console.log('✅ Deployment successful:', result);
-
+    if (!isConnected) {
       toast({
-        title: "Creator Coin Deployed!",
-        description: `${formData.coinName} is now live on Zora with bonding curves`,
+        title: "Wallet Required",
+        description: "Please connect your wallet to deploy creator coins",
+        variant: "destructive",
       });
-
-      // Reset form
-      console.log('🔄 Resetting form after successful deployment');
-      setSelectedFile(null);
-      setPreviewUrl('');
-      setUploadedCoin(null);
-      setSelectedType('');
-      setFormData({
-        title: '',
-        description: '',
-        coinName: '',
-        coinSymbol: '',
-        currency: 'ETH',
-        startingMarketCap: 'LOW',
-        twitter: '',
-        discord: '',
-        website: ''
-      });
-    } catch (error: any) {
-      console.error('❌ Deployment failed:', error);
-      console.error('Full error object:', error);
-
-      toast({
-        title: "Deployment Failed",
-        description: error.message || "Failed to deploy creator coin",
-        variant: "destructive"
-      });
+      return;
     }
+
+    deployMutation.mutate(uploadedCoin.id);
   };
 
   const resetUpload = () => {
@@ -347,7 +323,7 @@ export default function CreateContentCoin() {
     }
   };
 
-  
+
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -365,7 +341,7 @@ export default function CreateContentCoin() {
           </p>
         </div>
 
-        
+
 
         {/* Tabs for Upload vs Import */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

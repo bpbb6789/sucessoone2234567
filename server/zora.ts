@@ -131,11 +131,23 @@ export async function createCreatorCoin(params: {
     const walletClient = getWalletClient();
     
     if (!walletClient) {
-      console.log('⚠️  No wallet client available, using simulation mode');
-      return simulateZoraDeployment(params);
+      const errorMsg = 'DEPLOYER_PRIVATE_KEY not found in environment variables. Real deployment requires a valid private key with funds on Base Sepolia.';
+      console.error('❌ Deployment Error:', errorMsg);
+      throw new Error(errorMsg);
     }
 
     console.log('⚡ Deploying Creator Coin with Zora SDK...');
+    console.log('🔑 Using deployer address:', walletClient.account.address);
+
+    // Check deployer balance before deployment
+    const balance = await publicClient.getBalance({
+      address: walletClient.account.address
+    });
+    console.log(`💰 Deployer balance: ${balance} wei (${Number(balance) / 1e18} ETH)`);
+
+    if (balance === 0n) {
+      throw new Error(`Deployer wallet ${walletClient.account.address} has no ETH balance. Please add testnet ETH to deploy.`);
+    }
 
     // Map our currency to Zora's actual DeployCurrency enum
     let zoraCurrency = DeployCurrency.ETH; // Default to ETH
@@ -181,11 +193,20 @@ export async function createCreatorCoin(params: {
 
   } catch (error) {
     console.error('❌ Zora Creator Coin deployment failed:', error);
-    console.error('Error details:', error instanceof Error ? error.stack : 'Unknown error type');
+    console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error type');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
-    // Fallback to simulation if Zora deployment fails
-    console.log('🔄 Falling back to simulation mode...');
-    return simulateZoraDeployment(params);
+    // Log additional error details for debugging
+    if (error && typeof error === 'object') {
+      console.error('Error object keys:', Object.keys(error));
+      if ('code' in error) console.error('Error code:', error.code);
+      if ('reason' in error) console.error('Error reason:', error.reason);
+      if ('data' in error) console.error('Error data:', error.data);
+    }
+    
+    // Re-throw the actual error instead of falling back to simulation
+    throw error;
   }
 }
 
