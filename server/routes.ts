@@ -1399,10 +1399,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // For public imports, don't save to database, just return IPFS data
         if (!channelId || channelId === 'public') {
+          const publicId = `public-${Date.now()}`;
+          
+          // For public imports, also try to create a creator coin entry
+          try {
+            await db.insert(creatorCoins).values({
+              id: publicId,
+              creatorAddress: 'public',
+              title: videoInfo?.title || title,
+              description: videoInfo?.description || description,
+              contentType,
+              coinName,
+              coinSymbol,
+              mediaCid: videoCid,
+              thumbnailCid,
+              metadataUri: `https://gateway.pinata.cloud/ipfs/${metadataCid}`,
+              originalUrl: url,
+              status: 'uploaded',
+              currency: 'ETH',
+              currentPrice: '0',
+              startingMarketCap: '0',
+              platform: videoInfo?.platform || 'Unknown'
+            });
+          } catch (error) {
+            console.warn('⚠️ Failed to create public creator coin entry:', error);
+          }
+
           res.json({
             success: true,
             content: {
-              id: `public-${Date.now()}`,
+              id: publicId,
               title: videoInfo?.title || title,
               description: videoInfo?.description || description,
               contentType,
@@ -1440,6 +1466,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         const content = await storage.createContentImport(contentData);
+
+        // Also create a creator coin entry so it appears on /contentcoins page
+        try {
+          await db.insert(creatorCoins).values({
+            id: content.id, // Use same ID to link them
+            creatorAddress: channelId,
+            title: videoInfo?.title || title,
+            description: videoInfo?.description || description,
+            contentType,
+            coinName,
+            coinSymbol,
+            mediaCid: videoCid,
+            thumbnailCid,
+            metadataUri: `https://gateway.pinata.cloud/ipfs/${metadataCid}`,
+            originalUrl: url,
+            status: 'uploaded',
+            currency: 'ETH',
+            currentPrice: '0',
+            startingMarketCap: '0',
+            platform: videoInfo?.platform || 'Unknown'
+          });
+          console.log('✅ Created creator coin entry for imported content');
+        } catch (error) {
+          console.warn('⚠️ Failed to create creator coin entry:', error);
+          // Don't fail the entire request if this fails
+        }
 
         res.json({
           success: true,
