@@ -175,23 +175,13 @@ export default function ContentCoin() {
       <div className="space-y-8">
         {/* Header */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-white mb-2">
-                Now Trending
-              </h1>
-              <p className="text-gray-400 text-lg">
-                Your tokenized content collection • {filteredContent.length} items
-              </p>
-            </div>
-            <Link to="/create-content-coin">
-              <Button 
-                className="bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-2 rounded-full"
-                data-testid="button-create-content-coin"
-              >
-                + Create Content Coin
-              </Button>
-            </Link>
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Now Trending
+            </h1>
+            <p className="text-gray-400 text-lg">
+              Your tokenized content collection • {filteredContent.length} items
+            </p>
           </div>
 
           {/* Category Filter Chips */}

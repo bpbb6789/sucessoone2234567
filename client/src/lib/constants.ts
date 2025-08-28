@@ -1,15 +1,15 @@
 export const CATEGORIES = [
-  "All",
-  "Videos",
-  "Music",
-  "NFT",
-  "Fashion",
-  "Pop Culture",
-  "GenZ",
-  "Sports",
-  "Skits",
-  "Betting",
-] as const;
+  'All',
+  'Image',
+  'Video', 
+  'Audio',
+  'GIF',
+  'Document',
+  'Events',
+  'Podcasts',
+  'Books',
+  'Deployed'
+];
 
 export const SHORTS_CATEGORIES = [
   "For you",
