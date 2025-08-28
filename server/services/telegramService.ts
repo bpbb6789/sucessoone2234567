@@ -70,25 +70,34 @@ export class TelegramService {
     creator: string;
     contentType: string;
     coinAddress?: string;
+    marketCap?: string;
+    totalSupply?: string;
+    currentPrice?: string;
+    imageUrl?: string;
+    createdAt?: string;
   }): Promise<boolean> {
     let message;
     
     if (data.coinAddress) {
-      // Deployed coin with onchain stats
-      message = `🚀 <b>Content Coin Deployed Onchain!</b>
+      // Get formatted timestamp
+      const timestamp = data.createdAt ? new Date(data.createdAt).toISOString().replace('T', ' ').replace('.000Z', ' UTC') : new Date().toISOString().replace('T', ' ').replace('.000Z', ' UTC');
+      
+      // Deployed coin with comprehensive onchain stats
+      message = `🆕🪙 <b>NEW CREATOR COIN CREATED</b>
 
-📺 <b>${data.title}</b>
-💰 Symbol: <code>${data.coinSymbol}</code>
-👤 Creator: ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
-🎭 Type: ${data.contentType}
-🔗 Contract: <code>${data.coinAddress}</code>
-⛓️ Network: Base Sepolia
-📊 <a href="https://sepolia.basescan.org/address/${data.coinAddress}">View on BaseScan</a>
+📛 <b>${data.title}</b> (${data.coinSymbol})
+💰 Market Cap: $${data.marketCap || '0.00'}
+📊 Total Supply: ${data.totalSupply || '1.00B'}
+👤 <a href="https://zora.co/profile/${data.creator}">${data.creator.slice(0, 6)}...${data.creator.slice(-4)}</a>
+📅 Created: ${timestamp}
+📄 Contract: <code>${data.coinAddress.slice(0, 6)}...${data.coinAddress.slice(-4)}</code>
 
-#ContentCoinDeployed #${data.coinSymbol} #Onchain`;
+🔗 <a href="https://zora.co/creator-coins/base:${data.coinAddress}">View on Zora</a> | <a href="https://basescan.org/address/${data.coinAddress}">BaseScan</a> | <a href="https://dexscreener.com/base/${data.coinAddress}">DexScreener</a>
+
+#NewCreatorCoin #${data.coinSymbol} #Deployed`;
     } else {
       // Content uploaded, pending deployment
-      message = `🎬 <b>New Content Coin Created!</b>
+      message = `🎬 <b>NEW CONTENT COIN UPLOADED</b>
 
 📺 <b>${data.title}</b>
 💰 Symbol: <code>${data.coinSymbol}</code>
@@ -96,7 +105,7 @@ export class TelegramService {
 🎭 Type: ${data.contentType}
 ⏳ Status: Pending Deployment
 
-#NewContentCoin #${data.coinSymbol}`;
+#NewContentCoin #${data.coinSymbol} #Pending`;
     }
 
     return this.sendMessage(message, { parseMode: 'HTML' });
@@ -106,14 +115,43 @@ export class TelegramService {
     name: string;
     creator: string;
     coinAddress?: string;
+    ticker?: string;
+    category?: string;
+    avatarUrl?: string;
+    slug?: string;
+    createdAt?: string;
   }): Promise<boolean> {
-    const message = `📺 <b>New Channel Created!</b>
+    const timestamp = data.createdAt ? new Date(data.createdAt).toISOString().replace('T', ' ').replace('.000Z', ' UTC') : new Date().toISOString().replace('T', ' ').replace('.000Z', ' UTC');
+    
+    let message;
+    
+    if (data.coinAddress) {
+      // Channel with deployed coin
+      message = `📺🪙 <b>NEW CHANNEL WITH COIN CREATED</b>
+
+🏷️ <b>${data.name}</b> (${data.ticker || 'TKN'})
+📂 Category: ${data.category || 'General'}
+👤 <a href="https://zora.co/profile/${data.creator}">${data.creator.slice(0, 6)}...${data.creator.slice(-4)}</a>
+📅 Created: ${timestamp}
+💰 Coin Address: <code>${data.coinAddress.slice(0, 6)}...${data.coinAddress.slice(-4)}</code>
+
+🔗 <a href="https://zora.co/creator-coins/base:${data.coinAddress}">View Coin on Zora</a> | <a href="https://basescan.org/address/${data.coinAddress}">BaseScan</a>
+📺 <a href="/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
+
+#NewChannel #${data.ticker || data.name.replace(/\s+/g, '')} #WithCoin`;
+    } else {
+      // Regular channel without coin
+      message = `📺 <b>NEW CHANNEL CREATED</b>
 
 🏷️ <b>${data.name}</b>
-👤 Creator: ${data.creator}
-${data.coinAddress ? `💰 Coin Address: <code>${data.coinAddress}</code>` : ''}
+📂 Category: ${data.category || 'General'}
+👤 Creator: ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
+📅 Created: ${timestamp}
+
+📺 <a href="/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
 
 #NewChannel #${data.name.replace(/\s+/g, '')}`;
+    }
 
     return this.sendMessage(message, { parseMode: 'HTML' });
   }

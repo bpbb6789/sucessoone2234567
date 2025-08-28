@@ -112,7 +112,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await telegramService.notifyNewChannel({
           name: channel.name,
           creator: channel.createdBy || 'Unknown',
-          coinAddress: undefined
+          coinAddress: undefined,
+          category: 'General',
+          slug: channel.slug,
+          createdAt: channel.createdAt?.toISOString()
         }).catch(err => console.log('Telegram notification failed:', err));
       }
 
@@ -993,7 +996,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await telegramService.notifyNewChannel({
           name: channel.name,
           creator: channel.createdBy,
-          coinAddress: channel.coinAddress || undefined
+          coinAddress: channel.coinAddress || undefined,
+          ticker: channel.ticker,
+          category: channel.category,
+          avatarUrl: channel.avatarCid ? `https://gateway.pinata.cloud/ipfs/${channel.avatarCid}` : undefined,
+          slug: channel.slug,
+          createdAt: channel.createdAt?.toISOString()
         }).catch(err => console.log('Telegram notification failed:', err));
       }
 
@@ -1050,7 +1058,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await telegramService.notifyNewChannel({
           name: channel.name,
           creator: channel.createdBy || channel.owner || 'Unknown',
-          coinAddress: channel.coinAddress || undefined
+          coinAddress: channel.coinAddress || undefined,
+          ticker: channel.ticker,
+          category: channel.category,
+          avatarUrl: channel.avatarCid ? `https://gateway.pinata.cloud/ipfs/${channel.avatarCid}` : undefined,
+          slug: channel.slug,
+          createdAt: channel.createdAt?.toISOString()
         }).catch(err => console.log('Telegram notification failed:', err));
       }
 
@@ -2173,7 +2186,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             coinSymbol: updatedCoin.coinSymbol,
             creator: updatedCoin.creatorAddress,
             contentType: updatedCoin.contentType,
-            coinAddress: updatedCoin.coinAddress || undefined
+            coinAddress: updatedCoin.coinAddress || undefined,
+            marketCap: updatedCoin.marketCap || '0.00',
+            totalSupply: '1.00B', // Standard supply for creator coins
+            currentPrice: updatedCoin.currentPrice || '0.000001',
+            imageUrl: updatedCoin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${updatedCoin.mediaCid}` : undefined,
+            createdAt: updatedCoin.createdAt?.toISOString()
           });
           
           if (notificationSent) {
