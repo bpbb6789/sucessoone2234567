@@ -120,7 +120,7 @@ export function Sidebar() {
                         <img
                           src={channel.avatarUrl?.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}` : channel.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`}
                           alt={channel.name}
-                          className="w-6 h-6 rounded-full flex-shrink-0 object-cover"
+                          className="w-6 h-6 rounded-md flex-shrink-0 object-cover"
                           onError={(e) => {
                             e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`;
                           }}
