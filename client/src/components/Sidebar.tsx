@@ -127,7 +127,16 @@ export function Sidebar() {
                         />
                         <div className="sidebar-text flex flex-col flex-1 min-w-0">
                           <span className="text-sm truncate">{channel.name}</span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">Channel</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-green-400">💰</span>
+                              <span className="text-xs text-gray-400">${Math.floor(Math.random() * 500) + 50}K</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-blue-400">👥</span>
+                              <span className="text-xs text-gray-400">{Math.floor(Math.random() * 1000) + 100}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </Link>
