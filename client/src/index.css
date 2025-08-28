@@ -259,7 +259,7 @@ nav[data-testid="sidebar"]::-webkit-scrollbar {
 
   /* Category chips */
   .category-chip {
-    @apply px-3 py-1 bg-gray-100 dark:bg-youtube-dark-secondary rounded-full text-sm whitespace-nowrap hover:bg-gray-200 dark:hover:bg-youtube-dark-hover transition-colors cursor-pointer;
+    @apply px-3 py-1 bg-gray-100 dark:bg-youtube-dark-secondary rounded-full text-sm whitespace-nowrap hover:bg-gray-200 dark:hover:bg-youtube-dark-hover cursor-pointer;
   }
 
   .category-chip.active {
@@ -293,8 +293,8 @@ nav[data-testid="sidebar"]::-webkit-scrollbar {
 
   /* Scrollbar hiding */
   .scrollbar-hide {
-    -ms-overflow-style: none;
     scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
   .scrollbar-hide::-webkit-scrollbar {
