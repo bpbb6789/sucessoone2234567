@@ -347,24 +347,7 @@ export default function CreateContentCoin() {
     }
   };
 
-  if (!isConnected) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Card className="border-purple-200 dark:border-purple-800">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Sparkles className="h-16 w-16 text-purple-500 mb-4" />
-            <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Create Content Coins with Zora
-            </h2>
-            <p className="text-muted-foreground text-center mb-6 max-w-md">
-              Transform your content into tradable creator coins powered by Zora's bonding curves and Uniswap V4 integration.
-            </p>
-            <ConnectButton />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -381,6 +364,22 @@ export default function CreateContentCoin() {
             Upload your content or import shorts and transform them into tradable creator coins using Zora's advanced bonding curve technology
           </p>
         </div>
+
+        {/* Wallet Connection Prompt - Only show when not connected */}
+        {!isConnected && (
+          <Card className="border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20">
+            <CardContent className="flex flex-col items-center justify-center py-8">
+              <Sparkles className="h-12 w-12 text-purple-500 mb-4" />
+              <h2 className="text-xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Connect Wallet to Get Started
+              </h2>
+              <p className="text-muted-foreground text-center mb-4 max-w-md">
+                You can explore the form below, but you'll need to connect your wallet to upload content and create coins.
+              </p>
+              <ConnectButton />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabs for Upload vs Import */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
