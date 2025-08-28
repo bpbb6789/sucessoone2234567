@@ -225,7 +225,7 @@ export default function ContentCoin() {
                 <p className="text-gray-400">No channels found</p>
               </div>
             ) : (
-              // Carousel Layout
+              // Carousel Layout without arrows
               <Carousel
                 opts={{
                   align: "start",
@@ -241,18 +241,18 @@ export default function ContentCoin() {
                         <div className="group cursor-pointer">
                           <Card className="bg-gray-900/80 hover:bg-gray-800/90 border-gray-700/30 transition-all duration-300 overflow-hidden rounded-2xl">
                             <CardContent className="p-0">
-                              <div className="flex items-center gap-3 p-4">
-                                {/* Channel Avatar/Logo */}
-                                <div className="relative flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden">
+                              <div className="flex items-center gap-4 p-4">
+                                {/* Channel Image - Large Rounded */}
+                                <div className="relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden">
                                   {channel.coverUrl || channel.avatarUrl ? (
                                     <img
                                       src={
-                                        (channel.avatarUrl?.startsWith('baf')
-                                          ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
-                                          : channel.avatarUrl) ||
                                         (channel.coverUrl?.startsWith('baf') 
                                           ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}` 
-                                          : channel.coverUrl)
+                                          : channel.coverUrl) ||
+                                        (channel.avatarUrl?.startsWith('baf')
+                                          ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
+                                          : channel.avatarUrl)
                                       }
                                       alt={channel.name}
                                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
@@ -264,28 +264,28 @@ export default function ContentCoin() {
                                     />
                                   ) : null}
                                   <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${(channel.coverUrl || channel.avatarUrl) ? 'hidden' : ''}`}>
-                                    <span className="text-white font-bold text-lg">{channel.name.charAt(0)}</span>
+                                    <span className="text-white font-bold text-xl">{channel.name.charAt(0)}</span>
                                   </div>
                                 </div>
 
-                                {/* Channel Info */}
+                                {/* Channel Content */}
                                 <div className="flex-1 min-w-0">
-                                  {/* Channel Name & Symbol */}
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="font-bold text-white text-sm leading-tight truncate">
+                                  {/* Title and Rating Row */}
+                                  <div className="flex items-start justify-between mb-2">
+                                    <h3 className="font-bold text-white text-base leading-tight truncate pr-2">
                                       {channel.name}
                                     </h3>
-                                    <span className="text-gray-500 text-xs font-mono">({channel.name.slice(0, 4).toUpperCase()})</span>
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <span className="text-pink-400 text-sm">⭐</span>
+                                      <span className="text-white font-semibold text-sm">
+                                        {(4.2 + Math.random() * 0.7).toFixed(2)}
+                                      </span>
+                                    </div>
                                   </div>
                                   
-                                  {/* Market Cap */}
-                                  <div className="text-gray-300 text-xs mb-1">
-                                    market cap: <span className="text-green-400 font-semibold">${Math.floor(Math.random() * 500 + 50)}.{Math.floor(Math.random() * 99)}M</span>
-                                  </div>
-                                  
-                                  {/* Replies/Activity */}
-                                  <div className="text-gray-500 text-xs">
-                                    replies: {Math.floor(Math.random() * 1000 + 50)}
+                                  {/* Details Row - Year • Category • Runtime */}
+                                  <div className="text-gray-400 text-sm">
+                                    {2022 + Math.floor(Math.random() * 3)} • Entertainment • Runtime • {Math.floor(Math.random() * 3 + 1)}h {Math.floor(Math.random() * 60)}m
                                   </div>
                                 </div>
                               </div>
@@ -296,8 +296,6 @@ export default function ContentCoin() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="-left-6 bg-gray-800/80 border-gray-600 hover:bg-gray-700" />
-                <CarouselNext className="-right-6 bg-gray-800/80 border-gray-600 hover:bg-gray-700" />
               </Carousel>
             )}
           </div>
