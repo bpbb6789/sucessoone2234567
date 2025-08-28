@@ -1,49 +1,51 @@
+
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { useNotificationStore } from "@/stores/notificationStore";
-import { Check, ChevronRight, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Bell, ChevronRight, Trash2, Check, X } from "lucide-react";
+import { useNotificationStore } from "@/stores/notificationStore";
 
 export default function NotificationsPage() {
   const {
     notifications,
+    unreadCount,
+    markAsRead,
     markAllAsRead,
     removeNotification,
-    clearAll,
   } = useNotificationStore();
 
   const typeColors = {
-    success: "bg-green-500/10 text-green-400 border-green-500/20",
-    info: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    warning: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
-    error: "bg-red-500/10 text-red-400 border-red-500/20",
+    success: "bg-green-900/50 text-green-400",
+    info: "bg-blue-900/50 text-blue-400",
+    warning: "bg-yellow-900/50 text-yellow-400",
+    error: "bg-red-900/50 text-red-400",
   };
 
   return (
-    <div className="min-h-screen bg-site-main py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-white">Notifications</h1>
           <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold">Notifications</h1>
+            {unreadCount > 0 && (
+              <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
+                {unreadCount} unread
+              </span>
+            )}
+          </div>
+          {unreadCount > 0 && (
             <Button
-              variant="outline"
               onClick={markAllAsRead}
-              className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700"
+              variant="outline"
+              className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
             >
               <Check className="h-4 w-4 mr-2" />
-              Mark all as read
+              Mark All Read
             </Button>
-            <Button
-              variant="destructive"
-              onClick={clearAll}
-              className="bg-red-500/10 text-red-400 hover:bg-red-500/20"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear all
-            </Button>
-          </div>
+          )}
         </div>
 
         <div className="space-y-4">
@@ -102,6 +104,7 @@ export default function NotificationsPage() {
           ) : (
             <Card className="bg-zinc-900/50 border-zinc-800 p-8">
               <div className="text-center">
+                <Bell className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
                 <p className="text-lg text-zinc-400">No notifications yet</p>
                 <p className="text-sm text-zinc-500 mt-1">
                   When you get notifications, they'll show up here

@@ -1,85 +1,29 @@
 
-import { useState } from "react";
+import { useAccount } from "wagmi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Bell, Heart, MessageSquare, UserPlus, Video, Settings } from "lucide-react";
 import { formatDistance } from "date-fns";
-
-interface Notification {
-  id: string;
-  type: "like" | "comment" | "subscribe" | "upload" | "mention";
-  title: string;
-  description: string;
-  thumbnail?: string;
-  avatar: string;
-  timestamp: Date;
-  isRead: boolean;
-  channelName: string;
-}
+import { useNotifications, useMarkAsRead, useMarkAllAsRead } from "@/hooks/useNotifications";
 
 export default function Notifications() {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      type: "like",
-      title: "New likes on your video",
-      description: "5 people liked 'Amazing Tech Review'",
-      thumbnail: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=56",
-      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30),
-      isRead: false,
-      channelName: "Tech Explorer"
-    },
-    {
-      id: "2",
-      type: "comment",
-      title: "New comment",
-      description: "Gaming Pro commented: 'Great content! Keep it up!'",
-      thumbnail: "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=56",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-      isRead: false,
-      channelName: "Gaming Pro"
-    },
-    {
-      id: "3",
-      type: "subscribe",
-      title: "New subscriber",
-      description: "Cooking Master subscribed to your channel",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-      isRead: true,
-      channelName: "Cooking Master"
-    },
-    {
-      id: "4",
-      type: "upload",
-      title: "New video",
-      description: "Tech Explorer uploaded 'Latest Smartphone Comparison'",
-      thumbnail: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&h=56",
-      avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=32&h=32",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      isRead: true,
-      channelName: "Tech Explorer"
-    }
-  ]);
+  const { address } = useAccount();
+  const { data: notifications = [], isLoading } = useNotifications(address);
+  const markAsReadMutation = useMarkAsRead();
+  const markAllAsReadMutation = useMarkAllAsRead();
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id ? { ...notification, isRead: true } : notification
-      )
-    );
+    markAsReadMutation.mutate(id);
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, isRead: true }))
-    );
+    if (address) {
+      markAllAsReadMutation.mutate(address);
+    }
   };
 
   const getNotificationIcon = (type: string) => {
@@ -88,20 +32,22 @@ export default function Notifications() {
         return <Heart className="h-5 w-5 text-red-500" />;
       case "comment":
         return <MessageSquare className="h-5 w-5 text-blue-500" />;
-      case "subscribe":
+      case "subscription":
+      case "follow":
         return <UserPlus className="h-5 w-5 text-green-500" />;
-      case "upload":
+      case "content_coin":
+      case "trade":
         return <Video className="h-5 w-5 text-purple-500" />;
       default:
         return <Bell className="h-5 w-5 text-gray-500" />;
     }
   };
 
-  const renderNotification = (notification: Notification) => (
+  const renderNotification = (notification: any) => (
     <Card
       key={notification.id}
       className={`cursor-pointer transition-colors ${
-        !notification.isRead ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800" : ""
+        !notification.read ? "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800" : ""
       }`}
       onClick={() => markAsRead(notification.id)}
     >
@@ -109,8 +55,8 @@ export default function Notifications() {
         <div className="flex gap-3">
           <div className="relative">
             <img
-              src={notification.avatar}
-              alt={notification.channelName}
+              src={notification.actorAvatar || "/images/unipump.png"}
+              alt={notification.actorName || "User"}
               className="w-10 h-10 rounded-full"
             />
             <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-800 rounded-full p-1">
@@ -123,33 +69,50 @@ export default function Notifications() {
               <div className="flex-1">
                 <h3 className="font-medium text-sm">{notification.title}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {notification.description}
+                  {notification.message}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs text-gray-500">
-                    {formatDistance(notification.timestamp, new Date(), { addSuffix: true })}
+                    {formatDistance(new Date(notification.createdAt), new Date(), { addSuffix: true })}
                   </span>
-                  {!notification.isRead && (
+                  {!notification.read && (
                     <Badge variant="secondary" className="text-xs px-2 py-0">
                       New
                     </Badge>
                   )}
                 </div>
               </div>
-
-              {notification.thumbnail && (
-                <img
-                  src={notification.thumbnail}
-                  alt=""
-                  className="w-16 h-9 rounded object-cover ml-2"
-                />
-              )}
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
   );
+
+  if (!address) {
+    return (
+      <div className="p-4 max-w-4xl mx-auto" data-testid="page-notifications">
+        <div className="text-center py-12">
+          <Bell className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <h3 className="text-lg font-semibold mb-2">Connect Wallet</h3>
+          <p className="text-gray-500 dark:text-gray-400">
+            Please connect your wallet to view notifications.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-4 max-w-4xl mx-auto" data-testid="page-notifications">
+        <div className="text-center py-12">
+          <Bell className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <h3 className="text-lg font-semibold mb-2">Loading...</h3>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 max-w-4xl mx-auto" data-testid="page-notifications">
@@ -199,28 +162,56 @@ export default function Notifications() {
         </TabsContent>
 
         <TabsContent value="mentions" className="mt-6">
-          <div className="text-center py-12">
-            <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold mb-2">No mentions</h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              When someone mentions you, it will appear here.
-            </p>
+          <div className="space-y-3">
+            {notifications.filter(n => n.type === "mention").length === 0 ? (
+              <div className="text-center py-12">
+                <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold mb-2">No mentions</h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  When someone mentions you, it will appear here.
+                </p>
+              </div>
+            ) : (
+              notifications
+                .filter(n => n.type === "mention")
+                .map(renderNotification)
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="subscriptions" className="mt-6">
           <div className="space-y-3">
-            {notifications
-              .filter(n => n.type === "upload" || n.type === "subscribe")
-              .map(renderNotification)}
+            {notifications.filter(n => n.type === "subscription" || n.type === "follow").length === 0 ? (
+              <div className="text-center py-12">
+                <UserPlus className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold mb-2">No subscription activity</h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  Subscription and follow notifications will appear here.
+                </p>
+              </div>
+            ) : (
+              notifications
+                .filter(n => n.type === "subscription" || n.type === "follow")
+                .map(renderNotification)
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="other" className="mt-6">
           <div className="space-y-3">
-            {notifications
-              .filter(n => n.type === "like" || n.type === "comment")
-              .map(renderNotification)}
+            {notifications.filter(n => n.type === "like" || n.type === "comment" || n.type === "trade" || n.type === "content_coin").length === 0 ? (
+              <div className="text-center py-12">
+                <Heart className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <h3 className="text-lg font-semibold mb-2">No other activity</h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  Likes, comments, and other activity will appear here.
+                </p>
+              </div>
+            ) : (
+              notifications
+                .filter(n => n.type === "like" || n.type === "comment" || n.type === "trade" || n.type === "content_coin")
+                .map(renderNotification)
+            )}
           </div>
         </TabsContent>
       </Tabs>

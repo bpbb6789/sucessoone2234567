@@ -1,45 +1,31 @@
-"use client";
 
-import { Bell, Check, ChevronRight, X } from "lucide-react";
-import { Button } from "./ui/button";
+import { useState } from "react";
+import { useAccount } from "wagmi";
+import { Bell, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "./ui/scroll-area";
-import { useAccount } from 'wagmi';
-import { 
-  useNotifications, 
-  useUnreadCount, 
-  useMarkAsRead, 
-  useMarkAllAsRead, 
-  useDeleteNotification 
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatDistance } from "date-fns";
+import {
+  useNotifications,
+  useUnreadCount,
+  useMarkAsRead,
+  useMarkAllAsRead,
+  useDeleteNotification
 } from "@/hooks/useNotifications";
-import { formatDistanceToNow } from 'date-fns';
 
-export function NotificationBell() {
+export default function NotificationBell() {
   const { address } = useAccount();
-  
-  // Fetch notifications and unread count
   const { data: notifications = [], isLoading } = useNotifications(address);
   const { data: unreadCount = 0 } = useUnreadCount(address);
-  
-  // Mutation hooks
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
   const deleteNotificationMutation = useDeleteNotification();
-
-  const typeColors = {
-    subscription: "text-green-400",
-    comment: "text-blue-400", 
-    trade: "text-purple-400",
-    content_coin: "text-yellow-400",
-    follow: "text-pink-400",
-    like: "text-red-400",
-  };
 
   const handleMarkAsRead = (notificationId: string) => {
     markAsReadMutation.mutate(notificationId);
@@ -53,6 +39,25 @@ export function NotificationBell() {
 
   const handleDeleteNotification = (notificationId: string) => {
     deleteNotificationMutation.mutate(notificationId);
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case "trade":
+        return "💰";
+      case "subscription":
+        return "👤";
+      case "comment":
+        return "💬";
+      case "like":
+        return "❤️";
+      case "content_coin":
+        return "🎬";
+      case "follow":
+        return "👥";
+      default:
+        return "🔔";
+    }
   };
 
   return (
@@ -101,34 +106,32 @@ export function NotificationBell() {
               Loading notifications...
             </div>
           ) : notifications.length > 0 ? (
-            notifications.map((notification) => (
+            notifications.slice(0, 10).map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
-                className={cn(
-                  "flex items-start p-4 border-b border-zinc-800 cursor-pointer hover:bg-zinc-800/30",
-                  !notification.read && "bg-zinc-800/50"
-                )}
+                className="p-4 cursor-pointer hover:bg-zinc-800 flex-col items-start"
+                onClick={() => handleMarkAsRead(notification.id)}
                 data-testid={`notification-${notification.id}`}
               >
-                <div className="flex-1" onClick={() => handleMarkAsRead(notification.id)}>
-                  <div className="flex items-center justify-between">
-                    <h3
-                      className={cn(
-                        "font-medium",
-                        typeColors[notification.type] || "text-blue-400"
-                      )}
-                    >
-                      {notification.title}
-                    </h3>
-                    <span className="text-xs text-zinc-500">
-                      {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                    </span>
+                <div className="flex items-start justify-between w-full">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">{getNotificationIcon(notification.type)}</span>
+                      <span className="font-medium text-white text-sm truncate">
+                        {notification.title}
+                      </span>
+                    </div>
+                    <p className="text-zinc-400 text-xs mb-2 line-clamp-2">
+                      {notification.message}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-zinc-500">
+                      <span>
+                        {formatDistance(new Date(notification.createdAt), new Date(), { addSuffix: true })}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-zinc-400 mt-1">
-                    {notification.message}
-                  </p>
                   
-                  {/* Show actor info if available */}
+                  {/* Actor info */}
                   {notification.actorName && (
                     <div className="flex items-center gap-2 mt-2 text-xs text-zinc-500">
                       {notification.actorAvatar && (
