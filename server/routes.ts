@@ -3028,6 +3028,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             metadata: { amount: data.amount, price: data.price, tradeType: data.tradeType },
             actionUrl: `/token/${data.tokenId}`
           });
+          
+          // Send Telegram notification for trade
+          const telegramService = getTelegramService();
+          if (telegramService) {
+            await telegramService.notifyTrade({
+              type: data.tradeType.toUpperCase() as 'BUY' | 'SELL',
+              coinSymbol: data.tokenSymbol,
+              amount: data.amount,
+              price: data.price,
+              trader: data.traderAddress
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
           break;
           
         case 'content_coin_launch':
@@ -3071,6 +3083,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: 'Failed to trigger notification' });
+    }
+  });
+
+  // Trade notification endpoint
+  app.post('/api/trades/notify', async (req, res) => {
+    try {
+      const { type, coinSymbol, amount, price, trader, coinId } = req.body;
+      
+      if (!type || !coinSymbol || !amount || !price) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Send internal notification
+      await triggerNotification('token_trade', {
+        recipientAddress: trader,
+        tradeType: type.toLowerCase(),
+        amount,
+        tokenSymbol: coinSymbol,
+        price,
+        tokenId: coinId,
+        traderAddress: trader
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Trade notification error:', error);
+      res.status(500).json({ error: 'Failed to send trade notification' });
     }
   });
 

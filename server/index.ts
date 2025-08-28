@@ -51,6 +51,10 @@ app.use((req, res, next) => {
 
   // Initialize Telegram service
   initializeTelegramService();
+  
+  // Initialize Telegram leaderboard scheduler
+  const { initializeTelegramLeaderboard } = await import("./services/telegramLeaderboard.js");
+  initializeTelegramLeaderboard();
 
   const server = await registerRoutes(app);
 
