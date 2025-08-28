@@ -2072,18 +2072,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('✅ Upload completed successfully:', newCoin);
 
-      // Send Telegram notification for new content coin
-      const telegramService = getTelegramService();
-      if (telegramService) {
-        await telegramService.notifyNewContentCoin({
-          title: newCoin.title,
-          coinSymbol: newCoin.coinSymbol,
-          creator: newCoin.creatorAddress,
-          contentType: newCoin.contentType,
-          coinAddress: newCoin.coinAddress || undefined
-        }).catch(err => console.log('Telegram notification failed:', err));
-      }
-
       res.status(201).json({
         message: "Content uploaded successfully",
         coin: newCoin,
@@ -2175,6 +2163,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       console.log(`🎉 Creator coin deployment complete:`, updatedCoin);
+
+      // Send Telegram notification for successful deployment with onchain stats
+      const telegramService = getTelegramService();
+      if (telegramService) {
+        await telegramService.notifyNewContentCoin({
+          title: updatedCoin.title,
+          coinSymbol: updatedCoin.coinSymbol,
+          creator: updatedCoin.creatorAddress,
+          contentType: updatedCoin.contentType,
+          coinAddress: updatedCoin.coinAddress || undefined
+        }).catch(err => console.log('Telegram deployment notification failed:', err));
+      }
 
       res.json({
         message: "Creator coin deployed successfully!",

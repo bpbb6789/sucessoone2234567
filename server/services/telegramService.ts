@@ -46,15 +46,33 @@ export class TelegramService {
     contentType: string;
     coinAddress?: string;
   }): Promise<boolean> {
-    const message = `🎬 <b>New Content Coin Created!</b>
+    let message;
+    
+    if (data.coinAddress) {
+      // Deployed coin with onchain stats
+      message = `🚀 <b>Content Coin Deployed Onchain!</b>
 
 📺 <b>${data.title}</b>
 💰 Symbol: <code>${data.coinSymbol}</code>
-👤 Creator: ${data.creator}
+👤 Creator: ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
 🎭 Type: ${data.contentType}
-${data.coinAddress ? `🔗 Address: <code>${data.coinAddress}</code>` : ''}
+🔗 Contract: <code>${data.coinAddress}</code>
+⛓️ Network: Base Sepolia
+📊 <a href="https://sepolia.basescan.org/address/${data.coinAddress}">View on BaseScan</a>
+
+#ContentCoinDeployed #${data.coinSymbol} #Onchain`;
+    } else {
+      // Content uploaded, pending deployment
+      message = `🎬 <b>New Content Coin Created!</b>
+
+📺 <b>${data.title}</b>
+💰 Symbol: <code>${data.coinSymbol}</code>
+👤 Creator: ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
+🎭 Type: ${data.contentType}
+⏳ Status: Pending Deployment
 
 #NewContentCoin #${data.coinSymbol}`;
+    }
 
     return this.sendMessage(message, { parseMode: 'HTML' });
   }
