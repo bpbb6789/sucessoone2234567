@@ -93,7 +93,7 @@ export function Sidebar() {
               </h3>
               {channelsLoading ? (
                 <div className="space-y-2">
-                  {[...Array(4)].map((_, i) => (
+                  {[...Array(3)].map((_, i) => (
                     <div key={i} className="nav-item">
                       <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse flex-shrink-0" />
                       <div className="sidebar-text flex flex-col flex-1 min-w-0">
@@ -104,7 +104,7 @@ export function Sidebar() {
                   ))}
                 </div>
               ) : channels && channels.length > 0 ? (
-                channels.slice(0, 4).map((channel) => {
+                channels.slice(0, 3).map((channel) => {
                   const channelHref = `/channel/${channel.slug}`;
                   const isActive = location === channelHref;
 
