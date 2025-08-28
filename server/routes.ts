@@ -2167,13 +2167,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send Telegram notification for successful deployment with onchain stats
       const telegramService = getTelegramService();
       if (telegramService) {
-        await telegramService.notifyNewContentCoin({
-          title: updatedCoin.title,
-          coinSymbol: updatedCoin.coinSymbol,
-          creator: updatedCoin.creatorAddress,
-          contentType: updatedCoin.contentType,
-          coinAddress: updatedCoin.coinAddress || undefined
-        }).catch(err => console.log('Telegram deployment notification failed:', err));
+        try {
+          const notificationSent = await telegramService.notifyNewContentCoin({
+            title: updatedCoin.title,
+            coinSymbol: updatedCoin.coinSymbol,
+            creator: updatedCoin.creatorAddress,
+            contentType: updatedCoin.contentType,
+            coinAddress: updatedCoin.coinAddress || undefined
+          });
+          
+          if (notificationSent) {
+            console.log('✅ Telegram deployment notification sent successfully');
+          } else {
+            console.log('⚠️ Telegram deployment notification skipped (bot not configured)');
+          }
+        } catch (err) {
+          console.log('❌ Telegram deployment notification failed:', err instanceof Error ? err.message : err);
+        }
+      } else {
+        console.log('⚠️ Telegram service not available for deployment notification');
       }
 
       res.json({

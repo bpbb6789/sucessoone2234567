@@ -11,17 +11,32 @@ export class TelegramService {
 
   constructor(config: TelegramConfig) {
     if (config.botToken && config.channelId) {
-      this.bot = new TelegramBot(config.botToken, { polling: false });
-      this.channelId = config.channelId;
-      console.log('✅ Telegram bot initialized successfully');
+      try {
+        this.bot = new TelegramBot(config.botToken, { polling: false });
+        this.channelId = config.channelId;
+        console.log('✅ Telegram bot initialized successfully');
+        console.log('📋 Channel ID configured:', config.channelId);
+      } catch (error) {
+        console.error('❌ Failed to initialize Telegram bot:', error);
+        this.bot = null;
+        this.channelId = '';
+      }
     } else {
       console.log('⚠️ Telegram bot not initialized - missing credentials');
+      console.log('💡 Required env vars: TELEGRAM_BOT_TOKEN, TELEGRAM_CHANNEL_ID');
+      if (!config.botToken) console.log('❌ Missing TELEGRAM_BOT_TOKEN');
+      if (!config.channelId) console.log('❌ Missing TELEGRAM_CHANNEL_ID');
     }
   }
 
   async sendMessage(message: string, options?: { parseMode?: 'HTML' | 'Markdown' }): Promise<boolean> {
     if (!this.bot) {
-      console.log('Telegram bot not available - skipping message');
+      console.log('⚠️ Telegram bot not available - skipping message');
+      return false;
+    }
+
+    if (!this.channelId) {
+      console.log('⚠️ Telegram channel ID not configured - skipping message');
       return false;
     }
 
@@ -32,8 +47,18 @@ export class TelegramService {
       });
       console.log('📤 Telegram message sent successfully');
       return true;
-    } catch (error) {
-      console.error('❌ Failed to send Telegram message:', error);
+    } catch (error: any) {
+      if (error?.response?.body?.description?.includes('chat not found')) {
+        console.error('❌ Telegram chat not found. Please check TELEGRAM_CHANNEL_ID environment variable.');
+        console.error('💡 Current channel ID:', this.channelId);
+        console.error('💡 Make sure the bot is added to the channel and has permission to send messages.');
+      } else if (error?.response?.body?.description?.includes('bot was blocked')) {
+        console.error('❌ Telegram bot was blocked by the user/channel.');
+      } else if (error?.response?.body?.description?.includes('Forbidden')) {
+        console.error('❌ Telegram bot lacks permission to send messages to this channel.');
+      } else {
+        console.error('❌ Failed to send Telegram message:', error?.message || error);
+      }
       return false;
     }
   }
