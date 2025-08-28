@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, Link, FileImage, Video, Music, Palette, FileText, Loader2, Trash2, Play, Coins, Sparkles, ExternalLink } from 'lucide-react';
+import { Upload, Link, FileImage, Video, Music, Palette, FileText, Loader2, Trash2, Play, Coins, Sparkles, ExternalLink, ImageIcon, VideoIcon, MusicIcon, FileTextIcon, Download, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,11 +40,11 @@ export default function CreateContentCoin() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [uploadedCoin, setUploadedCoin] = useState<any>(null);
-  
+
   // Import tab state
   const [importUrl, setImportUrl] = useState('');
   const [activeTab, setActiveTab] = useState('upload');
-  
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -57,7 +57,7 @@ export default function CreateContentCoin() {
     discord: '',
     website: ''
   });
-  
+
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
   const uploadMutation = useCreatorCoinUpload();
@@ -109,7 +109,7 @@ export default function CreateContentCoin() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -118,7 +118,7 @@ export default function CreateContentCoin() {
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
-    
+
     // Determine content type based on file type
     let contentType = 'document';
     if (file.type.startsWith('image/')) {
@@ -128,20 +128,20 @@ export default function CreateContentCoin() {
     } else if (file.type.startsWith('audio/')) {
       contentType = 'audio';
     }
-    
+
     setSelectedType(contentType);
-    
+
     // Generate auto coin name from filename
     const fileName = file.name.split('.')[0].replace(/[^a-zA-Z0-9\s]/g, ' ').trim();
     const coinSymbol = fileName.replace(/\s+/g, '').toUpperCase().slice(0, 6);
-    
+
     setFormData(prev => ({
       ...prev,
       title: fileName,
       coinName: fileName,
       coinSymbol: coinSymbol
     }));
-    
+
     // Create preview URL
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
@@ -170,7 +170,7 @@ export default function CreateContentCoin() {
 
   const handleUpload = async () => {
     console.log('🚀 Starting content upload...');
-    
+
     if (!selectedFile || !address || !selectedType) {
       console.error('❌ Missing required information:', { 
         hasFile: !!selectedFile, 
@@ -196,7 +196,7 @@ export default function CreateContentCoin() {
     }
 
     try {
-      console.log('📤 Uploading content with data:', {
+      console.log('Uploading content with data:', {
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
         contentType: selectedType,
@@ -222,7 +222,7 @@ export default function CreateContentCoin() {
 
       console.log('✅ Upload successful:', result);
       setUploadedCoin(result.coin);
-      
+
       toast({
         title: "Content Uploaded!",
         description: `${formData.coinName} is ready for tokenization with Zora`,
@@ -248,14 +248,14 @@ export default function CreateContentCoin() {
     try {
       console.log('📡 Calling deployment API...');
       const result = await deployMutation.mutateAsync(uploadedCoin.id);
-      
+
       console.log('✅ Deployment successful:', result);
-      
+
       toast({
         title: "Creator Coin Deployed!",
         description: `${formData.coinName} is now live on Zora with bonding curves`,
       });
-      
+
       // Reset form
       console.log('🔄 Resetting form after successful deployment');
       setSelectedFile(null);
@@ -276,7 +276,7 @@ export default function CreateContentCoin() {
     } catch (error: any) {
       console.error('❌ Deployment failed:', error);
       console.error('Full error object:', error);
-      
+
       toast({
         title: "Deployment Failed",
         description: error.message || "Failed to deploy creator coin",
@@ -307,7 +307,7 @@ export default function CreateContentCoin() {
 
     try {
       const hostname = new URL(importUrl).hostname;
-      
+
       toast({
         title: "Import Started",
         description: "Processing shorts content... Downloading and extracting thumbnail (5-10s)"
@@ -322,7 +322,7 @@ export default function CreateContentCoin() {
         coinName: formData.coinName,
         coinSymbol: formData.coinSymbol
       });
-      
+
       // If import was successful, treat it like an uploaded coin
       setUploadedCoin({
         id: result.content.id,
@@ -331,7 +331,7 @@ export default function CreateContentCoin() {
         contentType: 'video',
         status: 'uploaded'
       });
-      
+
       setImportUrl('');
       toast({
         title: "Import Complete",
@@ -422,6 +422,7 @@ export default function CreateContentCoin() {
                       }`}
                       onClick={() => handleTypeSelect(type.id)}
                       data-testid={`content-type-${type.id}`}
+                      disabled={!isConnected}
                     >
                       <CardContent className="p-4 text-center">
                         <Icon className={`h-8 w-8 mx-auto mb-2 ${
@@ -464,9 +465,10 @@ export default function CreateContentCoin() {
                   className="hidden"
                   id="file-upload"
                   data-testid="file-upload-input"
+                  disabled={!isConnected}
                 />
                 <label htmlFor="file-upload">
-                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" data-testid="upload-button">
+                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" data-testid="upload-button" disabled={!isConnected}>
                     Choose File
                   </Button>
                 </label>
@@ -660,11 +662,13 @@ export default function CreateContentCoin() {
 
                 <Button 
                   onClick={handleUpload}
-                  disabled={uploadMutation.isPending || !formData.title || !formData.coinName || !formData.coinSymbol}
+                  disabled={!isConnected || uploadMutation.isPending || !selectedFile || !formData.title || !formData.coinName || !formData.coinSymbol}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                   data-testid="upload-content-button"
                 >
-                  {uploadMutation.isPending ? (
+                  {!isConnected ? (
+                    "Connect Wallet to Upload"
+                  ) : uploadMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Uploading to IPFS...
@@ -698,11 +702,12 @@ export default function CreateContentCoin() {
                 <div className="space-y-2">
                   <Label htmlFor="import-url">Content URL *</Label>
                   <Input
-                    id="import-url"
+                    placeholder="https://youtube.com/shorts/... or https://instagram.com/reel/..."
                     value={importUrl}
                     onChange={(e) => setImportUrl(e.target.value)}
-                    placeholder="https://tiktok.com/@user/video/123... or https://youtube.com/shorts/abc..."
-                    data-testid="input-import-url"
+                    className="flex-1"
+                    data-testid="import-url-input"
+                    disabled={!isConnected}
                   />
                   <p className="text-xs text-muted-foreground">
                     Supports: TikTok, YouTube Shorts, Instagram Reels, Twitter videos (15-90 seconds)
@@ -759,7 +764,7 @@ export default function CreateContentCoin() {
 
                 <Button 
                   onClick={handleUrlImport}
-                  disabled={urlImportMutation.isPending || !importUrl || !formData.coinName || !formData.coinSymbol}
+                  disabled={!isConnected || !importUrl.trim() || urlImportMutation.isPending}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                   data-testid="import-content-button"
                 >
@@ -817,18 +822,20 @@ export default function CreateContentCoin() {
               <div className="flex gap-3">
                 <Button 
                   onClick={handleDeploy}
-                  disabled={deployMutation.isPending}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                  disabled={!isConnected || deployMutation.isPending || !uploadedCoin}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
                   data-testid="deploy-coin-button"
                 >
-                  {deployMutation.isPending ? (
+                  {!isConnected ? (
+                    "Connect Wallet to Deploy"
+                  ) : deployMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Deploying with Zora...
+                      Deploying Contract...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-4 w-4" />
+                      <Rocket className="mr-2 h-4 w-4" />
                       Deploy Creator Coin
                     </>
                   )}
