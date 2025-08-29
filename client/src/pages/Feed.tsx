@@ -311,6 +311,17 @@ const FeedTabs: React.FC<{
                 : "text-gray-400 font-normal hover:text-gray-300",
             )}
           >
+            For You
+          </button>
+          <button
+            onClick={() => onTabChange("contents")}
+            className={cn(
+              "px-2 py-1 text-sm transition-all duration-200",
+              activeTab === "contents"
+                ? "text-white font-bold"
+                : "text-gray-400 font-normal hover:text-gray-300",
+            )}
+          >
             Contents
           </button>
           <button
@@ -452,6 +463,17 @@ export default function Feed() {
                   )}
                 >
                   For You
+                </button>
+                <button
+                  onClick={() => setActiveTab("contents")}
+                  className={cn(
+                    "px-2 py-1 text-sm transition-all duration-200",
+                    activeTab === "contents"
+                      ? "text-white font-bold"
+                      : "text-gray-400 font-normal hover:text-gray-300",
+                  )}
+                >
+                  Contents
                 </button>
                 <button
                   onClick={() => setActiveTab("music")}
