@@ -60,9 +60,9 @@ function TopCreatorsSection() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <Skeleton key={i} className="h-32 w-full" />
+          <Skeleton key={i} className="h-20 w-full rounded-xl" />
         ))}
       </div>
     );
@@ -70,7 +70,7 @@ function TopCreatorsSection() {
 
   if (error || !creators || creators.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="col-span-full text-center py-8">
           <p className="text-gray-400">No creators found</p>
         </div>
@@ -82,30 +82,53 @@ function TopCreatorsSection() {
   const topCreators = creators.slice(0, 4);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {topCreators.map((creator: any, index: number) => (
-        <Link key={creator.id} to={`/creators/${creator.address}`}>
-          <div className="group cursor-pointer">
-            <div className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors rounded-lg p-4">
-              <div className="relative aspect-square mb-4 overflow-hidden rounded-lg">
-                <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white">{creator.name.charAt(0)}</span>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {topCreators.map((creator: any, index: number) => {
+        // Spotify-style vibrant gradient colors
+        const gradients = [
+          'from-orange-400 via-red-500 to-pink-500',
+          'from-lime-400 via-green-500 to-emerald-500', 
+          'from-blue-400 via-purple-500 to-pink-500',
+          'from-yellow-400 via-orange-500 to-red-500',
+          'from-cyan-400 via-blue-500 to-purple-500',
+          'from-emerald-400 via-teal-500 to-cyan-500',
+          'from-pink-400 via-rose-500 to-red-500',
+          'from-indigo-400 via-purple-500 to-pink-500'
+        ];
+        const gradientClass = gradients[index % gradients.length];
+        
+        return (
+          <Link key={creator.id} to={`/creators/${creator.address}`}>
+            <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105">
+              <div className={`bg-gradient-to-r ${gradientClass} rounded-xl p-4 h-20 flex items-center gap-4 shadow-lg hover:shadow-xl`}>
+                {/* Creator Avatar */}
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">{creator.name.charAt(0)}</span>
+                  </div>
                 </div>
-                {/* Show rank in top right corner */}
-                <div className="absolute top-2 right-2">
-                  <div className="w-6 h-6 bg-black/50 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs">#{creator.rank}</span>
+
+                {/* Creator Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white font-bold text-base leading-tight truncate mb-1">
+                    {creator.name}
+                  </h3>
+                  <p className="text-white/80 text-sm truncate">
+                    {creator.contentCoins} Content Coins
+                  </p>
+                </div>
+
+                {/* Rank Badge */}
+                <div className="flex-shrink-0">
+                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-2 py-1 rounded-lg">
+                    <span className="text-white text-xs font-bold">#{creator.rank}</span>
                   </div>
                 </div>
               </div>
-              <div className="text-center">
-                <h3 className="text-white font-semibold text-lg mb-1">{creator.name}</h3>
-                <p className="text-gray-400 text-sm">{creator.contentCoins} Content Coins</p>
-              </div>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }
