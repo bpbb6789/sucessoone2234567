@@ -311,7 +311,7 @@ const FeedTabs: React.FC<{
                 : "text-gray-400 font-normal hover:text-gray-300",
             )}
           >
-            Posts
+            Contents
           </button>
           <button
             onClick={() => onTabChange("music")}
