@@ -14,6 +14,7 @@ interface Creator {
   address: string;
   name: string;
   username: string;
+  avatarUrl?: string;
   contentCoins: number;
   totalLikes: number;
   totalComments: number;
@@ -222,124 +223,67 @@ export default function Creators() {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Mobile: Single column horizontal cards */}
-            <div className="md:hidden grid grid-cols-1 gap-3">
-              {filteredCreators.map((creator: Creator, index: number) => {
-                return (
-                  <Link key={creator.id} to={`/creators/${creator.address}`}>
-                    <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02]" data-testid={`creator-card-${creator.id}`}>
-                      <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-4 h-20 flex items-center gap-4 shadow-lg hover:shadow-xl transition-colors">
-                        {/* Creator Avatar */}
-                        <div className="flex-shrink-0">
-                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
-                            {creator.avatarUrl ? (
-                              <img
-                                src={creator.avatarUrl.startsWith('baf') 
-                                  ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
-                                  : creator.avatarUrl
-                                }
-                                alt={creator.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  target.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : null}
-                            <div className={`w-full h-full flex items-center justify-center ${creator.avatarUrl ? 'hidden' : ''}`}>
-                              <span className="text-white font-bold text-lg">{creator.name.charAt(0)}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Creator Info */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-white font-bold text-base leading-tight truncate mb-1">
-                            {creator.name}
-                          </h3>
-                          <p className="text-gray-400 text-sm truncate">
-                            {creator.contentCoins} Content Coins • {creator.totalLikes} Likes
-                          </p>
-                        </div>
-
-                        {/* Rank Badge */}
-                        <div className="flex-shrink-0">
-                          <div className="bg-gray-700 px-2 py-1 rounded-lg">
-                            <span className="text-white text-xs font-bold">#{creator.rank}</span>
-                          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {filteredCreators.map((creator: Creator, index: number) => {
+              return (
+                <Link key={creator.id} to={`/creators/${creator.address}`}>
+                  <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105" data-testid={`creator-card-${creator.id}`}>
+                    <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-square shadow-lg hover:shadow-xl transition-shadow">
+                      {/* Background Image */}
+                      <div className="absolute inset-0">
+                        {creator.avatarUrl ? (
+                          <img
+                            src={creator.avatarUrl.startsWith('baf') 
+                              ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
+                              : creator.avatarUrl
+                            }
+                            alt={creator.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${creator.avatarUrl ? 'hidden' : ''}`}>
+                          <span className="text-white font-bold text-4xl">{creator.name.charAt(0)}</span>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
 
-            {/* Desktop: 2 per row horizontal cards */}
-            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {filteredCreators.map((creator: Creator, index: number) => {
-                return (
-                  <Link key={creator.id} to={`/creators/${creator.address}`}>
-                    <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02]" data-testid={`creator-card-${creator.id}`}>
-                      <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-5 h-24 flex items-center gap-5 shadow-lg hover:shadow-xl transition-colors">
-                        {/* Creator Avatar */}
-                        <div className="flex-shrink-0">
-                          <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
-                            {creator.avatarUrl ? (
-                              <img
-                                src={creator.avatarUrl.startsWith('baf') 
-                                  ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
-                                  : creator.avatarUrl
-                                }
-                                alt={creator.name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  target.nextElementSibling?.classList.remove('hidden');
-                                }}
-                              />
-                            ) : null}
-                            <div className={`w-full h-full flex items-center justify-center ${creator.avatarUrl ? 'hidden' : ''}`}>
-                              <span className="text-white font-bold text-xl">{creator.name.charAt(0)}</span>
-                            </div>
-                          </div>
-                        </div>
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-black/40"></div>
 
-                        {/* Creator Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-white font-bold text-xl leading-tight truncate">
-                              {creator.name}
-                            </h3>
-                            {creator.rank <= 3 && (
-                              <div className="bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-full">
-                                TOP {creator.rank}
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-gray-400 text-sm truncate">
-                            {creator.contentCoins} Content Coins • {creator.totalLikes} Likes • {creator.totalComments} Comments
-                          </p>
-                        </div>
+                      {/* Content */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <h3 className="text-white font-bold text-sm leading-tight truncate mb-1">
+                          {creator.name}
+                        </h3>
+                        <p className="text-white/80 text-xs truncate">
+                          {creator.contentCoins} Coins
+                        </p>
+                      </div>
 
-                        {/* Stats & Rank */}
-                        <div className="flex-shrink-0 text-right">
-                          <div className="bg-gray-700 px-3 py-2 rounded-lg mb-1">
-                            <span className="text-white text-sm font-bold">#{creator.rank}</span>
-                          </div>
-                          <p className="text-gray-400 text-xs">
-                            {formatTimeAgo(creator.lastActive)}
-                          </p>
+                      {/* Rank Badge */}
+                      <div className="absolute top-2 right-2">
+                        <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
+                          <span className="text-white text-xs font-bold">#{creator.rank}</span>
                         </div>
                       </div>
+
+                      {/* Top Badge for High Performers */}
+                      {creator.rank <= 3 && (
+                        <div className="absolute top-2 left-2">
+                          <div className="bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-md">
+                            TOP {creator.rank}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
