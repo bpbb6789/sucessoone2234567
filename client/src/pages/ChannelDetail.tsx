@@ -157,17 +157,52 @@ export default function ChannelDetail() {
                 <h2 className="text-2xl font-bold mb-1">{channel.name}</h2>
                 <div className="text-sm text-muted-foreground space-y-1">
                   <div>@{channel.slug}</div>
-                  <div>{formatNumber(subscriberCount)} subscribers • {videoCount} videos</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      <span>{formatNumber(subscriberCount)} subscribers</span>
+                    </div>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <Video className="w-3 h-3" />
+                      <span>{videoCount} posts</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
             
             <div className="flex-1 hidden md:block">
               <h2 className="text-3xl font-bold mb-2">{channel.name}</h2>
-              <div className="text-muted-foreground mb-2">
-                <span>@{channel.slug}</span> • 
-                <span className="ml-1">{formatNumber(subscriberCount)} subscribers</span> • 
-                <span className="ml-1">{videoCount} videos</span>
+              <div className="text-muted-foreground mb-2 flex items-center gap-2 flex-wrap">
+                <span>@{channel.slug}</span>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  <span>{formatNumber(subscriberCount)} subscribers</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <Video className="w-3 h-3" />
+                  <span>{videoCount} posts</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <a 
+                    href={`https://basescan.org/address/${channel.coinAddress}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                  >
+                    <span className="text-xs">🔗</span>
+                    <span>Basescan</span>
+                  </a>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">🎨</span>
+                  <span>{channel.category}</span>
+                </div>
               </div>
               {channel.description && (
                 <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
@@ -218,42 +253,7 @@ export default function ChannelDetail() {
             </div>
           )}
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            <Card>
-              <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-primary">{formatNumber(subscriberCount)}</div>
-                <div className="text-xs text-muted-foreground">Subscribers</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-primary">{videoCount + shortsCount}</div>
-                <div className="text-xs text-muted-foreground">Total Content</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-primary cursor-pointer hover:text-blue-500">
-                  <a 
-                    href={`https://basescan.org/address/${channel.coinAddress}`}
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-600"
-                  >
-                    View
-                  </a>
-                </div>
-                <div className="text-xs text-muted-foreground">Basescan</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-primary">{channel.category}</div>
-                <div className="text-xs text-muted-foreground">Category</div>
-              </CardContent>
-            </Card>
-          </div>
+          
 
           {/* Content Tabs */}
           <Tabs defaultValue="home" className="w-full">
@@ -264,7 +264,7 @@ export default function ChannelDetail() {
               </TabsTrigger>
               <TabsTrigger value="videos" className="gap-2">
                 <Video className="w-4 h-4" />
-                Videos
+                Posts
               </TabsTrigger>
               <TabsTrigger value="shorts" className="gap-2">
                 <Play className="w-4 h-4" />
@@ -305,10 +305,10 @@ export default function ChannelDetail() {
                   </div>
                 )}
 
-                {/* Recent Videos */}
+                {/* Recent Posts */}
                 {channelContent?.videos && channelContent.videos.length > 1 && (
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Recent videos</h3>
+                    <h3 className="text-lg font-semibold mb-4">Recent posts</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {channelContent.videos.slice(1).map((video) => (
                         <div key={video.id} className="group cursor-pointer">
@@ -336,8 +336,8 @@ export default function ChannelDetail() {
                 {(!channelContent?.videos || channelContent.videos.length === 0) && (
                   <div className="text-center py-12">
                     <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No videos yet</h3>
-                    <p className="text-muted-foreground">This channel hasn't uploaded any videos.</p>
+                    <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
+                    <p className="text-muted-foreground">This channel hasn't uploaded any posts.</p>
                   </div>
                 )}
               </div>
@@ -368,8 +368,8 @@ export default function ChannelDetail() {
               ) : (
                 <div className="text-center py-12">
                   <Video className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No videos yet</h3>
-                  <p className="text-muted-foreground">This channel hasn't uploaded any videos.</p>
+                  <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
+                  <p className="text-muted-foreground">This channel hasn't uploaded any posts.</p>
                 </div>
               )}
             </TabsContent>
@@ -449,7 +449,7 @@ export default function ChannelDetail() {
                     </div>
                     <div className="p-4 bg-muted rounded-lg">
                       <div className="text-2xl font-bold">{videoCount}</div>
-                      <div className="text-sm text-muted-foreground">videos</div>
+                      <div className="text-sm text-muted-foreground">posts</div>
                     </div>
                   </div>
                 </div>
