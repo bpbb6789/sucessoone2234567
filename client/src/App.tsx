@@ -88,7 +88,7 @@ function AppContent() {
             <Switch>
               <Route path="/" component={ContentCoin} />
               <Route path="/subscriptions" component={Subscriptions} />
-              <Route path="/profile/subscribers" element={<Subscribers />} />
+              <Route path="/profile/subscribers" component={Subscribers} />
               <Route path="/library" component={Library} />
               <Route path="/history" component={History} />
               <Route path="/liked" component={LikedVideos} />

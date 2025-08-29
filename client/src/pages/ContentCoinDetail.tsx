@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount } from "wagmi";
+import { useReadContract } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Play,
@@ -108,8 +109,8 @@ export default function ContentCoinDetail() {
     // First, try to use creator coin data if available
     if (creatorCoin) {
       return {
-        id: creatorCoin.memeTokenAddress || creatorCoin.id,
-        address: creatorCoin.memeTokenAddress || creatorCoin.id,
+        id: creatorCoin.coinAddress || creatorCoin.id,
+        address: creatorCoin.coinAddress || creatorCoin.id,
         name: creatorCoin.title || creatorCoin.coinName,
         symbol: creatorCoin.coinSymbol,
         description: creatorCoin.description || `${creatorCoin.coinName} content coin`,
@@ -119,10 +120,10 @@ export default function ContentCoinDetail() {
         volume24h: creatorCoin.volume24h || '0', 
         holders: creatorCoin.holders || 0,
         change24h: 0, // Calculate from price history
-        createdAt: new Date(creatorCoin.createdAt),
+        createdAt: creatorCoin.createdAt ? new Date(creatorCoin.createdAt) : new Date(),
         isOnBondingCurve: creatorCoin.status === 'deployed',
         progress: parseInt(creatorCoin.bondingCurveProgress || '0'),
-        bondingCurveAddress: creatorCoin.memeTokenAddress,
+        bondingCurveAddress: creatorCoin.coinAddress,
         imageUrl: `https://gateway.pinata.cloud/ipfs/${creatorCoin.mediaCid}`,
         contentType: creatorCoin.contentType as 'image' | 'video' | 'audio' | 'text',
         creatorEarnings: '0' // Calculate from trades
