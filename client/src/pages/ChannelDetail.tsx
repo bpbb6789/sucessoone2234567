@@ -222,14 +222,14 @@ export default function ChannelDetail() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <Card>
               <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-primary">$0</div>
-                <div className="text-xs text-muted-foreground">Market Cap</div>
+                <div className="text-lg font-bold text-primary">{formatNumber(subscriberCount)}</div>
+                <div className="text-xs text-muted-foreground">Subscribers</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-primary">0</div>
-                <div className="text-xs text-muted-foreground">Holders</div>
+                <div className="text-lg font-bold text-primary">{videoCount + shortsCount}</div>
+                <div className="text-xs text-muted-foreground">Total Content</div>
               </CardContent>
             </Card>
             <Card>
