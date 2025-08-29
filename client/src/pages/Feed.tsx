@@ -542,22 +542,22 @@ export default function Feed() {
     if (creatorCoins && creatorCoins.length > 0) {
       const reels: ContentReel[] = creatorCoins.map((coin, index) => ({
         id: coin.id,
-        title: coin.title || `${coin.symbol} Content Coin`,
-        description: coin.description || `Exclusive content from ${coin.symbol} creator. Join the community and unlock premium content!`,
-        imageUri: coin.imageUri || `/nfts/${(index % 9) + 1}.jpeg`,
+        title: coin.title || `${coin.coinSymbol} Content Coin`,
+        description: coin.description || `Exclusive content from ${coin.coinSymbol} creator. Join the community and unlock premium content!`,
+        imageUri: coin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` : `/nfts/${(index % 9) + 1}.jpeg`,
         creator: {
-          address: coin.createdBy,
-          name: coin.creatorName || '',
-          avatar: `/nfts/${(index % 9) + 1}.jpeg`
+          address: coin.creatorAddress,
+          name: '', // No creator name field in schema
+          avatar: coin.thumbnailCid ? `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}` : `/nfts/${(index % 9) + 1}.jpeg`
         },
-        coinSymbol: coin.symbol,
-        marketCap: `$${(Math.random() * 1000 + 100).toFixed(0)}K`,
-        price: `${(Math.random() * 0.01 + 0.001).toFixed(6)}`,
+        coinSymbol: coin.coinSymbol,
+        marketCap: coin.marketCap || `$${(Math.random() * 1000 + 100).toFixed(0)}K`,
+        price: coin.currentPrice || `${(Math.random() * 0.01 + 0.001).toFixed(6)}`,
         change24h: Math.random() > 0.5 ? `+${(Math.random() * 50).toFixed(1)}%` : `-${(Math.random() * 20).toFixed(1)}%`,
-        holders: Math.floor(Math.random() * 1000) + 50,
-        likes: Math.floor(Math.random() * 5000) + 100,
-        comments: Math.floor(Math.random() * 500) + 20,
-        shares: Math.floor(Math.random() * 200) + 10,
+        holders: coin.holders || Math.floor(Math.random() * 1000) + 50,
+        likes: coin.likes || Math.floor(Math.random() * 5000) + 100,
+        comments: coin.comments || Math.floor(Math.random() * 500) + 20,
+        shares: coin.shares || Math.floor(Math.random() * 200) + 10,
         views: Math.floor(Math.random() * 50000) + 1000,
       }));
       setContentsData(reels);
