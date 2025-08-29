@@ -318,7 +318,7 @@ export default function ContentCoin() {
             <div>
               <h2 className="text-xl font-bold text-white mb-2">Now Trending</h2>
             </div>
-            <Link to="/create-content-coin">
+            <Link to="/contents">
               <Button 
                 variant="ghost" 
                 className="text-green-400 hover:text-green-300 text-sm"

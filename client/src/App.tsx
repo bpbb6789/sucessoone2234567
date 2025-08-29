@@ -45,10 +45,10 @@ import CreateToken from '@/pages/CreateToken'
 import CreatorCoins from '@/pages/CreatorCoins'
 import CreateContentCoin from '@/pages/CreateContentCoin'
 import ContentCoin from '@/pages/ContentCoin'
-import TokenDetail from '@/pages/TokenDetail'
 import ContentCoinDetail from "./pages/ContentCoinDetail";
 import NotFound from '@/pages/not-found'
 import Channels from "./pages/Channels";
+import Contents from "@/pages/Contents";
 
 import Creators from '@/pages/Creators';
 import Leaderboard from './pages/Leaderboard';
@@ -103,7 +103,9 @@ function AppContent() {
               <Route path="/watch/:id" component={Watch} />
               <Route path="/creatorcoins" component={CreatorCoins} />
               <Route path="/contentcoin" component={ContentCoin} />
+              <Route path="/contents" component={Contents} />
               <Route path="/content/:network/:address" component={ContentCoinDetail} />
+              <Route path="/content/:id" component={ContentDetail} />
               <Route path="/tokenize" component={Tokenize} />
               <Route path="/create" component={Create} />
               <Route path="/admin" component={Admin} />
@@ -114,7 +116,6 @@ function AppContent() {
               <Route path="/channel/:slug/manager" component={ChannelManager} />
               <Route path="/dashboard/import" component={ContentImport} />
               <Route path="/my-content" component={MyContent} />
-              <Route path="/content/:id" component={ContentDetail} />
               <Route path="/channel/:slug" component={ChannelDetail} />
               <Route path="/:type/:id" component={PostDetail} />
               <Route path="/doc" component={Doc} />
