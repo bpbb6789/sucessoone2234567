@@ -198,24 +198,12 @@ export default function ContentCoin() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="space-y-8">
-        {/* Header */}
-        <div className="space-y-4">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Now Trending
-            </h1>
-            <p className="text-gray-400 text-lg">
-              Your tokenized content collection • {filteredContent.length} items
-            </p>
-          </div>
-
-          {/* Category Filter Chips */}
-          <div className="flex flex-col gap-4">
-            <CategoryChips 
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
-            />
-          </div>
+        {/* Category Filter Chips */}
+        <div className="mb-6">
+          <CategoryChips 
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
         </div>
 
         {/* Top Channels Section */}

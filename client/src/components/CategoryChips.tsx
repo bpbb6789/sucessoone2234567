@@ -9,14 +9,14 @@ interface CategoryChipsProps {
 
 export function CategoryChips({ selectedCategory, onCategoryChange }: CategoryChipsProps) {
   return (
-    <div className="px-4 py-2 border-b border-gray-200 dark:border-youtube-dark-secondary">
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+    <div className="px-2 py-1">
+      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {CATEGORIES.map((category) => (
           <button
             key={category}
             onClick={() => onCategoryChange(category)}
             className={cn(
-              "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 border",
+              "flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-all duration-200 border",
               selectedCategory === category
                 ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
                 : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700"
