@@ -9,12 +9,15 @@ import {
   VolumeX,
   MoreVertical,
   ArrowLeft,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
+import { useCreatorCoins } from "@/hooks/useCreatorCoins";
 
 interface FeedItem {
   id: string;
@@ -33,6 +36,27 @@ interface FeedItem {
   comments: number;
   shares: number;
   isLiked: boolean;
+}
+
+interface ContentReel {
+  id: string;
+  title: string;
+  description: string;
+  imageUri: string;
+  creator: {
+    address: string;
+    name: string;
+    avatar?: string;
+  };
+  coinSymbol: string;
+  marketCap: string;
+  price: string;
+  change24h: string;
+  holders: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  views: number;
 }
 
 // Mock data for the feed
@@ -130,6 +154,151 @@ const mockFeedData: FeedItem[] = [
     isLiked: false,
   },
 ];
+
+const ContentReelCard: React.FC<{
+  item: ContentReel;
+  isActive: boolean;
+  onLike: (id: string) => void;
+}> = ({ item, isActive, onLike }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+
+  const formatCount = (count: number) => {
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M`;
+    } else if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
+    return count.toString();
+  };
+
+  const formatPrice = (price: string) => {
+    const num = parseFloat(price);
+    if (num < 0.001) {
+      return `$${num.toFixed(6)}`;
+    }
+    return `$${num.toFixed(4)}`;
+  };
+
+  return (
+    <div className="relative w-full h-screen bg-black flex items-center justify-center snap-start">
+      {/* Content Background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${item.imageUri})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+      </div>
+
+      {/* Play/Pause Overlay */}
+      <button
+        onClick={() => setIsPlaying(!isPlaying)}
+        className="absolute inset-0 z-10 flex items-center justify-center"
+      >
+        {!isPlaying && (
+          <Play className="w-16 h-16 text-white opacity-80 fill-white" />
+        )}
+      </button>
+
+      {/* Content Info - Left Side */}
+      <div className="absolute bottom-0 left-0 p-3 text-white z-20 max-w-[70%]">
+        <div className="flex items-center gap-2 mb-3">
+          <Avatar className="w-10 h-10 border-2 border-white/20">
+            <AvatarImage src={item.creator.avatar || `/nfts/${Math.floor(Math.random() * 9) + 1}.jpeg`} />
+            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
+              {item.creator.name ? item.creator.name[0] : item.creator.address.slice(2, 4).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-semibold text-sm">
+              {item.creator.name || `${item.creator.address.slice(0, 6)}...${item.creator.address.slice(-4)}`}
+            </p>
+            <p className="text-xs text-gray-300">{item.coinSymbol}</p>
+          </div>
+          <Button
+            size="sm"
+            className="ml-2 bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-1 text-xs h-7 backdrop-blur-sm border border-white/30"
+          >
+            Follow
+          </Button>
+        </div>
+
+        <div className="mb-3">
+          <h3 className="font-bold text-lg mb-1">{item.title}</h3>
+          <p className="text-sm leading-tight opacity-90">{item.description}</p>
+        </div>
+
+        {/* Token Stats */}
+        <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-1">
+            <TrendingUp className="w-3 h-3" />
+            <span>{formatPrice(item.price)}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            <span>{formatCount(item.holders)} holders</span>
+          </div>
+          <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm">
+            <span className={cn(
+              "text-xs font-medium",
+              item.change24h.startsWith('+') ? "text-green-400" : "text-red-400"
+            )}>
+              {item.change24h}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions - Right Side */}
+      <div className="absolute bottom-0 right-0 p-3 z-20">
+        <div className="flex flex-col items-center gap-4">
+          <button
+            onClick={() => onLike(item.id)}
+            className="flex flex-col items-center gap-1"
+          >
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
+              <Heart className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white text-xs font-medium">
+              {formatCount(item.likes)}
+            </span>
+          </button>
+
+          <button className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
+              <MessageCircle className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white text-xs font-medium">
+              {formatCount(item.comments)}
+            </span>
+          </button>
+
+          <button className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
+              <Share className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white text-xs font-medium">
+              {formatCount(item.shares)}
+            </span>
+          </button>
+
+          <button className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white text-xs font-medium">Trade</span>
+          </button>
+
+          <button className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
+              <MoreVertical className="w-6 h-6 text-white" />
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const FeedVideoCard: React.FC<{
   item: FeedItem;
@@ -357,12 +526,43 @@ const FeedTabs: React.FC<{
 
 export default function Feed() {
   const [feedData, setFeedData] = useState<FeedItem[]>(mockFeedData);
+  const [contentsData, setContentsData] = useState<ContentReel[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("foryou");
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [, setLocation] = useLocation();
+  
+  // Fetch content coins data
+  const { data: creatorCoins, isLoading: coinsLoading } = useCreatorCoins();
+
+  // Transform creator coins into content reels
+  useEffect(() => {
+    if (creatorCoins && creatorCoins.length > 0) {
+      const reels: ContentReel[] = creatorCoins.map((coin, index) => ({
+        id: coin.id,
+        title: coin.title || `${coin.symbol} Content Coin`,
+        description: coin.description || `Exclusive content from ${coin.symbol} creator. Join the community and unlock premium content!`,
+        imageUri: coin.imageUri || `/nfts/${(index % 9) + 1}.jpeg`,
+        creator: {
+          address: coin.createdBy,
+          name: coin.creatorName || '',
+          avatar: `/nfts/${(index % 9) + 1}.jpeg`
+        },
+        coinSymbol: coin.symbol,
+        marketCap: `$${(Math.random() * 1000 + 100).toFixed(0)}K`,
+        price: `${(Math.random() * 0.01 + 0.001).toFixed(6)}`,
+        change24h: Math.random() > 0.5 ? `+${(Math.random() * 50).toFixed(1)}%` : `-${(Math.random() * 20).toFixed(1)}%`,
+        holders: Math.floor(Math.random() * 1000) + 50,
+        likes: Math.floor(Math.random() * 5000) + 100,
+        comments: Math.floor(Math.random() * 500) + 20,
+        shares: Math.floor(Math.random() * 200) + 10,
+        views: Math.floor(Math.random() * 50000) + 1000,
+      }));
+      setContentsData(reels);
+    }
+  }, [creatorCoins]);
 
   const handleBack = () => {
     setLocation("/");
@@ -515,16 +715,47 @@ export default function Feed() {
         onScroll={handleScroll}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {feedData.map((item, index) => (
-          <FeedVideoCard
-            key={item.id}
-            item={item}
-            isActive={index === currentIndex}
-            onLike={handleLike}
-          />
-        ))}
+        {activeTab === "contents" ? (
+          // Render Contents as reels
+          <>
+            {coinsLoading ? (
+              <div className="h-screen flex items-center justify-center bg-black">
+                <div className="text-white text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                  <p>Loading content reels...</p>
+                </div>
+              </div>
+            ) : contentsData.length > 0 ? (
+              contentsData.map((item, index) => (
+                <ContentReelCard
+                  key={item.id}
+                  item={item}
+                  isActive={index === currentIndex}
+                  onLike={handleLike}
+                />
+              ))
+            ) : (
+              <div className="h-screen flex items-center justify-center bg-black">
+                <div className="text-white text-center">
+                  <p className="text-xl mb-2">No content reels yet</p>
+                  <p className="text-gray-400">Create your first content coin to get started!</p>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          // Render regular feed for other tabs
+          feedData.map((item, index) => (
+            <FeedVideoCard
+              key={item.id}
+              item={item}
+              isActive={index === currentIndex}
+              onLike={handleLike}
+            />
+          ))
+        )}
 
-        {isLoading && (
+        {isLoading && activeTab !== "contents" && (
           <div className="h-screen flex items-center justify-center bg-black">
             <div className="text-white text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
