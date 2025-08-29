@@ -66,5 +66,18 @@ mode = "sequential"
 task = "shell.exec"
 args = "npm run dev"
 
+[[workflows.workflow]]
+name = "Wake Database"
+author = 47037283
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "curl -s \"$DATABASE_URL\" || echo \"Database wakeup attempt\""
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+
 [agent]
 integrations = ["javascript_log_in_with_replit==1.0.0", "javascript_mem_db==1.0.0", "javascript_database==1.0.0", "javascript_websocket==1.0.0"]

@@ -18,27 +18,46 @@ console.log("DATABASE_URL starts with:", process.env.DATABASE_URL?.substring(0, 
 // Use connection pooling for better stability with Neon
 const databaseUrl = process.env.DATABASE_URL;
 
-// Use the original database URL directly since it already contains pooler configuration
+// Use connection pooling URL for better stability
 let poolUrl = databaseUrl;
+if (databaseUrl.includes('.us-east-2') && !databaseUrl.includes('-pooler')) {
+  poolUrl = databaseUrl.replace('.us-east-2', '-pooler.us-east-2');
+}
 
 export const pool = new Pool({ 
   connectionString: poolUrl,
-  max: 10,
+  max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
+  statement_timeout: 30000,
+  query_timeout: 30000,
 });
 export const db = drizzle({ client: pool, schema });
 
 export async function testDatabaseConnection(): Promise<boolean> {
-  try {
-    const client = await pool.connect();
-    await client.query('SELECT 1');
-    client.release();
-    console.log('✓ Database connection successful');
-    return true;
-  } catch (error) {
-    console.error('✗ Database connection failed:', error);
-    console.error('Check your DATABASE_URL in Secrets and ensure it includes the correct password');
-    return false;
+  let retryCount = 0;
+  const maxRetries = 3;
+
+  while (retryCount < maxRetries) {
+    try {
+      const client = await pool.connect();
+      await client.query('SELECT 1');
+      client.release();
+      console.log('✓ Database connection successful');
+      return true;
+    } catch (error: any) {
+      retryCount++;
+      console.error(`✗ Database connection attempt ${retryCount} failed:`, error.message);
+      
+      if (retryCount >= maxRetries) {
+        console.error('Check your DATABASE_URL in Secrets and ensure it includes the correct password');
+        console.error('You may need to reset your database password in the Replit Database tab');
+        return false;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+    }
   }
+  return false;
 }

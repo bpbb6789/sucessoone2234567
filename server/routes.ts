@@ -35,6 +35,29 @@ const prisma = new PrismaClient();
 // Helper function to handle database errors gracefully
 function handleDatabaseError(error: any, operation: string) {
   console.error(`Database error in ${operation}:`, error);
+  
+  // Check if it's an authentication error
+  if (error?.message?.includes('password authentication failed')) {
+    console.error('❌ Database authentication failed - check DATABASE_URL password in Secrets');
+    return {
+      error: true,
+      message: "Database authentication failed. Please check your database configuration.",
+      operation,
+      needsDbReset: true
+    };
+  }
+  
+  // Check if it's an endpoint not found error
+  if (error?.message?.includes('The requested endpoint could not be found')) {
+    console.error('❌ Database endpoint not found - database may be sleeping or misconfigured');
+    return {
+      error: true,
+      message: "Database endpoint not accessible. Database may be sleeping.",
+      operation,
+      needsDbWakeup: true
+    };
+  }
+  
   return {
     error: true,
     message: "Database temporarily unavailable",

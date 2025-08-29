@@ -19,10 +19,16 @@ import {
   type Pad, type InsertPad,
   type PadLike, type InsertPadLike,
   type PadComment, type InsertPadComment,
+  type Notification, type InsertNotification,
+  type ChannelAnalytics, type InsertChannelAnalytics,
+  type EnhancedSubscription, type InsertEnhancedSubscription,
+  type ChannelComment, type InsertChannelComment,
+  type SearchFilter, type InsertSearchFilter,
   type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel,
   channels, videos, shorts, playlists, musicAlbums, comments, subscriptions,
   videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles,
-  tokens, tokenSales, web3Channels, contentImports, pads, padLikes, padComments
+  tokens, tokenSales, web3Channels, contentImports, pads, padLikes, padComments,
+  notifications, channelAnalytics, enhancedSubscriptions, channelComments, searchFilters
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -150,12 +156,75 @@ export interface IStorage {
   createPadComment(comment: InsertPadComment): Promise<PadComment>;
   deletePadComment(id: string): Promise<void>;
 
+  // Notifications
+  getNotifications(userAddress: string, limit?: number, unreadOnly?: boolean): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: string): Promise<void>;
+  markAllNotificationsAsRead(userAddress: string): Promise<void>;
+  getUnreadNotificationCount(userAddress: string): Promise<number>;
+  deleteNotification(id: string): Promise<void>;
+
+  // Channel Analytics
+  createChannelAnalytics(analytics: InsertChannelAnalytics): Promise<ChannelAnalytics>;
+  getChannelAnalytics(channelId?: string, web3ChannelId?: string): Promise<ChannelAnalytics[]>;
+  getChannelSubscriberCount(channelId?: string, web3ChannelId?: string): Promise<number>;
+
+  // Enhanced Subscriptions
+  createEnhancedSubscription(subscription: InsertEnhancedSubscription): Promise<EnhancedSubscription>;
+  getEnhancedSubscription(subscriberAddress: string, channelId?: string, web3ChannelId?: string): Promise<EnhancedSubscription | undefined>;
+  deleteEnhancedSubscription(subscriberAddress: string, channelId?: string, web3ChannelId?: string): Promise<void>;
+  updateSubscriptionPreferences(id: string, preferences: Partial<InsertEnhancedSubscription>): Promise<void>;
+  getSubscriptionsByAddress(subscriberAddress: string): Promise<EnhancedSubscription[]>;
+
+  // Channel Comments
+  createChannelComment(comment: InsertChannelComment): Promise<ChannelComment>;
+  getChannelComments(channelId?: string, web3ChannelId?: string): Promise<ChannelComment[]>;
+  likeChannelComment(commentId: string): Promise<void>;
+  deleteChannelComment(id: string): Promise<void>;
+  pinChannelComment(id: string, isPinned: boolean): Promise<void>;
+
+  // Search
+  saveSearchFilter(filter: InsertSearchFilter): Promise<SearchFilter>;
+  getUserSearchHistory(userAddress: string): Promise<SearchFilter[]>;
+  searchChannelsAdvanced(query: string, filters?: Partial<InsertSearchFilter>): Promise<Web3Channel[]>;
+
 }
 
 export class DatabaseStorage implements IStorage {
   // Assuming 'db' is initialized elsewhere and accessible.
   // The following implementation assumes Drizzle's 'db' object is available.
   private db = db;
+
+  // Helper method to retry database operations
+  private async retryOperation<T>(operation: () => Promise<T>, maxRetries: number = 2): Promise<T> {
+    let lastError: any;
+    
+    for (let i = 0; i <= maxRetries; i++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        lastError = error;
+        
+        // Don't retry for validation errors
+        if (error.name === 'ZodError') {
+          throw error;
+        }
+        
+        // If it's the last attempt, throw the error
+        if (i === maxRetries) {
+          console.error(`❌ Database operation failed after ${maxRetries + 1} attempts:`, error);
+          throw error;
+        }
+        
+        // Wait before retry (exponential backoff)
+        const delay = Math.pow(2, i) * 1000;
+        console.log(`⏳ Database operation failed, retrying in ${delay}ms... (attempt ${i + 1}/${maxRetries + 1})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw lastError;
+  }
 
   // Channel methods
   async getChannel(id: string): Promise<Channel | undefined> {
@@ -603,6 +672,57 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Notifications Implementation
+  async getNotifications(userAddress: string, limit: number = 50, unreadOnly: boolean = false): Promise<Notification[]> {
+    let query = this.db.select().from(notifications)
+      .where(eq(notifications.recipientAddress, userAddress));
+    
+    if (unreadOnly) {
+      query = query.where(eq(notifications.isRead, false));
+    }
+    
+    return await query.orderBy(desc(notifications.createdAt)).limit(limit);
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await this.db.insert(notifications).values({
+      id: randomUUID(),
+      createdAt: new Date(),
+      isRead: false,
+      ...notification,
+    }).returning();
+    return newNotification;
+  }
+
+  async markNotificationAsRead(id: string): Promise<void> {
+    await this.db.update(notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(eq(notifications.id, id));
+  }
+
+  async markAllNotificationsAsRead(userAddress: string): Promise<void> {
+    await this.db.update(notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(and(
+        eq(notifications.recipientAddress, userAddress),
+        eq(notifications.isRead, false)
+      ));
+  }
+
+  async getUnreadNotificationCount(userAddress: string): Promise<number> {
+    const result = await this.db.select({ count: count() })
+      .from(notifications)
+      .where(and(
+        eq(notifications.recipientAddress, userAddress),
+        eq(notifications.isRead, false)
+      ));
+    return result[0]?.count || 0;
+  }
+
+  async deleteNotification(id: string): Promise<void> {
+    await this.db.delete(notifications).where(eq(notifications.id, id));
+  }
+
   // Subscription methods
   async createSubscription(data: InsertSubscription): Promise<Subscription> {
     try {
@@ -873,7 +993,9 @@ export class DatabaseStorage implements IStorage {
     return newChannel;
   }
   async getAllWeb3Channels(): Promise<Web3Channel[]> {
-    return await this.db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
+    return await this.retryOperation(async () => {
+      return await this.db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
+    });
   }
 
   // Content Imports - Placeholder implementations
