@@ -3,13 +3,13 @@ import { createServer, type Server } from "http";
 import multer from 'multer';
 import { storage } from "./storage";
 import { uploadFileToIPFS, uploadJSONToIPFS } from './ipfs';
-import { 
-  createZoraMetadata, 
-  createCreatorCoin, 
-  getCoinPrice, 
+import {
+  createZoraMetadata,
+  createCreatorCoin,
+  getCoinPrice,
   getBondingCurveProgress,
   validateContentForTokenization,
-  generateThumbnail 
+  generateThumbnail
 } from './zora';
 import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema,
@@ -23,10 +23,11 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
-import { contentImports, creatorCoins, creatorCoinLikes, creatorCoinComments, creatorCoinTrades } from "@shared/schema";
+import { contentImports, creatorCoins, creatorCoinLikes, creatorCoinComments, creatorCoinTrades, web3Channels } from "@shared/schema";
 import { getDopplerService, type PadTokenConfig } from "./doppler";
 import { PrismaClient } from '../lib/generated/prisma/index.js';
 import { getTelegramService } from "./services/telegramService";
+import { adminAuth } from "./middleware/adminAuth"; // Assuming adminAuth middleware is defined elsewhere
 
 const prisma = new PrismaClient();
 
@@ -404,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
-      
+
       const feed = await storage.getSubscriptionFeed(req.params.channelId, limit, offset);
       res.json(feed);
     } catch (error) {
@@ -415,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/subscriptions", async (req, res) => {
     try {
       const validatedData = insertSubscriptionSchema.parse(req.body);
-      
+
       // Prevent self-subscription
       if (validatedData.subscriberChannelId === validatedData.subscribedToChannelId) {
         return res.status(400).json({ message: "Cannot subscribe to yourself" });
@@ -437,7 +438,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/subscriptions", async (req, res) => {
     try {
       const { subscriberChannelId, subscribedToChannelId } = req.body;
-      
+
       if (!subscriberChannelId || !subscribedToChannelId) {
         return res.status(400).json({ message: "Missing required parameters" });
       }
@@ -808,13 +809,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Token holder count endpoint
-  app.post('/api/token-holders', async (req, res) => {
+  // Token holders endpoint
+  app.post("/api/token-holders", async (req, res) => {
     try {
       const { tokenAddress } = req.body;
 
       if (!tokenAddress) {
-        return res.status(400).json({ error: true, message: 'Token address is required' });
+        return res.status(400).json({ error: 'Token address is required' });
       }
 
       // Use GraphQL to get transaction data and count unique holders
@@ -1017,9 +1018,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error: any) {
       console.error('❌ Zora channel creation failed:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to create Zora channel",
-        details: error.message 
+        details: error.message
       });
     }
   });
@@ -1412,17 +1413,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import the shorts processor
       const { shortsProcessor } = await import('./shortsProcessor');
-      
+
       // For reel/video content, use enhanced processing
       if (contentType === 'reel') {
         console.log(`Processing shorts content from: ${url}`);
-        
+
         // Process the video URL
         const processResult = await shortsProcessor.processShorts(url);
-        
+
         if (!processResult.success) {
-          return res.status(400).json({ 
-            message: processResult.error || "Failed to process shorts content" 
+          return res.status(400).json({
+            message: processResult.error || "Failed to process shorts content"
           });
         }
 
@@ -1447,7 +1448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // For public imports, don't save to database, just return IPFS data
         if (!channelId || channelId === 'public') {
           const publicId = `public-${Date.now()}`;
-          
+
           // For public imports, also try to create a creator coin entry
           try {
             await db.insert(creatorCoins).values({
@@ -1657,7 +1658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ==================== PAD ROUTES (pump.fun style tokens) ====================
+  // ==================== PADROUTES (pump.fun style tokens) ====================
 
   // Get all pads (with optional deployed filter)
   app.get("/api/pads", async (req, res) => {
@@ -1666,8 +1667,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Filter for deployed pads if requested
       if (req.query.deployed === 'true') {
-        pads = pads.filter(pad => 
-          pad.status === 'deployed' || 
+        pads = pads.filter(pad =>
+          pad.status === 'deployed' ||
           pad.status === 'graduated' ||
           (pad.tokenAddress && pad.deploymentTxHash)
         );
@@ -1863,7 +1864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (pad.status !== 'pending') {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: `Pad is in ${pad.status} status, cannot deploy`,
           currentStatus: pad.status
         });
@@ -1979,10 +1980,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/creator-coins/upload", upload.single('file'), async (req, res) => {
     console.log('📤 Creator coin upload started');
     console.log('Request body:', req.body);
-    console.log('File info:', req.file ? { 
-      name: req.file.originalname, 
-      size: req.file.size, 
-      mimetype: req.file.mimetype 
+    console.log('File info:', req.file ? {
+      name: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
     } : 'No file');
 
     try {
@@ -1991,10 +1992,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file provided" });
       }
 
-      const { 
-        creatorAddress, title, description, contentType, 
+      const {
+        creatorAddress, title, description, contentType,
         coinName, coinSymbol, currency, startingMarketCap,
-        twitter, discord, website 
+        twitter, discord, website
       } = req.body;
 
       console.log('📋 Upload parameters:', {
@@ -2003,12 +2004,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate required fields
       if (!creatorAddress || !title || !coinName || !coinSymbol || !contentType) {
-        console.error('❌ Missing required fields:', { 
-          creatorAddress: !!creatorAddress, 
-          title: !!title, 
-          coinName: !!coinName, 
-          coinSymbol: !!coinSymbol, 
-          contentType: !!contentType 
+        console.error('❌ Missing required fields:', {
+          creatorAddress: !!creatorAddress,
+          title: !!title,
+          coinName: !!coinName,
+          coinSymbol: !!coinSymbol,
+          contentType: !!contentType
         });
         return res.status(400).json({ message: "Missing required fields" });
       }
@@ -2033,7 +2034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const thumbnailCid = await generateThumbnail(contentType, mediaCid);
       console.log('Thumbnail CID:', thumbnailCid);
 
-      // Create Zora metadata 
+      // Create Zora metadata
       console.log('📝 Creating Zora metadata...');
       const imageUrl = `https://gateway.pinata.cloud/ipfs/${mediaCid}`;
 
@@ -2135,8 +2136,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`⏳ Updating coin status to 'creating'...`);
       // Update status to creating and clear any previous error info
       await db.update(creatorCoins)
-        .set({ 
-          status: 'creating', 
+        .set({
+          status: 'creating',
           updatedAt: new Date(),
           deploymentTxHash: null // Clear previous failed tx hash if any
         })
@@ -2172,7 +2173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (error.message?.includes('Metadata fetch failed') || error.message?.includes('429')) {
           console.log('🔄 Retrying deployment after IPFS gateway issue...');
           await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-          
+
           deploymentResult = await createCreatorCoin({
             name: coinData.coinName,
             symbol: coinData.coinSymbol,
@@ -2218,7 +2219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             imageUrl: updatedCoin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${updatedCoin.mediaCid}` : undefined,
             createdAt: updatedCoin.createdAt?.toISOString()
           });
-          
+
           if (notificationSent) {
             console.log('✅ Telegram deployment notification sent successfully');
           } else {
@@ -2305,7 +2306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Mock like functionality - in production, store in database
       console.log(`User ${userAddress} liked coin ${coinId}`);
-      
+
       res.json({ success: true, message: "Content liked successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to like content" });
@@ -2320,9 +2321,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/stats', async (req, res) => {
     try {
       console.log('🔍 Fetching admin stats...');
-      
+
       // In production, add proper admin authentication middleware
-      
+
       // Get total users (unique creator addresses)
       const totalUsers = await db.select({ count: sql`COUNT(DISTINCT ${creatorCoins.creatorAddress})` })
         .from(creatorCoins);
@@ -2356,7 +2357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/users', async (req, res) => {
     try {
       console.log('🔍 Fetching admin users...');
-      
+
       // Get unique creators with their stats
       const users = await db
         .select({
@@ -2402,7 +2403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/channels', async (req, res) => {
     try {
       const channels = await storage.getAllWeb3Channels();
-      
+
       const adminChannels = channels.map((channel: any) => ({
         id: channel.id,
         name: channel.name,
@@ -2489,10 +2490,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/admin/channels/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       // Delete from web3_channels table
       await db.delete(web3Channels).where(eq(web3Channels.id, id));
-      
+
       res.json({ success: true, message: 'Channel deleted successfully' });
     } catch (error) {
       console.error('Error deleting channel:', error);
@@ -2504,10 +2505,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/admin/content-coins/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      
+
       // Delete from creator_coins table
       await db.delete(creatorCoins).where(eq(creatorCoins.id, id));
-      
+
       res.json({ success: true, message: 'Content coin deleted successfully' });
     } catch (error) {
       console.error('Error deleting content coin:', error);
@@ -2529,12 +2530,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 1. Check contract balance
       // 2. Call withdraw function on contracts
       // 3. Transfer fees to admin wallet
-      
+
       console.log(`Admin withdrawing ${amount} ETH in fees`);
-      
+
       // Mock successful withdrawal
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         message: `Successfully withdrew ${amount} ETH`,
         txHash: `0x${Math.random().toString(16).substr(2, 64)}`
       });
@@ -2556,9 +2557,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // In production, implement user status management
       // This could involve updating a users table or blacklist
-      
+
       console.log(`Admin updated user ${address} status to ${status}`);
-      
+
       res.json({ success: true, message: `User status updated to ${status}` });
     } catch (error) {
       console.error('Error updating user status:', error);
@@ -2588,10 +2589,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/settings', async (req, res) => {
     try {
       const settings = req.body;
-      
+
       // In production, save to database
       console.log('Admin updated platform settings:', settings);
-      
+
       res.json({ success: true, message: 'Settings updated successfully' });
     } catch (error) {
       console.error('Error updating admin settings:', error);
@@ -2708,7 +2709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(creators);
     } catch (error) {
       console.error('❌ Error fetching creators:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to fetch creators',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -2726,7 +2727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(allCoins);
     } catch (error) {
       console.error('❌ Error fetching creator coins:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to fetch creator coins',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -2736,19 +2737,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ====================
   // NOTIFICATIONS SYSTEM API
   // ====================
-  
+
   // Get user notifications
   app.get('/api/notifications/:userAddress', async (req, res) => {
     try {
       const { userAddress } = req.params;
       const { limit = 50, unreadOnly = false } = req.query;
-      
+
       const notifications = await storage.getNotifications(
-        userAddress, 
-        parseInt(limit as string), 
+        userAddress,
+        parseInt(limit as string),
         unreadOnly === 'true'
       );
-      
+
       res.json(notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -2812,27 +2813,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ====================
-  // ENHANCED SUBSCRIPTIONS API  
+  // ENHANCED SUBSCRIPTIONS API
   // ====================
 
   // Subscribe to channel with preferences
   app.post('/api/subscriptions/enhanced', async (req, res) => {
     try {
       const validatedData = insertEnhancedSubscriptionSchema.parse(req.body);
-      
+
       // Check if subscription already exists
       const existing = await storage.getEnhancedSubscription(
         validatedData.subscriberAddress,
         validatedData.channelId,
         validatedData.web3ChannelId
       );
-      
+
       if (existing) {
         return res.status(409).json({ error: 'Subscription already exists' });
       }
-      
+
       const subscription = await storage.createEnhancedSubscription(validatedData);
-      
+
       // Create notification for channel owner
       const channelId = validatedData.channelId || validatedData.web3ChannelId;
       if (channelId) {
@@ -2847,7 +2848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actionUrl: validatedData.channelId ? `/channels/${validatedData.channelId}` : `/channel/${channelId}`
         });
       }
-      
+
       res.status(201).json(subscription);
     } catch (error: any) {
       if (error.name === 'ZodError') {
@@ -2862,13 +2863,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/subscriptions/enhanced', async (req, res) => {
     try {
       const { subscriberAddress, channelId, web3ChannelId } = req.query;
-      
+
       await storage.deleteEnhancedSubscription(
         subscriberAddress as string,
         channelId as string,
         web3ChannelId as string
       );
-      
+
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: 'Failed to unsubscribe' });
@@ -2903,12 +2904,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/analytics/channel', async (req, res) => {
     try {
       const { channelId, web3ChannelId } = req.query;
-      
+
       const analytics = await storage.getChannelAnalytics(
         channelId as string,
         web3ChannelId as string
       );
-      
+
       res.json(analytics);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch analytics' });
@@ -2919,12 +2920,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/analytics/subscribers', async (req, res) => {
     try {
       const { channelId, web3ChannelId } = req.query;
-      
+
       const count = await storage.getChannelSubscriberCount(
         channelId as string,
         web3ChannelId as string
       );
-      
+
       res.json({ subscriberCount: count });
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch subscriber count' });
@@ -2954,12 +2955,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/channel-comments', async (req, res) => {
     try {
       const { channelId, web3ChannelId } = req.query;
-      
+
       const comments = await storage.getChannelComments(
         channelId as string,
         web3ChannelId as string
       );
-      
+
       res.json(comments);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch comments' });
@@ -2971,7 +2972,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertChannelCommentSchema.parse(req.body);
       const comment = await storage.createChannelComment(validatedData);
-      
+
       // Create notification for channel owner
       const channelId = validatedData.channelId || validatedData.web3ChannelId;
       if (channelId && validatedData.authorAddress) {
@@ -2988,7 +2989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actionUrl: validatedData.channelId ? `/channels/${validatedData.channelId}` : `/channel/${channelId}`
         });
       }
-      
+
       res.status(201).json(comment);
     } catch (error: any) {
       if (error.name === 'ZodError') {
@@ -3037,21 +3038,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Advanced channel search with filters
   app.get('/api/search/channels', async (req, res) => {
     try {
-      const { 
-        q: query = '', 
-        category, 
+      const {
+        q: query = '',
+        category,
         sortBy = 'relevance',
-        userAddress 
+        userAddress
       } = req.query;
-      
+
       const filters = {
         categoryFilter: category as string,
         sortBy: sortBy as string,
         filterType: 'channel'
       };
-      
+
       const results = await storage.searchChannelsAdvanced(query as string, filters);
-      
+
       // Save search filter for analytics if user address provided
       if (userAddress) {
         await storage.saveSearchFilter({
@@ -3063,7 +3064,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           resultsFound: results.length
         });
       }
-      
+
       res.json({
         query,
         filters,
@@ -3105,7 +3106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             metadata: { amount: data.amount, price: data.price, tradeType: data.tradeType },
             actionUrl: `/token/${data.tokenId}`
           });
-          
+
           // Send Telegram notification for trade
           const telegramService = getTelegramService();
           if (telegramService) {
@@ -3118,7 +3119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }).catch(err => console.log('Telegram notification failed:', err));
           }
           break;
-          
+
         case 'content_coin_launch':
           await storage.createNotification({
             recipientAddress: data.recipientAddress,
@@ -3132,7 +3133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             actionUrl: `/content-coin/${data.coinId}`
           });
           break;
-          
+
         case 'follow':
           await storage.createNotification({
             recipientAddress: data.recipientAddress,
@@ -3167,7 +3168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/trades/notify', async (req, res) => {
     try {
       const { type, coinSymbol, amount, price, trader, coinId } = req.body;
-      
+
       if (!type || !coinSymbol || !amount || !price) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
@@ -3200,23 +3201,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🚀 API: Starting content sync to Telegram...');
       const success = await telegramService.postAllExistingContent();
-      
+
       if (success) {
-        res.json({ 
-          success: true, 
-          message: "Content sync to Telegram completed successfully" 
+        res.json({
+          success: true,
+          message: "Content sync to Telegram completed successfully"
         });
       } else {
-        res.status(500).json({ 
-          success: false, 
-          message: "Content sync to Telegram failed" 
+        res.status(500).json({
+          success: false,
+          message: "Content sync to Telegram failed"
         });
       }
     } catch (error) {
       console.error('❌ API: Content sync error:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Internal error during content sync" 
+      res.status(500).json({
+        success: false,
+        message: "Internal error during content sync"
       });
     }
   });
@@ -3230,23 +3231,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🚀 API: Starting channels sync to Telegram...');
       const success = await telegramService.postAllExistingChannels();
-      
+
       if (success) {
-        res.json({ 
-          success: true, 
-          message: "Channels sync to Telegram completed successfully" 
+        res.json({
+          success: true,
+          message: "Channels sync to Telegram completed successfully"
         });
       } else {
-        res.status(500).json({ 
-          success: false, 
-          message: "Channels sync to Telegram failed" 
+        res.status(500).json({
+          success: false,
+          message: "Channels sync to Telegram failed"
         });
       }
     } catch (error) {
       console.error('❌ API: Channels sync error:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Internal error during channels sync" 
+      res.status(500).json({
+        success: false,
+        message: "Internal error during channels sync"
       });
     }
   });
@@ -3260,23 +3261,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🚀 API: Starting complete data sync to Telegram...');
       const success = await telegramService.postAllExistingData();
-      
+
       if (success) {
-        res.json({ 
-          success: true, 
-          message: "Complete data sync to Telegram completed successfully" 
+        res.json({
+          success: true,
+          message: "Complete data sync to Telegram completed successfully"
         });
       } else {
-        res.status(500).json({ 
-          success: false, 
-          message: "Complete data sync to Telegram failed" 
+        res.status(500).json({
+          success: false,
+          message: "Complete data sync to Telegram failed"
         });
       }
     } catch (error) {
       console.error('❌ API: Complete sync error:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: "Internal error during complete sync" 
+      res.status(500).json({
+        success: false,
+        message: "Internal error during complete sync"
       });
     }
   });

@@ -40,10 +40,15 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
       }
 
       try {
+        // Add timeout to prevent infinite loading
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
         // Fetch real market cap data
         const priceResponse = await fetch('https://unipump-contracts.onrender.com/graphql', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             query: `
               query GetTokenData($tokenAddress: String!) {
@@ -74,8 +79,11 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
         const holdersResponse = await fetch('/api/token-holders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({ tokenAddress: coinAddress })
         });
+
+        clearTimeout(timeoutId);
 
         // Process market cap data
         if (priceResponse.ok) {
@@ -111,6 +119,10 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
         }
       } catch (error) {
         console.error('Error fetching channel stats:', error);
+        // Handle different types of errors
+        if (error.name === 'AbortError') {
+          console.log('Request timed out');
+        }
         setMarketCap('$0.00');
         setHolders(0);
       }
