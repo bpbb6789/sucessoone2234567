@@ -336,7 +336,7 @@ export default function ChannelDetail() {
 
           {/* Content Tabs */}
           <Tabs defaultValue="home" className="w-full">
-            <TabsList className="grid grid-cols-5 w-full max-w-md">
+            <TabsList className="grid grid-cols-5 w-full max-w-md md:mx-auto md:justify-center">
               <TabsTrigger value="home" className="gap-2">
                 <div className="w-4 h-4 rounded bg-current opacity-20"></div>
                 Home
