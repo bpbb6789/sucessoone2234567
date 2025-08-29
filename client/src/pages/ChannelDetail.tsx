@@ -219,29 +219,38 @@ export default function ChannelDetail() {
           )}
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary">{formatNumber(subscriberCount)}</div>
-                <div className="text-sm text-muted-foreground">Subscribers</div>
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-primary">$0</div>
+                <div className="text-xs text-muted-foreground">Market Cap</div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary">{videoCount}</div>
-                <div className="text-sm text-muted-foreground">Videos</div>
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-primary">0</div>
+                <div className="text-xs text-muted-foreground">Holders</div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary">{shortsCount}</div>
-                <div className="text-sm text-muted-foreground">Shorts</div>
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-primary cursor-pointer hover:text-blue-500">
+                  <a 
+                    href={`https://basescan.org/address/${channel.coinAddress}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    View
+                  </a>
+                </div>
+                <div className="text-xs text-muted-foreground">Basescan</div>
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary">{channel.category}</div>
-                <div className="text-sm text-muted-foreground">Category</div>
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-primary">{channel.category}</div>
+                <div className="text-xs text-muted-foreground">Category</div>
               </CardContent>
             </Card>
           </div>
