@@ -3190,6 +3190,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Telegram bulk posting endpoints
+  app.post("/api/telegram/sync/content", async (req, res) => {
+    try {
+      const telegramService = getTelegramService();
+      if (!telegramService) {
+        return res.status(503).json({ message: "Telegram service not available" });
+      }
+
+      console.log('🚀 API: Starting content sync to Telegram...');
+      const success = await telegramService.postAllExistingContent();
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: "Content sync to Telegram completed successfully" 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Content sync to Telegram failed" 
+        });
+      }
+    } catch (error) {
+      console.error('❌ API: Content sync error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Internal error during content sync" 
+      });
+    }
+  });
+
+  app.post("/api/telegram/sync/channels", async (req, res) => {
+    try {
+      const telegramService = getTelegramService();
+      if (!telegramService) {
+        return res.status(503).json({ message: "Telegram service not available" });
+      }
+
+      console.log('🚀 API: Starting channels sync to Telegram...');
+      const success = await telegramService.postAllExistingChannels();
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: "Channels sync to Telegram completed successfully" 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Channels sync to Telegram failed" 
+        });
+      }
+    } catch (error) {
+      console.error('❌ API: Channels sync error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Internal error during channels sync" 
+      });
+    }
+  });
+
+  app.post("/api/telegram/sync/all", async (req, res) => {
+    try {
+      const telegramService = getTelegramService();
+      if (!telegramService) {
+        return res.status(503).json({ message: "Telegram service not available" });
+      }
+
+      console.log('🚀 API: Starting complete data sync to Telegram...');
+      const success = await telegramService.postAllExistingData();
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: "Complete data sync to Telegram completed successfully" 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Complete data sync to Telegram failed" 
+        });
+      }
+    } catch (error) {
+      console.error('❌ API: Complete sync error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Internal error during complete sync" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -63,6 +63,78 @@ export class TelegramService {
     }
   }
 
+  async sendPhoto(photoUrl: string, caption?: string, options?: { parseMode?: 'HTML' | 'Markdown' }): Promise<boolean> {
+    if (!this.bot) {
+      console.log('⚠️ Telegram bot not available - skipping photo');
+      return false;
+    }
+
+    if (!this.channelId) {
+      console.log('⚠️ Telegram channel ID not configured - skipping photo');
+      return false;
+    }
+
+    try {
+      await this.bot.sendPhoto(this.channelId, photoUrl, {
+        caption: caption,
+        parse_mode: options?.parseMode,
+      });
+      console.log('📤 Telegram photo sent successfully');
+      return true;
+    } catch (error: any) {
+      console.error('❌ Failed to send Telegram photo:', error?.message || error);
+      return false;
+    }
+  }
+
+  async sendVideo(videoUrl: string, caption?: string, options?: { parseMode?: 'HTML' | 'Markdown' }): Promise<boolean> {
+    if (!this.bot) {
+      console.log('⚠️ Telegram bot not available - skipping video');
+      return false;
+    }
+
+    if (!this.channelId) {
+      console.log('⚠️ Telegram channel ID not configured - skipping video');
+      return false;
+    }
+
+    try {
+      await this.bot.sendVideo(this.channelId, videoUrl, {
+        caption: caption,
+        parse_mode: options?.parseMode,
+      });
+      console.log('📤 Telegram video sent successfully');
+      return true;
+    } catch (error: any) {
+      console.error('❌ Failed to send Telegram video:', error?.message || error);
+      return false;
+    }
+  }
+
+  async sendDocument(documentUrl: string, caption?: string, options?: { parseMode?: 'HTML' | 'Markdown' }): Promise<boolean> {
+    if (!this.bot) {
+      console.log('⚠️ Telegram bot not available - skipping document');
+      return false;
+    }
+
+    if (!this.channelId) {
+      console.log('⚠️ Telegram channel ID not configured - skipping document');
+      return false;
+    }
+
+    try {
+      await this.bot.sendDocument(this.channelId, documentUrl, {
+        caption: caption,
+        parse_mode: options?.parseMode,
+      });
+      console.log('📤 Telegram document sent successfully');
+      return true;
+    } catch (error: any) {
+      console.error('❌ Failed to send Telegram document:', error?.message || error);
+      return false;
+    }
+  }
+
   // Event-specific message formatters
   async notifyNewContentCoin(data: {
     title: string;
@@ -73,7 +145,8 @@ export class TelegramService {
     marketCap?: string;
     totalSupply?: string;
     currentPrice?: string;
-    imageUrl?: string;
+    mediaUrl?: string;
+    thumbnailUrl?: string;
     createdAt?: string;
   }): Promise<boolean> {
     let message;
@@ -108,6 +181,21 @@ export class TelegramService {
 #NewContentCoin #${data.coinSymbol} #Pending`;
     }
 
+    // Send with media if available
+    if (data.mediaUrl) {
+      if (data.contentType === 'video') {
+        return this.sendVideo(data.mediaUrl, message, { parseMode: 'HTML' });
+      } else if (data.contentType === 'image') {
+        return this.sendPhoto(data.mediaUrl, message, { parseMode: 'HTML' });
+      } else if (data.contentType === 'audio' || data.contentType === 'document') {
+        return this.sendDocument(data.mediaUrl, message, { parseMode: 'HTML' });
+      }
+    } else if (data.thumbnailUrl) {
+      // Use thumbnail if main media not available
+      return this.sendPhoto(data.thumbnailUrl, message, { parseMode: 'HTML' });
+    }
+
+    // Fallback to text message
     return this.sendMessage(message, { parseMode: 'HTML' });
   }
 
@@ -118,6 +206,7 @@ export class TelegramService {
     ticker?: string;
     category?: string;
     avatarUrl?: string;
+    coverUrl?: string;
     slug?: string;
     createdAt?: string;
   }): Promise<boolean> {
@@ -151,6 +240,12 @@ export class TelegramService {
 📺 <a href="/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
 
 #NewChannel #${data.name.replace(/\s+/g, '')}`;
+    }
+
+    // Send with channel image if available
+    if (data.coverUrl || data.avatarUrl) {
+      const imageUrl = data.coverUrl || data.avatarUrl;
+      return this.sendPhoto(imageUrl, message, { parseMode: 'HTML' });
     }
 
     return this.sendMessage(message, { parseMode: 'HTML' });
@@ -233,6 +328,194 @@ ${entries}
 #Milestone #Growth`;
 
     return this.sendMessage(message, { parseMode: 'HTML' });
+  }
+
+  // Bulk posting functions for existing content
+  async postAllExistingContent(): Promise<boolean> {
+    if (!this.bot) {
+      console.log('⚠️ Telegram bot not available - skipping bulk content posting');
+      return false;
+    }
+
+    try {
+      // Import db and storage here to avoid circular dependencies
+      const { db } = await import('../db');
+      const { creatorCoins } = await import('../../shared/schema');
+      const { desc } = await import('drizzle-orm');
+
+      console.log('📤 Starting bulk posting of existing content to Telegram...');
+      
+      // Get all content coins from database
+      const contentCoins = await db.select().from(creatorCoins).orderBy(desc(creatorCoins.createdAt));
+      
+      console.log(`📊 Found ${contentCoins.length} content coins to post`);
+      
+      let successCount = 0;
+      let failCount = 0;
+
+      // Post each content coin with delay to avoid rate limiting
+      for (const coin of contentCoins) {
+        try {
+          const mediaUrl = coin.mediaCid 
+            ? (coin.mediaCid.startsWith('baf') 
+                ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` 
+                : coin.mediaCid)
+            : undefined;
+            
+          const thumbnailUrl = coin.thumbnailCid 
+            ? (coin.thumbnailCid.startsWith('baf')
+                ? `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}`
+                : coin.thumbnailCid)
+            : undefined;
+
+          const success = await this.notifyNewContentCoin({
+            title: coin.title,
+            coinSymbol: coin.coinSymbol,
+            creator: coin.creatorAddress,
+            contentType: coin.contentType,
+            coinAddress: coin.coinAddress || undefined,
+            marketCap: coin.marketCap || undefined,
+            totalSupply: coin.totalSupply || undefined,
+            currentPrice: coin.currentPrice || undefined,
+            mediaUrl,
+            thumbnailUrl,
+            createdAt: coin.createdAt?.toISOString()
+          });
+
+          if (success) {
+            successCount++;
+            console.log(`✅ Posted content: ${coin.title} (${coin.coinSymbol})`);
+          } else {
+            failCount++;
+            console.log(`❌ Failed to post content: ${coin.title}`);
+          }
+
+          // Add delay to avoid rate limiting (3-5 seconds between posts)
+          await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
+          
+        } catch (error) {
+          failCount++;
+          console.error(`❌ Error posting content ${coin.title}:`, error);
+        }
+      }
+
+      console.log(`📤 Bulk content posting completed: ${successCount} success, ${failCount} failed`);
+      
+      // Send summary message
+      await this.sendMessage(
+        `📊 <b>Content Sync Complete!</b>\n\n✅ Posted: ${successCount} content coins\n❌ Failed: ${failCount}\n\n#BulkSync #ContentCoins`,
+        { parseMode: 'HTML' }
+      );
+      
+      return successCount > 0;
+      
+    } catch (error) {
+      console.error('❌ Failed to post existing content:', error);
+      return false;
+    }
+  }
+
+  async postAllExistingChannels(): Promise<boolean> {
+    if (!this.bot) {
+      console.log('⚠️ Telegram bot not available - skipping bulk channel posting');
+      return false;
+    }
+
+    try {
+      // Import db and storage here to avoid circular dependencies
+      const { db } = await import('../db');
+      const { web3Channels } = await import('../../shared/schema');
+      const { desc } = await import('drizzle-orm');
+
+      console.log('📤 Starting bulk posting of existing channels to Telegram...');
+      
+      // Get all channels from database
+      const channels = await db.select().from(web3Channels).orderBy(desc(web3Channels.createdAt));
+      
+      console.log(`📊 Found ${channels.length} channels to post`);
+      
+      let successCount = 0;
+      let failCount = 0;
+
+      // Post each channel with delay to avoid rate limiting
+      for (const channel of channels) {
+        try {
+          const avatarUrl = channel.avatarUrl 
+            ? (channel.avatarUrl.startsWith('baf')
+                ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
+                : channel.avatarUrl)
+            : undefined;
+            
+          const coverUrl = channel.coverUrl 
+            ? (channel.coverUrl.startsWith('baf')
+                ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}`
+                : channel.coverUrl)
+            : undefined;
+
+          const success = await this.notifyNewChannel({
+            name: channel.name,
+            creator: channel.creatorAddress,
+            coinAddress: channel.coinAddress || undefined,
+            ticker: channel.coinSymbol || undefined,
+            category: channel.category || undefined,
+            avatarUrl,
+            coverUrl,
+            slug: channel.slug || undefined,
+            createdAt: channel.createdAt?.toISOString()
+          });
+
+          if (success) {
+            successCount++;
+            console.log(`✅ Posted channel: ${channel.name}`);
+          } else {
+            failCount++;
+            console.log(`❌ Failed to post channel: ${channel.name}`);
+          }
+
+          // Add delay to avoid rate limiting (3-5 seconds between posts)
+          await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
+          
+        } catch (error) {
+          failCount++;
+          console.error(`❌ Error posting channel ${channel.name}:`, error);
+        }
+      }
+
+      console.log(`📤 Bulk channel posting completed: ${successCount} success, ${failCount} failed`);
+      
+      // Send summary message
+      await this.sendMessage(
+        `📊 <b>Channel Sync Complete!</b>\n\n✅ Posted: ${successCount} channels\n❌ Failed: ${failCount}\n\n#BulkSync #Channels`,
+        { parseMode: 'HTML' }
+      );
+      
+      return successCount > 0;
+      
+    } catch (error) {
+      console.error('❌ Failed to post existing channels:', error);
+      return false;
+    }
+  }
+
+  async postAllExistingData(): Promise<boolean> {
+    console.log('🚀 Starting complete data sync to Telegram...');
+    
+    // Send start notification
+    await this.sendMessage(
+      '🚀 <b>Starting Platform Data Sync</b>\n\nPosting all existing content and channels to Telegram...\n\n#DataSync #Started',
+      { parseMode: 'HTML' }
+    );
+    
+    const contentSuccess = await this.postAllExistingContent();
+    const channelSuccess = await this.postAllExistingChannels();
+    
+    // Send completion notification
+    await this.sendMessage(
+      `🎉 <b>Platform Data Sync Complete!</b>\n\n${contentSuccess ? '✅' : '❌'} Content Coins Sync\n${channelSuccess ? '✅' : '❌'} Channels Sync\n\n#DataSync #Complete`,
+      { parseMode: 'HTML' }
+    );
+    
+    return contentSuccess || channelSuccess;
   }
 }
 
