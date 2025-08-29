@@ -217,9 +217,9 @@ const ContentReelCard: React.FC<{
           </div>
           <Button
             size="sm"
-            className="ml-2 bg-white/20 hover:bg-white/30 text-white rounded-full px-4 py-1 text-xs h-7 backdrop-blur-sm border border-white/30"
+            className="ml-2 bg-green-500 hover:bg-green-600 text-white rounded-full px-4 py-1 text-xs h-7 font-bold"
           >
-            Follow
+            BUY
           </Button>
         </div>
 
@@ -284,9 +284,11 @@ const ContentReelCard: React.FC<{
 
           <button className="flex flex-col items-center gap-1">
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
-              <TrendingUp className="w-6 h-6 text-white" />
+              <Users className="w-6 h-6 text-white" />
             </div>
-            <span className="text-white text-xs font-medium">Trade</span>
+            <span className="text-white text-xs font-medium">
+              {formatCount(item.holders)}
+            </span>
           </button>
 
           <button className="flex flex-col items-center gap-1">
@@ -361,9 +363,9 @@ const FeedVideoCard: React.FC<{
           </div>
           <Button
             size="sm"
-            className="ml-1 bg-red-500 hover:bg-red-600 text-white rounded-full px-3 py-0.5 text-xs h-6"
+            className="ml-1 bg-green-500 hover:bg-green-600 text-white rounded-full px-3 py-0.5 text-xs h-6 font-bold"
           >
-            Follow
+            BUY
           </Button>
         </div>
 
@@ -448,7 +450,7 @@ const FeedTabs: React.FC<{
   onBack: () => void;
 }> = ({ activeTab, onTabChange, onBack }) => {
   return (
-    <div className="absolute top-0 left-0 right-0 z-30 bg-black/20 backdrop-blur-sm">
+    <div className="absolute top-0 left-0 right-0 z-30">
       <div className="flex items-center justify-between pt-12 pb-3 px-4">
         {/* Back Button */}
         <button
@@ -470,17 +472,6 @@ const FeedTabs: React.FC<{
             )}
           >
             Channels
-          </button>
-          <button
-            onClick={() => onTabChange("foryou")}
-            className={cn(
-              "px-2 py-1 text-sm transition-all duration-200",
-              activeTab === "foryou"
-                ? "text-white font-bold"
-                : "text-gray-400 font-normal hover:text-gray-300",
-            )}
-          >
-            For You
           </button>
           <button
             onClick={() => onTabChange("contents")}
@@ -529,7 +520,7 @@ export default function Feed() {
   const [contentsData, setContentsData] = useState<ContentReel[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("foryou");
+  const [activeTab, setActiveTab] = useState("contents");
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [, setLocation] = useLocation();
@@ -629,7 +620,7 @@ export default function Feed() {
 
       {/* Desktop tabs - for larger screens */}
       {!isMobile && (
-        <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-sm border-b border-gray-800">
+        <div className="sticky top-0 z-30">
           <div className="container mx-auto px-4 py-3">
             <div className="flex items-center justify-between">
               {/* Back Button for Desktop */}
@@ -652,17 +643,6 @@ export default function Feed() {
                   )}
                 >
                   Channels
-                </button>
-                <button
-                  onClick={() => setActiveTab("foryou")}
-                  className={cn(
-                    "px-2 py-1 text-sm transition-all duration-200",
-                    activeTab === "foryou"
-                      ? "text-white font-bold"
-                      : "text-gray-400 font-normal hover:text-gray-300",
-                  )}
-                >
-                  For You
                 </button>
                 <button
                   onClick={() => setActiveTab("contents")}
