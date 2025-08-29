@@ -166,9 +166,6 @@ const ContentReelCard: React.FC<{
 }> = ({ item, isActive, onLike }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
-  const [showComments, setShowComments] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
-  const [showShare, setShowShare] = useState(false);
 
   const formatCount = (count: number) => {
     if (count >= 1000000) {
@@ -186,28 +183,6 @@ const ContentReelCard: React.FC<{
     }
     return `$${num.toFixed(4)}`;
   };
-
-  // Mock comments data for the content reel
-  const mockComments = [
-    {
-      id: "1",
-      content: "This content is fire! 🔥",
-      author: item.creator.name || `${item.creator.address.slice(0, 6)}...${item.creator.address.slice(-4)}`,
-      authorAvatar: item.creator.avatar,
-      createdAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
-      likeCount: Math.floor(Math.random() * 50),
-      replies: []
-    },
-    {
-      id: "2", 
-      content: `${item.coinSymbol} to the moon! 🚀`,
-      author: "CryptoFan",
-      authorAvatar: `/nfts/${Math.floor(Math.random() * 9) + 1}.jpeg`,
-      createdAt: new Date(Date.now() - Math.random() * 48 * 60 * 60 * 1000).toISOString(),
-      likeCount: Math.floor(Math.random() * 30),
-      replies: []
-    }
-  ];
 
   const handleAddComment = (content: string) => {
     console.log("Adding comment:", content, "to content:", item.id);
@@ -237,22 +212,20 @@ const ContentReelCard: React.FC<{
       {/* Content Info - Left Side */}
       <div className="absolute bottom-0 left-0 p-3 text-white z-20 max-w-[70%]">
         <div className="flex items-center gap-2 mb-3">
-          <ProfileModal trigger>
-            <button className="flex items-center gap-2">
-              <Avatar className="w-10 h-10 border-2 border-white/20">
-                <AvatarImage src={item.creator.avatar || `/nfts/${Math.floor(Math.random() * 9) + 1}.jpeg`} />
-                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
-                  {item.creator.name ? item.creator.name[0] : (item.creator.address ? item.creator.address.slice(2, 4).toUpperCase() : 'CC')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="text-left">
-                <p className="font-semibold text-sm">
-                  {item.creator.name || (item.creator.address ? `${item.creator.address.slice(0, 6)}...${item.creator.address.slice(-4)}` : 'Unknown Creator')}
-                </p>
-                <p className="text-xs text-gray-300">{item.coinSymbol}</p>
-              </div>
-            </button>
-          </ProfileModal>
+          <button className="flex items-center gap-2">
+            <Avatar className="w-10 h-10 border-2 border-white/20">
+              <AvatarImage src={item.creator.avatar || `/nfts/${Math.floor(Math.random() * 9) + 1}.jpeg`} />
+              <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
+                {item.creator.name ? item.creator.name[0] : (item.creator.address ? item.creator.address.slice(2, 4).toUpperCase() : 'CC')}
+              </AvatarFallback>
+            </Avatar>
+            <div className="text-left">
+              <p className="font-semibold text-sm">
+                {item.creator.name || (item.creator.address ? `${item.creator.address.slice(0, 6)}...${item.creator.address.slice(-4)}` : 'Unknown Creator')}
+              </p>
+              <p className="text-xs text-gray-300">{item.coinSymbol}</p>
+            </div>
+          </button>
           <TradingModal
             coinAddress={item.creator.address}
             coinName={item.title}
@@ -310,35 +283,35 @@ const ContentReelCard: React.FC<{
             </span>
           </button>
 
-          <CommentModal
-            comments={mockComments}
-            onAddComment={handleAddComment}
-            title={`Comments on ${item.title}`}
+          <button
+            className="flex flex-col items-center gap-1"
+            onClick={() => {
+              // TODO: Implement actual comment functionality
+              console.log('Comments clicked for:', item.id);
+            }}
           >
-            <button className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
-                <MessageCircle className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-white text-xs font-medium">
-                {formatCount(item.comments)}
-              </span>
-            </button>
-          </CommentModal>
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
+              <MessageCircle className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white text-xs font-medium">
+              {formatCount(item.comments)}
+            </span>
+          </button>
 
-          <ShareModal
-            url={`${window.location.origin}/content/${item.id}`}
-            title={item.title}
-            description={item.description}
+          <button
+            className="flex flex-col items-center gap-1"
+            onClick={() => {
+              // TODO: Implement actual share functionality
+              console.log('Share clicked for:', item.id);
+            }}
           >
-            <button className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
-                <Share className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-white text-xs font-medium">
-                {formatCount(item.shares)}
-              </span>
-            </button>
-          </ShareModal>
+            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
+              <Share className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white text-xs font-medium">
+              {formatCount(item.shares)}
+            </span>
+          </button>
 
           <button className="flex flex-col items-center gap-1">
             <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 hover:bg-white/30 transition-colors">
@@ -590,7 +563,7 @@ export default function Feed() {
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [, setLocation] = useLocation();
-  
+
   // Fetch content coins data
   const { data: creatorCoins, isLoading: coinsLoading } = useCreatorCoins();
 
