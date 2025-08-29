@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
 import { useCreatorCoins } from "@/hooks/useCreatorCoins";
+import TradingModal from "@/components/TradingModal";
 
 interface FeedItem {
   id: string;
@@ -215,12 +216,20 @@ const ContentReelCard: React.FC<{
             </p>
             <p className="text-xs text-gray-300">{item.coinSymbol}</p>
           </div>
-          <Button
-            size="sm"
-            className="ml-2 bg-green-500 hover:bg-green-600 text-white rounded-full px-4 py-1 text-xs h-7 font-bold"
+          <TradingModal
+            coinAddress={item.creator.address}
+            coinName={item.title}
+            ticker={item.coinSymbol}
+            currentPrice={item.price}
+            marketCap={item.marketCap}
           >
-            BUY
-          </Button>
+            <Button
+              size="sm"
+              className="ml-2 bg-green-500 hover:bg-green-600 text-white rounded-full px-4 py-1 text-xs h-7 font-bold"
+            >
+              BUY
+            </Button>
+          </TradingModal>
         </div>
 
         <div className="mb-3">
@@ -361,12 +370,20 @@ const FeedVideoCard: React.FC<{
             <p className="font-semibold text-xs">{item.user.name}</p>
             <p className="text-xs text-gray-400">{item.user.username}</p>
           </div>
-          <Button
-            size="sm"
-            className="ml-1 bg-green-500 hover:bg-green-600 text-white rounded-full px-3 py-0.5 text-xs h-6 font-bold"
+          <TradingModal
+            coinAddress={item.user.avatar}
+            coinName={item.user.name}
+            ticker="COIN"
+            currentPrice="0.001"
+            marketCap="100K"
           >
-            BUY
-          </Button>
+            <Button
+              size="sm"
+              className="ml-1 bg-green-500 hover:bg-green-600 text-white rounded-full px-3 py-0.5 text-xs h-6 font-bold"
+            >
+              BUY
+            </Button>
+          </TradingModal>
         </div>
 
         <p className="text-xs mb-1 leading-tight">{item.description}</p>
