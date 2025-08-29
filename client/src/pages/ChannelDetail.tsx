@@ -232,15 +232,27 @@ export default function ChannelDetail() {
                 )}
               </Button>
               
-              <TradingModal
-                coinAddress={channel.coinAddress}
-                coinName={channel.name}
-                ticker={channel.ticker}
-              >
-                <Button variant="outline" size="lg" className="min-w-[120px]">
-                  Trade {channel.ticker}
+              <div className="flex gap-2">
+                <TradingModal
+                  coinAddress={channel.coinAddress}
+                  coinName={channel.name}
+                  ticker={channel.ticker}
+                >
+                  <Button variant="outline" size="lg" className="min-w-[120px]">
+                    Trade {channel.ticker}
+                  </Button>
+                </TradingModal>
+                
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="min-w-[100px]"
+                  onClick={() => window.open(`https://basescan.org/address/${channel.coinAddress}`, '_blank')}
+                >
+                  <span className="text-xs">💎</span>
+                  <span className="ml-1">Market Cap</span>
                 </Button>
-              </TradingModal>
+              </div>
             </div>
           </div>
 
