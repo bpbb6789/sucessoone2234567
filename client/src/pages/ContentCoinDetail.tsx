@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount } from "wagmi";
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Play,
@@ -124,8 +125,8 @@ export default function ContentCoinDetail() {
   const { data: trades, isLoading: tradesLoading } = useCreatorCoinTrades(tokenAddress || '');
   const { data: holders, isLoading: holdersLoading } = useCreatorCoinHolders(tokenAddress || '');
   
-  // Get token data from GraphQL as fallback
-  const { data: salesData, loading: salesLoading } = useGetAllSales();
+  // Remove expensive fallback query that loads ALL sales data
+  // This was causing major performance issues
 
   const tokenData = React.useMemo(() => {
     // First, try to use creator coin data if available
@@ -152,36 +153,9 @@ export default function ContentCoinDetail() {
       } as ContentCoinData;
     }
 
-    // Fallback to GraphQL sales data
-    if (!salesData || !Array.isArray(salesData) || !tokenAddress) return null;
-
-    const token = salesData.find((t: any) => 
-      t.memeTokenAddress?.toLowerCase() === tokenAddress.toLowerCase()
-    );
-
-    if (!token) return null;
-
-    return {
-      id: token.memeTokenAddress,
-      address: token.memeTokenAddress,
-      name: token.name || token.symbol || 'Unknown Token',
-      symbol: token.symbol || 'UNKNOWN',
-      description: token.bio || token.description || 'Created via pump.fun mechanics',
-      creator: token.createdBy || 'No Creator Found',
-      price: '0.00187076',
-      marketCap: '0',
-      volume24h: '0',
-      holders: 0,
-      change24h: 0,
-      createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
-      isOnBondingCurve: true,
-      progress: 0,
-      bondingCurveAddress: token.bondingCurve,
-      imageUrl: token.imageUri || '/placeholder-content.png',
-      contentType: 'image' as const,
-      creatorEarnings: '0'
-    } as ContentCoinData;
-  }, [creatorCoin, salesData, tokenAddress]);
+    // No fallback needed - just return null if creator coin data not available
+    return null;
+  }, [creatorCoin, tokenAddress]); // Fixed dependency array
 
   // Process real data for display
   const processedComments = comments || [];
@@ -344,7 +318,7 @@ export default function ContentCoinDetail() {
 
       toast({
         title: "Sell successful!",
-        description: `Sold ${sellAmount} tokens for ${result.ethReceived} ETH`
+        description: `Sold ${sellAmount} tokens for ${(result as any)?.ethReceived || 'unknown'} ETH`
       });
 
       setSellAmount("");
@@ -358,7 +332,8 @@ export default function ContentCoinDetail() {
     }
   };
 
-  if (creatorCoinLoading || salesLoading || commentsLoading || tradesLoading || holdersLoading) {
+  // Only show loading spinner for the main coin data - secondary data loads independently
+  if (creatorCoinLoading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
@@ -592,7 +567,19 @@ export default function ContentCoinDetail() {
             </TabsList>
 
             <TabsContent value="comments" className="p-4 space-y-4">
-              {processedComments.length === 0 ? (
+              {commentsLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-3 animate-pulse">
+                      <div className="h-8 w-8 bg-gray-700 rounded-full flex-shrink-0"></div>
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-gray-700 rounded w-1/4"></div>
+                        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : processedComments.length === 0 ? (
                 <div className="text-center text-gray-400 py-8">
                   <MessageCircle className="w-8 h-8 mx-auto mb-2" />
                   <p>No comments yet. Be the first to comment!</p>
@@ -619,7 +606,22 @@ export default function ContentCoinDetail() {
             </TabsContent>
 
             <TabsContent value="holders" className="p-4 space-y-3">
-              {processedHolders.length === 0 ? (
+              {holdersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center justify-between animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 bg-gray-700 rounded-full"></div>
+                        <div className="space-y-1">
+                          <div className="h-3 bg-gray-700 rounded w-24"></div>
+                          <div className="h-3 bg-gray-700 rounded w-16"></div>
+                        </div>
+                      </div>
+                      <div className="h-3 bg-gray-700 rounded w-16"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : processedHolders.length === 0 ? (
                 <div className="text-center text-gray-400 py-8">
                   <Users className="w-8 h-8 mx-auto mb-2" />
                   <p>No holders data available yet</p>
@@ -646,7 +648,25 @@ export default function ContentCoinDetail() {
             </TabsContent>
 
             <TabsContent value="activity" className="p-4 space-y-3">
-              {processedActivities.length === 0 ? (
+              {tradesLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center justify-between animate-pulse">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 bg-gray-700 rounded"></div>
+                        <div className="space-y-1">
+                          <div className="h-3 bg-gray-700 rounded w-20"></div>
+                          <div className="h-3 bg-gray-700 rounded w-16"></div>
+                        </div>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <div className="h-3 bg-gray-700 rounded w-16"></div>
+                        <div className="h-3 bg-gray-700 rounded w-12"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : processedActivities.length === 0 ? (
                 <div className="text-center text-gray-400 py-8">
                   <Activity className="w-8 h-8 mx-auto mb-2" />
                   <p>No trading activity yet</p>

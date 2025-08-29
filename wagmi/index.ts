@@ -6,7 +6,7 @@ import {
   rabbyWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { useMemo } from "react";
-import { createConfig } from "wagmi";
+import { createConfig } from "@wagmi/core";
 import { http } from "viem";
 import { baseSepolia } from "wagmi/chains";
 

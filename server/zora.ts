@@ -255,9 +255,9 @@ export async function createCreatorCoin(params: {
     console.log('✅ Zora Creator Coin deployed successfully:', result);
 
     return {
-      coinAddress: result.address || '',
+      coinAddress: (result as any)?.address || '',
       factoryAddress: ZORA_FACTORY_ADDRESS,
-      txHash: result.hash || ''
+      txHash: (result as any)?.hash || ''
     };
 
   } catch (error) {
