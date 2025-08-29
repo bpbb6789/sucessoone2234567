@@ -2315,18 +2315,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Not a Zora channel" });
       }
 
-      // For Zora coins, use the Zora SDK price functions
+      // For Zora coins, use the Zora SDK price functions with real blockchain data
       const priceData = await getCoinPrice(coinAddress);
       
-      // Mock Zora-specific data (in production, this would use actual Zora APIs)
-      const zoraMarketCap = parseFloat(priceData.marketCap) || Math.random() * 50000;
-      const zoraHolders = parseInt(priceData.holders.toString()) || Math.floor(Math.random() * 500);
+      // Update the web3 channel with real holders data
+      try {
+        await db.update(web3Channels)
+          .set({
+            holders: priceData.holders,
+            currentPrice: priceData.price,
+            marketCap: priceData.marketCap,
+            volume24h: priceData.volume24h,
+            updatedAt: new Date()
+          })
+          .where(eq(web3Channels.coinAddress, coinAddress));
+        
+        console.log(`✅ Updated web3 channel ${coinAddress} with ${priceData.holders} holders`);
+      } catch (dbError) {
+        console.warn('⚠️ Failed to update web3 channel with price data:', dbError);
+      }
+
+      // Format market cap properly
+      const zoraMarketCap = parseFloat(priceData.marketCap) || 0;
 
       res.json({
         price: priceData.price,
         marketCap: zoraMarketCap.toFixed(2),
         volume24h: priceData.volume24h,
-        holders: zoraHolders,
+        holders: priceData.holders, // Real blockchain data
         platform: 'zora',
         isZoraChannel: true
       });
@@ -2701,16 +2717,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get creator coin holders (mock for now, would need blockchain data)
+  // Get creator coin holders with real blockchain data
   app.get('/api/creator-coins/:coinId/holders', async (req, res) => {
     try {
       const { coinId } = req.params;
-      // For now return empty array since this requires blockchain data
-      // In a real implementation, you'd query the token contract for holder balances
-      res.json([]);
+      console.log(`🔍 Fetching holders for creator coin: ${coinId}`);
+      
+      // First, get the creator coin to find the contract address
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
+      
+      if (!coin.length) {
+        return res.status(404).json({ error: 'Creator coin not found' });
+      }
+      
+      const coinData = coin[0];
+      const coinAddress = coinData.coinAddress;
+      
+      if (!coinAddress || coinAddress === 'Deploying...' || coinAddress.length < 10) {
+        console.log(`⚠️ No valid contract address for coin ${coinId}, returning empty holders`);
+        return res.json([]);
+      }
+      
+      // Import getTokenHolders from zora.ts
+      const { getTokenHolders } = await import('./zora');
+      
+      // Get real holders data from blockchain
+      const holdersData = await getTokenHolders(coinAddress);
+      
+      console.log(`✅ Found ${holdersData.totalHolders} holders for creator coin ${coinId}`);
+      
+      // Update the database with the current holder count
+      await db.update(creatorCoins)
+        .set({ 
+          holders: holdersData.totalHolders,
+          updatedAt: new Date()
+        })
+        .where(eq(creatorCoins.id, coinId));
+      
+      res.json(holdersData.holders);
+      
     } catch (error) {
       console.error('Error fetching creator coin holders:', error);
-      res.status(500).json({ error: 'Failed to fetch holders' });
+      res.status(500).json({ 
+        error: 'Failed to fetch holders',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 

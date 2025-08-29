@@ -156,7 +156,7 @@ export default function Channels() {
                           </div>
                           <div className="flex items-center gap-0.5">
                             <span>👥</span>
-                            <span className="text-gray-400">{channel.holderCount || 0}</span>
+                            <span className="text-gray-400">{channel.holders || 0}</span>
                           </div>
                           <div className="flex items-center gap-0.5">
                             <span>💎</span>

@@ -231,34 +231,49 @@ export default function Contents() {
                         </p>
                       </div>
 
-                      {/* Contract info and Price */}
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1">
-                          {coin.status === 'deployed' && coin.coinAddress && (
-                            <>
+                      {/* Stats Row with Holders and Price */}
+                      <div className="space-y-1">
+                        {/* Holders and Likes Row */}
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-0.5">
+                              <span>👥</span>
+                              <span className="text-gray-400">{(coin as any).holders || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              <span>❤️</span>
+                              <span className="text-gray-400">{coin.likes || 0}</span>
+                            </div>
+                          </div>
+                          <div className="text-green-400 font-medium">
+                            ${coin.currentPrice}
+                          </div>
+                        </div>
+
+                        {/* Contract info */}
+                        {coin.status === 'deployed' && coin.coinAddress && (
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-1">
                               <Hash className="w-3 h-3 text-green-400" />
                               <code className="text-green-400 font-mono">
                                 {`${coin.coinAddress.slice(0, 4)}...${coin.coinAddress.slice(-2)}`}
                               </code>
-                            </>
-                          )}
-                          {coin.deploymentTxHash && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-4 p-1 text-xs text-blue-400 hover:text-blue-300"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
-                              }}
-                            >
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                          )}
-                        </div>
-                        <div className="text-gray-400">
-                          ${coin.currentPrice}
-                        </div>
+                            </div>
+                            {coin.deploymentTxHash && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-4 p-1 text-xs text-blue-400 hover:text-blue-300"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
+                                }}
+                              >
+                                <Eye className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* BUY Button */}
