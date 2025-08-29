@@ -283,16 +283,20 @@ export default function ContentCoin() {
                                     <span>{channel.name.split(' ')[0]} {channel.name.split(' ')[1] || 'Team'}</span>
                                   </div>
                                   
-                                  {/* Market Cap with Coin Icon */}
+                                  {/* Contract Address */}
                                   <div className="flex items-center gap-2 text-sm mb-1">
                                     <DollarSign className="w-3 h-3 text-green-400" />
-                                    <span className="text-green-400 font-semibold">$157.3M</span>
+                                    <span className="text-green-400 font-semibold text-xs truncate">
+                                      {channel.coinAddress ? `${channel.coinAddress.slice(0, 6)}...${channel.coinAddress.slice(-4)}` : 'Not deployed'}
+                                    </span>
                                   </div>
                                   
-                                  {/* Posts with Icon */}
+                                  {/* Created Date */}
                                   <div className="flex items-center gap-2 text-gray-400 text-sm">
                                     <FileText className="w-3 h-3" />
-                                    <span>247</span>
+                                    <span className="text-xs">
+                                      {formatTimeAgo(channel.createdAt)}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
