@@ -254,7 +254,7 @@ nav[data-testid="sidebar"]::-webkit-scrollbar {
   }
 
   .mobile-nav-item.active {
-    @apply text-youtube-red;
+    @apply text-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 dark:text-indigo-400;
   }
 
   /* Category chips */
@@ -296,8 +296,7 @@ nav[data-testid="sidebar"]::-webkit-scrollbar {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-
-  .scrollbar-hide::-webkit-scrollbar {
+  .scrollbar-hide::-webkit-scrollbar { 
     display: none;
   }
 

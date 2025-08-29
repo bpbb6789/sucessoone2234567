@@ -55,6 +55,7 @@ import Creators from '@/pages/Creators';
 import Leaderboard from './pages/Leaderboard';
 import Admin from "./pages/Admin";
 
+import Feed from "./pages/Feed";
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -95,9 +96,10 @@ function AppContent() {
               <Route path="/liked" component={LikedVideos} />
               <Route path="/watchlater" component={WatchLater} />
               <Route path="/music" component={Music} />
+              <Route path="/feed" component={Feed} />
               <Route path="/profile" component={Profile} />
-              <Route path="/activities" component={Activities} />
               <Route path="/notifications" component={Notifications} />
+              <Route path="/activities" component={Activities} />
               <Route path="/search" component={Search} />
               <Route path="/create-token" component={CreateChannel} />
               <Route path="/createtoken" component={CreateToken} />
