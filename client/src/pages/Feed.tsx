@@ -206,12 +206,12 @@ const ContentReelCard: React.FC<{
           <Avatar className="w-10 h-10 border-2 border-white/20">
             <AvatarImage src={item.creator.avatar || `/nfts/${Math.floor(Math.random() * 9) + 1}.jpeg`} />
             <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
-              {item.creator.name ? item.creator.name[0] : item.creator.address.slice(2, 4).toUpperCase()}
+              {item.creator.name ? item.creator.name[0] : (item.creator.address ? item.creator.address.slice(2, 4).toUpperCase() : 'CC')}
             </AvatarFallback>
           </Avatar>
           <div>
             <p className="font-semibold text-sm">
-              {item.creator.name || `${item.creator.address.slice(0, 6)}...${item.creator.address.slice(-4)}`}
+              {item.creator.name || (item.creator.address ? `${item.creator.address.slice(0, 6)}...${item.creator.address.slice(-4)}` : 'Unknown Creator')}
             </p>
             <p className="text-xs text-gray-300">{item.coinSymbol}</p>
           </div>
