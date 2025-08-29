@@ -66,64 +66,90 @@ export default function ChannelDetail() {
     return num.toString()
   }
 
-  // Fetch real market cap data
+  // Fetch real market cap data (prioritize Zora for Zora channels)
   useEffect(() => {
     const fetchMarketCap = async () => {
       if (!channel?.coinAddress) return
-      
+
       try {
-        const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: `
-              query GetTokenData($tokenAddress: String!) {
-                minBuckets(
-                  where: { tokenAddress: $tokenAddress }
-                  orderBy: { id: desc }
-                  first: 1
-                ) {
-                  items {
-                    close
-                    average
-                  }
-                }
-                uniPumpCreatorSaless(
-                  where: { memeTokenAddress: $tokenAddress }
-                ) {
-                  items {
-                    totalSupply
-                  }
-                }
+        let marketCapValue = '$0.00'
+        let isZoraChannel = false
+
+        // First try to fetch from Zora if it's a Zora channel
+        try {
+          const zoraResponse = await fetch(`/api/creator-coins/zora-price/${channel.coinAddress}`)
+          if (zoraResponse.ok) {
+            const zoraData = await zoraResponse.json()
+            isZoraChannel = true
+
+            if (zoraData.marketCap && parseFloat(zoraData.marketCap) > 0) {
+              const marketCap = parseFloat(zoraData.marketCap)
+              if (marketCap >= 1000000) {
+                marketCapValue = `$${(marketCap / 1000000).toFixed(2)}M`
+              } else if (marketCap >= 1000) {
+                marketCapValue = `$${(marketCap / 1000).toFixed(2)}K`
+              } else {
+                marketCapValue = `$${marketCap.toFixed(2)}`
               }
-            `,
-            variables: { tokenAddress: channel.coinAddress }
-          })
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          const priceData = data.data?.minBuckets?.items?.[0]
-          const tokenData = data.data?.uniPumpCreatorSaless?.items?.[0]
-
-          if (priceData && tokenData) {
-            const price = parseFloat(priceData.close || priceData.average || '0')
-            const totalSupply = parseFloat(tokenData.totalSupply || '1000000000')
-            const calculatedMarketCap = price * Math.min(totalSupply, 800000000) // Max 800M circulating
-            
-            if (calculatedMarketCap >= 1000000) {
-              setMarketCap(`$${(calculatedMarketCap / 1000000).toFixed(2)}M`)
-            } else if (calculatedMarketCap >= 1000) {
-              setMarketCap(`$${(calculatedMarketCap / 1000).toFixed(2)}K`)
-            } else {
-              setMarketCap(`$${calculatedMarketCap.toFixed(2)}`)
             }
-          } else {
-            setMarketCap('$0.00')
           }
-        } else {
-          setMarketCap('$0.00')
+        } catch (zoraError) {
+          console.log('Not a Zora channel, trying UniPump...')
         }
+
+        // If not a Zora channel, fall back to UniPump
+        if (!isZoraChannel) {
+          const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: `
+                query GetTokenData($tokenAddress: String!) {
+                  minBuckets(
+                    where: { tokenAddress: $tokenAddress }
+                    orderBy: { id: desc }
+                    first: 1
+                  ) {
+                    items {
+                      close
+                      average
+                    }
+                  }
+                  uniPumpCreatorSaless(
+                    where: { memeTokenAddress: $tokenAddress }
+                  ) {
+                    items {
+                      totalSupply
+                    }
+                  }
+                }
+              `,
+              variables: { tokenAddress: channel.coinAddress }
+            })
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            const priceData = data.data?.minBuckets?.items?.[0]
+            const tokenData = data.data?.uniPumpCreatorSaless?.items?.[0]
+
+            if (priceData && tokenData) {
+              const price = parseFloat(priceData.close || priceData.average || '0')
+              const totalSupply = parseFloat(tokenData.totalSupply || '1000000000')
+              const calculatedMarketCap = price * Math.min(totalSupply, 800000000) // Max 800M circulating
+
+              if (calculatedMarketCap >= 1000000) {
+                marketCapValue = `$${(calculatedMarketCap / 1000000).toFixed(2)}M`
+              } else if (calculatedMarketCap >= 1000) {
+                marketCapValue = `$${(calculatedMarketCap / 1000).toFixed(2)}K`
+              } else {
+                marketCapValue = `$${calculatedMarketCap.toFixed(2)}`
+              }
+            }
+          }
+        }
+
+        setMarketCap(marketCapValue)
       } catch (error) {
         console.error('Error fetching market cap:', error)
         setMarketCap('$0.00')
@@ -187,7 +213,7 @@ export default function ChannelDetail() {
               className="w-full h-full object-cover"
             />
           )}
-          
+
           {/* Header Controls Overlay */}
           <div className="absolute top-0 left-0 right-0 z-50">
             <div className="px-4 py-3 flex items-center justify-between">
@@ -239,7 +265,7 @@ export default function ChannelDetail() {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex-1 hidden md:block">
               <h2 className="text-3xl font-bold mb-2">{channel.name}</h2>
               <div className="text-muted-foreground mb-2 flex items-center gap-2 flex-wrap">
@@ -299,7 +325,7 @@ export default function ChannelDetail() {
                   </>
                 )}
               </Button>
-              
+
               <div className="flex gap-2">
                 <TradingModal
                   coinAddress={channel.coinAddress}
@@ -310,7 +336,7 @@ export default function ChannelDetail() {
                     Trade {channel.ticker}
                   </Button>
                 </TradingModal>
-                
+
                 <Button 
                   variant="outline" 
                   size="lg" 
@@ -332,7 +358,7 @@ export default function ChannelDetail() {
             </div>
           )}
 
-          
+
 
           {/* Content Tabs */}
           <Tabs defaultValue="home" className="w-full">
@@ -518,7 +544,7 @@ export default function ChannelDetail() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Stats</h3>
                   <div className="grid grid-cols-2 gap-4">

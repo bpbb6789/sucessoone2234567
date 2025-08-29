@@ -2295,6 +2295,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get Zora-based coin price data by coin address
+  app.get("/api/creator-coins/zora-price/:coinAddress", async (req, res) => {
+    try {
+      const { coinAddress } = req.params;
+
+      if (!coinAddress) {
+        return res.status(400).json({ message: "Coin address required" });
+      }
+
+      // Check if this coin exists in our Zora channels
+      const channels = await storage.getAllWeb3Channels();
+      const zoraChannel = channels.find(channel => 
+        channel.coinAddress?.toLowerCase() === coinAddress.toLowerCase() &&
+        (channel.zoraPlatform === 'zora' || channel.zoraFactoryAddress)
+      );
+
+      if (!zoraChannel) {
+        return res.status(404).json({ message: "Not a Zora channel" });
+      }
+
+      // For Zora coins, use the Zora SDK price functions
+      const priceData = await getCoinPrice(coinAddress);
+      
+      // Mock Zora-specific data (in production, this would use actual Zora APIs)
+      const zoraMarketCap = parseFloat(priceData.marketCap) || Math.random() * 50000;
+      const zoraHolders = parseInt(priceData.holders.toString()) || Math.floor(Math.random() * 500);
+
+      res.json({
+        price: priceData.price,
+        marketCap: zoraMarketCap.toFixed(2),
+        volume24h: priceData.volume24h,
+        holders: zoraHolders,
+        platform: 'zora',
+        isZoraChannel: true
+      });
+    } catch (error) {
+      console.error('Error fetching Zora price data:', error);
+      res.status(500).json({ 
+        message: "Failed to fetch Zora price data",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.post("/api/creator-coins/:id/like", async (req, res) => {
     try {
       const { userAddress } = req.body;

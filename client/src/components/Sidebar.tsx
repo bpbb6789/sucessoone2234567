@@ -44,79 +44,114 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-        // Fetch real market cap data
-        const priceResponse = await fetch('https://unipump-contracts.onrender.com/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            query: `
-              query GetTokenData($tokenAddress: String!) {
-                minBuckets(
-                  where: { tokenAddress: $tokenAddress }
-                  orderBy: { id: desc }
-                  first: 1
-                ) {
-                  items {
-                    close
-                    average
-                  }
-                }
-                uniPumpCreatorSaless(
-                  where: { memeTokenAddress: $tokenAddress }
-                ) {
-                  items {
-                    totalSupply
-                  }
-                }
-              }
-            `,
-            variables: { tokenAddress: coinAddress }
-          })
-        });
+        // For Zora-based channels, fetch price data from Zora's infrastructure
+        // Check if this is a Zora channel by trying to get Zora price data first
+        let isZoraChannel = false;
+        let marketCapValue = '$0.00';
+        let holderCount = 0;
 
-        // Fetch real holder count
-        const holdersResponse = await fetch('/api/token-holders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({ tokenAddress: coinAddress })
-        });
+        try {
+          // Try to fetch Zora price data using the Zora SDK endpoint
+          const zoraResponse = await fetch(`/api/creator-coins/zora-price/${coinAddress}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal
+          });
+
+          if (zoraResponse.ok) {
+            const zoraData = await zoraResponse.json();
+            isZoraChannel = true;
+            
+            if (zoraData.marketCap && parseFloat(zoraData.marketCap) > 0) {
+              const marketCap = parseFloat(zoraData.marketCap);
+              if (marketCap >= 1000000) {
+                marketCapValue = `$${(marketCap / 1000000).toFixed(2)}M`;
+              } else if (marketCap >= 1000) {
+                marketCapValue = `$${(marketCap / 1000).toFixed(2)}K`;
+              } else {
+                marketCapValue = `$${marketCap.toFixed(2)}`;
+              }
+            }
+            
+            holderCount = zoraData.holders || 0;
+          }
+        } catch (zoraError) {
+          console.log('Not a Zora channel or Zora data unavailable, trying UniPump...');
+        }
+
+        // If not a Zora channel, fall back to UniPump data
+        if (!isZoraChannel) {
+          // Fetch real market cap data from UniPump
+          const priceResponse = await fetch('https://unipump-contracts.onrender.com/graphql', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              query: `
+                query GetTokenData($tokenAddress: String!) {
+                  minBuckets(
+                    where: { tokenAddress: $tokenAddress }
+                    orderBy: { id: desc }
+                    first: 1
+                  ) {
+                    items {
+                      close
+                      average
+                    }
+                  }
+                  uniPumpCreatorSaless(
+                    where: { memeTokenAddress: $tokenAddress }
+                  ) {
+                    items {
+                      totalSupply
+                    }
+                  }
+                }
+              `,
+              variables: { tokenAddress: coinAddress }
+            })
+          });
+
+          // Fetch real holder count
+          const holdersResponse = await fetch('/api/token-holders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({ tokenAddress: coinAddress })
+          });
+
+          // Process UniPump market cap data
+          if (priceResponse.ok) {
+            const priceData = await priceResponse.json();
+            const bucketData = priceData.data?.minBuckets?.items?.[0];
+            const tokenData = priceData.data?.uniPumpCreatorSaless?.items?.[0];
+
+            if (bucketData && tokenData) {
+              const price = parseFloat(bucketData.close || bucketData.average || '0');
+              const totalSupply = parseFloat(tokenData.totalSupply || '1000000000');
+              const calculatedMarketCap = price * Math.min(totalSupply, 800000000); // Max 800M circulating
+
+              if (calculatedMarketCap >= 1000000) {
+                marketCapValue = `$${(calculatedMarketCap / 1000000).toFixed(2)}M`;
+              } else if (calculatedMarketCap >= 1000) {
+                marketCapValue = `$${(calculatedMarketCap / 1000).toFixed(2)}K`;
+              } else {
+                marketCapValue = `$${calculatedMarketCap.toFixed(2)}`;
+              }
+            }
+          }
+
+          // Process UniPump holder count data
+          if (holdersResponse.ok) {
+            const holdersData = await holdersResponse.json();
+            holderCount = holdersData.holderCount || 0;
+          }
+        }
 
         clearTimeout(timeoutId);
+        setMarketCap(marketCapValue);
+        setHolders(holderCount);
 
-        // Process market cap data
-        if (priceResponse.ok) {
-          const priceData = await priceResponse.json();
-          const bucketData = priceData.data?.minBuckets?.items?.[0];
-          const tokenData = priceData.data?.uniPumpCreatorSaless?.items?.[0];
-
-          if (bucketData && tokenData) {
-            const price = parseFloat(bucketData.close || bucketData.average || '0');
-            const totalSupply = parseFloat(tokenData.totalSupply || '1000000000');
-            const calculatedMarketCap = price * Math.min(totalSupply, 800000000); // Max 800M circulating
-
-            if (calculatedMarketCap >= 1000000) {
-              setMarketCap(`$${(calculatedMarketCap / 1000000).toFixed(2)}M`);
-            } else if (calculatedMarketCap >= 1000) {
-              setMarketCap(`$${(calculatedMarketCap / 1000).toFixed(2)}K`);
-            } else {
-              setMarketCap(`$${calculatedMarketCap.toFixed(2)}`);
-            }
-          } else {
-            setMarketCap('$0.00');
-          }
-        } else {
-          setMarketCap('$0.00');
-        }
-
-        // Process holder count data
-        if (holdersResponse.ok) {
-          const holdersData = await holdersResponse.json();
-          setHolders(holdersData.holderCount || 0);
-        } else {
-          setHolders(0);
-        }
       } catch (error) {
         console.error('Error fetching channel stats:', error);
         // Handle different types of errors
