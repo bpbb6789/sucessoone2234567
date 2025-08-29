@@ -215,3 +215,58 @@ export function useCreators() {
     refetchInterval: 300000 // Refetch every 5 minutes
   });
 }
+
+// Buy creator coin tokens
+export function useBuyCreatorCoin() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: {
+      coinId: string;
+      userAddress: string;
+      ethAmount: string;
+      minTokensOut?: string;
+      comment?: string;
+    }) => {
+      return apiRequest(`/api/creator-coins/${data.coinId}/buy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', variables.coinId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', variables.coinId, 'trades'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', variables.coinId, 'holders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins'] });
+    }
+  });
+}
+
+// Sell creator coin tokens
+export function useSellCreatorCoin() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: {
+      coinId: string;
+      userAddress: string;
+      tokenAmount: string;
+      minEthOut?: string;
+    }) => {
+      return apiRequest(`/api/creator-coins/${data.coinId}/sell`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', variables.coinId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', variables.coinId, 'trades'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins', variables.coinId, 'holders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/creator-coins'] });
+    }
+  });
+}

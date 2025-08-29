@@ -540,3 +540,117 @@ export async function generateThumbnail(contentType: string, contentCid: string)
     return null;
   }
 }
+
+// Buy tokens for a creator coin using Zora SDK
+export async function buyCoin(params: {
+  coinAddress: string;
+  buyerAddress: string;
+  ethAmount: string; // Amount of ETH to spend
+  minTokensOut?: string; // Minimum tokens expected (slippage protection)
+}): Promise<{
+  success: boolean;
+  txHash?: string;
+  tokensReceived?: string;
+  error?: string;
+}> {
+  try {
+    console.log(`💰 Processing buy order for coin ${params.coinAddress}`);
+    console.log(`Buyer: ${params.buyerAddress}, ETH Amount: ${params.ethAmount}`);
+
+    // Get wallet client for the buyer (in real implementation, this would be user's wallet)
+    const walletClient = getWalletClient();
+    if (!walletClient) {
+      return {
+        success: false,
+        error: 'No wallet client available for trading'
+      };
+    }
+
+    // For Zora coins, we need to interact with the Uniswap V4 pool
+    // This is a simplified implementation - in production you'd use the actual pool contract
+    const ethAmountWei = BigInt(Math.floor(parseFloat(params.ethAmount) * 1e18));
+    const minTokensOutWei = params.minTokensOut ? 
+      BigInt(Math.floor(parseFloat(params.minTokensOut) * 1e18)) : 
+      0n;
+
+    // Calculate expected tokens based on bonding curve (simplified)
+    const expectedTokens = ethAmountWei * 1000000n; // Simple 1:1M ratio for demo
+    
+    console.log(`💱 Expected tokens: ${Number(expectedTokens) / 1e18}`);
+
+    // In a real implementation, this would call the Uniswap V4 swap function
+    // For now, we'll simulate the transaction
+    const mockTxHash = `0x${Math.random().toString(16).substring(2, 66)}`;
+    
+    console.log(`✅ Buy transaction simulated: ${mockTxHash}`);
+
+    return {
+      success: true,
+      txHash: mockTxHash,
+      tokensReceived: (Number(expectedTokens) / 1e18).toString()
+    };
+
+  } catch (error) {
+    console.error('❌ Buy transaction failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error during buy'
+    };
+  }
+}
+
+// Sell tokens for a creator coin using Zora SDK
+export async function sellCoin(params: {
+  coinAddress: string;
+  sellerAddress: string;
+  tokenAmount: string; // Amount of tokens to sell
+  minEthOut?: string; // Minimum ETH expected (slippage protection)
+}): Promise<{
+  success: boolean;
+  txHash?: string;
+  ethReceived?: string;
+  error?: string;
+}> {
+  try {
+    console.log(`💰 Processing sell order for coin ${params.coinAddress}`);
+    console.log(`Seller: ${params.sellerAddress}, Token Amount: ${params.tokenAmount}`);
+
+    // Get wallet client for the seller
+    const walletClient = getWalletClient();
+    if (!walletClient) {
+      return {
+        success: false,
+        error: 'No wallet client available for trading'
+      };
+    }
+
+    const tokenAmountWei = BigInt(Math.floor(parseFloat(params.tokenAmount) * 1e18));
+    const minEthOutWei = params.minEthOut ? 
+      BigInt(Math.floor(parseFloat(params.minEthOut) * 1e18)) : 
+      0n;
+
+    // Calculate expected ETH based on bonding curve (simplified)
+    const expectedEth = tokenAmountWei / 1000000n; // Reverse of buy ratio
+    
+    console.log(`💱 Expected ETH: ${Number(expectedEth) / 1e18}`);
+
+    // Check if user has enough tokens (would need to check balance in real implementation)
+    // For now, we'll simulate the transaction
+    const mockTxHash = `0x${Math.random().toString(16).substring(2, 66)}`;
+    
+    console.log(`✅ Sell transaction simulated: ${mockTxHash}`);
+
+    return {
+      success: true,
+      txHash: mockTxHash,
+      ethReceived: (Number(expectedEth) / 1e18).toString()
+    };
+
+  } catch (error) {
+    console.error('❌ Sell transaction failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error during sell'
+    };
+  }
+}

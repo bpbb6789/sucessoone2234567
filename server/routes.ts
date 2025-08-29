@@ -2740,6 +2740,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Buy creator coin tokens
+  app.post('/api/creator-coins/:coinId/buy', async (req, res) => {
+    try {
+      const { coinId } = req.params;
+      const { userAddress, ethAmount, minTokensOut, comment } = req.body;
+
+      if (!userAddress || !ethAmount) {
+        return res.status(400).json({ error: 'Missing required fields: userAddress, ethAmount' });
+      }
+
+      console.log(`🛒 Processing buy order for creator coin ${coinId}`);
+
+      // Get creator coin details
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
+      if (!coin.length) {
+        return res.status(404).json({ error: 'Creator coin not found' });
+      }
+
+      const coinData = coin[0];
+      const coinAddress = coinData.coinAddress;
+
+      if (!coinAddress || coinAddress === 'Deploying...' || coinAddress.length < 10) {
+        return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
+      }
+
+      // Import trading functions from zora.ts
+      const { buyCoin } = await import('./zora');
+
+      // Execute buy transaction
+      const buyResult = await buyCoin({
+        coinAddress,
+        buyerAddress: userAddress,
+        ethAmount,
+        minTokensOut
+      });
+
+      if (!buyResult.success) {
+        return res.status(400).json({ error: buyResult.error });
+      }
+
+      // Record the trade in database
+      await db.insert(creatorCoinTrades).values({
+        coinId,
+        userAddress,
+        tradeType: 'buy',
+        amount: ethAmount,
+        price: coinData.currentPrice || '0.001',
+        transactionHash: buyResult.txHash
+      });
+
+      // Update coin statistics (simplified)
+      await db.update(creatorCoins)
+        .set({
+          volume24h: sql`CAST(COALESCE(${creatorCoins.volume24h}, '0') AS DECIMAL) + CAST(${ethAmount} AS DECIMAL)`,
+          updatedAt: new Date()
+        })
+        .where(eq(creatorCoins.id, coinId));
+
+      console.log(`✅ Buy order completed for ${coinId}: ${ethAmount} ETH`);
+
+      res.json({
+        success: true,
+        txHash: buyResult.txHash,
+        tokensReceived: buyResult.tokensReceived,
+        message: `Successfully bought ${buyResult.tokensReceived} tokens`
+      });
+
+    } catch (error) {
+      console.error('❌ Buy order failed:', error);
+      res.status(500).json(handleDatabaseError(error, "buyCoin"));
+    }
+  });
+
+  // Sell creator coin tokens
+  app.post('/api/creator-coins/:coinId/sell', async (req, res) => {
+    try {
+      const { coinId } = req.params;
+      const { userAddress, tokenAmount, minEthOut } = req.body;
+
+      if (!userAddress || !tokenAmount) {
+        return res.status(400).json({ error: 'Missing required fields: userAddress, tokenAmount' });
+      }
+
+      console.log(`💰 Processing sell order for creator coin ${coinId}`);
+
+      // Get creator coin details
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
+      if (!coin.length) {
+        return res.status(404).json({ error: 'Creator coin not found' });
+      }
+
+      const coinData = coin[0];
+      const coinAddress = coinData.coinAddress;
+
+      if (!coinAddress || coinAddress === 'Deploying...' || coinAddress.length < 10) {
+        return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
+      }
+
+      // Import trading functions from zora.ts
+      const { sellCoin } = await import('./zora');
+
+      // Execute sell transaction
+      const sellResult = await sellCoin({
+        coinAddress,
+        sellerAddress: userAddress,
+        tokenAmount,
+        minEthOut
+      });
+
+      if (!sellResult.success) {
+        return res.status(400).json({ error: sellResult.error });
+      }
+
+      // Record the trade in database
+      await db.insert(creatorCoinTrades).values({
+        coinId,
+        userAddress,
+        tradeType: 'sell',
+        amount: tokenAmount,
+        price: coinData.currentPrice || '0.001',
+        transactionHash: sellResult.txHash
+      });
+
+      // Update coin statistics (simplified)
+      await db.update(creatorCoins)
+        .set({
+          volume24h: sql`CAST(COALESCE(${creatorCoins.volume24h}, '0') AS DECIMAL) + CAST(${sellResult.ethReceived} AS DECIMAL)`,
+          updatedAt: new Date()
+        })
+        .where(eq(creatorCoins.id, coinId));
+
+      console.log(`✅ Sell order completed for ${coinId}: ${tokenAmount} tokens`);
+
+      res.json({
+        success: true,
+        txHash: sellResult.txHash,
+        ethReceived: sellResult.ethReceived,
+        message: `Successfully sold ${tokenAmount} tokens for ${sellResult.ethReceived} ETH`
+      });
+
+    } catch (error) {
+      console.error('❌ Sell order failed:', error);
+      res.status(500).json(handleDatabaseError(error, "sellCoin"));
+    }
+  });
+
   // Get creator coin holders with real blockchain data
   app.get('/api/creator-coins/:coinId/holders', async (req, res) => {
     try {

@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 import TransactionComponent from "@/components/Transaction";
 import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
 import { useGetAllSales } from "@/hooks/useGetAllSales";
-import { useCreatorCoin, useCreatorCoinComments, useCreatorCoinTrades, useCreatorCoinHolders } from "@/hooks/useCreatorCoins";
+import { useCreatorCoin, useCreatorCoinComments, useCreatorCoinTrades, useCreatorCoinHolders, useBuyCreatorCoin, useSellCreatorCoin } from "@/hooks/useCreatorCoins";
 
 interface ContentCoinData {
   id: string;
@@ -91,6 +91,10 @@ export default function ContentCoinDetail() {
   const [buyAmount, setBuyAmount] = useState("");
   const [sellAmount, setSellAmount] = useState("");
   const [comment, setComment] = useState("");
+
+  // Trading mutations
+  const buyMutation = useBuyCreatorCoin();
+  const sellMutation = useSellCreatorCoin();
 
   // Try to get content coin data first (from creator coins API)
   const { data: creatorCoin, isLoading: creatorCoinLoading } = useCreatorCoin(tokenAddress || '');
@@ -195,6 +199,110 @@ export default function ContentCoinDetail() {
     });
   };
 
+  const handleBuy = async () => {
+    if (!address) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to trade",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!buyAmount || parseFloat(buyAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid ETH amount",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!tokenData?.id) {
+      toast({
+        title: "Token not found",
+        description: "Unable to find token information",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const result = await buyMutation.mutateAsync({
+        coinId: tokenData.id,
+        userAddress: address,
+        ethAmount: buyAmount,
+        comment: comment.trim() || undefined
+      });
+
+      toast({
+        title: "Buy successful!",
+        description: `Purchased ${result.tokensReceived} tokens for ${buyAmount} ETH`
+      });
+
+      setBuyAmount("");
+      setComment("");
+    } catch (error) {
+      console.error('Buy failed:', error);
+      toast({
+        title: "Buy failed",
+        description: error instanceof Error ? error.message : "Transaction failed",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSell = async () => {
+    if (!address) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to trade",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!sellAmount || parseFloat(sellAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid token amount",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!tokenData?.id) {
+      toast({
+        title: "Token not found",
+        description: "Unable to find token information",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const result = await sellMutation.mutateAsync({
+        coinId: tokenData.id,
+        userAddress: address,
+        tokenAmount: sellAmount
+      });
+
+      toast({
+        title: "Sell successful!",
+        description: `Sold ${sellAmount} tokens for ${result.ethReceived} ETH`
+      });
+
+      setSellAmount("");
+    } catch (error) {
+      console.error('Sell failed:', error);
+      toast({
+        title: "Sell failed",
+        description: error instanceof Error ? error.message : "Transaction failed",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (creatorCoinLoading || salesLoading || commentsLoading || tradesLoading || holdersLoading) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -287,11 +395,22 @@ export default function ContentCoinDetail() {
               </div>
 
               <div className="flex gap-2">
-                <Button className="flex-1 bg-green-500 hover:bg-green-600 text-black font-bold">
-                  Buy
+                <Button 
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-black font-bold"
+                  onClick={handleBuy}
+                  disabled={buyMutation.isPending || !address}
+                  data-testid="button-buy-mobile"
+                >
+                  {buyMutation.isPending ? 'Buying...' : 'Buy'}
                 </Button>
-                <Button variant="outline" className="flex-1">
-                  Sell
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={handleSell}
+                  disabled={sellMutation.isPending || !address}
+                  data-testid="button-sell-mobile"
+                >
+                  {sellMutation.isPending ? 'Selling...' : 'Sell'}
                 </Button>
               </div>
             </div>
@@ -391,12 +510,11 @@ export default function ContentCoinDetail() {
 
               <Button 
                 className="w-full bg-green-500 hover:bg-green-600 text-black font-bold h-12"
-                onClick={() => {
-                  // TODO: Implement buy with comment
-                  handleComment();
-                }}
+                onClick={handleBuy}
+                disabled={buyMutation.isPending || !address}
+                data-testid="button-buy-desktop"
               >
-                Buy
+                {buyMutation.isPending ? 'Buying...' : 'Buy'}
               </Button>
             </div>
           </div>
