@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'wouter'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Settings, Bell, BellRing, Play, Users, Video, Grid3X3, Music, Share2 } from 'lucide-react'
@@ -27,6 +27,7 @@ interface ChannelDetail {
 export default function ChannelDetail() {
   const { slug } = useParams()
   const [isSubscribed, setIsSubscribed] = useState(false)
+  const [marketCap, setMarketCap] = useState<string>('Loading...')
 
   // Fetch real videos and content data
   const { data: channelContent } = useQuery({
@@ -64,6 +65,73 @@ export default function ChannelDetail() {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
     return num.toString()
   }
+
+  // Fetch real market cap data
+  useEffect(() => {
+    const fetchMarketCap = async () => {
+      if (!channel?.coinAddress) return
+      
+      try {
+        const response = await fetch('https://unipump-contracts.onrender.com/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `
+              query GetTokenData($tokenAddress: String!) {
+                minBuckets(
+                  where: { tokenAddress: $tokenAddress }
+                  orderBy: { id: desc }
+                  first: 1
+                ) {
+                  items {
+                    close
+                    average
+                  }
+                }
+                uniPumpCreatorSaless(
+                  where: { memeTokenAddress: $tokenAddress }
+                ) {
+                  items {
+                    totalSupply
+                  }
+                }
+              }
+            `,
+            variables: { tokenAddress: channel.coinAddress }
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          const priceData = data.data?.minBuckets?.items?.[0]
+          const tokenData = data.data?.uniPumpCreatorSaless?.items?.[0]
+
+          if (priceData && tokenData) {
+            const price = parseFloat(priceData.close || priceData.average || '0')
+            const totalSupply = parseFloat(tokenData.totalSupply || '1000000000')
+            const calculatedMarketCap = price * Math.min(totalSupply, 800000000) // Max 800M circulating
+            
+            if (calculatedMarketCap >= 1000000) {
+              setMarketCap(`$${(calculatedMarketCap / 1000000).toFixed(2)}M`)
+            } else if (calculatedMarketCap >= 1000) {
+              setMarketCap(`$${(calculatedMarketCap / 1000).toFixed(2)}K`)
+            } else {
+              setMarketCap(`$${calculatedMarketCap.toFixed(2)}`)
+            }
+          } else {
+            setMarketCap('$0.00')
+          }
+        } else {
+          setMarketCap('$0.00')
+        }
+      } catch (error) {
+        console.error('Error fetching market cap:', error)
+        setMarketCap('$0.00')
+      }
+    }
+
+    fetchMarketCap()
+  }, [channel?.coinAddress])
 
   if (isLoading) {
     return (
@@ -121,7 +189,7 @@ export default function ChannelDetail() {
           )}
           
           {/* Header Controls Overlay */}
-          <div className="absolute top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-sm">
+          <div className="absolute top-0 left-0 right-0 z-50">
             <div className="px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link href="/contentcoin">
@@ -246,11 +314,10 @@ export default function ChannelDetail() {
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="min-w-[100px]"
+                  className="min-w-[120px]"
                   onClick={() => window.open(`https://basescan.org/address/${channel.coinAddress}`, '_blank')}
                 >
-                  <span className="text-xs">💎</span>
-                  <span className="ml-1">Market Cap</span>
+                  {marketCap}
                 </Button>
               </div>
             </div>
