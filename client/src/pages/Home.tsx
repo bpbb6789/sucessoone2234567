@@ -254,7 +254,7 @@ export default function Home() {
         />
 
         <Tabs defaultValue="pads" className="w-full">
-          <TabsList className="inline-flex w-auto bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50 h-8 p-0.5 rounded-lg">
+          <TabsList className="inline-flex w-auto bg-gray-800/50 dark:bg-gray-800/50 bg-gray-200/50 dark:bg-gray-800/50 h-8 p-0.5 rounded-lg md:mx-auto md:justify-center">
             <TabsTrigger
               value="pads"
               className="data-[state=active]:bg-green-500 data-[state=active]:text-black flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-md transition-all"
