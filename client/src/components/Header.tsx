@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "wouter";
 import { ROUTES } from "@/lib/constants";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
+import ProfileModal from "./profile/ProfileModal";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
@@ -141,6 +142,9 @@ export function Header() {
                   </div>
                 </Link>
               </Button>
+
+              {/* Profile Modal Trigger */}
+              <ProfileModal />
 
               {/* Create Channel Button */}
               <Button

@@ -4,6 +4,7 @@ import { ThumbsUp, ThumbsDown, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { ShareModal } from "./ShareModal";
 
 interface LikeDislikeButtonsProps {
   videoId?: string;
@@ -15,23 +16,24 @@ interface LikeDislikeButtonsProps {
   onShare?: () => void;
 }
 
-export function LikeDislikeButtons({ 
-  videoId, 
-  shortsId, 
-  channelId, 
-  likeCount, 
+export function LikeDislikeButtons({
+  videoId,
+  shortsId,
+  channelId,
+  likeCount,
   dislikeCount,
   className,
-  onShare 
+  onShare
 }: LikeDislikeButtonsProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Use appropriate hook based on content type
   const videoLike = useVideoLike(videoId, channelId);
   const shortsLike = useShortsLike(shortsId, channelId);
-  
-  const { likeStatus, likeVideo, dislikeVideo, likeShorts, dislikeShorts, removeLike, isLoading } = 
+
+  const { likeStatus, likeVideo, dislikeVideo, likeShorts, dislikeShorts, removeLike, isLoading } =
     videoId ? videoLike : shortsLike;
 
   const handleLike = () => {
@@ -55,11 +57,18 @@ export function LikeDislikeButtons({
       onShare();
       return;
     }
-    
-    const url = videoId 
+    setIsShareModalOpen(true);
+  };
+
+  const handleCloseShareModal = () => {
+    setIsShareModalOpen(false);
+  };
+
+  const handleCopyLink = async () => {
+    const url = videoId
       ? `${window.location.origin}/watch/${videoId}`
       : `${window.location.origin}/shorts/${shortsId}`;
-    
+
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -88,8 +97,8 @@ export function LikeDislikeButtons({
         size="sm"
         className={cn(
           "flex items-center gap-2 px-3 py-1 rounded-full transition-colors",
-          likeStatus?.isLike 
-            ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300" 
+          likeStatus?.isLike
+            ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
             : "hover:bg-gray-100 dark:hover:bg-gray-800"
         )}
         data-testid="button-like"
@@ -111,8 +120,8 @@ export function LikeDislikeButtons({
         size="sm"
         className={cn(
           "flex items-center gap-2 px-3 py-1 rounded-full transition-colors",
-          likeStatus && !likeStatus.isLike 
-            ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300" 
+          likeStatus && !likeStatus.isLike
+            ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
             : "hover:bg-gray-100 dark:hover:bg-gray-800"
         )}
         data-testid="button-dislike"
@@ -137,6 +146,8 @@ export function LikeDislikeButtons({
         <Share2 className="w-4 h-4" />
         <span className="text-sm">{copied ? "Copied!" : "Share"}</span>
       </Button>
+
+      <ShareModal isOpen={isShareModalOpen} onClose={handleCloseShareModal} onCopyLink={handleCopyLink} url={videoId ? `${window.location.origin}/watch/${videoId}` : `${window.location.origin}/shorts/${shortsId}`} />
     </div>
   );
 }

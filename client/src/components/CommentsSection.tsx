@@ -6,6 +6,7 @@ import { useComments } from "@/hooks/useComments";
 import { formatTimeAgo } from "@/lib/constants";
 import { ThumbsUp, Send, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CommentModal } from "./CommentModal";
 
 interface CommentsSectionProps {
   videoId?: string;
@@ -157,16 +158,24 @@ export function CommentsSection({
                       {comment.likeCount || 0}
                     </Button>
                     
-                    <Button
-                      onClick={() => setReplyingTo(comment.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="p-1 h-auto hover:bg-transparent text-gray-500"
-                      data-testid={`button-reply-comment-${comment.id}`}
+                    <CommentModal
+                      title={`Reply to ${comment.author}`}
+                      comments={comment.replies || []}
+                      onAddComment={(content, parentId) => {
+                        // Handle reply logic here
+                        console.log('Reply:', content, 'to:', parentId || comment.id);
+                      }}
                     >
-                      <MessageCircle className="w-3 h-3 mr-1" />
-                      Reply
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-auto hover:bg-transparent text-gray-500"
+                        data-testid={`button-reply-comment-${comment.id}`}
+                      >
+                        <MessageCircle className="w-3 h-3 mr-1" />
+                        Reply
+                      </Button>
+                    </CommentModal>
                   </div>
 
                   {/* Reply input */}
