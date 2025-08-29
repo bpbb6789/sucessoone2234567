@@ -226,27 +226,31 @@ export default function Creators() {
             {/* Mobile: Single column horizontal cards */}
             <div className="md:hidden grid grid-cols-1 gap-3">
               {filteredCreators.map((creator: Creator, index: number) => {
-                // Generate vibrant gradient colors for each creator
-                const gradients = [
-                  'from-orange-400 via-red-500 to-pink-500',
-                  'from-lime-400 via-green-500 to-emerald-500', 
-                  'from-blue-400 via-purple-500 to-pink-500',
-                  'from-yellow-400 via-orange-500 to-red-500',
-                  'from-cyan-400 via-blue-500 to-purple-500',
-                  'from-emerald-400 via-teal-500 to-cyan-500',
-                  'from-pink-400 via-rose-500 to-red-500',
-                  'from-indigo-400 via-purple-500 to-pink-500'
-                ];
-                const gradientClass = gradients[index % gradients.length];
-                
                 return (
                   <Link key={creator.id} to={`/creators/${creator.address}`}>
                     <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02]" data-testid={`creator-card-${creator.id}`}>
-                      <div className={`bg-gradient-to-r ${gradientClass} rounded-xl p-4 h-20 flex items-center gap-4 shadow-lg hover:shadow-xl`}>
+                      <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-4 h-20 flex items-center gap-4 shadow-lg hover:shadow-xl transition-colors">
                         {/* Creator Avatar */}
                         <div className="flex-shrink-0">
-                          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 flex items-center justify-center">
-                            <span className="text-white font-bold text-lg">{creator.name.charAt(0)}</span>
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                            {creator.avatarUrl ? (
+                              <img
+                                src={creator.avatarUrl.startsWith('baf') 
+                                  ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
+                                  : creator.avatarUrl
+                                }
+                                alt={creator.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-full h-full flex items-center justify-center ${creator.avatarUrl ? 'hidden' : ''}`}>
+                              <span className="text-white font-bold text-lg">{creator.name.charAt(0)}</span>
+                            </div>
                           </div>
                         </div>
 
@@ -255,14 +259,14 @@ export default function Creators() {
                           <h3 className="text-white font-bold text-base leading-tight truncate mb-1">
                             {creator.name}
                           </h3>
-                          <p className="text-white/80 text-sm truncate">
+                          <p className="text-gray-400 text-sm truncate">
                             {creator.contentCoins} Content Coins • {creator.totalLikes} Likes
                           </p>
                         </div>
 
                         {/* Rank Badge */}
                         <div className="flex-shrink-0">
-                          <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-2 py-1 rounded-lg">
+                          <div className="bg-gray-700 px-2 py-1 rounded-lg">
                             <span className="text-white text-xs font-bold">#{creator.rank}</span>
                           </div>
                         </div>
@@ -276,27 +280,31 @@ export default function Creators() {
             {/* Desktop: 2 per row horizontal cards */}
             <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filteredCreators.map((creator: Creator, index: number) => {
-                // Generate vibrant gradient colors for each creator
-                const gradients = [
-                  'from-orange-400 via-red-500 to-pink-500',
-                  'from-lime-400 via-green-500 to-emerald-500', 
-                  'from-blue-400 via-purple-500 to-pink-500',
-                  'from-yellow-400 via-orange-500 to-red-500',
-                  'from-cyan-400 via-blue-500 to-purple-500',
-                  'from-emerald-400 via-teal-500 to-cyan-500',
-                  'from-pink-400 via-rose-500 to-red-500',
-                  'from-indigo-400 via-purple-500 to-pink-500'
-                ];
-                const gradientClass = gradients[index % gradients.length];
-                
                 return (
                   <Link key={creator.id} to={`/creators/${creator.address}`}>
                     <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02]" data-testid={`creator-card-${creator.id}`}>
-                      <div className={`bg-gradient-to-r ${gradientClass} rounded-xl p-5 h-24 flex items-center gap-5 shadow-lg hover:shadow-xl`}>
+                      <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-5 h-24 flex items-center gap-5 shadow-lg hover:shadow-xl transition-colors">
                         {/* Creator Avatar */}
                         <div className="flex-shrink-0">
-                          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 flex items-center justify-center">
-                            <span className="text-white font-bold text-xl">{creator.name.charAt(0)}</span>
+                          <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                            {creator.avatarUrl ? (
+                              <img
+                                src={creator.avatarUrl.startsWith('baf') 
+                                  ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
+                                  : creator.avatarUrl
+                                }
+                                alt={creator.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.currentTarget as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-full h-full flex items-center justify-center ${creator.avatarUrl ? 'hidden' : ''}`}>
+                              <span className="text-white font-bold text-xl">{creator.name.charAt(0)}</span>
+                            </div>
                           </div>
                         </div>
 
@@ -312,17 +320,17 @@ export default function Creators() {
                               </div>
                             )}
                           </div>
-                          <p className="text-white/80 text-sm truncate">
+                          <p className="text-gray-400 text-sm truncate">
                             {creator.contentCoins} Content Coins • {creator.totalLikes} Likes • {creator.totalComments} Comments
                           </p>
                         </div>
 
                         {/* Stats & Rank */}
                         <div className="flex-shrink-0 text-right">
-                          <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-3 py-2 rounded-lg mb-1">
+                          <div className="bg-gray-700 px-3 py-2 rounded-lg mb-1">
                             <span className="text-white text-sm font-bold">#{creator.rank}</span>
                           </div>
-                          <p className="text-white/70 text-xs">
+                          <p className="text-gray-400 text-xs">
                             {formatTimeAgo(creator.lastActive)}
                           </p>
                         </div>

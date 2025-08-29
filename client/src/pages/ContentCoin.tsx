@@ -84,27 +84,33 @@ function TopCreatorsSection() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {topCreators.map((creator: any, index: number) => {
-        // Spotify-style vibrant gradient colors
-        const gradients = [
-          'from-orange-400 via-red-500 to-pink-500',
-          'from-lime-400 via-green-500 to-emerald-500', 
-          'from-blue-400 via-purple-500 to-pink-500',
-          'from-yellow-400 via-orange-500 to-red-500',
-          'from-cyan-400 via-blue-500 to-purple-500',
-          'from-emerald-400 via-teal-500 to-cyan-500',
-          'from-pink-400 via-rose-500 to-red-500',
-          'from-indigo-400 via-purple-500 to-pink-500'
-        ];
-        const gradientClass = gradients[index % gradients.length];
+        // Use creator's profile data for avatar
         
         return (
           <Link key={creator.id} to={`/creators/${creator.address}`}>
             <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105">
-              <div className={`bg-gradient-to-r ${gradientClass} rounded-xl p-4 h-20 flex items-center gap-4 shadow-lg hover:shadow-xl`}>
+              <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-4 h-20 flex items-center gap-4 shadow-lg hover:shadow-xl transition-colors">
                 {/* Creator Avatar */}
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">{creator.name.charAt(0)}</span>
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                    {creator.avatarUrl ? (
+                      <img
+                        src={creator.avatarUrl.startsWith('baf') 
+                          ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
+                          : creator.avatarUrl
+                        }
+                        alt={creator.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-full h-full flex items-center justify-center ${creator.avatarUrl ? 'hidden' : ''}`}>
+                      <span className="text-white font-bold text-lg">{creator.name.charAt(0)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -120,7 +126,7 @@ function TopCreatorsSection() {
 
                 {/* Rank Badge */}
                 <div className="flex-shrink-0">
-                  <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-2 py-1 rounded-lg">
+                  <div className="bg-gray-700 px-2 py-1 rounded-lg">
                     <span className="text-white text-xs font-bold">#{creator.rank}</span>
                   </div>
                 </div>
