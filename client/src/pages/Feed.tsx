@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Heart, MessageCircle, Share, Play, Pause, Volume2, VolumeX, MoreVertical } from 'lucide-react';
+import { Heart, MessageCircle, Share, Play, Pause, Volume2, VolumeX, MoreVertical, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLocation } from 'wouter';
 
 interface FeedItem {
   id: string;
@@ -252,11 +253,31 @@ const FeedVideoCard: React.FC<{
   );
 };
 
-const FeedTabs: React.FC<{ activeTab: string; onTabChange: (tab: string) => void }> = ({ activeTab, onTabChange }) => {
+const FeedTabs: React.FC<{ activeTab: string; onTabChange: (tab: string) => void; onBack: () => void }> = ({ activeTab, onTabChange, onBack }) => {
   return (
     <div className="absolute top-0 left-0 right-0 z-30 bg-black/20 backdrop-blur-sm">
-      <div className="flex justify-center pt-12 pb-3">
-        <div className="flex gap-6">
+      <div className="flex items-center justify-between pt-12 pb-3 px-4">
+        {/* Back Button */}
+        <button
+          onClick={onBack}
+          className="w-8 h-8 rounded-full bg-black/30 flex items-center justify-center hover:bg-black/50 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-white" />
+        </button>
+        
+        {/* Tabs */}
+        <div className="flex gap-4">
+          <button
+            onClick={() => onTabChange('channels')}
+            className={cn(
+              "px-2 py-1 text-sm transition-all duration-200",
+              activeTab === 'channels'
+                ? "text-white font-bold"
+                : "text-gray-400 font-normal hover:text-gray-300"
+            )}
+          >
+            Channels
+          </button>
           <button
             onClick={() => onTabChange('foryou')}
             className={cn(
@@ -269,17 +290,31 @@ const FeedTabs: React.FC<{ activeTab: string; onTabChange: (tab: string) => void
             For You
           </button>
           <button
-            onClick={() => onTabChange('following')}
+            onClick={() => onTabChange('music')}
             className={cn(
               "px-2 py-1 text-sm transition-all duration-200",
-              activeTab === 'following'
+              activeTab === 'music'
                 ? "text-white font-bold"
                 : "text-gray-400 font-normal hover:text-gray-300"
             )}
           >
-            Following
+            Music
+          </button>
+          <button
+            onClick={() => onTabChange('subscribed')}
+            className={cn(
+              "px-2 py-1 text-sm transition-all duration-200",
+              activeTab === 'subscribed'
+                ? "text-white font-bold"
+                : "text-gray-400 font-normal hover:text-gray-300"
+            )}
+          >
+            Subscribed
           </button>
         </div>
+        
+        {/* Empty space for balance */}
+        <div className="w-8"></div>
       </div>
     </div>
   );
@@ -292,6 +327,11 @@ export default function Feed() {
   const [activeTab, setActiveTab] = useState('foryou');
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [, setLocation] = useLocation();
+
+  const handleBack = () => {
+    setLocation('/');
+  };
 
   const handleLike = useCallback((id: string) => {
     setFeedData(prevData => 
@@ -342,15 +382,35 @@ export default function Feed() {
     <div className="min-h-screen bg-black relative">
       {/* TikTok-style tabs - only on mobile */}
       {isMobile && (
-        <FeedTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        <FeedTabs activeTab={activeTab} onTabChange={setActiveTab} onBack={handleBack} />
       )}
       
       {/* Desktop tabs - for larger screens */}
       {!isMobile && (
         <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-sm border-b border-gray-800">
           <div className="container mx-auto px-4 py-3">
-            <div className="flex justify-center">
-              <div className="flex gap-8">
+            <div className="flex items-center justify-between">
+              {/* Back Button for Desktop */}
+              <button
+                onClick={handleBack}
+                className="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center hover:bg-gray-800/70 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+              
+              {/* Tabs */}
+              <div className="flex gap-6">
+                <button
+                  onClick={() => setActiveTab('channels')}
+                  className={cn(
+                    "px-2 py-1 text-sm transition-all duration-200",
+                    activeTab === 'channels'
+                      ? "text-white font-bold"
+                      : "text-gray-400 font-normal hover:text-gray-300"
+                  )}
+                >
+                  Channels
+                </button>
                 <button
                   onClick={() => setActiveTab('foryou')}
                   className={cn(
@@ -363,17 +423,31 @@ export default function Feed() {
                   For You
                 </button>
                 <button
-                  onClick={() => setActiveTab('following')}
+                  onClick={() => setActiveTab('music')}
                   className={cn(
                     "px-2 py-1 text-sm transition-all duration-200",
-                    activeTab === 'following'
+                    activeTab === 'music'
                       ? "text-white font-bold"
                       : "text-gray-400 font-normal hover:text-gray-300"
                   )}
                 >
-                  Following
+                  Music
+                </button>
+                <button
+                  onClick={() => setActiveTab('subscribed')}
+                  className={cn(
+                    "px-2 py-1 text-sm transition-all duration-200",
+                    activeTab === 'subscribed'
+                      ? "text-white font-bold"
+                      : "text-gray-400 font-normal hover:text-gray-300"
+                  )}
+                >
+                  Subscribed
                 </button>
               </div>
+              
+              {/* Empty space for balance */}
+              <div className="w-8"></div>
             </div>
           </div>
         </div>
