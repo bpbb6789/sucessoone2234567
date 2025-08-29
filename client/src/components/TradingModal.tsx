@@ -96,22 +96,22 @@ export default function TradingModal({
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-md" data-testid="trading-modal">
-        <DialogHeader>
-          <DialogTitle className="text-lg flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+      <DialogContent className="max-w-sm p-4" data-testid="trading-modal">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-base flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
             Trade {ticker}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Price Info */}
           <Card>
-            <CardContent className="p-4">
-              <div className="text-center space-y-2">
-                <h3 className="font-semibold">{coinName}</h3>
-                <div className="text-2xl font-bold">{currentPrice} ETH</div>
-                <div className="text-sm text-muted-foreground">
+            <CardContent className="p-3">
+              <div className="text-center space-y-1">
+                <h3 className="font-medium text-sm">{coinName}</h3>
+                <div className="text-xl font-bold">{currentPrice} ETH</div>
+                <div className="text-xs text-muted-foreground">
                   Market Cap: {marketCap} ETH
                 </div>
               </div>
@@ -120,28 +120,28 @@ export default function TradingModal({
 
           {/* Trading Interface */}
           <Tabs defaultValue="buy" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 h-8">
               <TabsTrigger 
                 value="buy" 
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 text-xs h-6"
                 data-testid="tab-buy"
               >
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="h-3 w-3" />
                 Buy
               </TabsTrigger>
               <TabsTrigger 
                 value="sell" 
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 text-xs h-6"
                 data-testid="tab-sell"
               >
-                <TrendingDown className="h-4 w-4" />
+                <TrendingDown className="h-3 w-3" />
                 Sell
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="buy" className="space-y-3">
+            <TabsContent value="buy" className="space-y-2 mt-2">
               <div>
-                <label className="text-sm font-medium">Amount (ETH)</label>
+                <label className="text-xs font-medium">Amount (ETH)</label>
                 <Input
                   type="number"
                   placeholder="0.1"
@@ -149,22 +149,23 @@ export default function TradingModal({
                   onChange={(e) => setBuyAmount(e.target.value)}
                   step="0.001"
                   min="0"
+                  className="h-8 text-sm"
                   data-testid="input-buy-amount"
                 />
               </div>
               <Button
                 onClick={handleBuy}
                 disabled={isLoading || !buyAmount}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full bg-green-600 hover:bg-green-700 h-8 text-sm"
                 data-testid="button-buy"
               >
                 {isLoading ? "Processing..." : "Buy"}
               </Button>
             </TabsContent>
 
-            <TabsContent value="sell" className="space-y-3">
+            <TabsContent value="sell" className="space-y-2 mt-2">
               <div>
-                <label className="text-sm font-medium">Amount ({ticker})</label>
+                <label className="text-xs font-medium">Amount ({ticker})</label>
                 <Input
                   type="number"
                   placeholder="1000"
@@ -172,13 +173,14 @@ export default function TradingModal({
                   onChange={(e) => setSellAmount(e.target.value)}
                   step="1"
                   min="0"
+                  className="h-8 text-sm"
                   data-testid="input-sell-amount"
                 />
               </div>
               <Button
                 onClick={handleSell}
                 disabled={isLoading || !sellAmount}
-                className="w-full bg-red-600 hover:bg-red-700"
+                className="w-full bg-red-600 hover:bg-red-700 h-8 text-sm"
                 data-testid="button-sell"
               >
                 {isLoading ? "Processing..." : "Sell"}
@@ -186,7 +188,7 @@ export default function TradingModal({
             </TabsContent>
           </Tabs>
 
-          <div className="text-xs text-muted-foreground text-center">
+          <div className="text-[10px] text-muted-foreground text-center pt-1">
             Trading powered by Zora & Uniswap V4
           </div>
         </div>
