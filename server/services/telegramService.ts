@@ -161,7 +161,7 @@ export class TelegramService {
 📛 <b>${data.title}</b> (${data.coinSymbol})
 💰 Market Cap: $${data.marketCap || '0.00'}
 📊 Total Supply: ${data.totalSupply || '1.00B'}
-👤 ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
+👤 <a href="${process.env.PLATFORM_URL || 'https://your-platform.replit.app'}/creators/${data.creator}">${data.creator.slice(0, 6)}...${data.creator.slice(-4)}</a>
 📅 Created: ${timestamp}
 📄 Contract: <code>${data.coinAddress.slice(0, 6)}...${data.coinAddress.slice(-4)}</code>
 
@@ -174,7 +174,7 @@ export class TelegramService {
 
 📺 <b>${data.title}</b>
 💰 Symbol: <code>${data.coinSymbol}</code>
-👤 Creator: ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
+👤 Creator: <a href="${process.env.PLATFORM_URL || 'https://your-platform.replit.app'}/creators/${data.creator}">${data.creator.slice(0, 6)}...${data.creator.slice(-4)}</a>
 🎭 Type: ${data.contentType}
 ⏳ Status: Pending Deployment
 
@@ -220,11 +220,11 @@ export class TelegramService {
 
 🏷️ <b>${data.name}</b> (${data.ticker || 'TKN'})
 📂 Category: ${data.category || 'General'}
-👤 ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
+👤 <a href="${process.env.PLATFORM_URL || 'https://your-platform.replit.app'}/creators/${data.creator}">${data.creator.slice(0, 6)}...${data.creator.slice(-4)}</a>
 📅 Created: ${timestamp}
 💰 Coin Address: <code>${data.coinAddress.slice(0, 6)}...${data.coinAddress.slice(-4)}</code>
 
-🔗 <a href="https://basescan.org/address/${data.coinAddress}">BaseScan</a> | <a href="https://tokenscan.xyz/token/${data.coinAddress}">TokenScan</a>
+🔗 <a href="https://sepolia.basescan.org/address/${data.coinAddress}">BaseScan</a>
 📺 <a href="${process.env.PLATFORM_URL || 'https://your-platform.replit.app'}/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
 
 #NewChannel #${data.ticker || data.name.replace(/\s+/g, '')} #WithCoin`;
@@ -234,7 +234,7 @@ export class TelegramService {
 
 🏷️ <b>${data.name}</b>
 📂 Category: ${data.category || 'General'}
-👤 Creator: ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
+👤 Creator: <a href="${process.env.PLATFORM_URL || 'https://your-platform.replit.app'}/creators/${data.creator}">${data.creator.slice(0, 6)}...${data.creator.slice(-4)}</a>
 📅 Created: ${timestamp}
 
 📺 <a href="${process.env.PLATFORM_URL || 'https://your-platform.replit.app'}/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
