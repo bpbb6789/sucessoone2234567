@@ -9,7 +9,7 @@ export const CATEGORIES = [
   "Shorts films",
   "Podcasts",
   "Books",
-  "Deployed",
+  "Onchain",
 ];
 
 export const CATEGORY_ICONS = {

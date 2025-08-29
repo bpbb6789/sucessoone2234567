@@ -56,7 +56,7 @@ const getContentUrl = (mediaCid: string): string => {
 // Top Creators Section Component
 function TopCreatorsSection() {
   const { data: creators, isLoading, error } = useCreators();
-  
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -115,7 +115,7 @@ export default function ContentCoin() {
 
   // Get creator coins from API
   const { data: contentCoins, isLoading, error } = useCreatorCoins();
-  
+
   // Get real channels data
   const { data: channels, isLoading: channelsLoading, error: channelsError } = useGetAllChannels();
 
@@ -276,13 +276,13 @@ export default function ContentCoin() {
                                       {channel.name} ({channel.name.slice(0, 4).toUpperCase()})
                                     </h3>
                                   </div>
-                                  
+
                                   {/* Creator with Icon */}
                                   <div className="flex items-center gap-2 text-gray-300 text-sm mb-1">
                                     <User className="w-3 h-3" />
                                     <span>{channel.name.split(' ')[0]} {channel.name.split(' ')[1] || 'Team'}</span>
                                   </div>
-                                  
+
                                   {/* Contract Address */}
                                   <div className="flex items-center gap-2 text-sm mb-1">
                                     <DollarSign className="w-3 h-3 text-green-400" />
@@ -290,7 +290,7 @@ export default function ContentCoin() {
                                       {channel.coinAddress ? `${channel.coinAddress.slice(0, 6)}...${channel.coinAddress.slice(-4)}` : 'Not deployed'}
                                     </span>
                                   </div>
-                                  
+
                                   {/* Created Date */}
                                   <div className="flex items-center gap-2 text-gray-400 text-sm">
                                     <FileText className="w-3 h-3" />
@@ -399,7 +399,7 @@ export default function ContentCoin() {
                                 : 'bg-yellow-500 text-black'
                               }`}
                             >
-                              {coin.status === 'deployed' ? '✓' : '⏳'}
+                              {coin.status === 'deployed' ? '✓ Onchain' : '⏳ Pending'}
                             </Badge>
                           </div>
                         </div>
@@ -494,7 +494,7 @@ export default function ContentCoin() {
                                   : 'bg-yellow-500 text-black'
                                 }
                               >
-                                {coin.status === 'deployed' ? '✓ Deployed' : '⏳ Pending'}
+                                {coin.status === 'deployed' ? '✓ Onchain' : '⏳ Pending'}
                               </Badge>
                             </div>
                           </div>
