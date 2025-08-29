@@ -161,11 +161,11 @@ export class TelegramService {
 📛 <b>${data.title}</b> (${data.coinSymbol})
 💰 Market Cap: $${data.marketCap || '0.00'}
 📊 Total Supply: ${data.totalSupply || '1.00B'}
-👤 <a href="https://zora.co/profile/${data.creator}">${data.creator.slice(0, 6)}...${data.creator.slice(-4)}</a>
+👤 ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
 📅 Created: ${timestamp}
 📄 Contract: <code>${data.coinAddress.slice(0, 6)}...${data.coinAddress.slice(-4)}</code>
 
-🔗 <a href="https://zora.co/creator-coins/base:${data.coinAddress}">View on Zora</a> | <a href="https://basescan.org/address/${data.coinAddress}">BaseScan</a> | <a href="https://dexscreener.com/base/${data.coinAddress}">DexScreener</a>
+🔗 <a href="https://basescan.org/address/${data.coinAddress}">BaseScan</a> | <a href="https://tokenscan.xyz/token/${data.coinAddress}">TokenScan</a> | <a href="https://dexscreener.com/base/${data.coinAddress}">DexScreener</a>
 
 #NewCreatorCoin #${data.coinSymbol} #Deployed`;
     } else {
@@ -220,12 +220,12 @@ export class TelegramService {
 
 🏷️ <b>${data.name}</b> (${data.ticker || 'TKN'})
 📂 Category: ${data.category || 'General'}
-👤 <a href="https://zora.co/profile/${data.creator}">${data.creator.slice(0, 6)}...${data.creator.slice(-4)}</a>
+👤 ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
 📅 Created: ${timestamp}
 💰 Coin Address: <code>${data.coinAddress.slice(0, 6)}...${data.coinAddress.slice(-4)}</code>
 
-🔗 <a href="https://zora.co/creator-coins/base:${data.coinAddress}">View Coin on Zora</a> | <a href="https://basescan.org/address/${data.coinAddress}">BaseScan</a>
-📺 <a href="/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
+🔗 <a href="https://basescan.org/address/${data.coinAddress}">BaseScan</a> | <a href="https://tokenscan.xyz/token/${data.coinAddress}">TokenScan</a>
+📺 <a href="${process.env.PLATFORM_URL || 'https://your-platform.replit.app'}/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
 
 #NewChannel #${data.ticker || data.name.replace(/\s+/g, '')} #WithCoin`;
     } else {
@@ -237,7 +237,7 @@ export class TelegramService {
 👤 Creator: ${data.creator.slice(0, 6)}...${data.creator.slice(-4)}
 📅 Created: ${timestamp}
 
-📺 <a href="/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
+📺 <a href="${process.env.PLATFORM_URL || 'https://your-platform.replit.app'}/channel/${data.slug || data.name.toLowerCase()}">Visit Channel</a>
 
 #NewChannel #${data.name.replace(/\s+/g, '')}`;
     }
