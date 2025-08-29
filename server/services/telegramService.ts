@@ -165,7 +165,7 @@ export class TelegramService {
 📅 Created: ${timestamp}
 📄 Contract: <code>${data.coinAddress.slice(0, 6)}...${data.coinAddress.slice(-4)}</code>
 
-🔗 <a href="https://basescan.org/address/${data.coinAddress}">BaseScan</a> | <a href="https://tokenscan.xyz/token/${data.coinAddress}">TokenScan</a> | <a href="https://dexscreener.com/base/${data.coinAddress}">DexScreener</a>
+🔗 <a href="https://sepolia.basescan.org/address/${data.coinAddress}">BaseScan</a> | <a href="https://dexscreener.com/base/${data.coinAddress}">DexScreener</a>
 
 #NewCreatorCoin #${data.coinSymbol} #Deployed`;
     } else {
