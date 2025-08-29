@@ -1,22 +1,8 @@
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Card } from "@/components/ui/card";
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Volume2, 
-  VolumeX,
-  Repeat,
-  Shuffle,
-  Heart,
-  MoreHorizontal
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { type MusicTrack, type MusicAlbum } from "@shared/schema";
+import React, { useState } from 'react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Repeat, Shuffle, Heart, MoreHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 
 interface MusicPlayerProps {
   currentTrack?: MusicTrack;

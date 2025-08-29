@@ -9,6 +9,8 @@ import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { Layout } from '@/components/Layout'
 import { SidebarProvider } from '@/hooks/use-sidebar'
+import { MusicPlayerProvider } from '@/contexts/MusicPlayerContext'
+import { GlobalMusicPlayer } from '@/components/GlobalMusicPlayer'
 import { queryClient } from '@/lib/queryClient'
 import { useWagmiConfig } from '../../wagmi'
 import { ApolloWrapper } from '../../lib/apollo-provider'
@@ -85,52 +87,55 @@ function AppContent() {
   return (
     <ApolloWrapper>
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <SidebarProvider>
-          <Layout>
-            <Switch>
-              <Route path="/" component={ContentCoin} />
-              <Route path="/subscriptions" component={Subscriptions} />
-              <Route path="/profile/subscribers" component={Subscribers} />
-              <Route path="/library" component={Library} />
-              <Route path="/history" component={History} />
-              <Route path="/liked" component={LikedVideos} />
-              <Route path="/watchlater" component={WatchLater} />
-              <Route path="/music" component={Music} />
-              <Route path="/feed" component={Feed} />
-              <Route path="/profile" component={Profile} />
-              <Route path="/notifications" component={Notifications} />
-              <Route path="/activities" component={Activities} />
-              <Route path="/search" component={Search} />
-              <Route path="/create-token" component={CreateChannel} />
-              <Route path="/createtoken" component={CreateToken} />
-              <Route path="/watch/:id" component={Watch} />
-              <Route path="/creatorcoins" component={CreatorCoins} />
-              <Route path="/contentcoin" component={ContentCoin} />
-              <Route path="/contents" component={Contents} />
-              <Route path="/content/:network/:address" component={ContentCoinDetail} />
-              <Route path="/content/:id" component={ContentDetail} />
-              <Route path="/tokenize" component={Tokenize} />
-              <Route path="/create" component={Create} />
-              <Route path="/admin" component={Admin} />
-              <Route path="/create-channel" component={CreateChannel} />
-              <Route path="/create-pad" component={CreatePad} />
-              <Route path="/create-content-coin" component={CreateContentCoin} />
-              <Route path="/token/:id" component={TokenDetail} />
-              <Route path="/channel/:slug/manager" component={ChannelManager} />
-              <Route path="/dashboard/import" component={ContentImport} />
-              <Route path="/my-content" component={MyContent} />
-              <Route path="/channel/:slug" component={ChannelDetail} />
-              <Route path="/:type/:id" component={PostDetail} />
-              <Route path="/doc" component={Doc} />
-              <Route path="/faq" component={FAQ} />
-              <Route path="/creators" component={Creators} /> {/* New route for Creators page */}
-              <Route path="/channels" component={Channels} />
-              <Route path="/leaderboard" component={Leaderboard} />
-              <Route component={NotFound} />
-            </Switch>
-          </Layout>
-          <Toaster />
-        </SidebarProvider>
+        <MusicPlayerProvider>
+          <SidebarProvider>
+            <Layout>
+              <Switch>
+                <Route path="/" component={ContentCoin} />
+                <Route path="/subscriptions" component={Subscriptions} />
+                <Route path="/profile/subscribers" component={Subscribers} />
+                <Route path="/library" component={Library} />
+                <Route path="/history" component={History} />
+                <Route path="/liked" component={LikedVideos} />
+                <Route path="/watchlater" component={WatchLater} />
+                <Route path="/music" component={Music} />
+                <Route path="/feed" component={Feed} />
+                <Route path="/profile" component={Profile} />
+                <Route path="/notifications" component={Notifications} />
+                <Route path="/activities" component={Activities} />
+                <Route path="/search" component={Search} />
+                <Route path="/create-token" component={CreateChannel} />
+                <Route path="/createtoken" component={CreateToken} />
+                <Route path="/watch/:id" component={Watch} />
+                <Route path="/creatorcoins" component={CreatorCoins} />
+                <Route path="/contentcoin" component={ContentCoin} />
+                <Route path="/contents" component={Contents} />
+                <Route path="/content/:network/:address" component={ContentCoinDetail} />
+                <Route path="/content/:id" component={ContentDetail} />
+                <Route path="/tokenize" component={Tokenize} />
+                <Route path="/create" component={Create} />
+                <Route path="/admin" component={Admin} />
+                <Route path="/create-channel" component={CreateChannel} />
+                <Route path="/create-pad" component={CreatePad} />
+                <Route path="/create-content-coin" component={CreateContentCoin} />
+                <Route path="/token/:id" component={TokenDetail} />
+                <Route path="/channel/:slug/manager" component={ChannelManager} />
+                <Route path="/dashboard/import" component={ContentImport} />
+                <Route path="/my-content" component={MyContent} />
+                <Route path="/channel/:slug" component={ChannelDetail} />
+                <Route path="/:type/:id" component={PostDetail} />
+                <Route path="/doc" component={Doc} />
+                <Route path="/faq" component={FAQ} />
+                <Route path="/creators" component={Creators} /> {/* New route for Creators page */}
+                <Route path="/channels" component={Channels} />
+                <Route path="/leaderboard" component={Leaderboard} />
+                <Route component={NotFound} />
+              </Switch>
+            </Layout>
+            <GlobalMusicPlayer />
+            <Toaster />
+          </SidebarProvider>
+        </MusicPlayerProvider>
       </ThemeProvider>
     </ApolloWrapper>
   )

@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
 import { CategoryChips } from "@/components/CategoryChips";
 import { CATEGORIES } from "@/lib/constants";
+import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
 
 interface ContentCoin {
   id: string;
@@ -148,6 +149,38 @@ export default function ContentCoin() {
 
   // Get real channels data
   const { data: channels, isLoading: channelsLoading, error: channelsError } = useGetAllChannels();
+
+  // Music player functionality
+  const { loadTrack, loadPlaylist } = useMusicPlayer();
+
+  // Handle play audio content
+  const handlePlayAudio = (coin: ContentCoin, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (coin.contentType === 'audio') {
+      const track = {
+        id: coin.id,
+        title: coin.title,
+        creator: coin.coinSymbol,
+        audioUrl: getContentUrl(coin.mediaCid),
+        coverUrl: coin.thumbnailCid ? getContentUrl(coin.thumbnailCid) : undefined
+      };
+      
+      // Create playlist from all audio content
+      const audioCoins = (contentCoins || []).filter((c: ContentCoin) => c.contentType === 'audio');
+      const playlist = audioCoins.map((c: ContentCoin) => ({
+        id: c.id,
+        title: c.title,
+        creator: c.coinSymbol,
+        audioUrl: getContentUrl(c.mediaCid),
+        coverUrl: c.thumbnailCid ? getContentUrl(c.thumbnailCid) : undefined
+      }));
+      
+      const currentIndex = audioCoins.findIndex((c: ContentCoin) => c.id === coin.id);
+      loadPlaylist(playlist, currentIndex);
+    }
+  };
 
   // Filter and sort content
   const filteredContent = (contentCoins || [])
@@ -409,6 +442,7 @@ export default function ContentCoin() {
                           {(coin.contentType === 'video' || coin.contentType === 'audio') && (
                             <Button
                               size="icon"
+                              onClick={(e) => handlePlayAudio(coin, e)}
                               className="absolute bottom-2 right-2 bg-black bg-opacity-70 hover:bg-black hover:bg-opacity-90 text-white rounded-full w-6 h-6 opacity-80 hover:opacity-100 transition-all"
                             >
                               <Play className="w-3 h-3" />
@@ -504,6 +538,7 @@ export default function ContentCoin() {
                             {(coin.contentType === 'video' || coin.contentType === 'audio') && (
                               <Button
                                 size="icon"
+                                onClick={(e) => handlePlayAudio(coin, e)}
                                 className="absolute bottom-2 right-2 bg-black bg-opacity-70 hover:bg-black hover:bg-opacity-90 text-white rounded-full w-8 h-8 opacity-80 hover:opacity-100 transition-all"
                               >
                                 <Play className="w-4 h-4" />
