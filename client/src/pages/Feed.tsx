@@ -168,82 +168,82 @@ const FeedVideoCard: React.FC<{
       </button>
 
       {/* User Info - Left Side */}
-      <div className="absolute bottom-0 left-0 p-4 text-white z-20 max-w-[70%]">
-        <div className="flex items-center gap-3 mb-3">
-          <Avatar className="w-10 h-10">
+      <div className="absolute bottom-0 left-0 p-3 text-white z-20 max-w-[70%]">
+        <div className="flex items-center gap-2 mb-2">
+          <Avatar className="w-8 h-8">
             <AvatarImage src={item.user.avatar} />
             <AvatarFallback>{item.user.name[0]}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-semibold text-sm">{item.user.name}</p>
-            <p className="text-xs text-gray-300">{item.user.username}</p>
+            <p className="font-semibold text-xs">{item.user.name}</p>
+            <p className="text-xs text-gray-400">{item.user.username}</p>
           </div>
           <Button 
             size="sm" 
-            className="ml-2 bg-red-500 hover:bg-red-600 text-white rounded-full px-4 py-1 text-xs"
+            className="ml-1 bg-red-500 hover:bg-red-600 text-white rounded-full px-3 py-0.5 text-xs h-6"
           >
             Follow
           </Button>
         </div>
         
-        <p className="text-sm mb-2 leading-relaxed">{item.description}</p>
+        <p className="text-xs mb-1 leading-tight">{item.description}</p>
         
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-1 text-xs">
           <Volume2 className="w-3 h-3" />
           <span className="truncate">{item.music}</span>
         </div>
       </div>
 
       {/* Actions - Right Side */}
-      <div className="absolute bottom-0 right-0 p-4 z-20">
-        <div className="flex flex-col items-center gap-6">
+      <div className="absolute bottom-0 right-0 p-3 z-20">
+        <div className="flex flex-col items-center gap-4">
           <button
             onClick={() => onLike(item.id)}
             className="flex flex-col items-center gap-1"
           >
             <div className={cn(
-              "w-12 h-12 rounded-full flex items-center justify-center",
+              "w-10 h-10 rounded-full flex items-center justify-center",
               item.isLiked ? "bg-red-500" : "bg-gray-800/50"
             )}>
               <Heart 
                 className={cn(
-                  "w-6 h-6",
+                  "w-5 h-5",
                   item.isLiked ? "text-white fill-white" : "text-white"
                 )}
               />
             </div>
-            <span className="text-white text-xs">{formatCount(item.likes)}</span>
+            <span className="text-white text-xs font-medium">{formatCount(item.likes)}</span>
           </button>
 
           <button className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-gray-800/50 flex items-center justify-center">
-              <MessageCircle className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-full bg-gray-800/50 flex items-center justify-center">
+              <MessageCircle className="w-5 h-5 text-white" />
             </div>
-            <span className="text-white text-xs">{formatCount(item.comments)}</span>
+            <span className="text-white text-xs font-medium">{formatCount(item.comments)}</span>
           </button>
 
           <button className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-gray-800/50 flex items-center justify-center">
-              <Share className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-full bg-gray-800/50 flex items-center justify-center">
+              <Share className="w-5 h-5 text-white" />
             </div>
-            <span className="text-white text-xs">{formatCount(item.shares)}</span>
+            <span className="text-white text-xs font-medium">{formatCount(item.shares)}</span>
           </button>
 
           <button 
             onClick={() => setIsMuted(!isMuted)}
             className="flex flex-col items-center gap-1"
           >
-            <div className="w-12 h-12 rounded-full bg-gray-800/50 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-gray-800/50 flex items-center justify-center">
               {isMuted ? 
-                <VolumeX className="w-6 h-6 text-white" /> : 
-                <Volume2 className="w-6 h-6 text-white" />
+                <VolumeX className="w-5 h-5 text-white" /> : 
+                <Volume2 className="w-5 h-5 text-white" />
               }
             </div>
           </button>
 
           <button className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-gray-800/50 flex items-center justify-center">
-              <MoreVertical className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-full bg-gray-800/50 flex items-center justify-center">
+              <MoreVertical className="w-5 h-5 text-white" />
             </div>
           </button>
         </div>
@@ -255,15 +255,15 @@ const FeedVideoCard: React.FC<{
 const FeedTabs: React.FC<{ activeTab: string; onTabChange: (tab: string) => void }> = ({ activeTab, onTabChange }) => {
   return (
     <div className="absolute top-0 left-0 right-0 z-30 bg-black/20 backdrop-blur-sm">
-      <div className="flex justify-center pt-12 pb-4">
-        <div className="flex bg-black/30 rounded-full p-1">
+      <div className="flex justify-center pt-12 pb-3">
+        <div className="flex gap-6">
           <button
             onClick={() => onTabChange('foryou')}
             className={cn(
-              "px-6 py-2 text-sm font-medium rounded-full transition-all duration-200",
+              "px-2 py-1 text-sm transition-all duration-200",
               activeTab === 'foryou'
-                ? "bg-white text-black"
-                : "text-white hover:text-gray-300"
+                ? "text-white font-bold"
+                : "text-gray-400 font-normal hover:text-gray-300"
             )}
           >
             For You
@@ -271,10 +271,10 @@ const FeedTabs: React.FC<{ activeTab: string; onTabChange: (tab: string) => void
           <button
             onClick={() => onTabChange('following')}
             className={cn(
-              "px-6 py-2 text-sm font-medium rounded-full transition-all duration-200",
+              "px-2 py-1 text-sm transition-all duration-200",
               activeTab === 'following'
-                ? "bg-white text-black"
-                : "text-white hover:text-gray-300"
+                ? "text-white font-bold"
+                : "text-gray-400 font-normal hover:text-gray-300"
             )}
           >
             Following
@@ -350,14 +350,14 @@ export default function Feed() {
         <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-sm border-b border-gray-800">
           <div className="container mx-auto px-4 py-3">
             <div className="flex justify-center">
-              <div className="flex bg-gray-800/50 rounded-lg p-1">
+              <div className="flex gap-8">
                 <button
                   onClick={() => setActiveTab('foryou')}
                   className={cn(
-                    "px-6 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                    "px-2 py-1 text-sm transition-all duration-200",
                     activeTab === 'foryou'
-                      ? "bg-white text-black"
-                      : "text-white hover:text-gray-300"
+                      ? "text-white font-bold"
+                      : "text-gray-400 font-normal hover:text-gray-300"
                   )}
                 >
                   For You
@@ -365,10 +365,10 @@ export default function Feed() {
                 <button
                   onClick={() => setActiveTab('following')}
                   className={cn(
-                    "px-6 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                    "px-2 py-1 text-sm transition-all duration-200",
                     activeTab === 'following'
-                      ? "bg-white text-black"
-                      : "text-white hover:text-gray-300"
+                      ? "text-white font-bold"
+                      : "text-gray-400 font-normal hover:text-gray-300"
                   )}
                 >
                   Following
