@@ -22,7 +22,7 @@ interface ContentCoin {
   mediaCid: string;
   thumbnailCid?: string | null;
   metadataUri?: string | null;
-  coinAddress?: string;
+  coinAddress?: string | null;
   deploymentTxHash?: string;
   creatorAddress: string;
   status: string;
