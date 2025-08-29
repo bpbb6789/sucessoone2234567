@@ -24,6 +24,118 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useGetAllChannels } from "@/hooks/useGetAllChannels";
+import { useState, useEffect } from "react";
+
+// Component to fetch and display real channel stats
+function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticker?: string }) {
+  const [marketCap, setMarketCap] = useState<string>('Loading...');
+  const [holders, setHolders] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!coinAddress) {
+        setMarketCap('$0.00');
+        setHolders(0);
+        return;
+      }
+
+      try {
+        // Fetch real market cap data
+        const priceResponse = await fetch('https://unipump-contracts.onrender.com/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `
+              query GetTokenData($tokenAddress: String!) {
+                minBuckets(
+                  where: { tokenAddress: $tokenAddress }
+                  orderBy: { id: desc }
+                  first: 1
+                ) {
+                  items {
+                    close
+                    average
+                  }
+                }
+                uniPumpCreatorSaless(
+                  where: { memeTokenAddress: $tokenAddress }
+                ) {
+                  items {
+                    totalSupply
+                  }
+                }
+              }
+            `,
+            variables: { tokenAddress: coinAddress }
+          })
+        });
+
+        // Fetch real holder count
+        const holdersResponse = await fetch('/api/token-holders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tokenAddress: coinAddress })
+        });
+
+        // Process market cap data
+        if (priceResponse.ok) {
+          const priceData = await priceResponse.json();
+          const bucketData = priceData.data?.minBuckets?.items?.[0];
+          const tokenData = priceData.data?.uniPumpCreatorSaless?.items?.[0];
+
+          if (bucketData && tokenData) {
+            const price = parseFloat(bucketData.close || bucketData.average || '0');
+            const totalSupply = parseFloat(tokenData.totalSupply || '1000000000');
+            const calculatedMarketCap = price * Math.min(totalSupply, 800000000); // Max 800M circulating
+
+            if (calculatedMarketCap >= 1000000) {
+              setMarketCap(`$${(calculatedMarketCap / 1000000).toFixed(2)}M`);
+            } else if (calculatedMarketCap >= 1000) {
+              setMarketCap(`$${(calculatedMarketCap / 1000).toFixed(2)}K`);
+            } else {
+              setMarketCap(`$${calculatedMarketCap.toFixed(2)}`);
+            }
+          } else {
+            setMarketCap('$0.00');
+          }
+        } else {
+          setMarketCap('$0.00');
+        }
+
+        // Process holder count data
+        if (holdersResponse.ok) {
+          const holdersData = await holdersResponse.json();
+          setHolders(holdersData.holderCount || 0);
+        } else {
+          setHolders(0);
+        }
+      } catch (error) {
+        console.error('Error fetching channel stats:', error);
+        setMarketCap('$0.00');
+        setHolders(0);
+      }
+    };
+
+    fetchStats();
+  }, [coinAddress]);
+
+  return (
+    <div className="flex items-center gap-2 mt-1">
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-green-400">💰</span>
+        <span className="text-xs text-gray-400">
+          {marketCap}
+        </span>
+      </div>
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-blue-400">👥</span>
+        <span className="text-xs text-gray-400">
+          {holders}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const mainNavItems = [
   { icon: FileImage, label: "Discover", href: "/" },
@@ -131,20 +243,10 @@ export function Sidebar() {
                           <span className="text-sm truncate">
                             {channel.name}
                           </span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs text-green-400">💰</span>
-                              <span className="text-xs text-gray-400">
-                                ${Math.floor(Math.random() * 500) + 50}K
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-xs text-blue-400">👥</span>
-                              <span className="text-xs text-gray-400">
-                                {Math.floor(Math.random() * 1000) + 100}
-                              </span>
-                            </div>
-                          </div>
+                          <ChannelRealStats 
+                            coinAddress={channel.coinAddress}
+                            ticker={channel.ticker}
+                          />
                         </div>
                       </div>
                     </Link>
