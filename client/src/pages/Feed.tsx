@@ -534,7 +534,7 @@ export default function Feed() {
       const reels: ContentReel[] = creatorCoins.map((coin, index) => ({
         id: coin.id,
         title: coin.title || `${coin.coinSymbol} Content Coin`,
-        description: coin.description || `Exclusive content from ${coin.coinSymbol} creator. Join the community and unlock premium content!`,
+        description: coin.description || coin.title || `${coin.coinSymbol} Content`,
         imageUri: coin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` : `/nfts/${(index % 9) + 1}.jpeg`,
         creator: {
           address: coin.creatorAddress,
