@@ -46,6 +46,7 @@ import CreatorCoins from '@/pages/CreatorCoins'
 import CreateContentCoin from '@/pages/CreateContentCoin'
 import ContentCoin from '@/pages/ContentCoin'
 import ContentCoinDetail from "./pages/ContentCoinDetail";
+import TokenDetail from '@/pages/TokenDetail'
 import NotFound from '@/pages/not-found'
 import Channels from "./pages/Channels";
 import Contents from "@/pages/Contents";
