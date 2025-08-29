@@ -109,39 +109,39 @@ export default function ChannelDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/contentcoin">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            </Link>
-            <h1 className="text-lg font-semibold">{channel.name}</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              <Share2 className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Settings className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto">
-        {/* Channel Banner */}
-        {channel.coverUrl && (
-          <div className="aspect-[6/1] bg-gradient-to-r from-blue-500 to-purple-600 relative overflow-hidden">
+        {/* Channel Banner with Header Controls */}
+        <div className="aspect-[6/1] bg-gradient-to-r from-blue-500 to-purple-600 relative overflow-hidden">
+          {channel.coverUrl && (
             <img 
               src={channel.coverUrl} 
               alt={`${channel.name} banner`}
               className="w-full h-full object-cover"
             />
+          )}
+          
+          {/* Header Controls Overlay */}
+          <div className="absolute top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-sm">
+            <div className="px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Link href="/contentcoin">
+                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <h1 className="text-lg font-semibold text-white">{channel.name}</h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                  <Share2 className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
+                  <Settings className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Channel Info */}
         <div className="p-6">
