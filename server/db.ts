@@ -1,26 +1,19 @@
 
-import { PrismaClient } from '../lib/generated/prisma/index.js';
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon } from '@neondatabase/serverless';
+import * as schema from '@shared/schema';
 
-let prisma: PrismaClient;
-
-declare global {
-  var __prisma: PrismaClient | undefined;
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is required');
 }
 
-if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient();
-} else {
-  if (!global.__prisma) {
-    global.__prisma = new PrismaClient();
-  }
-  prisma = global.__prisma;
-}
-
-export const db = prisma;
+const sql = neon(process.env.DATABASE_URL);
+export const db = drizzle(sql, { schema });
 
 export async function testDatabaseConnection() {
   try {
-    await prisma.$connect();
+    // Test the connection by running a simple query
+    await sql`SELECT 1`;
     console.log('✅ Database connected successfully');
     return true;
   } catch (error) {
@@ -29,4 +22,4 @@ export async function testDatabaseConnection() {
   }
 }
 
-export default prisma;
+export default db;
