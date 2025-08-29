@@ -15,9 +15,10 @@ export function Layout({ children }: LayoutProps) {
   const isMobile = useIsMobile();
   const [location] = useLocation();
   
-  // Check if we're on the shorts page for mobile full-screen experience
+  // Check if we're on the shorts or feed page for mobile full-screen experience
   const isShortsPage = location === '/shorts';
-  const shouldHideHeaderOnMobile = isMobile && isShortsPage;
+  const isFeedPage = location === '/feed';
+  const shouldHideHeaderOnMobile = isMobile && (isShortsPage || isFeedPage);
   const shouldHideMobileNavOnMobile = false; // Always show mobile nav
 
   return (

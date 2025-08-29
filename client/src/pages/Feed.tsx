@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Share, Play, Pause, Volume2, VolumeX, MoreVertica
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FeedItem {
   id: string;
@@ -251,11 +252,46 @@ const FeedVideoCard: React.FC<{
   );
 };
 
+const FeedTabs: React.FC<{ activeTab: string; onTabChange: (tab: string) => void }> = ({ activeTab, onTabChange }) => {
+  return (
+    <div className="absolute top-0 left-0 right-0 z-30 bg-black/20 backdrop-blur-sm">
+      <div className="flex justify-center pt-12 pb-4">
+        <div className="flex bg-black/30 rounded-full p-1">
+          <button
+            onClick={() => onTabChange('foryou')}
+            className={cn(
+              "px-6 py-2 text-sm font-medium rounded-full transition-all duration-200",
+              activeTab === 'foryou'
+                ? "bg-white text-black"
+                : "text-white hover:text-gray-300"
+            )}
+          >
+            For You
+          </button>
+          <button
+            onClick={() => onTabChange('following')}
+            className={cn(
+              "px-6 py-2 text-sm font-medium rounded-full transition-all duration-200",
+              activeTab === 'following'
+                ? "bg-white text-black"
+                : "text-white hover:text-gray-300"
+            )}
+          >
+            Following
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Feed() {
   const [feedData, setFeedData] = useState<FeedItem[]>(mockFeedData);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('foryou');
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const handleLike = useCallback((id: string) => {
     setFeedData(prevData => 
@@ -303,10 +339,52 @@ export default function Feed() {
   }, [feedData.length, loadMoreContent]);
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black relative">
+      {/* TikTok-style tabs - only on mobile */}
+      {isMobile && (
+        <FeedTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      )}
+      
+      {/* Desktop tabs - for larger screens */}
+      {!isMobile && (
+        <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-sm border-b border-gray-800">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex justify-center">
+              <div className="flex bg-gray-800/50 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('foryou')}
+                  className={cn(
+                    "px-6 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                    activeTab === 'foryou'
+                      ? "bg-white text-black"
+                      : "text-white hover:text-gray-300"
+                  )}
+                >
+                  For You
+                </button>
+                <button
+                  onClick={() => setActiveTab('following')}
+                  className={cn(
+                    "px-6 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                    activeTab === 'following'
+                      ? "bg-white text-black"
+                      : "text-white hover:text-gray-300"
+                  )}
+                >
+                  Following
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div 
         ref={containerRef}
-        className="h-screen overflow-y-auto snap-y snap-mandatory scrollbar-hide"
+        className={cn(
+          "overflow-y-auto snap-y snap-mandatory scrollbar-hide",
+          isMobile ? "h-screen" : "h-[calc(100vh-4rem)]"
+        )}
         onScroll={handleScroll}
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
