@@ -25,8 +25,7 @@ import {
   Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PUMP_FUN_ADDRESS } from "@/lib/addresses";
-import { PUMP_FUN_ABI } from "../../../abi/PumpFunAbi";
+// Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
 import TradingChart from "@/components/TradingChart";
 import TokenStats from "@/components/TokenStats";
@@ -116,15 +115,10 @@ export default function TokenDetail() {
     }
   });
 
-  // Get bonding curve data
-  const { data: bondingCurvePrice } = useReadContract({
-    address: PUMP_FUN_ADDRESS as Address,
-    abi: PUMP_FUN_ABI,
-    functionName: "getBondingCurve",
-    args: [tokenAddress as Address],
-    query: {
-      enabled: !!tokenAddress
-    }
+  // Get bonding curve data from Zora API
+  const { data: bondingCurveData } = useQuery({
+    queryKey: ['/api/zora/bonding-curve', tokenAddress],
+    enabled: !!tokenAddress
   });
 
   const copyAddress = () => {

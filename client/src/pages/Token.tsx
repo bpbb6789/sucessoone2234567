@@ -9,9 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Coins, TrendingUp, Users, DollarSign, ExternalLink, ArrowLeft } from 'lucide-react';
 import { TokenTrading } from '@/components/TokenTrading';
 import { Link } from 'react-router-dom';
-import { useReadContract } from 'wagmi';
+import { useQuery } from '@tanstack/react-query';
 import { PriceService } from '../../../lib/priceService';
-import { CONTRACTS, PUMP_FUN_ABI } from '@/lib/contracts';
+// Using Zora SDK via API routes instead of direct contract calls
 import { formatUnits } from 'viem';
 
 interface TokenData {
@@ -53,16 +53,11 @@ export default function Token() {
 
   const tokenAddress = getTokenAddressFromPath() as `0x${string}` | null;
 
-  // Get token bonding curve data from contract
-  const { data: bondingCurveData, isError: tokenDataError, isLoading: contractLoading } = useReadContract({
-    address: CONTRACTS.PUMP_FUN,
-    abi: PUMP_FUN_ABI,
-    functionName: 'getBondingCurve',
-    args: tokenAddress ? [tokenAddress] : undefined,
-    query: {
-      enabled: !!tokenAddress,
-      retry: 2,
-    },
+  // Get token bonding curve data from Zora API
+  const { data: bondingCurveData, isError: tokenDataError, isLoading: contractLoading } = useQuery({
+    queryKey: ['/api/zora/bonding-curve', tokenAddress],
+    enabled: !!tokenAddress,
+    retry: 2,
   });
 
   // Helper function to format numbers for display

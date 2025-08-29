@@ -1,12 +1,9 @@
-import { useReadContract } from 'wagmi';
-import { PUMP_FUN_ADDRESS } from '@/lib/addresses';
-import { PUMP_FUN_ABI } from '../../../abi/PumpFunAbi';
+import { useQuery } from '@tanstack/react-query';
 
 export function useCreateFee() {
-  const { data: createFee, isError, isLoading, error } = useReadContract({
-    address: PUMP_FUN_ADDRESS as `0x${string}`,
-    abi: PUMP_FUN_ABI,
-    functionName: 'getCreateFee',
+  const { data: createFee, isError, isLoading, error } = useQuery({
+    queryKey: ['/api/zora/create-fee'],
+    retry: 2,
   });
 
   console.log('Create Fee Hook:', { createFee, isError, isLoading, error });

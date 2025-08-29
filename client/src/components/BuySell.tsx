@@ -1,5 +1,5 @@
 "'use client'"
-import { PUMP_FUN_ABI } from "../../../abi/PumpFunAbi";
+// Using Zora SDK via TransactionComponent instead of direct contract calls
 import { Button } from "@/components/ui/button";
 import {
   Card,

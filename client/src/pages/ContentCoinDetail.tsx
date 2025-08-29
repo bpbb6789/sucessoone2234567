@@ -9,8 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAccount } from "wagmi";
-import { useReadContract } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Play,
@@ -31,8 +30,7 @@ import {
   Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PUMP_FUN_ADDRESS } from "@/lib/addresses";
-import { PUMP_FUN_ABI } from "../../../abi/PumpFunAbi";
+// Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
 import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
 import { useGetAllSales } from "@/hooks/useGetAllSales";

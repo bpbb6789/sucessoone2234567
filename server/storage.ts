@@ -19,16 +19,10 @@ import {
   type Pad, type InsertPad,
   type PadLike, type InsertPadLike,
   type PadComment, type InsertPadComment,
-  type Notification, type InsertNotification,
-  type ChannelAnalytics, type InsertChannelAnalytics,
-  type EnhancedSubscription, type InsertEnhancedSubscription,
-  type ChannelComment, type InsertChannelComment,
-  type SearchFilter, type InsertSearchFilter,
   type VideoWithChannel, type ShortsWithChannel, type CommentWithChannel,
   channels, videos, shorts, playlists, musicAlbums, comments, subscriptions,
   videoLikes, shortsLikes, commentLikes, shares, musicTracks, userProfiles,
-  tokens, tokenSales, web3Channels, contentImports, pads, padLikes, padComments,
-  notifications, channelAnalytics, enhancedSubscriptions, channelComments, searchFilters
+  tokens, tokenSales, web3Channels, contentImports, pads, padLikes, padComments
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -156,38 +150,6 @@ export interface IStorage {
   createPadComment(comment: InsertPadComment): Promise<PadComment>;
   deletePadComment(id: string): Promise<void>;
 
-  // Notifications System
-  createNotification(notification: InsertNotification): Promise<Notification>;
-  getNotifications(recipientAddress: string, limit?: number, unreadOnly?: boolean): Promise<Notification[]>;
-  markNotificationAsRead(id: string): Promise<void>;
-  markAllNotificationsAsRead(recipientAddress: string): Promise<void>;
-  deleteNotification(id: string): Promise<void>;
-  getUnreadNotificationCount(recipientAddress: string): Promise<number>;
-
-  // Channel Analytics
-  createChannelAnalytics(analytics: InsertChannelAnalytics): Promise<ChannelAnalytics>;
-  getChannelAnalytics(channelId?: string, web3ChannelId?: string): Promise<ChannelAnalytics[]>;
-  updateChannelAnalytics(channelId: string, updates: Partial<InsertChannelAnalytics>): Promise<void>;
-  getChannelSubscriberCount(channelId?: string, web3ChannelId?: string): Promise<number>;
-
-  // Enhanced Subscriptions
-  createEnhancedSubscription(subscription: InsertEnhancedSubscription): Promise<EnhancedSubscription>;
-  getEnhancedSubscription(subscriberAddress: string, channelId?: string, web3ChannelId?: string): Promise<EnhancedSubscription | undefined>;
-  deleteEnhancedSubscription(subscriberAddress: string, channelId?: string, web3ChannelId?: string): Promise<void>;
-  updateSubscriptionPreferences(id: string, preferences: Partial<InsertEnhancedSubscription>): Promise<void>;
-  getSubscriptionsByAddress(subscriberAddress: string): Promise<EnhancedSubscription[]>;
-
-  // Channel Comments
-  createChannelComment(comment: InsertChannelComment): Promise<ChannelComment>;
-  getChannelComments(channelId?: string, web3ChannelId?: string): Promise<ChannelComment[]>;
-  likeChannelComment(commentId: string): Promise<void>;
-  deleteChannelComment(id: string): Promise<void>;
-  pinChannelComment(id: string, isPinned: boolean): Promise<void>;
-
-  // Search Filters & Advanced Search
-  saveSearchFilter(filter: InsertSearchFilter): Promise<SearchFilter>;
-  getUserSearchHistory(userAddress: string): Promise<SearchFilter[]>;
-  searchChannelsAdvanced(query: string, filters?: Partial<InsertSearchFilter>): Promise<Web3Channel[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -943,55 +905,6 @@ export class DatabaseStorage implements IStorage {
   async createPadComment(): Promise<PadComment> { throw new Error('Not implemented'); }
   async deletePadComment(): Promise<void> { }
 
-  // Notifications System Implementation
-  async createNotification(notification: InsertNotification): Promise<Notification> {
-    const [newNotification] = await this.db.insert(notifications).values({
-      id: randomUUID(),
-      createdAt: new Date(),
-      ...notification,
-    }).returning();
-    return newNotification;
-  }
-
-  async getNotifications(recipientAddress: string, limit: number = 50, unreadOnly: boolean = false): Promise<Notification[]> {
-    let query = this.db.select().from(notifications)
-      .where(eq(notifications.recipientAddress, recipientAddress));
-    
-    if (unreadOnly) {
-      query = query.where(eq(notifications.read, false));
-    }
-    
-    return await query.orderBy(desc(notifications.createdAt)).limit(limit);
-  }
-
-  async markNotificationAsRead(id: string): Promise<void> {
-    await this.db.update(notifications)
-      .set({ read: true })
-      .where(eq(notifications.id, id));
-  }
-
-  async markAllNotificationsAsRead(recipientAddress: string): Promise<void> {
-    await this.db.update(notifications)
-      .set({ read: true })
-      .where(and(
-        eq(notifications.recipientAddress, recipientAddress),
-        eq(notifications.read, false)
-      ));
-  }
-
-  async deleteNotification(id: string): Promise<void> {
-    await this.db.delete(notifications).where(eq(notifications.id, id));
-  }
-
-  async getUnreadNotificationCount(recipientAddress: string): Promise<number> {
-    const result = await this.db.select({ count: count() })
-      .from(notifications)
-      .where(and(
-        eq(notifications.recipientAddress, recipientAddress),
-        eq(notifications.read, false)
-      ));
-    return result[0]?.count || 0;
-  }
 
   // Channel Analytics Implementation
   async createChannelAnalytics(analytics: InsertChannelAnalytics): Promise<ChannelAnalytics> {

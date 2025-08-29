@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { formatEther, parseEther, type Address } from 'viem';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { pumpFunConfig, CONTRACTS, PUMP_FUN_ABI } from '@/lib/contracts';
+// Using Zora SDK via API routes instead of direct contract calls
 import { formatUnits, parseUnits } from 'viem';
 import { useWallet } from '@/hooks/useWallet';
 
