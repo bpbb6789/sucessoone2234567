@@ -222,73 +222,116 @@ export default function Creators() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredCreators.map((creator: Creator, index: number) => {
-              // Generate vibrant gradient colors for each creator
-              const gradients = [
-                'from-orange-400 via-red-500 to-pink-500',
-                'from-lime-400 via-green-500 to-emerald-500', 
-                'from-blue-400 via-purple-500 to-pink-500',
-                'from-yellow-400 via-orange-500 to-red-500',
-                'from-cyan-400 via-blue-500 to-purple-500',
-                'from-emerald-400 via-teal-500 to-cyan-500',
-                'from-pink-400 via-rose-500 to-red-500',
-                'from-indigo-400 via-purple-500 to-pink-500'
-              ];
-              const gradientClass = gradients[index % gradients.length];
-              
-              return (
-                <Link key={creator.id} to={`/creators/${creator.address}`}>
-                  <div className="group cursor-pointer" data-testid={`creator-card-${creator.id}`}>
-                    <div className={`relative bg-gradient-to-br ${gradientClass} rounded-2xl aspect-[3/4] overflow-hidden transform transition-all duration-300 hover:scale-105`}>
-                      {/* Background Pattern/Texture */}
-                      <div className="absolute inset-0 bg-black/20"></div>
-                      
-                      {/* Content Container */}
-                      <div className="relative h-full flex flex-col justify-end p-4">
-                        {/* Artist Name */}
-                        <div className="space-y-1">
-                          <h3 className="text-white font-bold text-lg leading-tight">
+          <div className="space-y-4">
+            {/* Mobile: Single column horizontal cards */}
+            <div className="md:hidden grid grid-cols-1 gap-3">
+              {filteredCreators.map((creator: Creator, index: number) => {
+                // Generate vibrant gradient colors for each creator
+                const gradients = [
+                  'from-orange-400 via-red-500 to-pink-500',
+                  'from-lime-400 via-green-500 to-emerald-500', 
+                  'from-blue-400 via-purple-500 to-pink-500',
+                  'from-yellow-400 via-orange-500 to-red-500',
+                  'from-cyan-400 via-blue-500 to-purple-500',
+                  'from-emerald-400 via-teal-500 to-cyan-500',
+                  'from-pink-400 via-rose-500 to-red-500',
+                  'from-indigo-400 via-purple-500 to-pink-500'
+                ];
+                const gradientClass = gradients[index % gradients.length];
+                
+                return (
+                  <Link key={creator.id} to={`/creators/${creator.address}`}>
+                    <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02]" data-testid={`creator-card-${creator.id}`}>
+                      <div className={`bg-gradient-to-r ${gradientClass} rounded-xl p-4 h-20 flex items-center gap-4 shadow-lg hover:shadow-xl`}>
+                        {/* Creator Avatar */}
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 flex items-center justify-center">
+                            <span className="text-white font-bold text-lg">{creator.name.charAt(0)}</span>
+                          </div>
+                        </div>
+
+                        {/* Creator Info */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-white font-bold text-base leading-tight truncate mb-1">
                             {creator.name}
                           </h3>
-                          <p className="text-white/80 text-sm">
-                            {creator.contentCoins} Releases
+                          <p className="text-white/80 text-sm truncate">
+                            {creator.contentCoins} Content Coins • {creator.totalLikes} Likes
+                          </p>
+                        </div>
+
+                        {/* Rank Badge */}
+                        <div className="flex-shrink-0">
+                          <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-2 py-1 rounded-lg">
+                            <span className="text-white text-xs font-bold">#{creator.rank}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Desktop: 2 per row horizontal cards */}
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredCreators.map((creator: Creator, index: number) => {
+                // Generate vibrant gradient colors for each creator
+                const gradients = [
+                  'from-orange-400 via-red-500 to-pink-500',
+                  'from-lime-400 via-green-500 to-emerald-500', 
+                  'from-blue-400 via-purple-500 to-pink-500',
+                  'from-yellow-400 via-orange-500 to-red-500',
+                  'from-cyan-400 via-blue-500 to-purple-500',
+                  'from-emerald-400 via-teal-500 to-cyan-500',
+                  'from-pink-400 via-rose-500 to-red-500',
+                  'from-indigo-400 via-purple-500 to-pink-500'
+                ];
+                const gradientClass = gradients[index % gradients.length];
+                
+                return (
+                  <Link key={creator.id} to={`/creators/${creator.address}`}>
+                    <div className="group cursor-pointer transform transition-all duration-300 hover:scale-[1.02]" data-testid={`creator-card-${creator.id}`}>
+                      <div className={`bg-gradient-to-r ${gradientClass} rounded-xl p-5 h-24 flex items-center gap-5 shadow-lg hover:shadow-xl`}>
+                        {/* Creator Avatar */}
+                        <div className="flex-shrink-0">
+                          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 flex items-center justify-center">
+                            <span className="text-white font-bold text-xl">{creator.name.charAt(0)}</span>
+                          </div>
+                        </div>
+
+                        {/* Creator Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-white font-bold text-xl leading-tight truncate">
+                              {creator.name}
+                            </h3>
+                            {creator.rank <= 3 && (
+                              <div className="bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-full">
+                                TOP {creator.rank}
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-white/80 text-sm truncate">
+                            {creator.contentCoins} Content Coins • {creator.totalLikes} Likes • {creator.totalComments} Comments
+                          </p>
+                        </div>
+
+                        {/* Stats & Rank */}
+                        <div className="flex-shrink-0 text-right">
+                          <div className="bg-white/20 backdrop-blur-sm border border-white/30 px-3 py-2 rounded-lg mb-1">
+                            <span className="text-white text-sm font-bold">#{creator.rank}</span>
+                          </div>
+                          <p className="text-white/70 text-xs">
+                            {formatTimeAgo(creator.lastActive)}
                           </p>
                         </div>
                       </div>
-
-                      {/* Hover Overlay with Additional Info */}
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center items-center p-4">
-                        <div className="text-center space-y-2">
-                          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full border-2 border-white/40 flex items-center justify-center mb-2">
-                            <span className="text-lg font-bold text-white">
-                              {creator.name.charAt(0)}
-                            </span>
-                          </div>
-                          <h3 className="text-white font-bold text-lg">
-                            {creator.name}
-                          </h3>
-                          <p className="text-white/80 text-sm">{creator.username}</p>
-                          <div className="space-y-1 text-xs text-white/70">
-                            <p>{creator.totalLikes} Likes • {creator.totalComments} Comments</p>
-                            <p>Rank #{creator.rank}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Top Right Badge for High Performers */}
-                      {creator.rank <= 3 && (
-                        <div className="absolute top-3 right-3">
-                          <div className="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">
-                            TOP {creator.rank}
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
