@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy, User, DollarSign, FileText } from "lucide-react";
 import { useCreatorCoins, useCreators } from '@/hooks/useCreatorCoins';
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
@@ -230,8 +231,15 @@ export default function ContentCoin() {
                 opts={{
                   align: "start",
                   loop: true,
-                  slidesToScroll: 3
+                  slidesToScroll: 1
                 }}
+                plugins={[
+                  Autoplay({
+                    delay: 3000,
+                    stopOnInteraction: true,
+                    stopOnMouseEnter: true
+                  })
+                ]}
                 className="w-full"
               >
                 <CarouselContent className="-ml-4">
