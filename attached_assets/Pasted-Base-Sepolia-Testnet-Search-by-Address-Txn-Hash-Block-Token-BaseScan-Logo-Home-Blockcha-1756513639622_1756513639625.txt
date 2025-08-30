@@ -1,0 +1,107 @@
+Base Sepolia Testnet
+Search by Address / Txn Hash / Block / Token
+/
+BaseScan Logo
+Home
+Blockchain
+Transactions
+Latest L1→L2 Transactions
+Latest L2→L1 Transactions
+Contract Internal Transactions
+AA Transactions Beta
+EIP-7702 Authorizations Beta
+View Blocks
+View L1 Transaction Batches
+View L1 State Batches
+Top Accounts
+Verified Contracts
+Tokens
+View ERC-20 Transfers
+NFTs
+Latest Transfers
+Latest Mints
+More
+Converters
+Unit Converter
+Base64 Converter
+Block & Date Converter
+UTF-8 Converter
+Method ID Converter
+Developers
+API Documentation
+Verify Contract
+Contract Diff Checker
+Similar Contract Search
+Vyper Online Compiler
+Bytecode to Opcode
+Broadcast Transaction
+Tools & Services
+CSV Export
+Input Data Decoder Beta
+Account Balance Checker
+Token Supply Checker
+Token Standard Checker
+Transaction Details
+ 
+Overview
+State
+Transaction Action
+Call
+0x24856bc3
+Method by
+0xB59fEcEd...8a21e648D
+on
+0x2626664c...21741e481
+[ This is a Base Sepolia Network Testnet transaction only ]
+Transaction Hash:
+0x37e8a83fff73e8b301b5834867de3b76d764df96a92451754e33a45464cef90f 
+Status:
+Success
+Block:
+30372383 Confirmed by Sequencer
+Timestamp:
+9 mins ago (Aug-30-2025 12:17:34 AM +UTC)
+From:
+0xB59fEcEd64136e00D0be412623564408a21e648D
+To:
+0x2626664c2603336E57B271c5C0b26F421741e481
+Value:
+0.001 ETH
+Transaction Fee:
+0.000000022846272064 ETH ($0.000042)
+Gas Price:
+0.000970076 Gwei (0.000000000000970076 ETH)
+Gas Limit & Usage by Txn:
+23,887 | 23,550 (98.59%)
+Gas Fees:
+Base: 0.000000076 Gwei |Max: 0.000970237 Gwei |Max Priority: 0.00097 Gwei
+L2 Fees Paid:
+0.0000000228452898 ETH
+L1 Fees Paid:
+0.000000000000982264 ETH
+L1 Gas Price:
+0.000000000000001317 ETH (0.000001317 Gwei)
+L1 Gas Used by Txn:
+1,600
+L1 Fee Scalar:
+0
+Other Attributes:
+Txn Type: 2 (EIP-1559)
+Nonce: 3
+Position In Block: 18
+Input Data:
+0x24856bc30000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000
+More Details:
+ Click to show less
+A transaction is a cryptographically signed instruction that changes the blockchain state. Block explorers track the details of all transactions in the network. Learn more about transactions in our Knowledge Base.
+
+Base Sepolia Network Logo
+Powered By Base
+ Back to Top
+BaseScan © 2025 (BASE-Sepolia-A) | ⛏ Built by Team Etherscan
+
+Terms & Privacy
+|
+Network Status
+|
+Donations: 0x71c765...d8976f 
