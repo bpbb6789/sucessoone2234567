@@ -228,11 +228,7 @@ export function useBuyCreatorCoin() {
       minTokensOut?: string;
       comment?: string;
     }) => {
-      return apiRequest(`/api/creator-coins/${data.coinId}/buy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      return apiRequest('POST', `/api/creator-coins/${data.coinId}/buy`, data);
     },
     onSuccess: (_, variables) => {
       // Invalidate relevant queries to refresh data
@@ -255,11 +251,7 @@ export function useSellCreatorCoin() {
       tokenAmount: string;
       minEthOut?: string;
     }) => {
-      return apiRequest(`/api/creator-coins/${data.coinId}/sell`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      return apiRequest('POST', `/api/creator-coins/${data.coinId}/sell`, data);
     },
     onSuccess: (_, variables) => {
       // Invalidate relevant queries to refresh data

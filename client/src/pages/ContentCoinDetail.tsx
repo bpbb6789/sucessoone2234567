@@ -428,10 +428,11 @@ export default function ContentCoinDetail() {
                 <Button 
                   className="flex-1 bg-green-500 hover:bg-green-600 text-black font-bold"
                   onClick={handleBuy}
-                  disabled={isWritePending || isTxConfirming || !address}
+                  disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
                   data-testid="button-buy-mobile"
                 >
-                  {isWritePending ? 'Signing...' : isTxConfirming ? 'Confirming...' : 'Buy'}
+                  {isWritePending ? 'Signing...' : isTxConfirming ? 'Confirming...' : 
+                   !address ? 'Connect' : !buyAmount ? 'Enter Amount' : 'Buy'}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -444,6 +445,27 @@ export default function ContentCoinDetail() {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* DEX Screener Trading Chart - Desktop Only */}
+          <div className="hidden lg:block p-4">
+            <Card className="bg-gray-800 border-gray-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Trading Chart
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="h-96 w-full">
+                  <iframe
+                    src={`https://dexscreener.com/base/${tokenData.address}?embed=1&theme=dark&trades=0&info=0`}
+                    className="w-full h-full border-0 rounded"
+                    title="DEX Screener Chart"
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -484,12 +506,13 @@ export default function ContentCoinDetail() {
               </div>
             </div>
 
-            {/* Balance */}
+            {/* Token Balance */}
             <div className="text-right">
-              <p className="text-xs text-gray-400">Balance</p>
+              <p className="text-xs text-gray-400">Your Balance</p>
               <p className="font-bold">
-                {tokenBalance ? formatUnits(tokenBalance, 18) : '0'} ETH
+                {tokenBalance ? formatUnits(tokenBalance, 18) : '0'} {tokenData.symbol}
               </p>
+              <p className="text-xs text-gray-400 mt-1">Price: ${tokenData.price}</p>
             </div>
           </div>
 
@@ -541,10 +564,14 @@ export default function ContentCoinDetail() {
               <Button 
                 className="w-full bg-green-500 hover:bg-green-600 text-black font-bold h-12"
                 onClick={handleBuy}
-                disabled={isWritePending || isTxConfirming || !address}
+                disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
                 data-testid="button-buy-desktop"
               >
-                {isWritePending ? 'Signing Transaction...' : isTxConfirming ? 'Confirming...' : 'Buy'}
+                {isWritePending ? 'Signing Transaction...' : 
+                 isTxConfirming ? 'Confirming...' : 
+                 !address ? 'Connect Wallet' :
+                 !buyAmount || parseFloat(buyAmount) <= 0 ? 'Enter Amount' :
+                 `Buy ${buyAmount} ETH worth`}
               </Button>
             </div>
           </div>
