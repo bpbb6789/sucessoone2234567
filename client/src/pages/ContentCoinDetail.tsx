@@ -132,8 +132,8 @@ export default function ContentCoinDetail() {
     // First, try to use creator coin data if available
     if (creatorCoin) {
       return {
-        id: creatorCoin.coinAddress || creatorCoin.id,
-        address: creatorCoin.coinAddress || creatorCoin.id,
+        id: creatorCoin.id, // Use the actual database ID for API calls
+        address: creatorCoin.coinAddress || tokenAddress, // Use contract address for blockchain calls
         name: creatorCoin.title || creatorCoin.coinName,
         symbol: creatorCoin.coinSymbol,
         description: creatorCoin.description || `${creatorCoin.coinName} content coin`,
