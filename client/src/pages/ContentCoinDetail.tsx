@@ -212,61 +212,50 @@ export default function ContentCoinDetail() {
       return;
     }
 
-    if (!tokenData?.address) {
+    if (!tokenData?.id) {
       toast({
         title: "Token not found",
-        description: "Unable to find token contract address",
+        description: "Unable to find token information",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      // Execute direct onchain transaction using Uniswap V4
-      const ethAmountWei = parseUnits(buyAmount, 18);
-      
-      // Uniswap V4 Universal Router on Base Sepolia
-      const UNISWAP_V4_ROUTER = '0x2626664c2603336E57B271c5C0b26F421741e481';
-      
-      // For the actual swap, we would need the proper function selector and encoding
-      // This is a simplified version - production would use Uniswap V4 SDK
-      
-      const result = await writeContract({
-        address: UNISWAP_V4_ROUTER as `0x${string}`,
-        abi: [
-          {
-            name: 'execute',
-            type: 'function',
-            stateMutability: 'payable',
-            inputs: [
-              { name: 'commands', type: 'bytes' },
-              { name: 'inputs', type: 'bytes[]' }
-            ],
-            outputs: []
-          }
-        ],
-        functionName: 'execute',
-        args: [
-          '0x00', // Command for swap
-          ['0x'] // Encoded swap parameters
-        ],
-        value: ethAmountWei
+      // Use the proper API endpoint for buying creator coins
+      const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          buyerAddress: address,
+          ethAmount: buyAmount,
+          minTokensOut: '0' // No minimum for now
+        }),
       });
 
-      setPendingTxHash(result);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Buy transaction failed');
+      }
+
+      const result = await response.json();
 
       toast({
-        title: "Transaction submitted!",
+        title: "Buy order submitted!",
         description: `Buying ${buyAmount} ETH worth of ${tokenData.symbol} tokens`,
       });
 
-      // Record the trade in our database for tracking
-      await buyMutation.mutateAsync({
-        coinId: tokenData.id,
-        userAddress: address,
-        ethAmount: buyAmount,
-        comment: comment.trim() || undefined
-      });
+      // Record the trade comment if provided
+      if (comment.trim()) {
+        await buyMutation.mutateAsync({
+          coinId: tokenData.id,
+          userAddress: address,
+          ethAmount: buyAmount,
+          comment: comment.trim()
+        });
+      }
 
       setBuyAmount("");
       setComment("");
@@ -275,7 +264,7 @@ export default function ContentCoinDetail() {
       console.error('Buy failed:', error);
       toast({
         title: "Transaction failed",
-        description: error instanceof Error ? error.message : "Failed to execute swap",
+        description: error instanceof Error ? error.message : "Failed to execute buy order",
         variant: "destructive"
       });
     }
