@@ -541,6 +541,208 @@ export async function generateThumbnail(contentType: string, contentCid: string)
   }
 }
 
+// Create Uniswap V4 pool for a creator coin using Zora Hook system
+export async function createUniswapV4Pool(params: {
+  coinAddress: string;
+  creatorAddress: string;
+  initialLiquidityETH: string; // Amount of ETH for initial liquidity
+  initialLiquidityTokens: string; // Amount of tokens for initial liquidity
+}): Promise<{
+  success: boolean;
+  poolId?: string;
+  txHash?: string;
+  error?: string;
+}> {
+  try {
+    console.log(`🏊 Creating Uniswap V4 pool for coin ${params.coinAddress}`);
+
+    const walletClient = getWalletClient();
+    if (!walletClient) {
+      return {
+        success: false,
+        error: 'No wallet client available for pool creation'
+      };
+    }
+
+    // Uniswap V4 Pool Manager on Base Sepolia
+    const POOL_MANAGER = '0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967' as const;
+    const CONTENT_COIN_HOOK = '0x9ea932730A7787000042e34390B8E435dD839040' as const;
+    
+    // Define pool key with ContentCoinHook
+    const poolKey = {
+      currency0: '0x4200000000000000000000000000000000000006', // WETH on Base
+      currency1: params.coinAddress,
+      fee: 3000, // 0.3% fee tier
+      tickSpacing: 60,
+      hooks: CONTENT_COIN_HOOK
+    };
+
+    // Calculate initial price (simplified - 1 ETH = 1M tokens)
+    const sqrtPriceX96 = BigInt('79228162514264337593543950336'); // sqrt(1) * 2^96
+
+    // Initialize pool
+    const initializePoolTx = await walletClient.writeContract({
+      address: POOL_MANAGER,
+      abi: [
+        {
+          name: 'initialize',
+          type: 'function',
+          stateMutability: 'nonpayable',
+          inputs: [
+            { name: 'key', type: 'tuple', components: [
+              { name: 'currency0', type: 'address' },
+              { name: 'currency1', type: 'address' },
+              { name: 'fee', type: 'uint24' },
+              { name: 'tickSpacing', type: 'int24' },
+              { name: 'hooks', type: 'address' }
+            ]},
+            { name: 'sqrtPriceX96', type: 'uint160' }
+          ],
+          outputs: []
+        }
+      ],
+      functionName: 'initialize',
+      args: [poolKey, sqrtPriceX96]
+    });
+
+    console.log(`✅ Pool initialized: ${initializePoolTx}`);
+
+    // Calculate pool ID (simplified hash of pool key)
+    const poolId = `${poolKey.currency0}-${poolKey.currency1}-${poolKey.fee}`;
+
+    return {
+      success: true,
+      poolId,
+      txHash: initializePoolTx
+    };
+
+  } catch (error) {
+    console.error('❌ Pool creation failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error during pool creation'
+    };
+  }
+}
+
+// Add initial liquidity to the Uniswap V4 pool
+export async function addInitialLiquidity(params: {
+  coinAddress: string;
+  creatorAddress: string;
+  ethAmount: string;
+  tokenAmount: string;
+}): Promise<{
+  success: boolean;
+  liquidityTokenId?: string;
+  txHash?: string;
+  error?: string;
+}> {
+  try {
+    console.log(`💧 Adding initial liquidity for coin ${params.coinAddress}`);
+
+    const walletClient = getWalletClient();
+    if (!walletClient) {
+      return {
+        success: false,
+        error: 'No wallet client available for liquidity addition'
+      };
+    }
+
+    // Uniswap V4 Position Manager on Base Sepolia
+    const POSITION_MANAGER = '0x1B1C77B606d13b09C84d1c7394B96b147bC03147' as const;
+    
+    const ethAmountWei = BigInt(Math.floor(parseFloat(params.ethAmount) * 1e18));
+    const tokenAmountWei = BigInt(Math.floor(parseFloat(params.tokenAmount) * 1e18));
+
+    // First, approve tokens for the Position Manager
+    const approveTokenTx = await walletClient.writeContract({
+      address: params.coinAddress as `0x${string}`,
+      abi: [
+        {
+          name: 'approve',
+          type: 'function',
+          stateMutability: 'nonpayable',
+          inputs: [
+            { name: 'spender', type: 'address' },
+            { name: 'amount', type: 'uint256' }
+          ],
+          outputs: [{ name: '', type: 'bool' }]
+        }
+      ],
+      functionName: 'approve',
+      args: [POSITION_MANAGER, tokenAmountWei]
+    });
+
+    console.log(`✅ Token approval: ${approveTokenTx}`);
+
+    // Define liquidity parameters
+    const liquidityParams = {
+      poolKey: {
+        currency0: '0x4200000000000000000000000000000000000006', // WETH
+        currency1: params.coinAddress,
+        fee: 3000,
+        tickSpacing: 60,
+        hooks: '0x9ea932730A7787000042e34390B8E435dD839040'
+      },
+      tickLower: -887220, // Full range liquidity
+      tickUpper: 887220,
+      liquidityDelta: ethAmountWei / 1000n, // Simplified liquidity calculation
+      salt: 0n
+    };
+
+    // Add liquidity through Position Manager
+    const addLiquidityTx = await walletClient.writeContract({
+      address: POSITION_MANAGER,
+      abi: [
+        {
+          name: 'modifyLiquidity',
+          type: 'function',
+          stateMutability: 'payable',
+          inputs: [
+            { name: 'key', type: 'tuple', components: [
+              { name: 'currency0', type: 'address' },
+              { name: 'currency1', type: 'address' },
+              { name: 'fee', type: 'uint24' },
+              { name: 'tickSpacing', type: 'int24' },
+              { name: 'hooks', type: 'address' }
+            ]},
+            { name: 'params', type: 'tuple', components: [
+              { name: 'tickLower', type: 'int24' },
+              { name: 'tickUpper', type: 'int24' },
+              { name: 'liquidityDelta', type: 'int128' },
+              { name: 'salt', type: 'bytes32' }
+            ]}
+          ],
+          outputs: []
+        }
+      ],
+      functionName: 'modifyLiquidity',
+      args: [liquidityParams.poolKey, {
+        tickLower: liquidityParams.tickLower,
+        tickUpper: liquidityParams.tickUpper,
+        liquidityDelta: liquidityParams.liquidityDelta,
+        salt: `0x${'0'.repeat(64)}`
+      }],
+      value: ethAmountWei
+    });
+
+    console.log(`✅ Liquidity added: ${addLiquidityTx}`);
+
+    return {
+      success: true,
+      liquidityTokenId: `${params.coinAddress}-liquidity`,
+      txHash: addLiquidityTx
+    };
+
+  } catch (error) {
+    console.error('❌ Liquidity addition failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error during liquidity addition'
+    };
+  }
+}
+
 // Buy tokens for a creator coin using real Uniswap V4 contracts
 export async function buyCoin(params: {
   coinAddress: string;
@@ -558,6 +760,39 @@ export async function buyCoin(params: {
   try {
     console.log(`💰 Processing buy order for coin ${params.coinAddress}`);
     console.log(`Buyer: ${params.buyerAddress}, ETH Amount: ${params.ethAmount}`);
+
+    // Check if pool exists, create if not
+    const poolExists = await checkPoolExists(params.coinAddress);
+    if (!poolExists) {
+      console.log(`🏊 Pool doesn't exist, creating pool and adding initial liquidity...`);
+      
+      // Create pool and add initial liquidity
+      const poolResult = await createUniswapV4Pool({
+        coinAddress: params.coinAddress,
+        creatorAddress: params.buyerAddress, // Using buyer as creator for now
+        initialLiquidityETH: '0.1', // 0.1 ETH initial liquidity
+        initialLiquidityTokens: '100000' // 100k tokens initial liquidity
+      });
+
+      if (!poolResult.success) {
+        return {
+          success: false,
+          error: `Failed to create pool: ${poolResult.error}`
+        };
+      }
+
+      // Add initial liquidity
+      const liquidityResult = await addInitialLiquidity({
+        coinAddress: params.coinAddress,
+        creatorAddress: params.buyerAddress,
+        ethAmount: '0.1',
+        tokenAmount: '100000'
+      });
+
+      if (!liquidityResult.success) {
+        console.warn(`⚠️ Initial liquidity addition failed: ${liquidityResult.error}`);
+      }
+    }
 
     // Uniswap V4 Universal Router address on Base Sepolia
     const UNISWAP_V4_ROUTER = '0x2626664c2603336E57B271c5C0b26F421741e481' as const;
@@ -577,40 +812,6 @@ export async function buyCoin(params: {
       hooks: '0x9ea932730A7787000042e34390B8E435dD839040' // ContentCoinHook address
     };
 
-    // Calculate the current pool price to estimate tokens received
-    try {
-      // Read current pool state
-      const poolState = await publicClient.readContract({
-        address: '0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967' as `0x${string}`, // Pool Manager on Base Sepolia
-        abi: [
-          {
-            name: 'getSlot0',
-            type: 'function',
-            stateMutability: 'view',
-            inputs: [
-              { name: 'id', type: 'bytes32' }
-            ],
-            outputs: [
-              { name: 'sqrtPriceX96', type: 'uint160' },
-              { name: 'tick', type: 'int24' },
-              { name: 'protocolFee', type: 'uint24' },
-              { name: 'lpFee', type: 'uint24' }
-            ]
-          }
-        ],
-        functionName: 'getSlot0',
-        args: [
-          // Calculate pool ID from poolKey
-          // This is a simplified calculation - real implementation would hash the full poolKey
-          `0x${'0'.repeat(64)}` as `0x${string}`
-        ]
-      });
-
-      console.log(`📊 Pool state retrieved successfully`);
-    } catch (poolError) {
-      console.warn(`⚠️ Could not read pool state, using fallback calculation:`, poolError);
-    }
-
     // Build swap parameters for Uniswap V4
     const swapParams = {
       zeroForOne: true, // Swapping ETH (currency0) for tokens (currency1)
@@ -621,25 +822,12 @@ export async function buyCoin(params: {
     // Encode hook data for trade referral (if any)
     const hookData = '0x'; // Could include referral address here
 
-    // Build the actual Uniswap V4 swap transaction data
-    // We need to encode the swap call for the Universal Router
-    
-    // Uniswap V4 swap function signature and parameters
-    const swapSelector = '0x00000000'; // Placeholder - would be actual function selector
-    
-    // Encode the swap parameters
-    const swapData = {
-      poolKey: poolKey,
-      params: swapParams,
-      hookData: hookData
-    };
-
     // For production, this would use the actual Uniswap V4 SDK to encode the transaction
     // For now, we'll prepare the transaction structure for frontend execution
     const transactionRequest = {
       to: UNISWAP_V4_ROUTER,
       value: ethAmountWei,
-      data: swapSelector, // In production: properly encoded swap call data
+      data: '0x24856bc3', // The function selector that was in the transaction
       gasLimit: 500000n,
       chainId: 84532 // Base Sepolia
     };
@@ -660,6 +848,49 @@ export async function buyCoin(params: {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error during buy preparation'
     };
+  }
+}
+
+// Check if Uniswap V4 pool exists for a token
+async function checkPoolExists(coinAddress: string): Promise<boolean> {
+  try {
+    const POOL_MANAGER = '0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967' as const;
+    
+    const poolKey = {
+      currency0: '0x4200000000000000000000000000000000000006', // WETH
+      currency1: coinAddress,
+      fee: 3000,
+      tickSpacing: 60,
+      hooks: '0x9ea932730A7787000042e34390B8E435dD839040'
+    };
+
+    // Try to read pool state
+    const poolState = await publicClient.readContract({
+      address: POOL_MANAGER,
+      abi: [
+        {
+          name: 'getSlot0',
+          type: 'function',
+          stateMutability: 'view',
+          inputs: [
+            { name: 'id', type: 'bytes32' }
+          ],
+          outputs: [
+            { name: 'sqrtPriceX96', type: 'uint160' },
+            { name: 'tick', type: 'int24' },
+            { name: 'protocolFee', type: 'uint24' },
+            { name: 'lpFee', type: 'uint24' }
+          ]
+        }
+      ],
+      functionName: 'getSlot0',
+      args: [`0x${'0'.repeat(64)}` as `0x${string}`] // Simplified pool ID
+    });
+
+    return poolState && poolState[0] > 0n; // Pool exists if sqrtPriceX96 > 0
+  } catch (error) {
+    console.log(`📊 Pool doesn't exist for ${coinAddress}`);
+    return false;
   }
 }
 

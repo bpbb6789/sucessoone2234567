@@ -9,7 +9,12 @@ import {
   getCoinPrice,
   getBondingCurveProgress,
   validateContentForTokenization,
-  generateThumbnail
+  generateThumbnail,
+  buyCoin, // Import buyCoin function
+  sellCoin, // Import sellCoin function
+  getTokenHolders, // Import getTokenHolders function
+  createUniswapV4Pool, // Import createUniswapV4Pool function
+  addInitialLiquidity // Import addInitialLiquidity function
 } from './zora';
 import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema,
@@ -28,6 +33,8 @@ import { getDopplerService, type PadTokenConfig } from "./doppler";
 import { PrismaClient } from '../lib/generated/prisma/index.js';
 import { getTelegramService } from "./services/telegramService";
 import { adminAuth } from "./middleware/adminAuth"; // Assuming adminAuth middleware is defined elsewhere
+import { v4 as uuidv4 } from 'uuid'; // Import uuid for trade IDs
+
 
 const prisma = new PrismaClient();
 
@@ -35,7 +42,7 @@ const prisma = new PrismaClient();
 // Helper function to handle database errors gracefully
 function handleDatabaseError(error: any, operation: string) {
   console.error(`Database error in ${operation}:`, error);
-  
+
   // Check if it's an authentication error
   if (error?.message?.includes('password authentication failed')) {
     console.error('❌ Database authentication failed - check DATABASE_URL password in Secrets');
@@ -46,7 +53,7 @@ function handleDatabaseError(error: any, operation: string) {
       needsDbReset: true
     };
   }
-  
+
   // Check if it's an endpoint not found error
   if (error?.message?.includes('The requested endpoint could not be found')) {
     console.error('❌ Database endpoint not found - database may be sleeping or misconfigured');
@@ -57,7 +64,7 @@ function handleDatabaseError(error: any, operation: string) {
       needsDbWakeup: true
     };
   }
-  
+
   return {
     error: true,
     message: "Database temporarily unavailable",
@@ -1992,7 +1999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const identifier = req.params.id;
       let coin;
-      
+
       // Check if the identifier is a contract address (starts with 0x) or database ID
       if (identifier.startsWith('0x')) {
         // Look up by contract address
@@ -2001,7 +2008,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Look up by database ID
         coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, identifier)).limit(1);
       }
-      
+
       if (!coin.length) {
         return res.status(404).json({ message: "Creator coin not found" });
       }
@@ -2220,57 +2227,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      console.log(`✅ Zora deployment successful:`, deploymentResult);
+      console.log(`✅ Zora Creator Coin deployed successfully:`, deploymentResult);
 
-      console.log(`💾 Updating coin with deployment info...`);
+      // Create Uniswap V4 pool and add initial liquidity
+      console.log(`🏊 Creating Uniswap V4 pool and adding initial liquidity...`);
+      try {
+        // Create pool
+        const poolResult = await createUniswapV4Pool({
+          coinAddress: deploymentResult.coinAddress,
+          creatorAddress: coinData.creatorAddress,
+          initialLiquidityETH: '0.1', // 0.1 ETH initial liquidity
+          initialLiquidityTokens: '100000' // 100k tokens initial liquidity
+        });
+
+        if (poolResult.success) {
+          console.log(`✅ Pool created successfully: ${poolResult.poolId}`);
+
+          // Add initial liquidity
+          const liquidityResult = await addInitialLiquidity({
+            coinAddress: deploymentResult.coinAddress,
+            creatorAddress: coinData.creatorAddress,
+            ethAmount: '0.1',
+            tokenAmount: '100000'
+          });
+
+          if (liquidityResult.success) {
+            console.log(`✅ Initial liquidity added successfully`);
+          } else {
+            console.warn(`⚠️ Initial liquidity addition failed: ${liquidityResult.error}`);
+          }
+        } else {
+          console.warn(`⚠️ Pool creation failed: ${poolResult.error}`);
+        }
+      } catch (poolError) {
+        console.warn(`⚠️ Pool setup failed (coin still deployed):`, poolError);
+      }
+
       // Update coin with deployment info
-      const [updatedCoin] = await db.update(creatorCoins)
+      await db.update(creatorCoins)
         .set({
           status: 'deployed',
           coinAddress: deploymentResult.coinAddress,
-          zoraFactoryAddress: deploymentResult.factoryAddress,
           deploymentTxHash: deploymentResult.txHash,
           updatedAt: new Date()
         })
-        .where(eq(creatorCoins.id, coinId))
-        .returning();
+        .where(eq(creatorCoins.id, coinId));
 
-      console.log(`🎉 Creator coin deployment complete:`, updatedCoin);
-
-      // Send Telegram notification for successful deployment with onchain stats
-      const telegramService = getTelegramService();
-      if (telegramService) {
-        try {
-          const notificationSent = await telegramService.notifyNewContentCoin({
-            title: updatedCoin.title,
-            coinSymbol: updatedCoin.coinSymbol,
-            creator: updatedCoin.creatorAddress,
-            contentType: updatedCoin.contentType,
-            coinAddress: updatedCoin.coinAddress || undefined,
-            marketCap: updatedCoin.marketCap || '0.00',
-            totalSupply: '1.00B', // Standard supply for creator coins
-            currentPrice: updatedCoin.currentPrice || '0.000001',
-            imageUrl: updatedCoin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${updatedCoin.mediaCid}` : undefined,
-            createdAt: updatedCoin.createdAt?.toISOString()
-          });
-
-          if (notificationSent) {
-            console.log('✅ Telegram deployment notification sent successfully');
-          } else {
-            console.log('⚠️ Telegram deployment notification skipped (bot not configured)');
-          }
-        } catch (err) {
-          console.log('❌ Telegram deployment notification failed:', err instanceof Error ? err.message : err);
-        }
-      } else {
-        console.log('⚠️ Telegram service not available for deployment notification');
-      }
+      console.log(`✅ Creator coin deployment completed for ${coinId}`);
 
       res.json({
-        message: "Creator coin deployed successfully!",
-        coin: updatedCoin,
-        coinAddress: deploymentResult.coinAddress,
-        txHash: deploymentResult.txHash
+        success: true,
+        coin: {
+          id: coinId,
+          coinAddress: deploymentResult.coinAddress,
+          txHash: deploymentResult.txHash,
+          factoryAddress: deploymentResult.factoryAddress
+        }
       });
     } catch (error) {
       console.error("Creator coin deployment error:", error);
@@ -2340,7 +2352,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if this coin exists in our Zora channels
       const channels = await storage.getAllWeb3Channels();
-      const zoraChannel = channels.find(channel => 
+      const zoraChannel = channels.find(channel =>
         channel.coinAddress?.toLowerCase() === coinAddress.toLowerCase() &&
         (channel.zoraPlatform === 'zora' || channel.zoraFactoryAddress)
       );
@@ -2351,7 +2363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // For Zora coins, use the Zora SDK price functions with real blockchain data
       const priceData = await getCoinPrice(coinAddress);
-      
+
       // Update the web3 channel with real holders data
       try {
         await db.update(web3Channels)
@@ -2363,7 +2375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             updatedAt: new Date()
           })
           .where(eq(web3Channels.coinAddress, coinAddress));
-        
+
         console.log(`✅ Updated web3 channel ${coinAddress} with ${priceData.holders} holders`);
       } catch (dbError) {
         console.warn('⚠️ Failed to update web3 channel with price data:', dbError);
@@ -2382,7 +2394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Error fetching Zora price data:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to fetch Zora price data",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -2755,13 +2767,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/creator-coins/:coinId/buy', async (req, res) => {
     try {
       const { coinId } = req.params;
-      const { userAddress, ethAmount, minTokensOut, comment } = req.body;
+      const { buyerAddress, ethAmount, minTokensOut } = req.body;
 
-      if (!userAddress || !ethAmount) {
-        return res.status(400).json({ error: 'Missing required fields: userAddress, ethAmount' });
+      if (!buyerAddress || !ethAmount) {
+        return res.status(400).json({ error: "Buyer address and ETH amount required" });
       }
 
-      console.log(`🛒 Processing buy order for creator coin ${coinId}`);
+      console.log(`💰 Processing buy order for creator coin ${coinId}: ${ethAmount} ETH from ${buyerAddress}`);
 
       // Get creator coin details
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
@@ -2776,13 +2788,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
       }
 
-      // Import trading functions from zora.ts
-      const { buyCoin } = await import('./zora');
-
-      // Execute buy transaction
+      // Use the improved buy function from zora.ts that handles pool creation
       const buyResult = await buyCoin({
         coinAddress,
-        buyerAddress: userAddress,
+        buyerAddress,
         ethAmount,
         minTokensOut
       });
@@ -2791,31 +2800,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: buyResult.error });
       }
 
-      // Record the trade in database
-      await db.insert(creatorCoinTrades).values({
-        coinId,
-        userAddress,
-        tradeType: 'buy',
-        amount: ethAmount,
-        price: coinData.currentPrice || '0.001',
-        transactionHash: buyResult.txHash
-      });
+      // Record the trade (simplified - in production you'd wait for transaction confirmation)
+      const tradeId = uuidv4();
+      const estimatedTokens = parseFloat(ethAmount) * 1000; // Simplified estimate: 1 ETH = 1000 tokens
 
-      // Update coin statistics (simplified)
-      await db.update(creatorCoins)
-        .set({
-          volume24h: sql`CAST(COALESCE(${creatorCoins.volume24h}, '0') AS DECIMAL) + CAST(${ethAmount} AS DECIMAL)`,
-          updatedAt: new Date()
-        })
-        .where(eq(creatorCoins.id, coinId));
+      await db.insert(creatorCoinTrades).values({
+        id: tradeId,
+        coinId: coinData.id,
+        traderAddress: buyerAddress,
+        type: 'buy',
+        ethAmount: parseFloat(ethAmount),
+        tokenAmount: estimatedTokens,
+        timestamp: new Date(),
+        txHash: buyResult.txHash || 'pending'
+      });
 
       console.log(`✅ Buy order completed for ${coinId}: ${ethAmount} ETH`);
 
       res.json({
         success: true,
-        txHash: buyResult.txHash,
-        tokensReceived: buyResult.tokensReceived,
-        message: `Successfully bought ${buyResult.tokensReceived} tokens`
+        trade: {
+          id: tradeId,
+          txHash: buyResult.txHash,
+          tokensReceived: estimatedTokens.toString(),
+          transactionRequest: buyResult.transactionRequest
+        }
       });
 
     } catch (error) {
@@ -2902,43 +2911,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { coinId } = req.params;
       console.log(`🔍 Fetching holders for creator coin: ${coinId}`);
-      
+
       // First, get the creator coin to find the contract address
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
-      
+
       if (!coin.length) {
         return res.status(404).json({ error: 'Creator coin not found' });
       }
-      
+
       const coinData = coin[0];
       const coinAddress = coinData.coinAddress;
-      
+
       if (!coinAddress || coinAddress === 'Deploying...' || coinAddress.length < 10) {
         console.log(`⚠️ No valid contract address for coin ${coinId}, returning empty holders`);
         return res.json([]);
       }
-      
+
       // Import getTokenHolders from zora.ts
       const { getTokenHolders } = await import('./zora');
-      
+
       // Get real holders data from blockchain
       const holdersData = await getTokenHolders(coinAddress);
-      
+
       console.log(`✅ Found ${holdersData.totalHolders} holders for creator coin ${coinId}`);
-      
+
       // Update the database with the current holder count
       await db.update(creatorCoins)
-        .set({ 
+        .set({
           holders: holdersData.totalHolders,
           updatedAt: new Date()
         })
         .where(eq(creatorCoins.id, coinId));
-      
+
       res.json(holdersData.holders);
-      
+
     } catch (error) {
       console.error('Error fetching creator coin holders:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to fetch holders',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
