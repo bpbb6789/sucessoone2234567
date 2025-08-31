@@ -670,6 +670,23 @@ export const channelComments = pgTable("channel_comments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Wallet-based user profiles for creators
+export const walletProfiles = pgTable("wallet_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  address: text("address").notNull().unique(), // Wallet address as the primary identifier
+  name: text("name"), // Display name
+  description: text("description"), // Bio/description
+  avatarUrl: text("avatar_url"), // Profile picture URL
+  coverUrl: text("cover_url"), // Cover/banner image URL
+  website: text("website"), // Personal website
+  twitter: text("twitter"), // Twitter handle
+  discord: text("discord"), // Discord handle
+  preferences: jsonb("preferences"), // User preferences (theme, notifications, etc.)
+  isVerified: boolean("is_verified").default(false), // Verification status
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Search filters and preferences
 export const searchFilters = pgTable("search_filters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -756,8 +773,18 @@ export const insertChannelCommentSchema = createInsertSchema(channelComments).om
   editedAt: true, // Set when edited
 });
 
+export const insertWalletProfileSchema = createInsertSchema(walletProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertSearchFilterSchema = createInsertSchema(searchFilters).omit({
   id: true,
   createdAt: true,
   resultsFound: true, // Auto-calculated
 });
+
+// Wallet profiles types
+export type WalletProfile = typeof walletProfiles.$inferSelect;
+export type InsertWalletProfile = z.infer<typeof insertWalletProfileSchema>;

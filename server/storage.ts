@@ -6,7 +6,7 @@ import {
   videoLikes, shortsLikes, shares, musicTracks, userProfiles, tokens,
   contentImports, web3Channels, pads, padLikes, padComments, creatorCoins,
   notifications, enhancedSubscriptions, channelAnalytics, channelComments,
-  searchFilters
+  searchFilters, walletProfiles
 } from "@shared/schema";
 
 // Channels

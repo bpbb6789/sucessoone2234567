@@ -1329,16 +1329,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user profile
   app.put('/api/profile', async (req, res) => {
     try {
-      const address = req.headers['x-wallet-address'] as string;
+      const address = req.headers['x-wallet-address'] as string || req.body.address;
       const { name, description, avatarUrl } = req.body;
 
       if (!address) {
         return res.status(400).json({ error: 'Wallet address required' });
       }
 
-      // For now, we'll store profile data in localStorage on the client
-      // In a production app, you'd save this to a database
       console.log('Profile update request:', { address, name, description, avatarUrl });
+
+      // Check if profile exists
+      const existingProfile = await db
+        .select()
+        .from(walletProfiles)
+        .where(eq(walletProfiles.address, address))
+        .limit(1);
+
+      let profile;
+      if (existingProfile.length > 0) {
+        // Update existing profile
+        [profile] = await db
+          .update(walletProfiles)
+          .set({
+            name,
+            description,
+            avatarUrl,
+            updatedAt: new Date()
+          })
+          .where(eq(walletProfiles.address, address))
+          .returning();
+      } else {
+        // Create new profile
+        [profile] = await db
+          .insert(walletProfiles)
+          .values({
+            address,
+            name,
+            description,
+            avatarUrl
+          })
+          .returning();
+      }
 
       res.json({
         success: true,
@@ -3132,19 +3163,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`✅ Found ${creatorsData.length} unique creators`);
 
-      // Transform the data for frontend
-      const creators = creatorsData.map((creator, index) => ({
-        id: creator.creatorAddress,
-        address: creator.creatorAddress,
-        name: `Creator ${creator.creatorAddress.slice(0, 6)}...${creator.creatorAddress.slice(-4)}`,
-        username: `@${creator.creatorAddress.slice(0, 8)}`,
-        contentCoins: parseInt(creator.creatorCoinsCount as string),
-        totalLikes: parseInt(creator.totalLikes as string) || 0,
-        totalComments: parseInt(creator.totalComments as string) || 0,
-        memberSince: creator.firstCreated,
-        lastActive: creator.latestCreated,
-        rank: index + 1
-      }));
+      // Get profile data for all creators
+      const profilesPromises = creatorsData.map(async (creator) => {
+        try {
+          const profile = await db
+            .select()
+            .from(walletProfiles)
+            .where(eq(walletProfiles.address, creator.creatorAddress))
+            .limit(1);
+          
+          return profile[0] || null;
+        } catch (error) {
+          console.warn(`Failed to fetch profile for ${creator.creatorAddress}:`, error);
+          return null;
+        }
+      });
+
+      const profiles = await Promise.all(profilesPromises);
+
+      // Transform the data for frontend with profile data
+      const creators = creatorsData.map((creator, index) => {
+        const profile = profiles[index];
+        
+        return {
+          id: creator.creatorAddress,
+          address: creator.creatorAddress,
+          name: profile?.name || `Creator ${creator.creatorAddress.slice(0, 6)}...${creator.creatorAddress.slice(-4)}`,
+          username: `@${creator.creatorAddress.slice(0, 8)}`,
+          avatarUrl: profile?.avatarUrl || null,
+          contentCoins: parseInt(creator.creatorCoinsCount as string),
+          totalLikes: parseInt(creator.totalLikes as string) || 0,
+          totalComments: parseInt(creator.totalComments as string) || 0,
+          memberSince: creator.firstCreated,
+          lastActive: creator.latestCreated,
+          rank: index + 1
+        };
+      });
 
       res.json(creators);
     } catch (error) {
