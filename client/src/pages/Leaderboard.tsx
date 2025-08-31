@@ -31,24 +31,44 @@ const Leaderboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { data: creatorCoins, isLoading } = useCreatorCoins();
 
-  // Transform creator coins data to leaderboard format
-  const leaderboardData: LeaderboardEntry[] = creatorCoins?.map((coin: any, index: number) => ({
-    id: coin.id,
-    rank: index + 1,
-    avatar: coin.imageUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${coin.name}`,
-    username: coin.name || `Creator ${index + 1}`,
-    handle: `@${coin.symbol?.toLowerCase() || `creator${index + 1}`}`,
-    marketCap: `$${(Math.random() * 15 + 1).toFixed(1)}m`,
-    trend: Math.random() > 0.5 ? 'up' : 'down',
-    trendAmount: `$${(Math.random() * 2 + 0.1).toFixed(1)}m`,
-    socialLinks: {
-      x: Math.random() > 0.5,
-      farcaster: Math.random() > 0.7,
-      tiktok: Math.random() > 0.8,
-    },
-    timeAgo: `${Math.floor(Math.random() * 30 + 1)}d`,
-    coinAddress: coin.coinAddress,
-  })) || [];
+  // Transform creator coins data to leaderboard format with real data
+  const leaderboardData: LeaderboardEntry[] = creatorCoins?.map((coin: any, index: number) => {
+    // Calculate real market cap from coin data
+    const realMarketCap = coin.marketCap ? parseFloat(coin.marketCap) : 0;
+    const volume24h = coin.volume24h ? parseFloat(coin.volume24h) : 0;
+    
+    // Use real creator data
+    const creatorAddress = coin.creatorAddress || '';
+    const displayName = coin.coinName || coin.title || `${creatorAddress.slice(0, 6)}...${creatorAddress.slice(-4)}`;
+    const handle = `@${coin.coinSymbol?.toLowerCase() || creatorAddress.slice(0, 8)}`;
+    
+    // Calculate trend based on volume or use holders growth
+    const hasGrowth = volume24h > 0 || (coin.holders && coin.holders > 1);
+    
+    return {
+      id: coin.id,
+      rank: index + 1,
+      avatar: coin.thumbnailCid ? `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}` : 
+              coin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` :
+              `https://api.dicebear.com/7.x/shapes/svg?seed=${displayName}`,
+      username: displayName,
+      handle: handle,
+      marketCap: realMarketCap > 0 ? `$${realMarketCap.toFixed(1)}` : 
+                volume24h > 0 ? `$${volume24h.toFixed(2)}` : 
+                '$0.0',
+      trend: hasGrowth ? 'up' : 'down',
+      trendAmount: volume24h > 0 ? `$${volume24h.toFixed(2)}` : 
+                   coin.holders ? `${coin.holders} holders` : 
+                   '$0.0',
+      socialLinks: {
+        x: !!coin.twitter,
+        farcaster: false, // Add when farcaster data available
+        tiktok: false, // Add when tiktok data available
+      },
+      timeAgo: coin.createdAt ? `${Math.floor((Date.now() - new Date(coin.createdAt).getTime()) / (1000 * 60 * 60 * 24))}d` : '0d',
+      coinAddress: coin.coinAddress,
+    };
+  }) || [];
 
   const filteredData = leaderboardData.filter(entry =>
     entry.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
