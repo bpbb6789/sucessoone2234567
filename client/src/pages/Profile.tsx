@@ -108,8 +108,8 @@ export default function Profile() {
               className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-gray-800"
             />
             {isEditing && (
-              <label className="absolute -bottom-1 -right-1 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1.5 cursor-pointer transition-colors shadow-lg border-2 border-white dark:border-gray-800">
-                <Edit className="h-3 w-3" />
+              <label className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 cursor-pointer transition-colors shadow-lg border-2 border-white dark:border-gray-800 transform translate-x-1/2 translate-y-1/2">
+                <Edit className="h-4 w-4" />
                 <input
                   type="file"
                   accept="image/*"
