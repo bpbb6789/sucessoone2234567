@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,40 @@ export default function Profile() {
     description: "",
     avatarUrl: ""
   });
+
+  // Load profile data from localStorage on component mount
+  useEffect(() => {
+    if (address) {
+      const savedProfile = localStorage.getItem(`profile_${address}`);
+      if (savedProfile) {
+        setProfileData(JSON.parse(savedProfile));
+      }
+    }
+  }, [address]);
+
+  const handleSaveProfile = async () => {
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': address
+        },
+        body: JSON.stringify(profileData)
+      });
+
+      if (response.ok) {
+        // Save to localStorage
+        localStorage.setItem(`profile_${address}`, JSON.stringify(profileData));
+        console.log('Profile saved successfully');
+      } else {
+        console.error('Failed to save profile');
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+    }
+    setIsEditing(false);
+  };
 
   // Move all hooks before any conditional returns
   const { data: videos = [], isLoading: videosLoading } = useQuery({
@@ -169,7 +203,7 @@ export default function Profile() {
             <div className="flex gap-2">
               {isEditing ? (
                 <>
-                  <Button onClick={() => setIsEditing(false)}>
+                  <Button onClick={handleSaveProfile}>
                     Save Changes
                   </Button>
                   <Button variant="outline" onClick={() => setIsEditing(false)}>

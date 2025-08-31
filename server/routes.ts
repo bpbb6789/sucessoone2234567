@@ -1287,28 +1287,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/me", async (req, res) => {
+  // Get user channel data
+  app.get('/api/me', async (req, res) => {
     try {
-      // Get wallet address from request headers or auth
-      const walletAddress = req.headers['x-wallet-address'] as string;
+      const address = req.headers['x-wallet-address'] as string;
 
-      if (!walletAddress) {
-        return res.status(401).json({ message: "Wallet address required" });
+      if (!address) {
+        return res.status(400).json({ error: 'Wallet address required' });
       }
 
-      const channel = await storage.getWeb3ChannelByOwner(walletAddress);
+      // Check if user has any channels
+      const channels = await prisma.web3Channel.findMany({
+        where: {
+          OR: [
+            { owner: { equals: address, mode: 'insensitive' } },
+            { createdBy: { equals: address, mode: 'insensitive' } }
+          ]
+        }
+      });
 
-      if (channel) {
-        res.json({
+      if (channels.length > 0) {
+        const channel = channels[0];
+        return res.json({
           hasChannel: true,
           managerPath: `/channel/${channel.slug}/manager`,
-          channel
+          channel: {
+            id: channel.id,
+            name: channel.name,
+            slug: channel.slug
+          }
         });
-      } else {
-        res.json({ hasChannel: false });
       }
+
+      return res.json({ hasChannel: false });
     } catch (error) {
-      res.status(500).json(handleDatabaseError(error, "getUserProfile"));
+      console.error('Error fetching user data:', error);
+      res.status(500).json({ error: 'Failed to fetch user data' });
+    }
+  });
+
+  // Update user profile
+  app.put('/api/profile', async (req, res) => {
+    try {
+      const address = req.headers['x-wallet-address'] as string;
+      const { name, description, avatarUrl } = req.body;
+
+      if (!address) {
+        return res.status(400).json({ error: 'Wallet address required' });
+      }
+
+      // For now, we'll store profile data in localStorage on the client
+      // In a production app, you'd save this to a database
+      console.log('Profile update request:', { address, name, description, avatarUrl });
+
+      res.json({
+        success: true,
+        message: 'Profile updated successfully',
+        profile: { name, description, avatarUrl }
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ error: 'Failed to update profile' });
     }
   });
 
