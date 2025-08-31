@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useAccount } from "@/hooks/useWallet";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
