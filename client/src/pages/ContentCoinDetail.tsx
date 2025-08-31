@@ -760,14 +760,15 @@ export default function ContentCoinDetail() {
                     >
                       <Copy className="w-3 h-3" />
                     </Button>
-                    <Link 
+                    <a 
                       href={`https://basescan.org/address/${tokenData.address}`} 
                       target="_blank" 
+                      rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs text-blue-400 hover:underline"
                     >
                       <ExternalLink className="w-3 h-3" />
                       BaseScan
-                    </Link>
+                    </a>
                   </div>
                 </div>
                 <div>

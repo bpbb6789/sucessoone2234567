@@ -193,8 +193,8 @@ export default function ChannelDetail() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Channel not found</h1>
           <p className="text-muted-foreground mb-4">The channel you're looking for doesn't exist.</p>
-          <Link href="/contentcoin">
-            <Button variant="outline">Go to Discovery</Button>
+          <Link href="/channels">
+            <Button variant="outline">Go to Channels</Button>
           </Link>
         </div>
       </div>
