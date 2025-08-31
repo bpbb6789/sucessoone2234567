@@ -13,6 +13,7 @@ import { useAccount } from "@/hooks/useWallet";
 interface ProfileData {
   name: string;
   description: string;
+  avatarUrl: string;
 }
 
 export default function Profile() {
@@ -20,7 +21,8 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
-    description: ""
+    description: "",
+    avatarUrl: ""
   });
 
   // Move all hooks before any conditional returns
@@ -96,19 +98,38 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background" data-testid="page-profile">
-      {/* Banner */}
-      <div className="relative h-48 md:h-64 bg-gradient-to-r from-blue-500 to-purple-600">
-      </div>
-
       {/* Profile Info */}
       <div className="px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
           <div className="relative">
             <img
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${address}`}
+              src={profileData.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${address}`}
               alt="Profile Avatar"
               className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white dark:border-gray-800"
             />
+            {isEditing && (
+              <label className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 cursor-pointer transition-colors">
+                <Edit className="h-4 w-4" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        setProfileData(prev => ({ 
+                          ...prev, 
+                          avatarUrl: event.target?.result as string 
+                        }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+              </label>
+            )}
           </div>
 
           <div className="flex-1">
@@ -134,13 +155,20 @@ export default function Profile() {
             </div>
 
             {isEditing ? (
-              <Textarea
-                value={profileData.description}
-                onChange={(e) => setProfileData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Tell viewers about your channel..."
-                className="mb-4"
-                rows={3}
-              />
+              <div className="space-y-3 mb-4">
+                <Input
+                  value={profileData.avatarUrl}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, avatarUrl: e.target.value }))}
+                  placeholder="Avatar URL (optional)"
+                  className="text-sm"
+                />
+                <Textarea
+                  value={profileData.description}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Tell viewers about your channel..."
+                  rows={3}
+                />
+              </div>
             ) : (
               <p className="text-sm mb-4">{profileData.description || "No description yet."}</p>
             )}
