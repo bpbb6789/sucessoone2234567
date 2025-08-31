@@ -2807,12 +2807,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db.insert(creatorCoinTrades).values({
         id: tradeId,
         coinId: coinData.id,
-        traderAddress: buyerAddress,
-        type: 'buy',
-        ethAmount: parseFloat(ethAmount),
-        tokenAmount: estimatedTokens,
-        timestamp: new Date(),
-        txHash: buyResult.txHash || 'pending'
+        userAddress: buyerAddress, // Fix: use userAddress instead of traderAddress
+        tradeType: 'buy', // Fix: use tradeType instead of type
+        amount: estimatedTokens.toString(), // Fix: use amount instead of tokenAmount
+        price: parseFloat(ethAmount).toString(), // Fix: use price for ETH amount
+        createdAt: new Date(), // Fix: use createdAt instead of timestamp
+        transactionHash: buyResult.txHash || 'pending' // Fix: use transactionHash instead of txHash
       });
 
       console.log(`✅ Buy order completed for ${coinId}: ${ethAmount} ETH`);
