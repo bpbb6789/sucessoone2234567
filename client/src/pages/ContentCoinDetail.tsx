@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAccount } from "wagmi";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
-import { 
+import {
   Play,
   ArrowLeft,
   TrendingUp,
@@ -140,7 +140,7 @@ export default function ContentCoinDetail() {
         creator: creatorCoin.creatorAddress,
         price: creatorCoin.currentPrice || '0.001',
         marketCap: creatorCoin.marketCap || '0',
-        volume24h: creatorCoin.volume24h || '0', 
+        volume24h: creatorCoin.volume24h || '0',
         holders: creatorCoin.holders || 0,
         change24h: 0, // Calculate from price history
         createdAt: creatorCoin.createdAt ? new Date(creatorCoin.createdAt) : new Date(),
@@ -436,17 +436,17 @@ export default function ContentCoinDetail() {
               </div>
 
               <div className="flex gap-2">
-                <Button 
+                <Button
                   className="flex-1 bg-green-500 hover:bg-green-600 text-black font-bold"
                   onClick={handleBuy}
                   disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
                   data-testid="button-buy-mobile"
                 >
-                  {isWritePending ? 'Signing...' : isTxConfirming ? 'Confirming...' : 
+                  {isWritePending ? 'Signing...' : isTxConfirming ? 'Confirming...' :
                    !address ? 'Connect' : !buyAmount ? 'Enter Amount' : 'Buy'}
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="flex-1"
                   onClick={handleSell}
                   disabled={isWritePending || isTxConfirming || !address}
@@ -491,7 +491,7 @@ export default function ContentCoinDetail() {
               </Avatar>
               <div className="flex-1">
                 <p className="text-sm text-gray-400">
-                  {tokenData.creator !== 'No Creator Found' 
+                  {tokenData.creator !== 'No Creator Found'
                     ? `${tokenData.creator.slice(0, 6)}...${tokenData.creator.slice(-4)}`
                     : 'No Creator Found'
                   }
@@ -572,14 +572,14 @@ export default function ContentCoinDetail() {
                 rows={2}
               />
 
-              <Button 
+              <Button
                 className="w-full bg-green-500 hover:bg-green-600 text-black font-bold h-12"
                 onClick={handleBuy}
                 disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
                 data-testid="button-buy-desktop"
               >
-                {isWritePending ? 'Signing Transaction...' : 
-                 isTxConfirming ? 'Confirming...' : 
+                {isWritePending ? 'Signing Transaction...' :
+                 isTxConfirming ? 'Confirming...' :
                  !address ? 'Connect Wallet' :
                  !buyAmount || parseFloat(buyAmount) <= 0 ? 'Enter Amount' :
                  `Buy ${buyAmount} ETH worth`}
@@ -743,12 +743,12 @@ export default function ContentCoinDetail() {
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Contract Address</p>
                   <div className="flex items-center gap-2">
-                    <code className="text-xs bg-gray-800 px-2 py-1 rounded">
-                      {tokenData.address.slice(0, 10)}...{tokenData.address.slice(-4)}
+                    <code className="text-xs bg-gray-800 px-2 py-1 rounded break-all">
+                      {tokenData.address || 'Not deployed'}
                     </code>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="h-6 w-6 p-0"
                       onClick={() => {
                         navigator.clipboard.writeText(tokenData.address);
@@ -760,9 +760,9 @@ export default function ContentCoinDetail() {
                     >
                       <Copy className="w-3 h-3" />
                     </Button>
-                    <a 
-                      href={`https://basescan.org/address/${tokenData.address}`} 
-                      target="_blank" 
+                    <a
+                      href={`https://basescan.org/address/${tokenData.address}`}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs text-blue-400 hover:underline"
                     >
@@ -774,7 +774,7 @@ export default function ContentCoinDetail() {
                 <div>
                   <p className="text-xs text-gray-400 mb-1">Creator</p>
                   <code className="text-xs bg-gray-800 px-2 py-1 rounded">
-                    {tokenData.creator !== 'No Creator Found' 
+                    {tokenData.creator !== 'No Creator Found'
                       ? `${tokenData.creator.slice(0, 10)}...${tokenData.creator.slice(-4)}`
                       : 'No Creator Found'
                     }
