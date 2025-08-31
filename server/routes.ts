@@ -3188,7 +3188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           id: creator.creatorAddress,
           address: creator.creatorAddress,
-          name: profile?.name || `Creator ${creator.creatorAddress.slice(0, 6)}...${creator.creatorAddress.slice(-4)}`,
+          name: profile?.name || creator.creatorAddress,
           username: `@${creator.creatorAddress.slice(0, 8)}`,
           avatarUrl: profile?.avatarUrl || null,
           contentCoins: parseInt(creator.creatorCoinsCount as string),
