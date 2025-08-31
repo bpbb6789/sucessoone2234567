@@ -155,20 +155,13 @@ export default function Profile() {
             </div>
 
             {isEditing ? (
-              <div className="space-y-3 mb-4">
-                <Input
-                  value={profileData.avatarUrl}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, avatarUrl: e.target.value }))}
-                  placeholder="Avatar URL (optional)"
-                  className="text-sm"
-                />
-                <Textarea
-                  value={profileData.description}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Tell viewers about your channel..."
-                  rows={3}
-                />
-              </div>
+              <Textarea
+                value={profileData.description}
+                onChange={(e) => setProfileData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Tell viewers about your channel..."
+                className="mb-4"
+                rows={3}
+              />
             ) : (
               <p className="text-sm mb-4">{profileData.description || "No description yet."}</p>
             )}
