@@ -120,6 +120,18 @@ export default function ContentCoinDetail() {
   // Try to get content coin data first (from creator coins API)
   const { data: creatorCoin, isLoading: creatorCoinLoading } = useCreatorCoin(tokenAddress || '');
 
+  // Debug logging for token address verification
+  React.useEffect(() => {
+    if (creatorCoin) {
+      console.log('Creator coin data:', {
+        coinAddress: creatorCoin.coinAddress,
+        deployedTokenAddress: creatorCoin.deployedTokenAddress,
+        urlTokenAddress: tokenAddress,
+        actualTokenUsed: creatorCoin.deployedTokenAddress || creatorCoin.coinAddress || tokenAddress
+      });
+    }
+  }, [creatorCoin, tokenAddress]);
+
   // Get real data for comments, trades, and holders
   const { data: comments, isLoading: commentsLoading } = useCreatorCoinComments(tokenAddress || '');
   const { data: trades, isLoading: tradesLoading } = useCreatorCoinTrades(tokenAddress || '');
@@ -131,9 +143,12 @@ export default function ContentCoinDetail() {
   const tokenData = React.useMemo(() => {
     // First, try to use creator coin data if available
     if (creatorCoin) {
+      // Use the actual deployed token address, not the coinAddress (which might be bonding curve)
+      const actualTokenAddress = creatorCoin.deployedTokenAddress || creatorCoin.coinAddress || tokenAddress;
+      
       return {
         id: creatorCoin.id, // Use the actual database ID for API calls
-        address: creatorCoin.coinAddress || tokenAddress, // Use contract address for blockchain calls
+        address: actualTokenAddress, // Use the actual deployed token address
         name: creatorCoin.title || creatorCoin.coinName,
         symbol: creatorCoin.coinSymbol,
         description: creatorCoin.description || `${creatorCoin.coinName} content coin`,
