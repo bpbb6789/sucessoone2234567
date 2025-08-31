@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCreatorCoinUpload, useDeployCreatorCoin } from '@/hooks/useCreatorCoins';
 import { useUrlImport } from '@/hooks/useContentImports';
 import { useQuery } from '@tanstack/react-query';
+import CreateChannel from '@/components/CreateChannel';
 
 const contentTypes = [
   { id: 'image', name: 'Image', icon: FileImage, description: 'JPG, PNG, GIF, SVG images', accept: 'image/*' },
@@ -343,9 +344,9 @@ export default function CreateContentCoin() {
 
 
 
-        {/* Tabs for Upload vs Import */}
+        {/* Tabs for Upload vs Import vs Create Channel */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="upload" className="flex items-center gap-2" data-testid="tab-upload">
               <Upload className="h-4 w-4" />
               Upload File
@@ -353,6 +354,10 @@ export default function CreateContentCoin() {
             <TabsTrigger value="import" className="flex items-center gap-2" data-testid="tab-import">
               <ExternalLink className="h-4 w-4" />
               Import Shorts
+            </TabsTrigger>
+            <TabsTrigger value="channel" className="flex items-center gap-2" data-testid="tab-channel">
+              <Coins className="h-4 w-4" />
+              Create Channel
             </TabsTrigger>
           </TabsList>
 
@@ -741,6 +746,24 @@ export default function CreateContentCoin() {
                     </>
                   )}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="channel" className="space-y-6">
+            {/* Create Channel Content */}
+            <Card className="border-purple-200 dark:border-purple-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Coins className="h-5 w-5" />
+                  Create Your Channel Coin
+                </CardTitle>
+                <CardDescription>
+                  Deploy a Zora-based channel with bonding curve tokenomics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CreateChannel />
               </CardContent>
             </Card>
           </TabsContent>
