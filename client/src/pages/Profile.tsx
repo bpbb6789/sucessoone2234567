@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Edit, Share2, Wallet, Upload, FileText, Radio, Coins } from "lucide-react";
+import { Settings, Edit, Share2, Wallet, Upload, FileText, Radio, Coins, Users } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import ShortsCard from "@/components/ShortsCard";
 import { useAccount } from "@/hooks/useWallet";
