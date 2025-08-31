@@ -1,0 +1,119 @@
+ETH Price: $4,451.37 (+2.46%)
+Gas: 0.000119 Gwei
+Search by Address / Txn Hash / Block / Token / Domain Name
+/
+BaseScan Logo
+Home
+Blockchain
+Transactions
+Latest L1→L2 Transactions
+Latest L2→L1 Transactions
+Contract Internal Transactions
+AA Transactions Beta
+EIP-7702 Authorizations Beta
+View Blocks
+View L1 Transaction Batches
+View L1 State Batches
+Top Accounts
+Verified Contracts
+Tokens
+Top Tokens (ERC-20)
+Token Transfers (ERC-20)
+Token Flow Visualizer
+Beta
+NFTs
+Latest Transfers
+Latest Mints
+Resources
+Charts & Stats
+Developers
+API Plans 
+API Documentation
+Code Reader Beta
+Verify Contract
+Similar Contract Search
+Contract Diff Checker
+Vyper Online Compiler
+Bytecode to Opcode
+Broadcast Transaction
+More
+Tools & Services
+Discover more of BaseScan's tools and services in one place.
+
+Tools
+Input Data Decoder Beta
+Unit Converter
+CSV Export
+Account Balance Checker
+Explore
+Gas Tracker
+Label Cloud
+Domain Name Lookup
+Services
+Token Approvals Beta
+Verified Signature
+Advanced Filter Beta
+|
+ Sign In
+
+Address
+0x29c02e011215b06E5D0ceF5097CD860b3166e011 
+Sponsored:   Rollbit: Play & trade with SOL. 4,000+ Games, 50+ assets to trade. Instant withdrawals - Play Now!
+ 
+Overview
+ETH Balance
+0 ETH
+ETH Value
+$0.00
+More Info
+Private Name Tags
+Transactions Sent
+Latest:
+N/A
+First:
+N/A
+Funded By
+N/A
+Multichain Info
+No addresses found
+
+Transactions
+Token Transfers (ERC-20)
+Analytics
+Assets
+Multichain Portfolio
+Tokens
+NFTs
+Multichain Portfolio | 35 Chains
+Display all chains
+•
+Last updated: less than 1 sec ago
+ Show 35 more chains
+Chain	Token	Portfolio %	Price	Amount	Value
+A wallet address is a publicly available address that allows its owner to receive funds from another party. To access the funds in an address, you must have its private key. Learn more about addresses in our Knowledge Base.
+
+Back to Top
+Base Logo
+Powered By Base
+Basescan is a Block Explorer and Analytics Platform for Base
+
+Company
+Brand Assets
+Contact Us
+Terms & Privacy
+Bug Bounty 
+Community
+API Documentation
+Knowledge Base
+Network Status
+Products & Services
+Advertise 
+Explorer as a Service (EaaS) 
+API Plans 
+Priority Support
+Blockscan 
+BaseScan © 2025 (BASE-B1) | ⛏ Built by Team Etherscan
+
+Donations: 0x71c765...d8976f 
+
+ This website uses cookies to improve your experience. By continuing to use this website, you agree to its Terms and Privacy Policy.
