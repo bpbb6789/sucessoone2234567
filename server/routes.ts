@@ -629,6 +629,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertCommentSchema.parse(req.body);
       const comment = await storage.createComment(validatedData);
+
+      // Trigger notification for comment (get video/content owner)
+      if (validatedData.videoId) {
+        const video = await storage.getVideo(validatedData.videoId);
+        if (video && video.channelId !== validatedData.channelId) {
+          await triggerNotification('comment', {
+            contentOwnerAddress: video.channelId,
+            contentTitle: video.title,
+            contentId: video.id,
+            contentType: 'video',
+            commenterAddress: validatedData.channelId,
+            commenterName: validatedData.channelId,
+            commentText: validatedData.content
+          });
+        }
+      }
+
       res.status(201).json(comment);
     } catch (error) {
       // res.status(400).json({ message: "Invalid comment data" });
@@ -644,6 +661,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { channelId } = req.body;
       await storage.likeComment(req.params.id, channelId);
+
+      // Trigger notification for comment like
+      const comment = await storage.getComment(req.params.id);
+      if (comment && comment.channelId !== channelId) {
+        await triggerNotification('comment_liked', {
+          commentOwnerAddress: comment.channelId,
+          commentId: comment.id,
+          likerAddress: channelId,
+          likerName: channelId
+        });
+      }
+
       res.status(200).json({ message: "Comment liked" });
     } catch (error) {
       // res.status(400).json({ message: "Failed to like comment" });
@@ -2156,6 +2185,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedCoinData = insertCreatorCoinSchema.parse(coinData);
       const [newCoin] = await db.insert(creatorCoins).values(validatedCoinData).returning();
 
+      // Trigger notification for content coin creation
+      await triggerNotification('content_coin_created', {
+        creatorAddress: newCoin.creatorAddress,
+        coinName: newCoin.coinName,
+        coinId: newCoin.id
+      });
+
       console.log('✅ Upload completed successfully:', newCoin);
 
       res.status(201).json({
@@ -3641,16 +3677,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
-  // Notification trigger endpoint (for system use)
-  app.post('/api/notifications/trigger', async (req, res) => {
-    try {
-      const { type, data } = req.body;
-      await triggerNotification(type, data);
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to trigger notification' });
-    }
-  });
 
   // Trade notification endpoint
   app.post('/api/trades/notify', async (req, res) => {
