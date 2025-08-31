@@ -2823,7 +2823,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: tradeId,
           txHash: buyResult.txHash,
           tokensReceived: estimatedTokens.toString(),
-          transactionRequest: buyResult.transactionRequest
+          transactionRequest: buyResult.transactionRequest ? {
+            ...buyResult.transactionRequest,
+            value: buyResult.transactionRequest.value?.toString(),
+            gasLimit: buyResult.transactionRequest.gasLimit?.toString()
+          } : undefined
         }
       });
 

@@ -269,9 +269,24 @@ export default function ContentCoinDetail() {
 
     } catch (error) {
       console.error('Buy failed:', error);
+      
+      let errorMessage = "Failed to execute buy order";
+      if (error instanceof Error) {
+        // Parse the error message to provide more specific feedback
+        if (error.message.includes("500")) {
+          errorMessage = "Server error occurred. Please try again.";
+        } else if (error.message.includes("replacement transaction underpriced")) {
+          errorMessage = "Transaction failed due to gas pricing. Please try again with higher gas.";
+        } else if (error.message.includes("Pool doesn't exist")) {
+          errorMessage = "Trading pool is being created. Please wait a moment and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Transaction failed",
-        description: error instanceof Error ? error.message : "Failed to execute buy order",
+        description: errorMessage,
         variant: "destructive"
       });
     }

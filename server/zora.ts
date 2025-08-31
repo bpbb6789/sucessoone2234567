@@ -826,9 +826,9 @@ export async function buyCoin(params: {
     // For now, we'll prepare the transaction structure for frontend execution
     const transactionRequest = {
       to: UNISWAP_V4_ROUTER,
-      value: ethAmountWei,
+      value: ethAmountWei.toString(), // Convert BigInt to string for JSON serialization
       data: '0x24856bc3', // The function selector that was in the transaction
-      gasLimit: 500000n,
+      gasLimit: '500000', // Convert BigInt to string for JSON serialization
       chainId: 84532 // Base Sepolia
     };
 
