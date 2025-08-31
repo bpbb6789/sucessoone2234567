@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, TrendingUp, MoreHorizontal, Plus, Filter, FileText } from "lucide-react";
+import { Users, TrendingUp, MoreHorizontal, Plus, Filter, FileText, Copy, ExternalLink } from "lucide-react";
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
@@ -166,6 +166,34 @@ export default function Channels() {
                           </div>
                         </div>
                       </div>
+                      {channel.coinAddress && (
+                        <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                          <span>Token:</span>
+                          <code className="bg-gray-800 px-1 py-0.5 rounded font-mono">
+                            {channel.coinAddress.slice(0, 8)}...{channel.coinAddress.slice(-4)}
+                          </code>
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(channel.coinAddress);
+                            }}
+                            className="hover:text-white transition-colors"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              window.open(`https://sepolia.basescan.org/token/${channel.coinAddress}`, '_blank');
+                            }}
+                            className="hover:text-white transition-colors"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
 
                       {/* Subscribe Button - Compact */}
                       <SubscribeButton channelId={channel.id} />

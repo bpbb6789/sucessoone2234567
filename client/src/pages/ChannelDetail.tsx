@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'wouter'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, Settings, Bell, BellRing, Play, Users, Video, Grid3X3, Music, Share2 } from 'lucide-react'
+import { ArrowLeft, Settings, Bell, BellRing, Play, Users, Video, Grid3X3, Music, Share2, Copy, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -515,33 +515,44 @@ export default function ChannelDetail() {
 
             <TabsContent value="about" className="mt-6">
               <div className="max-w-2xl space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Channel Details</h3>
-                  <div className="space-y-4">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Description</p>
+                    <p className="text-sm">{channel.description}</p>
+                  </div>
+                  {channel.coinAddress && (
                     <div>
-                      <div className="text-sm text-muted-foreground">Description</div>
-                      <div className="mt-1">
-                        {channel.description || "No description available."}
+                      <p className="text-xs text-gray-400 mb-1">Token Contract</p>
+                      <div className="flex items-center gap-2">
+                        <code className="text-xs bg-gray-800 px-2 py-1 rounded font-mono">
+                          {channel.coinAddress.slice(0, 10)}...{channel.coinAddress.slice(-4)}
+                        </code>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 w-6 p-0"
+                          onClick={() => navigator.clipboard.writeText(channel.coinAddress)}
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 w-6 p-0"
+                          onClick={() => window.open(`https://sepolia.basescan.org/token/${channel.coinAddress}`, '_blank')}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Category</div>
-                      <div className="mt-1">
-                        <Badge variant="secondary">{channel.category}</Badge>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Channel Coin</div>
-                      <div className="mt-1 font-mono text-sm">
-                        {channel.ticker} • {channel.coinAddress}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-muted-foreground">Created</div>
-                      <div className="mt-1">
-                        {new Date(channel.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Created</p>
+                    <p className="text-sm">{new Date(channel.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Subscribers</p>
+                    <p className="text-sm">{channel.subscriberCount || 0}</p>
                   </div>
                 </div>
 

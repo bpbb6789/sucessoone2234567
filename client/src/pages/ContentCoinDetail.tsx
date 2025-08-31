@@ -100,7 +100,7 @@ export default function ContentCoinDetail() {
   // Direct contract interaction for onchain trading
   const { writeContract, isPending: isWritePending } = useWriteContract();
   const [pendingTxHash, setPendingTxHash] = useState<`0x${string}` | undefined>();
-  
+
   // Wait for transaction confirmation
   const { isLoading: isTxConfirming, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
     hash: pendingTxHash,
@@ -119,12 +119,12 @@ export default function ContentCoinDetail() {
 
   // Try to get content coin data first (from creator coins API)
   const { data: creatorCoin, isLoading: creatorCoinLoading } = useCreatorCoin(tokenAddress || '');
-  
+
   // Get real data for comments, trades, and holders
   const { data: comments, isLoading: commentsLoading } = useCreatorCoinComments(tokenAddress || '');
   const { data: trades, isLoading: tradesLoading } = useCreatorCoinTrades(tokenAddress || '');
   const { data: holders, isLoading: holdersLoading } = useCreatorCoinHolders(tokenAddress || '');
-  
+
   // Remove expensive fallback query that loads ALL sales data
   // This was causing major performance issues
 
@@ -269,7 +269,7 @@ export default function ContentCoinDetail() {
 
     } catch (error) {
       console.error('Buy failed:', error);
-      
+
       let errorMessage = "Failed to execute buy order";
       if (error instanceof Error) {
         // Parse the error message to provide more specific feedback
@@ -283,7 +283,7 @@ export default function ContentCoinDetail() {
           errorMessage = error.message;
         }
       }
-      
+
       toast({
         title: "Transaction failed",
         description: errorMessage,
@@ -746,9 +746,28 @@ export default function ContentCoinDetail() {
                     <code className="text-xs bg-gray-800 px-2 py-1 rounded">
                       {tokenData.address.slice(0, 10)}...{tokenData.address.slice(-4)}
                     </code>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0"
+                      onClick={() => {
+                        navigator.clipboard.writeText(tokenData.address);
+                        toast({
+                          title: "Address copied!",
+                          description: "Token address copied to clipboard",
+                        });
+                      }}
+                    >
                       <Copy className="w-3 h-3" />
                     </Button>
+                    <Link 
+                      href={`https://basescan.org/address/${tokenData.address}`} 
+                      target="_blank" 
+                      className="flex items-center gap-1 text-xs text-blue-400 hover:underline"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      BaseScan
+                    </Link>
                   </div>
                 </div>
                 <div>
