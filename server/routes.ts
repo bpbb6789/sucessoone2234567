@@ -137,6 +137,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertChannelSchema.parse(req.body);
       const channel = await storage.createChannel(validatedData);
 
+      // Trigger notification for channel creation
+      await triggerNotification('channel_created', {
+        creatorAddress: validatedData.createdBy || 'unknown',
+        channelName: channel.name,
+        channelId: channel.id
+      });
+
       // Send Telegram notification for new channel
       const telegramService = getTelegramService();
       if (telegramService) {
@@ -516,6 +523,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { channelId, isLike } = req.body;
       await storage.likeVideo(req.params.id, channelId, isLike);
+
+      // Trigger notification for video like (only for actual likes, not dislikes)
+      if (isLike) {
+        const video = await storage.getVideo(req.params.id);
+        if (video) {
+          await triggerNotification('video_liked', {
+            videoOwnerAddress: video.channelId, // In a real app, this would be the owner's address
+            videoTitle: video.title,
+            videoId: video.id,
+            likerAddress: channelId,
+            likerName: channelId
+          });
+        }
+      }
+
       res.status(200).json({ message: "Like updated" });
     } catch (error) {
       // res.status(400).json({ message: "Failed to like video" });
@@ -1021,6 +1043,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const channel = await storage.createWeb3Channel(channelData);
       console.log('💾 Channel saved to database:', channel.id);
+
+      // Trigger notification for web3 channel creation
+      await triggerNotification('web3_channel_created', {
+        creatorAddress: channel.createdBy || 'unknown',
+        channelName: channel.name,
+        channelId: channel.id,
+        tokenSymbol: channel.ticker
+      });
 
       // Send Telegram notification for new channel
       const telegramService = getTelegramService();
@@ -2273,6 +2303,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(eq(creatorCoins.id, coinId));
 
+      // Trigger notification for successful creator coin creation
+      await triggerNotification('creator_coin_created', {
+        creatorAddress: coinData.creatorAddress,
+        coinName: coinData.coinName,
+        coinId: coinData.id
+      });
+
       console.log(`✅ Creator coin deployment completed for ${coinId}`);
 
       res.json({
@@ -2410,11 +2447,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "User address required" });
       }
 
-      // Mock like functionality - in production, store in database
-      console.log(`User ${userAddress} liked coin ${coinId}`);
+      // Store like in database
+      await db.insert(creatorCoinLikes).values({
+        coinId,
+        userAddress,
+        createdAt: new Date()
+      }).onConflictDoNothing();
 
+      // Trigger notification for coin like
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
+      if (coin.length > 0) {
+        await triggerNotification('creator_coin_liked', {
+          coinOwnerAddress: coin[0].creatorAddress,
+          coinName: coin[0].coinName,
+          coinId: coin[0].id,
+          likerAddress: userAddress,
+          likerName: userAddress
+        });
+      }
+
+      console.log(`User ${userAddress} liked coin ${coinId}`);
       res.json({ success: true, message: "Content liked successfully" });
     } catch (error) {
+      console.error('Error liking creator coin:', error);
       res.status(500).json({ message: "Failed to like content" });
     }
   });
@@ -2815,6 +2870,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: buyResult.txHash || 'pending' // Fix: use transactionHash instead of txHash
       });
 
+      // Trigger notification for creator coin trade
+      await triggerNotification('creator_coin_trade', {
+        coinOwnerAddress: coinData.creatorAddress,
+        coinId: coinData.id,
+        tradeType: 'bought',
+        amount: estimatedTokens.toString(),
+        price: ethAmount,
+        traderAddress: buyerAddress,
+        traderName: buyerAddress
+      });
+
       console.log(`✅ Buy order completed for ${coinId}: ${ethAmount} ETH`);
 
       res.json({
@@ -2885,6 +2951,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: tokenAmount,
         price: coinData.currentPrice || '0.001',
         transactionHash: sellResult.txHash
+      });
+
+      // Trigger notification for creator coin trade
+      await triggerNotification('creator_coin_trade', {
+        coinOwnerAddress: coinData.creatorAddress,
+        coinId: coinData.id,
+        tradeType: 'sold',
+        amount: tokenAmount,
+        price: sellResult.ethReceived || '0.001',
+        traderAddress: userAddress,
+        traderName: userAddress
       });
 
       // Update coin statistics (simplified)
@@ -3433,6 +3510,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
             actorAddress: data.followerAddress,
             actorName: data.followerName,
             actionUrl: `/profile/${data.followerAddress}`
+          });
+          break;
+
+        case 'channel_created':
+          await storage.createNotification({
+            recipientAddress: data.creatorAddress,
+            title: 'Channel Created',
+            message: `You successfully created channel "${data.channelName}"`,
+            type: 'channel_created',
+            entityType: 'channel',
+            entityId: data.channelId,
+            actorAddress: data.creatorAddress,
+            actionUrl: `/channel/${data.channelId}`
+          });
+          break;
+
+        case 'video_uploaded':
+          await storage.createNotification({
+            recipientAddress: data.creatorAddress,
+            title: 'Video Uploaded',
+            message: `Your video "${data.videoTitle}" has been uploaded successfully`,
+            type: 'video_uploaded',
+            entityType: 'video',
+            entityId: data.videoId,
+            actorAddress: data.creatorAddress,
+            actionUrl: `/video/${data.videoId}`
+          });
+          break;
+
+        case 'video_liked':
+          await storage.createNotification({
+            recipientAddress: data.videoOwnerAddress,
+            title: 'Video Liked',
+            message: `${data.likerName || 'Someone'} liked your video "${data.videoTitle}"`,
+            type: 'like',
+            entityType: 'video',
+            entityId: data.videoId,
+            actorAddress: data.likerAddress,
+            actorName: data.likerName,
+            actionUrl: `/video/${data.videoId}`
+          });
+          break;
+
+        case 'comment_posted':
+          await storage.createNotification({
+            recipientAddress: data.recipientAddress,
+            title: 'New Comment',
+            message: `${data.commenterName || 'Someone'} commented on your ${data.entityType}`,
+            type: 'comment',
+            entityType: data.entityType,
+            entityId: data.entityId,
+            actorAddress: data.commenterAddress,
+            actorName: data.commenterName,
+            actionUrl: `/${data.entityType}/${data.entityId}`
+          });
+          break;
+
+        case 'subscription_created':
+          await storage.createNotification({
+            recipientAddress: data.channelOwnerAddress,
+            title: 'New Subscriber',
+            message: `${data.subscriberName || 'Someone'} subscribed to your channel`,
+            type: 'subscription',
+            entityType: 'channel',
+            entityId: data.channelId,
+            actorAddress: data.subscriberAddress,
+            actorName: data.subscriberName,
+            actionUrl: `/channel/${data.channelId}`
+          });
+          break;
+
+        case 'creator_coin_created':
+          await storage.createNotification({
+            recipientAddress: data.creatorAddress,
+            title: 'Content Coin Created',
+            message: `Your content coin "${data.coinName}" has been created successfully`,
+            type: 'content_coin',
+            entityType: 'content_coin',
+            entityId: data.coinId,
+            actorAddress: data.creatorAddress,
+            actionUrl: `/content-coin/${data.coinId}`
+          });
+          break;
+
+        case 'creator_coin_liked':
+          await storage.createNotification({
+            recipientAddress: data.coinOwnerAddress,
+            title: 'Content Coin Liked',
+            message: `${data.likerName || 'Someone'} liked your content coin "${data.coinName}"`,
+            type: 'like',
+            entityType: 'content_coin',
+            entityId: data.coinId,
+            actorAddress: data.likerAddress,
+            actorName: data.likerName,
+            actionUrl: `/content-coin/${data.coinId}`
+          });
+          break;
+
+        case 'creator_coin_trade':
+          await storage.createNotification({
+            recipientAddress: data.coinOwnerAddress,
+            title: 'Content Coin Trade',
+            message: `${data.traderName || 'Someone'} ${data.tradeType} ${data.amount} of your content coin for ${data.price} ETH`,
+            type: 'trade',
+            entityType: 'content_coin',
+            entityId: data.coinId,
+            actorAddress: data.traderAddress,
+            actorName: data.traderName,
+            metadata: { amount: data.amount, price: data.price, tradeType: data.tradeType },
+            actionUrl: `/content-coin/${data.coinId}`
+          });
+          break;
+
+        case 'web3_channel_created':
+          await storage.createNotification({
+            recipientAddress: data.creatorAddress,
+            title: 'Web3 Channel Created',
+            message: `Your Web3 channel "${data.channelName}" has been created with token ${data.tokenSymbol}`,
+            type: 'channel_created',
+            entityType: 'web3_channel',
+            entityId: data.channelId,
+            actorAddress: data.creatorAddress,
+            actionUrl: `/channel/${data.channelId}`
           });
           break;
       }

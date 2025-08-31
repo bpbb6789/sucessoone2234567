@@ -440,7 +440,7 @@ export const getNotifications = async (userAddress: string, limit: number, unrea
   let query = db.select().from(notifications).where(eq(notifications.recipientAddress, userAddress));
   
   if (unreadOnly) {
-    query = query.where(eq(notifications.isRead, false));
+    query = query.where(eq(notifications.read, false));
   }
   
   return await query.orderBy(desc(notifications.createdAt)).limit(limit);
@@ -452,17 +452,17 @@ export const createNotification = async (data: any) => {
 };
 
 export const markNotificationAsRead = async (id: string) => {
-  await db.update(notifications).set({ isRead: true }).where(eq(notifications.id, id));
+  await db.update(notifications).set({ read: true }).where(eq(notifications.id, id));
 };
 
 export const markAllNotificationsAsRead = async (userAddress: string) => {
-  await db.update(notifications).set({ isRead: true }).where(eq(notifications.recipientAddress, userAddress));
+  await db.update(notifications).set({ read: true }).where(eq(notifications.recipientAddress, userAddress));
 };
 
 export const getUnreadNotificationCount = async (userAddress: string) => {
   const result = await db.select({ count: sql`count(*)` })
     .from(notifications)
-    .where(and(eq(notifications.recipientAddress, userAddress), eq(notifications.isRead, false)));
+    .where(and(eq(notifications.recipientAddress, userAddress), eq(notifications.read, false)));
   return parseInt(result[0]?.count as string) || 0;
 };
 
