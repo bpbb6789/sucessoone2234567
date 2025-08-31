@@ -28,7 +28,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
-import { contentImports, creatorCoins, creatorCoinLikes, creatorCoinComments, creatorCoinTrades, web3Channels } from "@shared/schema";
+import { contentImports, creatorCoins, creatorCoinLikes, creatorCoinComments, creatorCoinTrades, web3Channels, walletProfiles } from "@shared/schema";
 import { getDopplerService, type PadTokenConfig } from "./doppler";
 import { PrismaClient } from '../lib/generated/prisma/index.js';
 import { getTelegramService } from "./services/telegramService";
