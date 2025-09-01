@@ -268,14 +268,14 @@ export default function Creators() {
                     </div>
 
                     {/* Creator Info Below Card */}
-                    <div className="space-y-1">
-                      <h3 className="text-white font-bold text-sm leading-tight truncate">
+                    <div className="space-y-0.5">
+                      <h3 className="text-white font-bold text-xs leading-tight truncate">
                         {creator.name}
                       </h3>
-                      <p className="text-gray-400 text-xs leading-tight">
-                        {creator.contentCoins} Content Coins • {creator.totalLikes} likes
+                      <p className="text-gray-400 text-[10px] leading-tight">
+                        {creator.contentCoins} Coins • {creator.totalLikes} likes
                       </p>
-                      <p className="text-gray-500 text-xs truncate">
+                      <p className="text-gray-500 text-[10px] truncate">
                         {creator.address.slice(0, 6)}...{creator.address.slice(-4)} • {formatTimeAgo(creator.lastActive)}
                       </p>
                     </div>
