@@ -229,16 +229,24 @@ export default function Creators() {
                 <Link key={creator.id} to={`/creators/${creator.address}`}>
                   <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105" data-testid={`creator-card-${creator.id}`}>
                     <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-square shadow-lg hover:shadow-xl transition-shadow">
-                      {/* Real User Avatar */}
+                      {/* User Avatar or Default Dice */}
                       <div className="absolute inset-0">
-                        <img
-                          src={creator.avatarUrl.startsWith('baf') 
-                            ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
-                            : creator.avatarUrl
-                          }
-                          alt={creator.name}
-                          className="w-full h-full object-cover"
-                        />
+                        {creator.avatarUrl ? (
+                          <img
+                            src={creator.avatarUrl.startsWith('baf') 
+                              ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
+                              : creator.avatarUrl
+                            }
+                            alt={creator.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
+                              <span className="text-2xl">🎲</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Overlay */}

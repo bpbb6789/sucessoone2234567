@@ -3181,31 +3181,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const profiles = await Promise.all(profilesPromises);
 
-      // Transform the data for frontend with profile data - only include creators with complete profiles
-      const creators = creatorsData
-        .map((creator, index) => {
-          const profile = profiles[index];
-          
-          // Only include creators who have set up a complete profile with both name and avatar
-          if (!profile || !profile.name || !profile.avatarUrl) {
-            return null;
-          }
-          
-          return {
-            id: creator.creatorAddress,
-            address: creator.creatorAddress,
-            name: profile.name,
-            username: `@${creator.creatorAddress.slice(0, 8)}`,
-            avatarUrl: profile.avatarUrl,
-            contentCoins: parseInt(creator.creatorCoinsCount as string),
-            totalLikes: parseInt(creator.totalLikes as string) || 0,
-            totalComments: parseInt(creator.totalComments as string) || 0,
-            memberSince: creator.firstCreated,
-            lastActive: creator.latestCreated,
-            rank: index + 1
-          };
-        })
-        .filter((creator): creator is NonNullable<typeof creator> => creator !== null);
+      // Transform the data for frontend with profile data
+      const creators = creatorsData.map((creator, index) => {
+        const profile = profiles[index];
+        
+        return {
+          id: creator.creatorAddress,
+          address: creator.creatorAddress,
+          name: profile?.name || creator.creatorAddress,
+          username: `@${creator.creatorAddress.slice(0, 8)}`,
+          avatarUrl: profile?.avatarUrl || null,
+          contentCoins: parseInt(creator.creatorCoinsCount as string),
+          totalLikes: parseInt(creator.totalLikes as string) || 0,
+          totalComments: parseInt(creator.totalComments as string) || 0,
+          memberSince: creator.firstCreated,
+          lastActive: creator.latestCreated,
+          rank: index + 1
+        };
+      });
 
       res.json(creators);
     } catch (error) {
