@@ -166,7 +166,7 @@ export default function Contents() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {filteredContent.map((coin: any) => (
               <Link to={`/content/base/${coin.memeTokenAddress || coin.id}`} key={coin.id}>
                 <Card 
@@ -186,54 +186,54 @@ export default function Contents() {
                       </div>
 
                       {/* Status Badge */}
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-1 right-1">
                         <Badge 
                           variant={coin.status === 'deployed' ? 'default' : 'secondary'}
-                          className={`text-xs ${coin.status === 'deployed' 
+                          className={`text-[10px] px-1.5 py-0.5 h-4 ${coin.status === 'deployed' 
                             ? 'bg-green-500 text-black' 
                             : 'bg-yellow-500 text-black'
                           }`}
                         >
-                          {coin.status === 'deployed' ? '✓ Onchain' : '⏳ Pending'}
+                          {coin.status === 'deployed' ? '✓' : '⏳'}
                         </Badge>
                       </div>
                     </div>
 
                     {/* Content Info */}
-                    <div className="p-3 space-y-2">
+                    <div className="p-2 space-y-1.5">
                       <div>
-                        <h3 className="font-semibold text-white text-xs line-clamp-2 mb-1">
+                        <h3 className="font-semibold text-white text-[11px] line-clamp-2 mb-0.5">
                           {coin.title}
                         </h3>
-                        <p className="text-gray-400 text-xs">
+                        <p className="text-gray-400 text-[10px]">
                           {coin.coinSymbol} • {formatTimeAgo(coin.createdAt)}
                         </p>
                       </div>
 
                       {/* Stats Row with Holders and Price */}
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         {/* Holders and Likes Row */}
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <div className="flex items-center gap-1.5">
                             <div className="flex items-center gap-0.5">
-                              <span>👥</span>
+                              <span className="text-[9px]">👥</span>
                               <span className="text-gray-400">{(coin as any).holders || 0}</span>
                             </div>
                             <div className="flex items-center gap-0.5">
-                              <span>❤️</span>
+                              <span className="text-[9px]">❤️</span>
                               <span className="text-gray-400">{coin.likes || 0}</span>
                             </div>
                           </div>
-                          <div className="text-green-400 font-medium">
+                          <div className="text-green-400 font-medium text-[10px]">
                             ${coin.currentPrice}
                           </div>
                         </div>
 
                         {/* Contract info */}
                         {coin.status === 'deployed' && coin.coinAddress && (
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-1">
-                              <Hash className="w-3 h-3 text-green-400" />
+                          <div className="flex items-center justify-between text-[9px]">
+                            <div className="flex items-center gap-0.5">
+                              <Hash className="w-2 h-2 text-green-400" />
                               <code className="text-green-400 font-mono">
                                 {`${coin.coinAddress.slice(0, 4)}...${coin.coinAddress.slice(-2)}`}
                               </code>
@@ -242,13 +242,13 @@ export default function Contents() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-4 p-1 text-xs text-blue-400 hover:text-blue-300"
+                                className="h-3 p-0.5 text-[9px] text-blue-400 hover:text-blue-300"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
                                 }}
                               >
-                                <Eye className="w-3 h-3" />
+                                <Eye className="w-2 h-2" />
                               </Button>
                             )}
                           </div>
@@ -258,7 +258,7 @@ export default function Contents() {
                       {/* BUY Button */}
                       <Button
                         size="sm"
-                        className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-6"
+                        className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-[10px] h-5"
                         onClick={(e) => {
                           e.stopPropagation();
                           console.log("Buy button clicked for:", coin.id);
