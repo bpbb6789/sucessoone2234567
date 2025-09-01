@@ -130,19 +130,6 @@ export default function Creators() {
               </div>
             </div>
           </div>
-
-          {/* Sort By Only */}
-          <div className="flex justify-end">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-gray-800 border border-gray-700 text-white rounded-md px-3 py-2"
-            >
-              <option value="contentCoins">Sort by Content Coins</option>
-              <option value="totalLikes">Sort by Total Likes</option>
-              <option value="totalComments">Sort by Total Comments</option>
-            </select>
-          </div>
         </div>
 
         {/* Creators Grid */}
