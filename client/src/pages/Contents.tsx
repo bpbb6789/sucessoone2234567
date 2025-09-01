@@ -189,12 +189,16 @@ export default function Contents() {
                       <div className="absolute top-1 right-1">
                         <Badge 
                           variant={coin.status === 'deployed' ? 'default' : 'secondary'}
-                          className={`text-[10px] px-1.5 py-0.5 h-4 ${coin.status === 'deployed' 
+                          className={`text-[8px] px-1 py-0.5 h-4 flex items-center ${coin.status === 'deployed' 
                             ? 'bg-green-500 text-black' 
                             : 'bg-yellow-500 text-black'
                           }`}
                         >
-                          {coin.status === 'deployed' ? '✓' : '⏳'}
+                          {coin.status === 'deployed' ? (
+                            <Hash className="w-2.5 h-2.5" />
+                          ) : (
+                            <span className="w-2.5 h-2.5 rounded-full bg-current animate-pulse" />
+                          )}
                         </Badge>
                       </div>
                     </div>
