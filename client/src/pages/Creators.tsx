@@ -114,6 +114,10 @@ export default function Creators() {
                 <div className="flex items-center gap-4 text-gray-400 text-sm ml-auto">
                   <span>Releases: {creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
                   <span>Mints: {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalLikes, 0) || 0}</span>
+                  <span>Total Creators: {creators?.length || 0}</span>
+                  <span>Content Coins: {creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
+                  <span>Total Likes: {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalLikes, 0) || 0}</span>
+                  <span>Total Comments: {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalComments, 0) || 0}</span>
                 </div>
               </div>
               <p className="text-gray-400 text-lg">
@@ -122,62 +126,7 @@ export default function Creators() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="bg-gray-800/50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-blue-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Total Creators</p>
-                    <p className="text-xl font-bold text-white">{creators?.length || 0}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-800/50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Coins className="h-5 w-5 text-green-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Content Coins</p>
-                    <p className="text-xl font-bold text-white">
-                      {creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-800/50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Heart className="h-5 w-5 text-red-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Total Likes</p>
-                    <p className="text-xl font-bold text-white">
-                      {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalLikes, 0) || 0}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-800/50">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <MessageSquare className="h-5 w-5 text-purple-400" />
-                  <div>
-                    <p className="text-sm text-gray-400">Total Comments</p>
-                    <p className="text-xl font-bold text-white">
-                      {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalComments, 0) || 0}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          
 
           {/* Search and Filters */}
           <div className="flex flex-col md:flex-row gap-4">
