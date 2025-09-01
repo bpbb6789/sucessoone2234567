@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, MoreHorizontal, Users, TrendingUp, Star, Award, Coins, MessageSquare, Heart } from "lucide-react";
+import { MoreHorizontal, Users, TrendingUp, Star, Award, Coins, MessageSquare, Heart } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
 import { useCreators } from '@/hooks/useCreators';
@@ -35,22 +35,13 @@ const formatTimeAgo = (date: string): string => {
 };
 
 export default function Creators() {
-  const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('contentCoins'); // contentCoins, totalLikes, totalComments
 
   // Get real creators data
   const { data: creators, isLoading, error } = useCreators();
 
-  // Filter and sort creators
+  // Sort creators
   const filteredCreators = (creators || [])
-    .filter((creator: Creator) => {
-      const matchesSearch = 
-        creator.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        creator.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        creator.address.toLowerCase().includes(searchTerm.toLowerCase());
-
-      return matchesSearch;
-    })
     .sort((a: Creator, b: Creator) => {
       switch (sortBy) {
         case 'totalLikes':
@@ -111,9 +102,15 @@ export default function Creators() {
                 <h1 className="text-4xl font-bold text-white">
                   Creators
                 </h1>
-                <div className="flex items-center gap-4 text-gray-400 text-sm ml-auto">
-                  <span>Total Creators: {creators?.length || 0}</span>
-                  <span>Content Coins: {creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Users className="h-5 w-5" />
+                    <span className="text-lg font-semibold">{creators?.length || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-400">
+                    <Coins className="h-5 w-5" />
+                    <span className="text-lg font-semibold">{creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -121,20 +118,8 @@ export default function Creators() {
 
           
 
-          {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search creators by address or name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-                data-testid="input-search-creators"
-              />
-            </div>
-
-            {/* Sort By */}
+          {/* Sort By Only */}
+          <div className="flex justify-end">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -154,7 +139,7 @@ export default function Creators() {
               <Coins className="h-16 w-16 text-gray-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">No creators found</h3>
               <p className="text-gray-400 mb-6">
-                {searchTerm ? `No creators match "${searchTerm}"` : 'No content creators have deployed coins yet'}
+                No content creators have deployed coins yet
               </p>
               <Link to="/create-content-coin">
                 <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
