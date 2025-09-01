@@ -228,7 +228,8 @@ export default function Creators() {
               return (
                 <Link key={creator.id} to={`/creators/${creator.address}`}>
                   <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105" data-testid={`creator-card-${creator.id}`}>
-                    <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-square shadow-lg hover:shadow-xl transition-shadow">
+                    {/* Creator Image */}
+                    <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-square shadow-lg hover:shadow-xl transition-shadow mb-3">
                       {/* User Avatar or Default Dice */}
                       <div className="absolute inset-0">
                         {creator.avatarUrl ? (
@@ -249,19 +250,6 @@ export default function Creators() {
                         )}
                       </div>
 
-                      {/* Overlay */}
-                      <div className="absolute inset-0 bg-black/40"></div>
-
-                      {/* Content */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <h3 className="text-white font-bold text-sm leading-tight truncate mb-1">
-                          {creator.name}
-                        </h3>
-                        <p className="text-white/80 text-xs truncate">
-                          {creator.address.slice(0, 6)}...{creator.address.slice(-4)}
-                        </p>
-                      </div>
-
                       {/* Rank Badge */}
                       <div className="absolute top-2 right-2">
                         <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
@@ -277,6 +265,19 @@ export default function Creators() {
                           </div>
                         </div>
                       )}
+                    </div>
+
+                    {/* Creator Info Below Card */}
+                    <div className="space-y-1">
+                      <h3 className="text-white font-bold text-sm leading-tight truncate">
+                        {creator.name}
+                      </h3>
+                      <p className="text-gray-400 text-xs leading-tight">
+                        {creator.contentCoins} Content Coins • {creator.totalLikes} likes
+                      </p>
+                      <p className="text-gray-500 text-xs truncate">
+                        {creator.address.slice(0, 6)}...{creator.address.slice(-4)} • {formatTimeAgo(creator.lastActive)}
+                      </p>
                     </div>
                   </div>
                 </Link>
