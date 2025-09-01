@@ -112,12 +112,8 @@ export default function Creators() {
                   Creators
                 </h1>
                 <div className="flex items-center gap-4 text-gray-400 text-sm ml-auto">
-                  <span>Releases: {creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
-                  <span>Mints: {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalLikes, 0) || 0}</span>
                   <span>Total Creators: {creators?.length || 0}</span>
                   <span>Content Coins: {creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
-                  <span>Total Likes: {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalLikes, 0) || 0}</span>
-                  <span>Total Comments: {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalComments, 0) || 0}</span>
                 </div>
               </div>
             </div>
