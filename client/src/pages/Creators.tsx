@@ -229,26 +229,16 @@ export default function Creators() {
                 <Link key={creator.id} to={`/creators/${creator.address}`}>
                   <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105" data-testid={`creator-card-${creator.id}`}>
                     <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-square shadow-lg hover:shadow-xl transition-shadow">
-                      {/* Background Image */}
+                      {/* Real User Avatar */}
                       <div className="absolute inset-0">
-                        {creator.avatarUrl ? (
-                          <img
-                            src={creator.avatarUrl.startsWith('baf') 
-                              ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
-                              : creator.avatarUrl
-                            }
-                            alt={creator.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${creator.avatarUrl ? 'hidden' : ''}`}>
-                          <span className="text-white font-bold text-4xl">{creator.name.charAt(0)}</span>
-                        </div>
+                        <img
+                          src={creator.avatarUrl.startsWith('baf') 
+                            ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
+                            : creator.avatarUrl
+                          }
+                          alt={creator.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
 
                       {/* Overlay */}
@@ -260,7 +250,7 @@ export default function Creators() {
                           {creator.name}
                         </h3>
                         <p className="text-white/80 text-xs truncate">
-                          {creator.contentCoins} Coins
+                          {creator.address.slice(0, 6)}...{creator.address.slice(-4)}
                         </p>
                       </div>
 
