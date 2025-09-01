@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Play, Hash, Eye } from "lucide-react";
+import { Search, Play, Hash, Eye, Link } from "lucide-react";
 import { useCreatorCoins } from '@/hooks/useCreatorCoins';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
@@ -195,7 +195,7 @@ export default function Contents() {
                           }`}
                         >
                           {coin.status === 'deployed' ? (
-                            <Hash className="w-2.5 h-2.5" />
+                            <Link className="w-2.5 h-2.5" />
                           ) : (
                             <span className="w-2.5 h-2.5 rounded-full bg-current animate-pulse" />
                           )}
