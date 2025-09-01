@@ -9,6 +9,7 @@ import { useCreatorCoins } from '@/hooks/useCreatorCoins';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
 import { CategoryChips } from "@/components/CategoryChips";
+import { ContentPreview } from "@/components/ContentPreview";
 
 interface ContentCoin {
   id: string;
@@ -21,18 +22,20 @@ interface ContentCoin {
   thumbnailCid?: string | null;
   metadataUri?: string | null;
   coinAddress?: string | null;
-  deploymentTxHash?: string;
+  deploymentTxHash?: string | null;
   creatorAddress: string;
   status: string;
-  createdAt: string;
+  createdAt: Date | null | string;
   likes: number;
   currency: string;
   currentPrice: string;
   memeTokenAddress?: string;
 }
 
-const formatTimeAgo = (dateString: string): string => {
-  const date = new Date(dateString);
+const formatTimeAgo = (dateValue: Date | null | string): string => {
+  if (!dateValue) return 'Unknown';
+  
+  const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
   const now = new Date();
   const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
@@ -60,7 +63,7 @@ export default function Contents() {
 
   // Filter and sort content
   const filteredContent = (contentCoins || [])
-    .filter((coin: ContentCoin) => {
+    .filter((coin: any) => {
       const matchesSearch = !searchTerm || 
         coin.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         coin.coinName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,9 +75,11 @@ export default function Contents() {
 
       return matchesSearch && matchesCategory;
     })
-    .sort((a: ContentCoin, b: ContentCoin) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    .sort((a: any, b: any) => {
+      const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bDate - aDate;
+    });
 
   if (isLoading) {
     return (
@@ -162,43 +167,23 @@ export default function Contents() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredContent.map((coin: ContentCoin) => (
+            {filteredContent.map((coin: any) => (
               <Link to={`/content/base/${coin.memeTokenAddress || coin.id}`} key={coin.id}>
                 <Card 
                   className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group relative overflow-hidden"
                 >
                   <CardContent className="p-0">
-                    {/* Content Image/Thumbnail */}
+                    {/* Content Preview */}
                     <div className="relative aspect-square overflow-hidden">
-                      <img
-                        src={
-                          coin.thumbnailCid 
-                            ? `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}`
-                            : getContentUrl(coin.mediaCid)
-                        }
-                        alt={coin.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.src = `data:image/svg+xml,${encodeURIComponent(`
-                            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-                              <rect width="200" height="200" fill="#374151"/>
-                              <text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9CA3AF" font-family="Arial" font-size="16">
-                                ${coin.contentType.toUpperCase()}
-                              </text>
-                            </svg>
-                          `)}`;
-                        }}
-                      />
-
-                      {/* Play Button Overlay for Video/Audio Content */}
-                      {(coin.contentType === 'video' || coin.contentType === 'audio' || coin.contentType === 'gif') && (
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
-                            <Play className="w-6 h-6 text-white fill-white ml-0.5" />
-                          </div>
-                        </div>
-                      )}
+                      <div className="group-hover:scale-105 transition-transform duration-300">
+                        <ContentPreview
+                          mediaCid={coin.mediaCid}
+                          thumbnailCid={coin.thumbnailCid}
+                          contentType={coin.contentType}
+                          title={coin.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
 
                       {/* Status Badge */}
                       <div className="absolute top-2 right-2">
