@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useAccount } from "wagmi";
+import { useLocation } from "wouter";
 import { Bell, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,14 +22,20 @@ import {
 
 export default function NotificationBell() {
   const { address } = useAccount();
+  const [, setLocation] = useLocation();
   const { data: notifications = [], isLoading } = useNotifications(address);
   const { data: unreadCount = 0 } = useUnreadCount(address);
   const markAsReadMutation = useMarkAsRead();
   const markAllAsReadMutation = useMarkAllAsRead();
   const deleteNotificationMutation = useDeleteNotification();
 
-  const handleMarkAsRead = (notificationId: string) => {
+  const handleMarkAsRead = (notificationId: string, actionUrl?: string) => {
     markAsReadMutation.mutate(notificationId);
+    
+    // Navigate to the action URL if provided
+    if (actionUrl) {
+      setLocation(actionUrl);
+    }
   };
 
   const handleMarkAllAsRead = () => {
@@ -110,7 +117,7 @@ export default function NotificationBell() {
               <DropdownMenuItem
                 key={notification.id}
                 className="p-4 cursor-pointer hover:bg-zinc-800 flex-col items-start"
-                onClick={() => handleMarkAsRead(notification.id)}
+                onClick={() => handleMarkAsRead(notification.id, notification.actionUrl)}
                 data-testid={`notification-${notification.id}`}
               >
                 <div className="flex items-start justify-between w-full">

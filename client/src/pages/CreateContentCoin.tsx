@@ -16,6 +16,7 @@ import { useCreatorCoinUpload, useDeployCreatorCoin } from '@/hooks/useCreatorCo
 import { useUrlImport } from '@/hooks/useContentImports';
 import { useQuery } from '@tanstack/react-query';
 import CreateChannel from '@/components/CreateChannel';
+import { useTriggerNotification } from "@/hooks/useNotifications";
 
 const contentTypes = [
   { id: 'image', name: 'Image', icon: FileImage, description: 'JPG, PNG, GIF, SVG images', accept: 'image/*' },
@@ -56,7 +57,10 @@ export default function CreateContentCoin() {
     startingMarketCap: 'LOW',
     twitter: '',
     discord: '',
-    website: ''
+    website: '',
+    // Added for notification context
+    creatorName: '', 
+    name: ''
   });
 
   const { toast } = useToast();
@@ -64,6 +68,7 @@ export default function CreateContentCoin() {
   const uploadMutation = useCreatorCoinUpload();
   const deployMutation = useDeployCreatorCoin();
   const urlImportMutation = useUrlImport();
+  const triggerNotification = useTriggerNotification();
 
   // Get user's channel data for imports
   const { data: userChannelData } = useQuery({
@@ -140,7 +145,9 @@ export default function CreateContentCoin() {
       ...prev,
       title: fileName,
       coinName: fileName,
-      coinSymbol: coinSymbol
+      coinSymbol: coinSymbol,
+      creatorName: userChannelData?.name || '', // Set creator name for notification
+      name: fileName // Set name for notification
     }));
 
     // Create preview URL
@@ -224,6 +231,18 @@ export default function CreateContentCoin() {
       console.log('✅ Upload successful:', result);
       setUploadedCoin(result.coin);
 
+      // Trigger notification for content coin creation
+      triggerNotification.mutate({
+        type: 'content_coin_launch',
+        data: {
+          recipientAddress: address,
+          creatorAddress: address,
+          creatorName: formData.creatorName || 'Creator',
+          coinName: formData.coinName,
+          coinId: result.coin.id
+        }
+      });
+
       toast({
         title: "Content Uploaded!",
         description: `${formData.coinName} is ready for tokenization with Zora`,
@@ -259,7 +278,33 @@ export default function CreateContentCoin() {
       return;
     }
 
-    deployMutation.mutate(uploadedCoin.id);
+    deployMutation.mutate(uploadedCoin.id, {
+      onSuccess: (data) => {
+        // Trigger notification for content coin creation
+        triggerNotification.mutate({
+          type: 'content_coin_launch',
+          data: {
+            recipientAddress: address,
+            creatorAddress: address,
+            creatorName: formData.creatorName || 'Creator',
+            coinName: uploadedCoin.coinName, // Use uploadedCoin.coinName for consistency
+            coinId: data.coinId // Assuming data.coinId is the correct ID
+          }
+        });
+
+        // Success - redirect to the content coin page
+        // navigate(`/content-coin/${data.coinId}`); // Uncomment and import navigate if needed
+        // onSuccess?.(); // Uncomment if onSuccess is a prop
+      },
+      onError: (error: any) => {
+        console.error('❌ Deployment failed:', error);
+        toast({
+          title: "Deployment Failed",
+          description: error.message || "Failed to deploy creator coin",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   const resetUpload = () => {
@@ -294,7 +339,7 @@ export default function CreateContentCoin() {
         url: importUrl,
         channelId,
         contentType: 'reel', // Default to reel for shorts
-        title: formData.title || formData.coinName,
+        title: formData.title, // Use title from form data
         description: formData.description || `Content imported from ${importUrl}`,
         coinName: formData.coinName,
         coinSymbol: formData.coinSymbol
@@ -308,6 +353,13 @@ export default function CreateContentCoin() {
         contentType: 'video',
         status: 'uploaded'
       });
+
+      // Set creator name and name for notification context
+      setFormData(prev => ({
+        ...prev,
+        creatorName: userChannelData?.name || '',
+        name: formData.coinName // Use coinName as the name for notification
+      }));
 
       setImportUrl('');
       toast({

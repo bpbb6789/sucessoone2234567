@@ -6,6 +6,7 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "wouter";
+import NotificationBell from "@/components/NotificationBell";
 import { ROUTES } from "@/lib/constants";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
 import ProfileModal from "./profile/ProfileModal";
@@ -129,19 +130,7 @@ export function Header() {
                 )}
               </Button>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-youtube-dark-hover"
-                data-testid="button-notifications"
-                asChild
-              >
-                <Link href={ROUTES.NOTIFICATIONS}>
-                  <div>
-                    <Bell className="h-4 w-4" />
-                  </div>
-                </Link>
-              </Button>
+              <NotificationBell />
 
               {/* Profile Modal Trigger */}
               <ProfileModal />

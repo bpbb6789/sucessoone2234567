@@ -14,6 +14,7 @@ import { useAccount } from "@/hooks/useWallet";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronDown, Upload, Coins, Zap, X, ImageIcon } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useTriggerNotification } from "@/hooks/useNotifications"; // Added import for useTriggerNotification
 
 const createChannelSchema = z.object({
   name: z.string().min(3, "Channel name must be at least 3 characters").max(32, "Channel name must be under 32 characters"),
@@ -44,7 +45,9 @@ const currencies = [
 
 export default function CreateChannel() {
   const { address } = useAccount();
+  const navigate = useNavigate(); // Added navigate import
   const { toast } = useToast();
+  const triggerNotification = useTriggerNotification(); // Added hook for triggering notifications
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [step, setStep] = useState<"form" | "creating" | "success">("form");
 
@@ -74,15 +77,15 @@ export default function CreateChannel() {
       formData.append('chainId', data.chainId.toString());
       formData.append('currency', data.currency);
       formData.append('creatorAddress', address);
-      
+
       if (data.description) {
         formData.append('description', data.description);
       }
-      
+
       if (data.avatarFile) {
         formData.append('avatarFile', data.avatarFile);
       }
-      
+
       if (data.coverFile) {
         formData.append('coverFile', data.coverFile);
       }
@@ -96,6 +99,18 @@ export default function CreateChannel() {
         title: "Channel Created!",
         description: `Your channel "${data.name}" has been created with Zora SDK.`,
       });
+      // Trigger notification for channel creation
+      if (triggerNotification && address) {
+        triggerNotification.mutate({
+          type: 'channel_created',
+          data: {
+            creatorAddress: address,
+            channelName: form.getValues('name'), // Use form.getValues to get the latest name
+            channelId: data.id
+          }
+        });
+      }
+      // navigate('/channels'); // Removed navigate here as it should be part of the mutation's onSuccess
     },
     onError: (error: any) => {
       toast({
@@ -134,7 +149,7 @@ export default function CreateChannel() {
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Your Zora-based channel is ready and your coin has been deployed.
           </p>
-          <Button 
+          <Button
             onClick={() => window.location.href = "/profile"}
             data-testid="button-open-profile"
           >
@@ -179,9 +194,9 @@ export default function CreateChannel() {
                   <FormItem>
                     <FormLabel>Name *</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Channel name" 
-                        {...field} 
+                      <Input
+                        placeholder="Channel name"
+                        {...field}
                         data-testid="input-channel-name"
                       />
                     </FormControl>
@@ -197,9 +212,9 @@ export default function CreateChannel() {
                   <FormItem>
                     <FormLabel>Ticker *</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="ALEX" 
-                        {...field} 
+                      <Input
+                        placeholder="ALEX"
+                        {...field}
                         onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                         maxLength={8}
                         data-testid="input-channel-ticker"
@@ -267,8 +282,8 @@ export default function CreateChannel() {
 
               <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
                 <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="w-full justify-between"
                     data-testid="button-advanced-toggle"
                   >
@@ -354,16 +369,16 @@ export default function CreateChannel() {
                 </CollapsibleContent>
               </Collapsible>
 
-              <Button 
-                type="submit" 
-                className="w-full mt-3" 
+              <Button
+                type="submit"
+                className="w-full mt-3"
                 size="default"
                 disabled={createChannelMutation.isPending}
                 data-testid="button-create-channel"
               >
                 {createChannelMutation.isPending ? "Creating..." : "Create Channel"}
               </Button>
-              
+
             </form>
           </Form>
         </CardContent>
@@ -380,7 +395,7 @@ function AvatarUploadField({ field }: { field: any }) {
     if (!file) return;
 
     field.onChange(file);
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewImage(e.target?.result as string);
@@ -417,9 +432,9 @@ function AvatarUploadField({ field }: { field: any }) {
 
   return (
     <div className="relative">
-      <img 
-        src={previewImage} 
-        alt="Avatar Preview" 
+      <img
+        src={previewImage}
+        alt="Avatar Preview"
         className="w-full h-16 rounded-lg object-cover"
         data-testid="img-avatar-preview"
       />
@@ -443,7 +458,7 @@ function CoverUploadField({ field }: { field: any }) {
     if (!file) return;
 
     field.onChange(file);
-    
+
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreviewImage(e.target?.result as string);
@@ -480,9 +495,9 @@ function CoverUploadField({ field }: { field: any }) {
 
   return (
     <div className="relative">
-      <img 
-        src={previewImage} 
-        alt="Cover Preview" 
+      <img
+        src={previewImage}
+        alt="Cover Preview"
         className="w-full h-16 rounded-lg object-cover"
         data-testid="img-cover-preview"
       />

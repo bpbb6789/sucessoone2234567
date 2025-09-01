@@ -35,7 +35,7 @@ export function useNotifications(userAddress?: string, unreadOnly: boolean = fal
       return response.json() as Notification[];
     },
     enabled: !!userAddress,
-    refetchInterval: 30000, // Poll every 30 seconds for new notifications
+    refetchInterval: 5000, // Poll every 5 seconds for new notifications
   });
 }
 
@@ -52,7 +52,7 @@ export function useUnreadCount(userAddress?: string) {
       return data.count as number;
     },
     enabled: !!userAddress,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 5000, // Poll every 5 seconds
   });
 }
 
