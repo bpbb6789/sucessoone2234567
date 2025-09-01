@@ -13,6 +13,7 @@ import { Link } from 'wouter';
 import { CategoryChips } from "@/components/CategoryChips";
 import { CATEGORIES } from "@/lib/constants";
 import { useMusicPlayer } from '@/contexts/MusicPlayerContext';
+import { ContentPreview } from "@/components/ContentPreview";
 
 interface ContentCoin {
   id: string;
@@ -410,33 +411,15 @@ export default function ContentCoin() {
                       className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group relative overflow-hidden"
                     >
                       <CardContent className="p-0">
-                        {/* Content Image/Thumbnail */}
+                        {/* Content Preview */}
                         <div className="relative aspect-square overflow-hidden">
-                          {coin.contentType === 'image' ? (
-                            <img
-                              src={getContentUrl(coin.mediaCid)}
-                              alt={coin.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              onError={(e) => {
-                                const target = e.currentTarget as HTMLImageElement;
-                                target.src = `data:image/svg+xml,${encodeURIComponent(`
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-                                    <rect width="200" height="200" fill="#374151"/>
-                                    <text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9CA3AF" font-family="Arial" font-size="16">
-                                      ${coin.contentType.toUpperCase()}
-                                    </text>
-                                  </svg>
-                                `)}`;
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                              <div className="text-center text-white">
-                                <Play className="w-8 h-8 mx-auto mb-1" />
-                                <p className="text-[10px] font-medium">{coin.contentType.toUpperCase()}</p>
-                              </div>
-                            </div>
-                          )}
+                          <ContentPreview
+                            mediaCid={coin.mediaCid}
+                            thumbnailCid={coin.thumbnailCid}
+                            contentType={coin.contentType}
+                            title={coin.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
 
                           {/* Play Button - Only for video/audio content */}
                           {(coin.contentType === 'video' || coin.contentType === 'audio') && (
@@ -508,31 +491,13 @@ export default function ContentCoin() {
                         <CardContent className="p-0">
                           {/* Content Image/Thumbnail */}
                           <div className="relative aspect-square overflow-hidden">
-                            {coin.contentType === 'image' ? (
-                              <img
-                                src={getContentUrl(coin.mediaCid)}
-                                alt={coin.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                  const target = e.currentTarget as HTMLImageElement;
-                                  target.src = `data:image/svg+xml,${encodeURIComponent(`
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-                                      <rect width="200" height="200" fill="#374151"/>
-                                      <text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9CA3AF" font-family="Arial" font-size="16">
-                                        ${coin.contentType.toUpperCase()}
-                                      </text>
-                                    </svg>
-                                  `)}`;
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                                <div className="text-center text-white">
-                                  <Play className="w-12 h-12 mx-auto mb-2" />
-                                  <p className="text-sm font-medium">{coin.contentType.toUpperCase()}</p>
-                                </div>
-                              </div>
-                            )}
+                            <ContentPreview
+                              mediaCid={coin.mediaCid}
+                              thumbnailCid={coin.thumbnailCid}
+                              contentType={coin.contentType}
+                              title={coin.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
 
                             {/* Play Button - Only for video/audio content */}
                             {(coin.contentType === 'video' || coin.contentType === 'audio') && (
