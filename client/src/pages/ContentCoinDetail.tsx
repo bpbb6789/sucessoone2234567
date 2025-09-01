@@ -435,22 +435,22 @@ export default function ContentCoinDetail() {
           {/* Mobile Trading Interface */}
           <div className="lg:hidden p-4 border-b border-gray-800">
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-3 gap-1 text-center">
                 <div>
-                  <p className="text-xs text-gray-400">Market Cap</p>
+                  <p className="text-[10px] text-gray-400">Market Cap</p>
                   <p className="text-green-400 font-bold">${tokenData.marketCap}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">24H Volume</p>
+                  <p className="text-[10px] text-gray-400">24H Volume</p>
                   <p className="font-bold">${tokenData.volume24h}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Creator Earnings</p>
+                  <p className="text-[10px] text-gray-400">Creator Earnings</p>
                   <p className="font-bold">${tokenData.creatorEarnings}</p>
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <Button
                   className="flex-1 bg-green-500 hover:bg-green-600 text-black font-bold"
                   onClick={handleBuy}
@@ -517,7 +517,7 @@ export default function ContentCoinDetail() {
             <h1 className="text-xl font-bold mb-2">{tokenData.name}</h1>
 
             {/* Stats Row - Desktop */}
-            <div className="hidden lg:grid grid-cols-3 gap-4 text-center mb-4">
+            <div className="hidden lg:grid grid-cols-3 gap-1 text-center mb-4">
               <div>
                 <p className="text-xs text-gray-400">Market Cap</p>
                 <p className="text-green-400 font-bold">${tokenData.marketCap}</p>
@@ -561,7 +561,7 @@ export default function ContentCoinDetail() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 {['0.001 ETH', '0.01 ETH', '0.1 ETH', 'Max'].map((amount) => (
                   <Button
                     key={amount}

@@ -70,12 +70,12 @@ export default function Creators() {
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-5 w-64" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
             {[...Array(8)].map((_, i) => (
               <Skeleton key={i} className="aspect-[3/4] w-full rounded-xl" />
             ))}
@@ -152,7 +152,7 @@ export default function Creators() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1">
             {filteredCreators.map((creator: Creator, index: number) => {
               return (
                 <Link key={creator.id} to={`/creators/${creator.address}`}>
@@ -185,8 +185,8 @@ export default function Creators() {
 
                       {/* Rank Badge */}
                       <div className="absolute top-2 right-2">
-                        <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
-                          <span className="text-white text-xs font-bold">
+                        <div className="bg-black/60 backdrop-blur-sm px-1 py-0.5 rounded-md">
+                          <span className="text-white text-[9px] font-bold">
                             #{creator.rank}
                           </span>
                         </div>
@@ -195,7 +195,7 @@ export default function Creators() {
                       {/* Top Badge for High Performers */}
                       {creator.rank <= 3 && (
                         <div className="absolute top-2 left-2">
-                          <div className="bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-md">
+                          <div className="bg-yellow-400 text-black text-[9px] font-bold px-1 py-0.5 rounded-md">
                             TOP {creator.rank}
                           </div>
                         </div>
@@ -204,14 +204,14 @@ export default function Creators() {
 
                     {/* Creator Info Below Card */}
                     <div className="space-y-0.5">
-                      <h3 className="text-white font-bold text-xs leading-tight truncate">
+                      <h3 className="text-white font-bold text-[10px] leading-tight truncate">
                         {creator.name}
                       </h3>
-                      <p className="text-gray-400 text-[10px] leading-tight">
+                      <p className="text-gray-400 text-[9px] leading-tight">
                         {creator.contentCoins} Coins • {creator.totalLikes}{" "}
                         likes
                       </p>
-                      <p className="text-gray-500 text-[10px] truncate">
+                      <p className="text-gray-500 text-[9px] truncate">
                         {creator.address.slice(0, 6)}...
                         {creator.address.slice(-4)} •{" "}
                         {formatTimeAgo(creator.lastActive)}
