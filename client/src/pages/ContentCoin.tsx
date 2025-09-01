@@ -91,10 +91,10 @@ function TopCreatorsSection() {
         return (
           <Link key={creator.id} to={`/creators/${creator.address}`}>
             <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105">
-              <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-4 h-20 flex items-center gap-1 shadow-lg hover:shadow-xl transition-colors">
+              <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-2 h-16 flex items-center gap-1 shadow-lg hover:shadow-xl transition-colors">
                 {/* Creator Avatar */}
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
                     {creator.avatarUrl ? (
                       <img
                         src={creator.avatarUrl.startsWith('baf') 
@@ -111,25 +111,25 @@ function TopCreatorsSection() {
                       />
                     ) : null}
                     <div className={`w-full h-full flex items-center justify-center ${creator.avatarUrl ? 'hidden' : ''}`}>
-                      <span className="text-white font-bold text-lg">{creator.name.charAt(0)}</span>
+                      <span className="text-white font-bold text-sm">{creator.name.charAt(0)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Creator Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-base leading-tight truncate mb-1">
+                  <h3 className="text-white font-bold text-[10px] leading-tight truncate mb-1">
                     {creator.name}
                   </h3>
-                  <p className="text-white/80 text-sm truncate">
+                  <p className="text-white/80 text-[9px] truncate">
                     {creator.contentCoins} Content Coins
                   </p>
                 </div>
 
                 {/* Rank Badge */}
                 <div className="flex-shrink-0">
-                  <div className="bg-gray-700 px-2 py-1 rounded-lg">
-                    <span className="text-white text-[10px] font-bold">#{creator.rank}</span>
+                  <div className="bg-gray-700 px-1 py-0.5 rounded-lg">
+                    <span className="text-white text-[9px] font-bold">#{creator.rank}</span>
                   </div>
                 </div>
               </div>
