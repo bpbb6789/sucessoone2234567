@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy, User, DollarSign, FileText } from "lucide-react";
+import { Search, Play, Heart, Share2, MoreHorizontal, Hash, Eye, Copy, User, DollarSign, FileText, ArrowLeft, Download, ExternalLink, Calendar, Tag, FileImage, Music, Loader2, MessageCircle, CheckCircle, Link as LinkIcon } from 'lucide-react'
 import { useCreatorCoins, useCreators } from '@/hooks/useCreatorCoins';
 import { useGetAllChannels } from '@/hooks/useGetAllChannels';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,7 +87,7 @@ function TopCreatorsSection() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1">
       {topCreators.map((creator: any, index: number) => {
         // Use creator's profile data for avatar
-        
+
         return (
           <Link key={creator.id} to={`/creators/${creator.address}`}>
             <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105">
@@ -158,7 +158,7 @@ export default function ContentCoin() {
   const handlePlayAudio = (coin: ContentCoin, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (coin.contentType === 'audio') {
       const track = {
         id: coin.id,
@@ -167,7 +167,7 @@ export default function ContentCoin() {
         audioUrl: getContentUrl(coin.mediaCid),
         coverUrl: coin.thumbnailCid ? getContentUrl(coin.thumbnailCid) : undefined
       };
-      
+
       // Create playlist from all audio content
       const audioCoins = (contentCoins || []).filter((c: ContentCoin) => c.contentType === 'audio');
       const playlist = audioCoins.map((c: ContentCoin) => ({
@@ -177,7 +177,7 @@ export default function ContentCoin() {
         audioUrl: getContentUrl(c.mediaCid),
         coverUrl: c.thumbnailCid ? getContentUrl(c.thumbnailCid) : undefined
       }));
-      
+
       const currentIndex = audioCoins.findIndex((c: ContentCoin) => c.id === coin.id);
       loadPlaylist(playlist, currentIndex);
     }
