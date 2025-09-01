@@ -434,15 +434,18 @@ export default function ContentCoin() {
 
                           {/* Status Badge */}
                           <div className="absolute top-2 right-2">
-                            <Badge 
-                              variant={coin.status === 'deployed' ? 'default' : 'secondary'}
-                              className={`text-[9px] px-1 py-0.5 ${coin.status === 'deployed' 
-                                ? 'bg-green-500 text-black' 
-                                : 'bg-yellow-500 text-black'
+                            <div 
+                              className={`p-1 rounded-full ${coin.status === 'deployed' 
+                                ? 'bg-green-500/20 text-green-400' 
+                                : 'bg-yellow-500/20 text-yellow-400'
                               }`}
                             >
-                              {coin.status === 'deployed' ? '✓ Onchain' : '⏳ Pending'}
-                            </Badge>
+                              {coin.status === 'deployed' ? (
+                                <LinkIcon className="w-2.5 h-2.5" />
+                              ) : (
+                                <span className="w-2.5 h-2.5 rounded-full bg-current animate-pulse" />
+                              )}
+                            </div>
                           </div>
                         </div>
 
@@ -512,15 +515,18 @@ export default function ContentCoin() {
 
                             {/* Status Badge */}
                             <div className="absolute top-2 right-2">
-                              <Badge 
-                                variant={coin.status === 'deployed' ? 'default' : 'secondary'}
-                                className={coin.status === 'deployed' 
-                                  ? 'bg-green-500 text-black' 
-                                  : 'bg-yellow-500 text-black'
-                                }
+                              <div 
+                                className={`p-1 rounded-full ${coin.status === 'deployed' 
+                                  ? 'bg-green-500/20 text-green-400' 
+                                  : 'bg-yellow-500/20 text-yellow-400'
+                                }`}
                               >
-                                {coin.status === 'deployed' ? '✓ Onchain' : '⏳ Pending'}
-                              </Badge>
+                                {coin.status === 'deployed' ? (
+                                  <LinkIcon className="w-2.5 h-2.5" />
+                                ) : (
+                                  <span className="w-2.5 h-2.5 rounded-full bg-current animate-pulse" />
+                                )}
+                              </div>
                             </div>
                           </div>
 
