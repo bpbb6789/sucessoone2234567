@@ -20,10 +20,8 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   title,
   className = ""
 }) => {
-  const [showPlayButton, setShowPlayButton] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -47,32 +45,27 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   };
 
   useEffect(() => {
-    // For video content, preload metadata to get first frame
+    // For video content, autoplay when loaded
     if (contentType === 'video' && videoRef.current) {
-      videoRef.current.addEventListener('loadedmetadata', handleLoadEnd);
-      videoRef.current.addEventListener('error', handleError);
+      const video = videoRef.current;
+      
+      const handleLoadedMetadata = () => {
+        handleLoadEnd();
+        // Autoplay video when metadata is loaded
+        video.play().catch(() => {
+          // Ignore play errors (browser restrictions, etc.)
+        });
+      };
+
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+      video.addEventListener('error', handleError);
+      
       return () => {
-        if (videoRef.current) {
-          videoRef.current.removeEventListener('loadedmetadata', handleLoadEnd);
-          videoRef.current.removeEventListener('error', handleError);
-        }
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        video.removeEventListener('error', handleError);
       };
     }
   }, [contentType]);
-
-  // Handle video play/pause based on hover state
-  useEffect(() => {
-    if (contentType === 'video' && videoRef.current) {
-      if (isHovered) {
-        videoRef.current.play().catch(() => {
-          // Ignore play errors (e.g., when video is not loaded yet)
-        });
-      } else {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0; // Reset to beginning
-      }
-    }
-  }, [isHovered, contentType]);
 
   // Render based on content type
   const renderContent = () => {
@@ -89,36 +82,20 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
     switch (contentType.toLowerCase()) {
       case 'video':
         return (
-          <div 
-            className="relative w-full h-full"
-            onMouseEnter={() => {
-              setIsHovered(true);
-              setShowPlayButton(true);
-            }}
-            onMouseLeave={() => {
-              setIsHovered(false);
-              setShowPlayButton(false);
-            }}
-          >
+          <div className="relative w-full h-full">
             <video
               ref={videoRef}
               src={contentUrl}
               poster={thumbnailUrl || undefined}
               preload="metadata"
+              autoPlay
               muted
               loop
+              playsInline
               className={`w-full h-full object-cover ${className}`}
               onLoadStart={handleLoadStart}
-              onLoadedMetadata={handleLoadEnd}
               onError={handleError}
             />
-            {!isHovered && showPlayButton && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity">
-                <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
-                  <Play className="w-6 h-6 text-white fill-white ml-0.5" />
-                </div>
-              </div>
-            )}
           </div>
         );
 
@@ -131,16 +108,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
               className={`w-full h-full object-cover ${className}`}
               onLoad={handleLoadEnd}
               onError={handleError}
-              onMouseEnter={() => setShowPlayButton(true)}
-              onMouseLeave={() => setShowPlayButton(false)}
             />
-            {showPlayButton && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity">
-                <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
-                  <Play className="w-6 h-6 text-white fill-white ml-0.5" />
-                </div>
-              </div>
-            )}
           </div>
         );
 
@@ -171,18 +139,12 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
                 ))}
               </div>
             </div>
-            {showPlayButton && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity">
-                <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
-                  <Play className="w-6 h-6 text-white fill-white ml-0.5" />
-                </div>
+            {/* Always show play button for audio */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <Play className="w-6 h-6 text-white fill-white ml-0.5" />
               </div>
-            )}
-            <div
-              className="absolute inset-0 cursor-pointer"
-              onMouseEnter={() => setShowPlayButton(true)}
-              onMouseLeave={() => setShowPlayButton(false)}
-            />
+            </div>
           </div>
         );
 
