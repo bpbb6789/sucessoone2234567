@@ -108,7 +108,7 @@ export default function Creators() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-3xl font-bold text-white">Creators</h1>
+                <h1 className="text-2xl font-bold text-white">Creators</h1>
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2 text-gray-400">
                     <Users className="h-5 w-5" />
