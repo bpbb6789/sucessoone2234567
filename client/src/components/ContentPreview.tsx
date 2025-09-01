@@ -23,6 +23,7 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
   const [showPlayButton, setShowPlayButton] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -59,6 +60,20 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
     }
   }, [contentType]);
 
+  // Handle video play/pause based on hover state
+  useEffect(() => {
+    if (contentType === 'video' && videoRef.current) {
+      if (isHovered) {
+        videoRef.current.play().catch(() => {
+          // Ignore play errors (e.g., when video is not loaded yet)
+        });
+      } else {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0; // Reset to beginning
+      }
+    }
+  }, [isHovered, contentType]);
+
   // Render based on content type
   const renderContent = () => {
     if (hasError) {
@@ -74,21 +89,30 @@ export const ContentPreview: React.FC<ContentPreviewProps> = ({
     switch (contentType.toLowerCase()) {
       case 'video':
         return (
-          <div className="relative w-full h-full">
+          <div 
+            className="relative w-full h-full"
+            onMouseEnter={() => {
+              setIsHovered(true);
+              setShowPlayButton(true);
+            }}
+            onMouseLeave={() => {
+              setIsHovered(false);
+              setShowPlayButton(false);
+            }}
+          >
             <video
               ref={videoRef}
               src={contentUrl}
               poster={thumbnailUrl || undefined}
               preload="metadata"
               muted
+              loop
               className={`w-full h-full object-cover ${className}`}
               onLoadStart={handleLoadStart}
               onLoadedMetadata={handleLoadEnd}
               onError={handleError}
-              onMouseEnter={() => setShowPlayButton(true)}
-              onMouseLeave={() => setShowPlayButton(false)}
             />
-            {showPlayButton && (
+            {!isHovered && showPlayButton && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity">
                 <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
                   <Play className="w-6 h-6 text-white fill-white ml-0.5" />
