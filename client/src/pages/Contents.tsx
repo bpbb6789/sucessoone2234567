@@ -170,40 +170,34 @@ export default function Contents() {
                   <CardContent className="p-0">
                     {/* Content Image/Thumbnail */}
                     <div className="relative aspect-square overflow-hidden">
-                      {coin.contentType === 'image' ? (
-                        <img
-                          src={getContentUrl(coin.mediaCid)}
-                          alt={coin.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            const target = e.currentTarget as HTMLImageElement;
-                            target.src = `data:image/svg+xml,${encodeURIComponent(`
-                              <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-                                <rect width="200" height="200" fill="#374151"/>
-                                <text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9CA3AF" font-family="Arial" font-size="16">
-                                  ${coin.contentType.toUpperCase()}
-                                </text>
-                              </svg>
-                            `)}`;
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                          <div className="text-center text-white">
-                            <Play className="w-8 h-8 mx-auto mb-1" />
-                            <p className="text-xs font-medium">{coin.contentType.toUpperCase()}</p>
+                      <img
+                        src={
+                          coin.thumbnailCid 
+                            ? `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}`
+                            : getContentUrl(coin.mediaCid)
+                        }
+                        alt={coin.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.src = `data:image/svg+xml,${encodeURIComponent(`
+                            <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+                              <rect width="200" height="200" fill="#374151"/>
+                              <text x="100" y="100" text-anchor="middle" dy=".3em" fill="#9CA3AF" font-family="Arial" font-size="16">
+                                ${coin.contentType.toUpperCase()}
+                              </text>
+                            </svg>
+                          `)}`;
+                        }}
+                      />
+
+                      {/* Play Button Overlay for Video/Audio Content */}
+                      {(coin.contentType === 'video' || coin.contentType === 'audio' || coin.contentType === 'gif') && (
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+                            <Play className="w-6 h-6 text-white fill-white ml-0.5" />
                           </div>
                         </div>
-                      )}
-
-                      {/* Play Button - Only for video/audio content */}
-                      {(coin.contentType === 'video' || coin.contentType === 'audio') && (
-                        <Button
-                          size="icon"
-                          className="absolute bottom-2 right-2 bg-black bg-opacity-70 hover:bg-black hover:bg-opacity-90 text-white rounded-full w-6 h-6 opacity-80 hover:opacity-100 transition-all"
-                        >
-                          <Play className="w-3 h-3" />
-                        </Button>
                       )}
 
                       {/* Status Badge */}
