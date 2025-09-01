@@ -109,7 +109,7 @@ export default function Creators() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <h1 className="text-4xl font-bold text-white">
-                  Artists ({creators?.length || 0})
+                  Creators
                 </h1>
                 <div className="flex items-center gap-4 text-gray-400 text-sm ml-auto">
                   <span>Releases: {creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
@@ -120,9 +120,6 @@ export default function Creators() {
                   <span>Total Comments: {creators?.reduce((sum: number, creator: Creator) => sum + creator.totalComments, 0) || 0}</span>
                 </div>
               </div>
-              <p className="text-gray-400 text-lg">
-                Discover creators who have deployed content coins on the platform
-              </p>
             </div>
           </div>
 
