@@ -1,13 +1,21 @@
-
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Users, TrendingUp, Star, Award, Coins, MessageSquare, Heart } from "lucide-react";
+import {
+  MoreHorizontal,
+  Users,
+  TrendingUp,
+  Star,
+  Award,
+  Coins,
+  MessageSquare,
+  Heart,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from 'wouter';
-import { useCreators } from '@/hooks/useCreators';
+import { Link } from "wouter";
+import { useCreators } from "@/hooks/useCreators";
 
 interface Creator {
   id: string;
@@ -25,33 +33,34 @@ interface Creator {
 
 const formatTimeAgo = (date: string): string => {
   const now = new Date();
-  const diffInDays = Math.floor((now.getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
-  
-  if (diffInDays < 1) return 'Today';
-  if (diffInDays === 1) return 'Yesterday';
+  const diffInDays = Math.floor(
+    (now.getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffInDays < 1) return "Today";
+  if (diffInDays === 1) return "Yesterday";
   if (diffInDays < 30) return `${diffInDays}d ago`;
   if (diffInDays < 365) return `${Math.floor(diffInDays / 30)}mo ago`;
   return `${Math.floor(diffInDays / 365)}y ago`;
 };
 
 export default function Creators() {
-  const [sortBy, setSortBy] = useState('contentCoins'); // contentCoins, totalLikes, totalComments
+  const [sortBy, setSortBy] = useState("contentCoins"); // contentCoins, totalLikes, totalComments
 
   // Get real creators data
   const { data: creators, isLoading, error } = useCreators();
 
   // Sort creators
-  const filteredCreators = (creators || [])
-    .sort((a: Creator, b: Creator) => {
-      switch (sortBy) {
-        case 'totalLikes':
-          return b.totalLikes - a.totalLikes;
-        case 'totalComments':
-          return b.totalComments - a.totalComments;
-        default:
-          return b.contentCoins - a.contentCoins;
-      }
-    });
+  const filteredCreators = (creators || []).sort((a: Creator, b: Creator) => {
+    switch (sortBy) {
+      case "totalLikes":
+        return b.totalLikes - a.totalLikes;
+      case "totalComments":
+        return b.totalComments - a.totalComments;
+      default:
+        return b.contentCoins - a.contentCoins;
+    }
+  });
 
   if (isLoading) {
     return (
@@ -81,10 +90,10 @@ export default function Creators() {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-red-500 mb-4">Error loading creators: {error.message}</p>
-            <Button onClick={() => window.location.reload()}>
-              Retry
-            </Button>
+            <p className="text-red-500 mb-4">
+              Error loading creators: {error.message}
+            </p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
           </div>
         </div>
       </div>
@@ -99,24 +108,28 @@ export default function Creators() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-4xl font-bold text-white">
-                  Creators
-                </h1>
+                <h1 className="text-3xl font-bold text-white">Creators</h1>
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2 text-gray-400">
                     <Users className="h-5 w-5" />
-                    <span className="text-lg font-semibold">{creators?.length || 0}</span>
+                    <span className="text-lg font-semibold">
+                      {creators?.length || 0}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-400">
                     <Coins className="h-5 w-5" />
-                    <span className="text-lg font-semibold">{creators?.reduce((sum: number, creator: Creator) => sum + creator.contentCoins, 0) || 0}</span>
+                    <span className="text-lg font-semibold">
+                      {creators?.reduce(
+                        (sum: number, creator: Creator) =>
+                          sum + creator.contentCoins,
+                        0,
+                      ) || 0}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          
 
           {/* Sort By Only */}
           <div className="flex justify-end">
@@ -137,7 +150,9 @@ export default function Creators() {
           <div className="flex flex-col items-center justify-center py-20">
             <div className="text-center">
               <Coins className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">No creators found</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                No creators found
+              </h3>
               <p className="text-gray-400 mb-6">
                 No content creators have deployed coins yet
               </p>
@@ -154,16 +169,20 @@ export default function Creators() {
             {filteredCreators.map((creator: Creator, index: number) => {
               return (
                 <Link key={creator.id} to={`/creators/${creator.address}`}>
-                  <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105" data-testid={`creator-card-${creator.id}`}>
+                  <div
+                    className="group cursor-pointer transform transition-all duration-300 hover:scale-105"
+                    data-testid={`creator-card-${creator.id}`}
+                  >
                     {/* Creator Image */}
                     <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-square shadow-lg hover:shadow-xl transition-shadow mb-3">
                       {/* User Avatar or Default Dice */}
                       <div className="absolute inset-0">
                         {creator.avatarUrl ? (
                           <img
-                            src={creator.avatarUrl.startsWith('baf') 
-                              ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}` 
-                              : creator.avatarUrl
+                            src={
+                              creator.avatarUrl.startsWith("baf")
+                                ? `https://gateway.pinata.cloud/ipfs/${creator.avatarUrl}`
+                                : creator.avatarUrl
                             }
                             alt={creator.name}
                             className="w-full h-full object-cover"
@@ -180,7 +199,9 @@ export default function Creators() {
                       {/* Rank Badge */}
                       <div className="absolute top-2 right-2">
                         <div className="bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
-                          <span className="text-white text-xs font-bold">#{creator.rank}</span>
+                          <span className="text-white text-xs font-bold">
+                            #{creator.rank}
+                          </span>
                         </div>
                       </div>
 
@@ -200,10 +221,13 @@ export default function Creators() {
                         {creator.name}
                       </h3>
                       <p className="text-gray-400 text-[10px] leading-tight">
-                        {creator.contentCoins} Coins • {creator.totalLikes} likes
+                        {creator.contentCoins} Coins • {creator.totalLikes}{" "}
+                        likes
                       </p>
                       <p className="text-gray-500 text-[10px] truncate">
-                        {creator.address.slice(0, 6)}...{creator.address.slice(-4)} • {formatTimeAgo(creator.lastActive)}
+                        {creator.address.slice(0, 6)}...
+                        {creator.address.slice(-4)} •{" "}
+                        {formatTimeAgo(creator.lastActive)}
                       </p>
                     </div>
                   </div>
