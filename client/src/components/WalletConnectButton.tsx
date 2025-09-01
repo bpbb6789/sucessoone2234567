@@ -78,9 +78,22 @@ export function WalletConnectButton({
             >
               {(() => {
                 if (!connected) {
+                  const handleConnectClick = () => {
+                    try {
+                      openConnectModal();
+                    } catch (error) {
+                      console.error('Wallet connection error:', error);
+                      // Fallback: try to trigger MetaMask directly if available
+                      if (window.ethereum && window.ethereum.request) {
+                        window.ethereum.request({ method: 'eth_requestAccounts' })
+                          .catch((err) => console.error('Direct MetaMask connection failed:', err));
+                      }
+                    }
+                  };
+
                   return (
                     <button
-                      onClick={openConnectModal}
+                      onClick={handleConnectClick}
                       type="button"
                       className={cn(
                         "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
