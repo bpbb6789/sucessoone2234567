@@ -61,7 +61,7 @@ function TopCreatorsSection() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1">
         {[...Array(4)].map((_, i) => (
           <Skeleton key={i} className="h-20 w-full rounded-xl" />
         ))}
@@ -71,7 +71,7 @@ function TopCreatorsSection() {
 
   if (error || !creators || creators.length === 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1">
         <div className="col-span-full text-center py-8">
           <p className="text-gray-400">No creators found</p>
         </div>
@@ -83,14 +83,14 @@ function TopCreatorsSection() {
   const topCreators = creators.slice(0, 4);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1">
       {topCreators.map((creator: any, index: number) => {
         // Use creator's profile data for avatar
         
         return (
           <Link key={creator.id} to={`/creators/${creator.address}`}>
             <div className="group cursor-pointer transform transition-all duration-300 hover:scale-105">
-              <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-4 h-20 flex items-center gap-4 shadow-lg hover:shadow-xl transition-colors">
+              <div className="bg-gray-800/50 hover:bg-gray-700/50 rounded-xl p-4 h-20 flex items-center gap-1 shadow-lg hover:shadow-xl transition-colors">
                 {/* Creator Avatar */}
                 <div className="flex-shrink-0">
                   <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
@@ -128,7 +128,7 @@ function TopCreatorsSection() {
                 {/* Rank Badge */}
                 <div className="flex-shrink-0">
                   <div className="bg-gray-700 px-2 py-1 rounded-lg">
-                    <span className="text-white text-xs font-bold">#{creator.rank}</span>
+                    <span className="text-white text-[10px] font-bold">#{creator.rank}</span>
                   </div>
                 </div>
               </div>
@@ -265,7 +265,7 @@ export default function ContentCoin() {
           <div className="relative px-12">
             {channelsLoading ? (
               // Loading state
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
                 {[...Array(3)].map((_, i) => (
                   <Skeleton key={i} className="h-20 w-full rounded-xl" />
                 ))}
@@ -299,7 +299,7 @@ export default function ContentCoin() {
                         <div className="group cursor-pointer">
                           <Card className="bg-gray-900/80 hover:bg-gray-800/90 border-gray-700/30 transition-all duration-300 overflow-hidden rounded-2xl">
                             <CardContent className="p-0">
-                              <div className="flex items-center gap-4 p-4">
+                              <div className="flex items-center gap-1 p-4">
                                 {/* Channel Image - Large Rounded */}
                                 <div className="relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden">
                                   {channel.coverUrl || channel.avatarUrl ? (
@@ -344,7 +344,7 @@ export default function ContentCoin() {
                                   {/* Contract Address */}
                                   <div className="flex items-center gap-2 text-sm mb-1">
                                     <DollarSign className="w-3 h-3 text-green-400" />
-                                    <span className="text-green-400 font-semibold text-xs truncate">
+                                    <span className="text-green-400 font-semibold text-[10px] truncate">
                                       {channel.coinAddress ? `${channel.coinAddress.slice(0, 6)}...${channel.coinAddress.slice(-4)}` : 'Not deployed'}
                                     </span>
                                   </div>
@@ -352,7 +352,7 @@ export default function ContentCoin() {
                                   {/* Created Date */}
                                   <div className="flex items-center gap-2 text-gray-400 text-sm">
                                     <FileText className="w-3 h-3" />
-                                    <span className="text-xs">
+                                    <span className="text-[10px]">
                                       {formatTimeAgo(channel.createdAt)}
                                     </span>
                                   </div>
@@ -403,7 +403,7 @@ export default function ContentCoin() {
           ) : (
             <div>
               {/* Mobile: 2 per row grid */}
-              <div className="grid md:hidden grid-cols-2 gap-4">
+              <div className="grid md:hidden grid-cols-2 gap-1">
                 {filteredContent.slice(0, 6).map((coin: ContentCoin) => (
                   <Link to={`/content/base/${coin.memeTokenAddress || coin.id}`} key={`mobile-${coin.id}`}>
                     <Card 
@@ -433,7 +433,7 @@ export default function ContentCoin() {
                             <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                               <div className="text-center text-white">
                                 <Play className="w-8 h-8 mx-auto mb-1" />
-                                <p className="text-xs font-medium">{coin.contentType.toUpperCase()}</p>
+                                <p className="text-[10px] font-medium">{coin.contentType.toUpperCase()}</p>
                               </div>
                             </div>
                           )}
@@ -453,7 +453,7 @@ export default function ContentCoin() {
                           <div className="absolute top-2 right-2">
                             <Badge 
                               variant={coin.status === 'deployed' ? 'default' : 'secondary'}
-                              className={`text-xs ${coin.status === 'deployed' 
+                              className={`text-[9px] px-1 py-0.5 ${coin.status === 'deployed' 
                                 ? 'bg-green-500 text-black' 
                                 : 'bg-yellow-500 text-black'
                               }`}
@@ -466,23 +466,23 @@ export default function ContentCoin() {
                         {/* Content Info */}
                         <div className="p-3 space-y-2">
                           <div>
-                            <h3 className="font-semibold text-white text-xs line-clamp-2 mb-1">
+                            <h3 className="font-semibold text-white text-[10px] line-clamp-2 mb-1">
                               {coin.title}
                             </h3>
-                            <p className="text-gray-400 text-xs">
+                            <p className="text-gray-400 text-[10px]">
                               {coin.coinSymbol}
                             </p>
                           </div>
 
                           {/* Price */}
-                          <div className="text-gray-400 text-xs">
+                          <div className="text-gray-400 text-[10px]">
                             ${coin.currentPrice}
                           </div>
 
                           {/* BUY Button */}
                           <Button
                             size="sm"
-                            className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-6"
+                            className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-[9px] h-5"
                             onClick={(e) => {
                               e.stopPropagation();
                               console.log("Buy button clicked for:", coin.id);
@@ -498,7 +498,7 @@ export default function ContentCoin() {
               </div>
 
               {/* Desktop: Horizontal Scroll */}
-              <div className="hidden md:flex space-x-6 overflow-x-auto scrollbar-hide pb-4">
+              <div className="hidden md:flex space-x-1 overflow-x-auto scrollbar-hide pb-4">
                 {filteredContent.map((coin: ContentCoin) => (
                   <Link to={`/content/base/${coin.memeTokenAddress || coin.id}`} key={`desktop-${coin.id}`}>
                     <div className="flex-shrink-0 w-48 group cursor-pointer">
@@ -565,13 +565,13 @@ export default function ContentCoin() {
                               <h3 className="font-semibold text-white text-sm line-clamp-2 mb-1">
                                 {coin.title}
                               </h3>
-                              <p className="text-gray-400 text-xs">
+                              <p className="text-gray-400 text-[10px]">
                                 {coin.coinSymbol} • {formatTimeAgo(coin.createdAt)}
                               </p>
                             </div>
 
                             {/* Compact Info Row */}
-                            <div className="flex items-center justify-between pt-2 text-xs">
+                            <div className="flex items-center justify-between pt-2 text-[10px]">
                               <div className="flex items-center gap-2">
                                 {coin.status === 'deployed' && coin.coinAddress && (
                                   <div className="flex items-center gap-1">
@@ -585,7 +585,7 @@ export default function ContentCoin() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-4 p-1 text-xs text-blue-400 hover:text-blue-300"
+                                    className="h-4 p-1 text-[10px] text-blue-400 hover:text-blue-300"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       window.open(`https://sepolia.basescan.org/tx/${coin.deploymentTxHash}`, '_blank');
@@ -604,7 +604,7 @@ export default function ContentCoin() {
                             <div className="pt-2">
                               <Button
                                 size="sm"
-                                className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-xs h-7"
+                                className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold text-[10px] h-7"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   console.log("Buy button clicked for:", coin.id);
