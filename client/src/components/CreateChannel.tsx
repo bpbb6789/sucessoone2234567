@@ -15,6 +15,7 @@ import { useMutation } from "@tanstack/react-query";
 import { ChevronDown, Upload, Coins, Zap, X, ImageIcon } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useTriggerNotification } from "@/hooks/useNotifications"; // Added import for useTriggerNotification
+import { useLocation } from 'wouter';
 
 const createChannelSchema = z.object({
   name: z.string().min(3, "Channel name must be at least 3 characters").max(32, "Channel name must be under 32 characters"),
