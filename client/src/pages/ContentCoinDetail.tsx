@@ -405,10 +405,10 @@ export default function ContentCoinDetail() {
       </div>
 
       {/* Main Content - Card Layout */}
-      <div className="flex gap-2 p-6 h-[calc(100vh-140px)]">
+      <div className="flex gap-2 p-6 min-h-[calc(100vh-140px)]">
         {/* Left Side - Chart Area */}
-        <Card className="flex-1 overflow-hidden">
-          <CardContent className="p-4 h-full flex flex-col">
+        <Card className="flex-1">
+          <CardContent className="p-4">
           {/* Price Display */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
@@ -443,7 +443,7 @@ export default function ContentCoinDetail() {
           </div>
 
           {/* Chart/Content Area */}
-          <div className="flex-1 bg-muted rounded-lg mb-4 relative overflow-hidden min-h-[300px]">
+          <div className="h-80 bg-muted rounded-lg mb-4 relative overflow-hidden">
             {viewMode === "chart" ? (
               chartData && currentData ? (
                 <svg className="w-full h-full" viewBox="0 0 400 320">
@@ -511,8 +511,8 @@ export default function ContentCoinDetail() {
         </Card>
 
         {/* Right Side - Trading Panel */}
-        <Card className="w-96 flex flex-col overflow-hidden">
-          <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
+        <Card className="w-96">
+          <CardContent className="p-0">
           {/* Market Stats - Always Visible */}
           <div className="p-4 border-b border-border">
             <div className="space-y-3">
@@ -532,7 +532,7 @@ export default function ContentCoinDetail() {
           </div>
 
           {/* Tabs Container */}
-          <Tabs defaultValue="comments" className="flex-1 flex flex-col">
+          <Tabs defaultValue="comments" className="flex flex-col">
             <div className="border-b border-border px-4 py-3">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="trading" className="flex items-center gap-1 text-xs">
@@ -556,7 +556,7 @@ export default function ContentCoinDetail() {
             </div>
 
             {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto max-h-full">
+            <div className="max-h-[500px] overflow-y-auto">
               {/* Trading Tab Content */}
               <TabsContent value="trading" className="p-4 space-y-0">
                 <div className="space-y-4">
