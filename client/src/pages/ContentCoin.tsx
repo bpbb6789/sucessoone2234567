@@ -217,17 +217,19 @@ export default function ContentCoin() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="space-y-8">
-          <div className="space-y-4">
-            <Skeleton className="h-12 w-96" />
-            <Skeleton className="h-6 w-[500px]" />
-            <Skeleton className="h-10 w-full max-w-md" />
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 w-full" />
-            ))}
+      <div className="w-full min-h-screen flex justify-center">
+        <div className="w-full max-w-7xl px-4 py-8 mx-auto">
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-96" />
+              <Skeleton className="h-6 w-[500px]" />
+              <Skeleton className="h-10 w-full max-w-md" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <Skeleton key={i} className="h-64 w-full" />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -236,13 +238,15 @@ export default function ContentCoin() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <p className="text-red-500 mb-4">Error loading content coins: {error.message}</p>
-            <Button onClick={() => window.location.reload()}>
-              Retry
-            </Button>
+      <div className="w-full min-h-screen flex justify-center">
+        <div className="w-full max-w-7xl px-4 py-8 mx-auto">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <p className="text-red-500 mb-4">Error loading content coins: {error.message}</p>
+              <Button onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -250,8 +254,9 @@ export default function ContentCoin() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="space-y-8">
+    <div className="w-full min-h-screen flex justify-center">
+      <div className="w-full max-w-7xl px-4 py-8 mx-auto">
+        <div className="space-y-8">
         {/* Category Filter Chips */}
         <div className="mb-6">
           <CategoryChips 
@@ -664,6 +669,7 @@ export default function ContentCoin() {
 
           {/* Top Creators Cards */}
           <TopCreatorsSection />
+        </div>
         </div>
       </div>
     </div>
