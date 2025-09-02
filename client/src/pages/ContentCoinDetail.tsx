@@ -20,6 +20,7 @@ import {
   TrendingDown,
   Users,
   Activity,
+  Image,
   MessageCircle,
   Share2,
   Heart,
@@ -37,6 +38,7 @@ import {
 import { cn } from "@/lib/utils";
 // Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
+import ContentPreview from "@/components/ContentPreview";
 import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
 import { useState, useMemo } from "react";
 
@@ -100,6 +102,7 @@ export default function ContentCoinDetail() {
   const [comment, setComment] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState<"1H" | "1D" | "1W" | "1M" | "All">("1D");
   const [tradeMode, setTradeMode] = useState<"buy" | "sell">("buy");
+  const [viewMode, setViewMode] = useState<"chart" | "image">("chart");
 
   // Trading mutations
   const buyMutation = useBuyCreatorCoin();
@@ -414,47 +417,90 @@ export default function ContentCoinDetail() {
             <p className="text-gray-400">{tokenData?.coinName || tokenData?.name || 'Loading...'} ({tokenData?.coinSymbol || tokenData?.symbol || '...'})</p>
           </div>
 
-          {/* Chart Area */}
+          {/* Chart/Image Toggle */}
+          <div className="flex items-center gap-2 mb-4">
+            <Button
+              variant={viewMode === "chart" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("chart")}
+              className={`${viewMode === "chart" ? "bg-white text-black" : ""}`}
+            >
+              <TrendingUp className="h-4 w-4 mr-1" />
+              Chart
+            </Button>
+            <Button
+              variant={viewMode === "image" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("image")}
+              className={`${viewMode === "image" ? "bg-white text-black" : ""}`}
+            >
+              <Image className="h-4 w-4 mr-1" />
+              Content
+            </Button>
+          </div>
+
+          {/* Chart/Content Area */}
           <div className="h-80 bg-gray-800 rounded-lg mb-6 relative overflow-hidden">
-            {currentData && (
-              <svg className="w-full h-full" viewBox="0 0 400 320">
-                <defs>
-                  <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity="0.05" />
-                  </linearGradient>
-                </defs>
+            {viewMode === "chart" ? (
+              currentData && (
+                <svg className="w-full h-full" viewBox="0 0 400 320">
+                  <defs>
+                    <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity="0.05" />
+                    </linearGradient>
+                  </defs>
 
-                {/* Area fill */}
-                <path d={`${currentData.points} L350,300 L50,300 Z`} fill="url(#areaGradient)" />
+                  {/* Area fill */}
+                  <path d={`${currentData.points} L350,300 L50,300 Z`} fill="url(#areaGradient)" />
 
-                {/* Line */}
-                <path
-                  d={currentData.points}
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+                  {/* Line */}
+                  <path
+                    d={currentData.points}
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                {tokenData?.mediaCid ? (
+                  <ContentPreview
+                    mediaCid={tokenData.mediaCid}
+                    thumbnailCid={tokenData.thumbnailCid}
+                    contentType={tokenData.contentType}
+                    title={tokenData.title || tokenData.coinName}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                ) : (
+                  <div className="text-center text-gray-400">
+                    <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No content available</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Time Period Buttons */}
-          <div className="flex space-x-2">
-            {(['1H', '1D', '1W', '1M', 'All'] as const).map((period) => (
-              <Button
-                key={period}
-                variant={selectedPeriod === period ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setSelectedPeriod(period)}
-                className={selectedPeriod === period ? "bg-white text-black" : ""}
-              >
-                {period}
-              </Button>
-            ))}
-          </div>
+          {/* Time Period Buttons - Only show when chart is active */}
+          {viewMode === "chart" && (
+            <div className="flex space-x-2">
+              {(['1H', '1D', '1W', '1M', 'All'] as const).map((period) => (
+                <Button
+                  key={period}
+                  variant={selectedPeriod === period ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedPeriod(period)}
+                  className={selectedPeriod === period ? "bg-white text-black" : ""}
+                >
+                  {period}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Side - Trading Panel */}
