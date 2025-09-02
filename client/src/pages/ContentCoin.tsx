@@ -217,7 +217,7 @@ export default function ContentCoin() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-7xl px-4 py-8 mx-auto">
+      <div className="w-full py-8">
         <div className="space-y-8">
           <div className="space-y-4">
             <Skeleton className="h-12 w-96" />
@@ -236,7 +236,7 @@ export default function ContentCoin() {
 
   if (error) {
     return (
-      <div className="w-full max-w-7xl px-4 py-8 mx-auto">
+      <div className="w-full py-8">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <p className="text-red-500 mb-4">Error loading content coins: {error.message}</p>
@@ -250,7 +250,7 @@ export default function ContentCoin() {
   }
 
   return (
-    <div className="w-full max-w-7xl px-4 py-8 mx-auto">
+    <div className="w-full py-8">
       <div className="space-y-8">
         {/* Category Filter Chips */}
         <div className="mb-6">

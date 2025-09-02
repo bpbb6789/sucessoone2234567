@@ -338,17 +338,7 @@ nav[data-testid="sidebar"]::-webkit-scrollbar {
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* Center content override - centers content within available space */
-  .content-centered {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-  }
-
-  .content-centered > * {
-    max-width: 1280px !important;
-    width: 100% !important;
-  }
+  /* Remove old content-centered styles since we now use Layout wrapper */
 
   /* Mobile responsive adjustments */
   @media (max-width: 768px) {

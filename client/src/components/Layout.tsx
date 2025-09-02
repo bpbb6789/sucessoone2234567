@@ -32,18 +32,18 @@ export function Layout({ children }: LayoutProps) {
       
       <main
         className={cn(
-          "transition-all duration-300",
+          "transition-all duration-300 flex justify-center",
           // Only add top padding if header is visible
           !shouldHideHeaderOnMobile && "pt-14",
           shouldUseSidebarMargin && (isExpanded ? "content-expanded" : "content-collapsed"),
-          // Center content for contentcoin page
-          isContentCoinPage && "content-centered",
           // Only add bottom padding if mobile nav is visible
           isMobile && !shouldHideMobileNavOnMobile && "pb-16"
         )}
         data-testid="main-content"
       >
-        {children}
+        <div className="w-full max-w-4xl px-4">
+          {children}
+        </div>
       </main>
       
       {!shouldHideMobileNavOnMobile && <MobileNavigation />}
