@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+"use client"
+
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAccount } from "wagmi";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
@@ -28,59 +28,64 @@ import {
   Hash,
   Clock,
   DollarSign,
-  Zap
+  ChevronDown,
+  Crown,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 // Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
 import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
-import { useGetAllSales } from "@/hooks/useGetAllSales";
-import { useCreatorCoin, useCreatorCoinComments, useCreatorCoinTrades, useCreatorCoinHolders, useBuyCreatorCoin, useSellCreatorCoin } from "@/hooks/useCreatorCoins";
+import { useState, useMemo } from "react";
 
-interface ContentCoinData {
+// Creator coin related hooks
+import { useBuyCreatorCoin, useSellCreatorCoin, type CreatorCoin } from "@/hooks/useCreatorCoins";
+
+// Contract constants for Base Sepolia
+const CREATOR_COIN_TOKEN_ABI = [
+  {
+    "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
+    "name": "balanceOf",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  }
+] as const;
+
+type CommentData = {
   id: string;
-  name: string;
-  symbol: string;
-  description: string;
-  address: string;
-  creator: string;
-  price: string;
-  marketCap: string;
-  volume24h: string;
-  holders: number;
-  change24h?: number;
-  createdAt: Date;
-  isOnBondingCurve?: boolean;
-  progress?: number;
-  bondingCurveAddress?: string;
-  imageUrl?: string;
-  videoUrl?: string;
-  audioUrl?: string;
-  contentType: 'image' | 'video' | 'audio' | 'text';
-  creatorEarnings?: string;
-}
+  userAddress: string;
+  content: string;
+  timestamp?: Date;
+  ethAmount?: string;
+  type?: 'buy' | 'sell' | 'comment';
+};
 
-interface Comment {
+type TradeData = {
   id: string;
-  user: string;
-  message: string;
-  timestamp: Date;
-  avatar?: string;
-}
+  userAddress: string;
+  ethAmount: string;
+  timestamp?: Date;
+  type: 'buy' | 'sell';
+};
 
-interface Holder {
+type HolderData = {
   address: string;
   balance: string;
-  percentage: number;
-}
+};
 
-interface ActivityItem {
-  id: string;
-  type: 'buy' | 'sell' | 'comment' | 'like';
-  user: string;
-  amount?: string;
-  price?: string;
-  timestamp: Date;
+// Utility function to format time ago
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays}d ago`;
 }
 
 export default function ContentCoinDetail() {
@@ -92,121 +97,82 @@ export default function ContentCoinDetail() {
   const [buyAmount, setBuyAmount] = useState("");
   const [sellAmount, setSellAmount] = useState("");
   const [comment, setComment] = useState("");
+  const [currentView, setCurrentView] = useState<"image" | "chart">("chart");
+  const [selectedPeriod, setSelectedPeriod] = useState<"1H" | "1D" | "1W" | "1M" | "All">("1D");
+  const [tradeMode, setTradeMode] = useState<"buy" | "sell">("buy");
+
+  const handleAmountSelect = (newAmount: string) => {
+    setBuyAmount(newAmount);
+  };
+
+  const handleMaxAmount = () => {
+    setBuyAmount("0"); // Would calculate max based on balance
+  };
 
   // Trading mutations
   const buyMutation = useBuyCreatorCoin();
   const sellMutation = useSellCreatorCoin();
 
   // Direct contract interaction for onchain trading
-  const { writeContract, isPending: isWritePending } = useWriteContract();
-  const [pendingTxHash, setPendingTxHash] = useState<`0x${string}` | undefined>();
+  const {
+    data: hash,
+    error: writeError,
+    writeContract
+  } = useWriteContract();
 
-  // Wait for transaction confirmation
-  const { isLoading: isTxConfirming, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
-    hash: pendingTxHash,
+  const { 
+    isLoading: isTxConfirming, 
+    isSuccess: isTxSuccess,
+    error: txError 
+  } = useWaitForTransactionReceipt({
+    hash,
   });
 
-  // Handle successful transaction
-  React.useEffect(() => {
-    if (isTxSuccess && pendingTxHash) {
-      toast({
-        title: "Transaction confirmed!",
-        description: "Your trade has been executed successfully onchain",
-      });
-      setPendingTxHash(undefined);
-    }
-  }, [isTxSuccess, pendingTxHash, toast]);
+  const isWritePending = false; // writeContract pending state
 
-  // Try to get content coin data first (from creator coins API)
-  const { data: creatorCoin, isLoading: creatorCoinLoading } = useCreatorCoin(tokenAddress || '');
+  // Fetch creator coin data
+  const { data: tokenData, isLoading: creatorCoinLoading, error: creatorCoinError } = useQuery({
+    queryKey: [`/api/creator-coins/${tokenAddress}`],
+    enabled: !!tokenAddress,
+  });
 
-  // Debug logging for token address verification
-  React.useEffect(() => {
-    if (creatorCoin) {
-      console.log('Creator coin data:', {
-        coinAddress: creatorCoin.coinAddress,
-        deployedTokenAddress: creatorCoin.deployedTokenAddress,
-        urlTokenAddress: tokenAddress,
-        actualTokenUsed: creatorCoin.deployedTokenAddress || creatorCoin.coinAddress || tokenAddress
-      });
-    }
-  }, [creatorCoin, tokenAddress]);
+  // Fetch comments
+  const { data: commentData, isLoading: commentsLoading } = useQuery<CommentData[]>({
+    queryKey: [`/api/creator-coins/${tokenAddress}/comments`],
+    enabled: !!tokenAddress,
+  });
 
-  // Get real data for comments, trades, and holders
-  const { data: comments, isLoading: commentsLoading } = useCreatorCoinComments(tokenAddress || '');
-  const { data: trades, isLoading: tradesLoading } = useCreatorCoinTrades(tokenAddress || '');
-  const { data: holders, isLoading: holdersLoading } = useCreatorCoinHolders(tokenAddress || '');
+  // Fetch trade activity
+  const { data: tradesData, isLoading: tradesLoading } = useQuery<TradeData[]>({
+    queryKey: [`/api/creator-coins/${tokenAddress}/trades`],
+    enabled: !!tokenAddress,
+  });
 
-  // Remove expensive fallback query that loads ALL sales data
-  // This was causing major performance issues
+  // Fetch holders
+  const { data: holdersData, isLoading: holdersLoading } = useQuery<HolderData[]>({
+    queryKey: [`/api/creator-coins/${tokenAddress}/holders`],
+    enabled: !!tokenAddress,
+  });
 
-  const tokenData = React.useMemo(() => {
-    // First, try to use creator coin data if available
-    if (creatorCoin) {
-      // Use the actual deployed token address, not the coinAddress (which might be bonding curve)
-      const actualTokenAddress = creatorCoin.deployedTokenAddress || creatorCoin.coinAddress || tokenAddress;
-      
-      return {
-        id: creatorCoin.id, // Use the actual database ID for API calls
-        address: actualTokenAddress, // Use the actual deployed token address
-        name: creatorCoin.title || creatorCoin.coinName,
-        symbol: creatorCoin.coinSymbol,
-        description: creatorCoin.description || `${creatorCoin.coinName} content coin`,
-        creator: creatorCoin.creatorAddress,
-        price: creatorCoin.currentPrice || '0.001',
-        marketCap: creatorCoin.marketCap || '0',
-        volume24h: creatorCoin.volume24h || '0',
-        holders: creatorCoin.holders || 0,
-        change24h: 0, // Calculate from price history
-        createdAt: creatorCoin.createdAt ? new Date(creatorCoin.createdAt) : new Date(),
-        isOnBondingCurve: creatorCoin.status === 'deployed',
-        progress: parseInt(creatorCoin.bondingCurveProgress || '0'),
-        bondingCurveAddress: creatorCoin.coinAddress,
-        imageUrl: `https://gateway.pinata.cloud/ipfs/${creatorCoin.mediaCid}`,
-        contentType: creatorCoin.contentType as 'image' | 'video' | 'audio' | 'text',
-        creatorEarnings: '0' // Calculate from trades
-      } as ContentCoinData;
-    }
-
-    // No fallback needed - just return null if creator coin data not available
-    return null;
-  }, [creatorCoin, tokenAddress]); // Fixed dependency array
-
-  // Process real data for display
-  const processedComments = comments || [];
-  const processedHolders = holders || [];
-  const processedActivities = trades || [];
-
-  // Get user's token balance
+  // Get user token balance
   const { data: tokenBalance } = useReadContract({
-    address: tokenAddress as Address,
-    abi: erc20Abi,
-    functionName: "balanceOf",
+    address: tokenData?.address as Address,
+    abi: CREATOR_COIN_TOKEN_ABI,
+    functionName: 'balanceOf',
     args: [address as Address],
     query: {
-      enabled: !!address && !!tokenAddress
-    }
+      enabled: !!(tokenData?.address && address),
+    },
   });
 
-  const formatTimeAgo = (date: Date): string => {
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 1) return 'now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
-    return `${Math.floor(diffInMinutes / 1440)}d`;
-  };
-
-  const handleComment = () => {
-    if (!comment.trim()) return;
-    // TODO: Implement comment functionality
-    setComment("");
-    toast({
-      title: "Comment posted",
-      description: "Your comment has been added",
-    });
-  };
+  // Process holders data with proper typing
+  const processedHolders = useMemo(() => {
+    if (!holdersData || !Array.isArray(holdersData)) return [];
+    return holdersData.map(holder => ({
+      address: holder.address,
+      balance: holder.balance
+    }));
+  }, [holdersData]);
 
   const handleBuy = async () => {
     if (!address) {
@@ -320,7 +286,7 @@ export default function ContentCoinDetail() {
     if (!sellAmount || parseFloat(sellAmount) <= 0) {
       toast({
         title: "Invalid amount",
-        description: "Please enter a valid token amount",
+        description: "Please enter a valid token amount to sell",
         variant: "destructive"
       });
       return;
@@ -380,6 +346,17 @@ export default function ContentCoinDetail() {
     );
   }
 
+  // Chart data for trading view - defined after tokenData is available
+  const chartData = {
+    "1H": { points: "M50,150 L100,140 L150,130 L200,120 L250,110 L300,100 L350,90", price: tokenData.price || "$0" },
+    "1D": { points: "M50,160 L100,150 L150,140 L200,125 L250,105 L300,85 L350,65", price: tokenData.price || "$0" },
+    "1W": { points: "M50,170 L100,160 L150,155 L200,135 L250,115 L300,95 L350,75", price: tokenData.price || "$0" },
+    "1M": { points: "M50,180 L100,170 L150,165 L200,145 L250,125 L300,105 L350,85", price: tokenData.price || "$0" },
+    All: { points: "M50,190 L100,180 L150,175 L200,155 L250,135 L300,115 L350,95", price: tokenData.price || "$0" },
+  };
+
+  const currentData = chartData[selectedPeriod];
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
@@ -391,12 +368,6 @@ export default function ContentCoinDetail() {
           </Button>
         </Link>
         <div className="flex items-center gap-2">
-          <Link to={`/content-coin/trade/base/${tokenAddress}`}>
-            <Button variant="default" size="sm" className="bg-green-500 hover:bg-green-600 text-black">
-              <Zap className="h-4 w-4 mr-1" />
-              Trade
-            </Button>
-          </Link>
           <Button variant="ghost" size="sm">
             <Share2 className="h-4 w-4" />
           </Button>
@@ -406,408 +377,282 @@ export default function ContentCoinDetail() {
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row">
-        {/* Left Side - Media */}
-        <div className="flex-1 lg:max-w-2xl">
-          <div className="relative aspect-square lg:aspect-video bg-black">
-            {tokenData.contentType === 'video' && tokenData.videoUrl ? (
-              <video
-                src={tokenData.videoUrl}
-                className="w-full h-full object-cover"
-                controls
-                poster={tokenData.imageUrl}
-              />
-            ) : tokenData.contentType === 'audio' && tokenData.audioUrl ? (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 to-pink-900">
-                <audio src={tokenData.audioUrl} controls className="w-4/5" />
-              </div>
-            ) : (
-              <img
-                src={tokenData.imageUrl}
-                alt={tokenData.name}
-                className="w-full h-full object-cover"
-              />
-            )}
-            {tokenData.contentType === 'video' && (
-              <div className="absolute top-4 right-4">
-                <Badge className="bg-black/70 text-white">
-                  <Play className="w-3 h-3 mr-1" />
-                  Video
-                </Badge>
-              </div>
-            )}
-          </div>
+      {/* Modern Trading Interface Layout */}
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex gap-6 min-h-[600px]">
+          {/* Left Side - Chart and Media */}
+          <div className="flex-[2] bg-card rounded-2xl p-6 border border-gray-700">
+            <div className="h-64 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-lg mb-6 relative overflow-hidden">
+              {currentView === "chart" ? (
+                <>
+                  <svg className="w-full h-full" viewBox="0 0 400 220">
+                    <defs>
+                      <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.05" />
+                      </linearGradient>
+                    </defs>
 
-          {/* Mobile Trading Interface */}
-          <div className="lg:hidden p-4 border-b border-gray-800">
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-1 text-center">
-                <div>
-                  <p className="text-[10px] text-gray-400">Market Cap</p>
-                  <p className="text-green-400 font-bold">${tokenData.marketCap}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400">24H Volume</p>
-                  <p className="font-bold">${tokenData.volume24h}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400">Creator Earnings</p>
-                  <p className="font-bold">${tokenData.creatorEarnings}</p>
-                </div>
-              </div>
+                    {/* Area fill */}
+                    <path d={`${currentData.points} L350,200 L50,200 Z`} fill="url(#areaGradient)" />
 
-              <div className="flex gap-1">
+                    {/* Line */}
+                    <path
+                      d={currentData.points}
+                      fill="none"
+                      stroke="#10b981"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                  <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-semibold border shadow-sm">
+                    {currentData.price}
+                    <span className="text-green-600 ml-2 text-xs">+48%</span>
+                  </div>
+                </>
+              ) : tokenData.contentType === 'video' && tokenData.videoUrl ? (
+                <video
+                  src={tokenData.videoUrl}
+                  className="w-full h-full object-cover"
+                  controls
+                  poster={tokenData.imageUrl}
+                />
+              ) : tokenData.contentType === 'audio' && tokenData.audioUrl ? (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 to-pink-900">
+                  <audio src={tokenData.audioUrl} controls className="w-4/5" />
+                </div>
+              ) : (
+                <img
+                  src={tokenData.imageUrl}
+                  alt={tokenData.name}
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex space-x-2">
                 <Button
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-black font-bold"
-                  onClick={handleBuy}
-                  disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
-                  data-testid="button-buy-mobile"
+                  variant={selectedPeriod === "1H" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedPeriod("1H")}
                 >
-                  {isWritePending ? 'Signing...' : isTxConfirming ? 'Confirming...' :
-                   !address ? 'Connect' : !buyAmount ? 'Enter Amount' : 'Buy'}
+                  1H
                 </Button>
                 <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handleSell}
-                  disabled={isWritePending || isTxConfirming || !address}
-                  data-testid="button-sell-mobile"
+                  variant={selectedPeriod === "1D" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedPeriod("1D")}
                 >
-                  {isWritePending ? 'Signing...' : isTxConfirming ? 'Confirming...' : 'Sell'}
+                  1D
+                </Button>
+                <Button
+                  variant={selectedPeriod === "1W" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedPeriod("1W")}
+                >
+                  1W
+                </Button>
+                <Button
+                  variant={selectedPeriod === "1M" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedPeriod("1M")}
+                >
+                  1M
+                </Button>
+                <Button
+                  variant={selectedPeriod === "All" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setSelectedPeriod("All")}
+                >
+                  All
+                </Button>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant={currentView === "chart" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setCurrentView("chart")}
+                >
+                  Chart
+                </Button>
+                <Button
+                  variant={currentView === "image" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setCurrentView("image")}
+                >
+                  Media
                 </Button>
               </div>
             </div>
           </div>
 
-          {/* DEX Screener Trading Chart - Desktop Only */}
-          <div className="hidden lg:block p-4">
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Trading Chart
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="h-96 w-full">
-                  <iframe
-                    src={`https://dexscreener.com/base/${tokenData.address}?embed=1&theme=dark&trades=0&info=0`}
-                    className="w-full h-full border-0 rounded"
-                    title="DEX Screener Chart"
-                  />
+          {/* Right Side - Trading Panel */}
+          <div className="flex-1 max-w-sm bg-card rounded-2xl p-6 border border-gray-700">
+            {/* Token Header */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${tokenData.creator || 'default'}`} />
+                  <AvatarFallback>{tokenData.creator?.slice(2, 4) || 'UN'}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="font-semibold text-lg">{tokenData.name}</h2>
+                  <p className="text-sm text-muted-foreground">{tokenData.symbol}</p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              </div>
+              
+              <div className="text-center mb-4">
+                <div className="text-2xl font-bold">{currentData.price}</div>
+                <div className="text-green-600 text-sm">+48% (24h)</div>
+              </div>
 
-        {/* Right Side - Token Info & Trading */}
-        <div className="flex-1 lg:max-w-md lg:border-l border-gray-800">
-          {/* Token Header */}
-          <div className="p-4 border-b border-gray-800">
-            <div className="flex items-center gap-3 mb-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${tokenData.creator}`} />
-                <AvatarFallback>{tokenData.creator.slice(2, 4)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <p className="text-sm text-gray-400">
-                  {tokenData.creator !== 'No Creator Found'
-                    ? `${tokenData.creator.slice(0, 6)}...${tokenData.creator.slice(-4)}`
-                    : 'No Creator Found'
-                  }
-                </p>
-                <p className="text-xs text-gray-500">{formatTimeAgo(tokenData.createdAt)}</p>
-              </div>
-            </div>
-            <h1 className="text-xl font-bold mb-2">{tokenData.name}</h1>
-
-            {/* Stats Row - Desktop */}
-            <div className="hidden lg:grid grid-cols-3 gap-1 text-center mb-4">
-              <div>
-                <p className="text-xs text-gray-400">Market Cap</p>
-                <p className="text-green-400 font-bold">${tokenData.marketCap}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">24H Volume</p>
-                <p className="font-bold">${tokenData.volume24h}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Creator Earnings</p>
-                <p className="font-bold">${tokenData.creatorEarnings}</p>
+              <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
+                <div>
+                  <div className="text-muted-foreground">Market Cap</div>
+                  <div className="font-semibold">${tokenData.marketCap}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">Volume 24h</div>
+                  <div className="font-semibold">${tokenData.volume24h}</div>
+                </div>
               </div>
             </div>
 
-            {/* Token Balance */}
-            <div className="text-right">
-              <p className="text-xs text-gray-400">Your Balance</p>
-              <p className="font-bold">
-                {tokenBalance ? formatUnits(tokenBalance, 18) : '0'} {tokenData.symbol}
-              </p>
-              <p className="text-xs text-gray-400 mt-1">Price: ${tokenData.price}</p>
+            {/* Buy/Sell Toggle */}
+            <div className="flex bg-muted rounded-lg p-1 mb-4">
+              <Button
+                variant={tradeMode === "buy" ? "default" : "ghost"}
+                className="flex-1"
+                onClick={() => setTradeMode("buy")}
+              >
+                Buy
+              </Button>
+              <Button
+                variant={tradeMode === "sell" ? "default" : "ghost"}
+                className="flex-1"
+                onClick={() => setTradeMode("sell")}
+              >
+                Sell
+              </Button>
             </div>
-          </div>
 
-          {/* Trading Interface */}
-          <div className="hidden lg:block p-4 border-b border-gray-800">
-            <div className="space-y-4">
+            {/* Amount Input */}
+            <div className="space-y-4 mb-6">
               <div className="relative">
                 <Input
                   type="number"
                   placeholder="0.000111"
                   value={buyAmount}
                   onChange={(e) => setBuyAmount(e.target.value)}
-                  className="pr-16 bg-gray-800 border-gray-700"
+                  className="pr-16"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <span className="text-sm">ETH</span>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                    ▼
-                  </Button>
+                  <span className="text-sm font-medium">ETH</span>
+                  <ChevronDown className="h-4 w-4" />
                 </div>
               </div>
 
-              <div className="flex gap-1">
-                {['0.001 ETH', '0.01 ETH', '0.1 ETH', 'Max'].map((amount) => (
+              <div className="flex gap-2">
+                {["0.001", "0.01", "0.1", "Max"].map((amount) => (
                   <Button
                     key={amount}
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => {
-                      if (amount !== 'Max') {
-                        setBuyAmount(amount.split(' ')[0]);
-                      }
-                    }}
+                    className="flex-1"
+                    onClick={() => handleAmountSelect(amount)}
                   >
                     {amount}
                   </Button>
                 ))}
               </div>
+            </div>
 
-              <Textarea
-                placeholder="Add a comment..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="bg-gray-800 border-gray-700 resize-none"
-                rows={2}
-              />
+            {/* Comment Input */}
+            <Textarea
+              placeholder="Add a comment..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="resize-none mb-4"
+              rows={3}
+            />
 
-              <Button
-                className="w-full bg-green-500 hover:bg-green-600 text-black font-bold h-12"
-                onClick={handleBuy}
-                disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
-                data-testid="button-buy-desktop"
-              >
-                {isWritePending ? 'Signing Transaction...' :
-                 isTxConfirming ? 'Confirming...' :
-                 !address ? 'Connect Wallet' :
-                 !buyAmount || parseFloat(buyAmount) <= 0 ? 'Enter Amount' :
-                 `Buy ${buyAmount} ETH worth`}
-              </Button>
+            {/* Trade Button */}
+            <Button
+              className={cn(
+                "w-full font-semibold py-6 text-lg",
+                tradeMode === "buy" 
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-red-500 hover:bg-red-600 text-white"
+              )}
+              onClick={tradeMode === "buy" ? handleBuy : handleSell}
+              disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
+            >
+              {isWritePending ? 'Signing...' : 
+               isTxConfirming ? 'Confirming...' :
+               !address ? 'Connect Wallet' :
+               !buyAmount ? 'Enter Amount' :
+               `${tradeMode === "buy" ? "Buy" : "Sell"} ${buyAmount} ETH worth`}
+            </Button>
+
+            {/* Token Tabs */}
+            <div className="mt-6">
+              <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1 mb-4">
+                <Button variant="ghost" size="sm" className="gap-2 bg-background shadow-sm">
+                  <MessageCircle className="h-4 w-4" />
+                  Comments
+                </Button>
+                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                  <Crown className="h-4 w-4" />
+                  Holders
+                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{processedHolders.length}</span>
+                </Button>
+                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                  <TrendingUp className="h-4 w-4" />
+                  Activity
+                </Button>
+                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                  <Sparkles className="h-4 w-4" />
+                  Details
+                </Button>
+              </div>
+
+              {/* Comments Section */}
+              <div className="max-h-64 overflow-y-auto">
+                {commentData && commentData.length > 0 ? (
+                  <div className="space-y-3">
+                    {commentData.map((comment) => (
+                      <div key={comment.id} className="flex gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.userAddress}`} />
+                          <AvatarFallback>{comment.userAddress.slice(2, 4)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium">
+                              {comment.userAddress.slice(0, 6)}...{comment.userAddress.slice(-4)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {comment.timestamp && formatTimeAgo(comment.timestamp)}
+                            </span>
+                          </div>
+                          <p className="text-sm">{comment.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No comments yet</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Tabs */}
-          <Tabs defaultValue="comments" className="flex-1">
-            <TabsList className="w-full bg-gray-800 p-1">
-              <TabsTrigger value="comments" className="flex-1 text-xs">
-                Comments
-              </TabsTrigger>
-              <TabsTrigger value="holders" className="flex-1 text-xs">
-                Holders {processedHolders.length}
-              </TabsTrigger>
-              <TabsTrigger value="activity" className="flex-1 text-xs">
-                Activity
-              </TabsTrigger>
-              <TabsTrigger value="details" className="flex-1 text-xs">
-                Details
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="comments" className="p-4 space-y-4">
-              {commentsLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex gap-3 animate-pulse">
-                      <div className="h-8 w-8 bg-gray-700 rounded-full flex-shrink-0"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-3 bg-gray-700 rounded w-1/4"></div>
-                        <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : processedComments.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">
-                  <MessageCircle className="w-8 h-8 mx-auto mb-2" />
-                  <p>No comments yet. Be the first to comment!</p>
-                </div>
-              ) : (
-                processedComments.map((comment: any) => (
-                  <div key={comment.id} className="flex gap-3">
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.userAddress}`} />
-                      <AvatarFallback>{comment.userAddress?.slice(2, 4) || '?'}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium text-sm">
-                          {comment.userAddress?.slice(0, 6)}...{comment.userAddress?.slice(-4)}
-                        </p>
-                        <p className="text-xs text-gray-400">{formatTimeAgo(new Date(comment.createdAt))}</p>
-                      </div>
-                      <p className="text-sm">{comment.content}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </TabsContent>
-
-            <TabsContent value="holders" className="p-4 space-y-3">
-              {holdersLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center justify-between animate-pulse">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 bg-gray-700 rounded-full"></div>
-                        <div className="space-y-1">
-                          <div className="h-3 bg-gray-700 rounded w-24"></div>
-                          <div className="h-3 bg-gray-700 rounded w-16"></div>
-                        </div>
-                      </div>
-                      <div className="h-3 bg-gray-700 rounded w-16"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : processedHolders.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">
-                  <Users className="w-8 h-8 mx-auto mb-2" />
-                  <p>No holders data available yet</p>
-                </div>
-              ) : (
-                processedHolders.map((holder: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address}`} />
-                        <AvatarFallback>{index + 1}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {holder.address?.slice(0, 6)}...{holder.address?.slice(-4)}
-                        </p>
-                        <p className="text-xs text-gray-400">{holder.percentage || 0}%</p>
-                      </div>
-                    </div>
-                    <p className="text-sm font-medium">{holder.balance || '0'}</p>
-                  </div>
-                ))
-              )}
-            </TabsContent>
-
-            <TabsContent value="activity" className="p-4 space-y-3">
-              {tradesLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center justify-between animate-pulse">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 bg-gray-700 rounded"></div>
-                        <div className="space-y-1">
-                          <div className="h-3 bg-gray-700 rounded w-20"></div>
-                          <div className="h-3 bg-gray-700 rounded w-16"></div>
-                        </div>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <div className="h-3 bg-gray-700 rounded w-16"></div>
-                        <div className="h-3 bg-gray-700 rounded w-12"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : processedActivities.length === 0 ? (
-                <div className="text-center text-gray-400 py-8">
-                  <Activity className="w-8 h-8 mx-auto mb-2" />
-                  <p>No trading activity yet</p>
-                </div>
-              ) : (
-                processedActivities.map((activity: any) => (
-                  <div key={activity.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
-                        activity.tradeType === 'buy' ? "bg-green-500 text-black" : "bg-red-500 text-white"
-                      )}>
-                        {activity.tradeType === 'buy' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {activity.userAddress?.slice(0, 6)}...{activity.userAddress?.slice(-4)}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {activity.tradeType} {activity.amount} at ${activity.price}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-400">{formatTimeAgo(new Date(activity.createdAt))}</p>
-                  </div>
-                ))
-              )}
-            </TabsContent>
-
-            <TabsContent value="details" className="p-4 space-y-4">
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Description</p>
-                  <p className="text-sm">{tokenData.description}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Contract Address</p>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs bg-gray-800 px-2 py-1 rounded break-all">
-                      {tokenData.address || 'Not deployed'}
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={() => {
-                        navigator.clipboard.writeText(tokenData.address);
-                        toast({
-                          title: "Address copied!",
-                          description: "Token address copied to clipboard",
-                        });
-                      }}
-                    >
-                      <Copy className="w-3 h-3" />
-                    </Button>
-                    <a
-                      href={`https://basescan.org/address/${tokenData.address}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-blue-400 hover:underline"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      BaseScan
-                    </a>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Creator</p>
-                  <code className="text-xs bg-gray-800 px-2 py-1 rounded">
-                    {tokenData.creator !== 'No Creator Found'
-                      ? `${tokenData.creator.slice(0, 10)}...${tokenData.creator.slice(-4)}`
-                      : 'No Creator Found'
-                    }
-                  </code>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 mb-1">Created</p>
-                  <p className="text-sm">{tokenData.createdAt.toLocaleDateString()}</p>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
         </div>
       </div>
     </div>
