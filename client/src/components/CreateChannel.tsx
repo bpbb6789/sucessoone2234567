@@ -46,7 +46,7 @@ const currencies = [
 
 export default function CreateChannel() {
   const { address } = useAccount();
-  const navigate = useNavigate(); // Added navigate import
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const triggerNotification = useTriggerNotification(); // Added hook for triggering notifications
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
