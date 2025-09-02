@@ -459,12 +459,12 @@ export default function ContentCoin() {
             </div>
           ) : (
             <div>
-              {/* Mobile: 2 per row grid */}
-              <div className="grid md:hidden grid-cols-2 gap-1">
+              {/* Mobile: Horizontal scroll showing 2.5 cards */}
+              <div className="flex md:hidden gap-2 overflow-x-auto scrollbar-hide">
                 {filteredContent.slice(0, 6).map((coin: ContentCoin) => (
                   <Link to={`/content/base/${coin.memeTokenAddress || coin.id}`} key={`mobile-${coin.id}`}>
                     <Card 
-                      className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group relative overflow-hidden"
+                      className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group relative overflow-hidden w-36 flex-shrink-0"
                     >
                       <CardContent className="p-0">
                         {/* Content Preview */}
