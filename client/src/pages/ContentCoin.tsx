@@ -330,12 +330,19 @@ export default function ContentCoin() {
 
                             {/* Content Overlay */}
                             <div className="absolute inset-0 p-2 flex flex-col justify-between">
-                              {/* Top Section - Price Badge */}
+                              {/* Top Section - Market Cap Badge with Arrow */}
                               <div className="flex justify-end">
-                                <div className="bg-black/80 backdrop-blur-sm rounded px-1.5 py-0.5 flex items-center gap-1">
-                                  <span className="text-green-400 text-[8px]">💰</span>
+                                <div className="bg-black/80 backdrop-blur-sm rounded px-1.5 py-0.5 flex items-center gap-0.5">
+                                  {/* Market Cap Arrow - Green up for positive, Red down for negative */}
+                                  <span className={`text-[8px] font-bold ${
+                                    (channel.marketCap && channel.marketCap > 0) 
+                                      ? 'text-green-400' 
+                                      : 'text-red-400'
+                                  }`}>
+                                    {(channel.marketCap && channel.marketCap > 0) ? '▲' : '▼'}
+                                  </span>
                                   <span className="text-white text-[9px] font-medium">
-                                    ${channel.currentPrice || '0.00'}
+                                    {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
                                   </span>
                                 </div>
                               </div>
