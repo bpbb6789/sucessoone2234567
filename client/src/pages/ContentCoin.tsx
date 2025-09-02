@@ -264,7 +264,7 @@ export default function ContentCoin() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white mb-2">Top Channels</h2>
+              <h2 className="text-xl font-bold text-white mb-1">Top Channels</h2>
             </div>
             <Link to="/channels">
               <Button 
@@ -336,8 +336,8 @@ export default function ContentCoin() {
                                   {/* Market Cap Arrow - Green up for positive, Red down for negative */}
                                   <span className={`text-[8px] font-bold ${
                                     (channel.marketCap && channel.marketCap > 0) 
-                                      ? 'text-red-400' 
-                                      : 'text-green-400'
+                                      ? 'text-red-400 dark:text-red-400' 
+                                      : 'text-green-400 dark:text-green-400'
                                   }`}>
                                     {(channel.marketCap && channel.marketCap > 0) ? '▼' : '▲'}
                                   </span>
@@ -353,11 +353,15 @@ export default function ContentCoin() {
                                 <div className="flex items-center gap-1">
                                   {/* Creator Avatar */}
                                   <div className="w-3 h-3 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex-shrink-0">
-                                    {channel.creatorAvatar ? (
+                                    {(channel.creatorAvatar || channel.avatarUrl) ? (
                                       <img
-                                        src={channel.creatorAvatar.startsWith('baf') 
-                                          ? `https://gateway.pinata.cloud/ipfs/${channel.creatorAvatar}` 
-                                          : channel.creatorAvatar
+                                        src={
+                                          (channel.creatorAvatar?.startsWith('baf') 
+                                            ? `https://gateway.pinata.cloud/ipfs/${channel.creatorAvatar}` 
+                                            : channel.creatorAvatar) ||
+                                          (channel.avatarUrl?.startsWith('baf')
+                                            ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
+                                            : channel.avatarUrl)
                                         }
                                         alt="Creator"
                                         className="w-full h-full object-cover"
@@ -391,19 +395,19 @@ export default function ContentCoin() {
                                 {/* Stats Row - Holders and Market Cap */}
                                 <div className="flex items-center justify-between text-[9px]">
                                   <div className="flex items-center gap-1">
-                                    <span className="text-blue-400">👥</span>
+                                    <span className="text-blue-400 text-[8px]">HOLDERS</span>
                                     <span className="text-white/80">{channel.holders || 0}</span>
                                   </div>
                                   <div className="flex items-center gap-0.5">
                                     {/* Market Cap Arrow - Green up for positive, Red down for negative */}
                                     <span className={`text-[10px] font-bold ${
                                       (channel.marketCap && channel.marketCap > 0) 
-                                        ? 'text-red-400' 
-                                        : 'text-green-400'
+                                        ? 'text-red-400 dark:text-red-400' 
+                                        : 'text-green-400 dark:text-green-400'
                                     }`}>
                                       {(channel.marketCap && channel.marketCap > 0) ? '▼' : '▲'}
                                     </span>
-                                    <span className="text-green-400">
+                                    <span className="text-green-400 dark:text-green-400">
                                       {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
                                     </span>
                                   </div>
@@ -425,7 +429,7 @@ export default function ContentCoin() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white mb-2">Now Trending</h2>
+              <h2 className="text-xl font-bold text-white mb-1">Now Trending</h2>
             </div>
             <Link to="/contents">
               <Button 
@@ -649,7 +653,7 @@ export default function ContentCoin() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white mb-2">Top Creators</h2>
+              <h2 className="text-xl font-bold text-white mb-1">Top Creators</h2>
               <p className="text-gray-400">Discover trending content creators</p>
             </div>
             <Link to="/creators">
