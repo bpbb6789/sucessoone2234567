@@ -278,7 +278,7 @@ export default function ContentCoin() {
               </div>
             ) : (
               // 4 Cards per Row Grid Layout
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-0.5">
                 {channels.slice(0, 4).map((channel, index) => (
                   <Link key={channel.id} to={`/channel/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
                     <div className="group cursor-pointer">
