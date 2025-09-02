@@ -363,15 +363,15 @@ export default function ContentCoinDetail() {
 
   if (creatorCoinLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current"></div>
       </div>
     );
   }
 
   if (!tokenData) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Token Not Found</h1>
           <Link to="/contentcoin">
@@ -385,9 +385,9 @@ export default function ContentCoinDetail() {
   
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-800">
+      <div className="flex items-center justify-between p-4 border-b border-border">
         <Link to="/contentcoin">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -404,10 +404,11 @@ export default function ContentCoinDetail() {
         </div>
       </div>
 
-      {/* Main Content - New Layout */}
-      <div className="flex h-[calc(100vh-80px)]">
+      {/* Main Content - Card Layout */}
+      <div className="flex gap-6 p-6 h-[calc(100vh-80px)]">
         {/* Left Side - Chart Area */}
-        <div className="flex-1 p-6 border-r border-gray-800">
+        <Card className="flex-1">
+          <CardContent className="p-6">
           {/* Price Display */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
@@ -416,7 +417,7 @@ export default function ContentCoinDetail() {
                 +48%
               </Badge>
             </div>
-            <p className="text-gray-400">{tokenData?.coinName || tokenData?.name || 'Loading...'} ({tokenData?.coinSymbol || tokenData?.symbol || '...'})</p>
+            <p className="text-muted-foreground">{tokenData?.coinName || tokenData?.name || 'Loading...'} ({tokenData?.coinSymbol || tokenData?.symbol || '...'})</p>
           </div>
 
           {/* Chart/Image Toggle */}
@@ -442,7 +443,7 @@ export default function ContentCoinDetail() {
           </div>
 
           {/* Chart/Content Area */}
-          <div className="h-80 bg-gray-800 rounded-lg mb-6 relative overflow-hidden">
+          <div className="h-80 bg-muted rounded-lg mb-6 relative overflow-hidden">
             {viewMode === "chart" ? (
               chartData && currentData ? (
                 <svg className="w-full h-full" viewBox="0 0 400 320">
@@ -467,7 +468,7 @@ export default function ContentCoinDetail() {
                   />
                 </svg>
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   <TrendingUp className="h-8 w-8 opacity-50" />
                 </div>
               )
@@ -482,7 +483,7 @@ export default function ContentCoinDetail() {
                     className="w-full h-full object-cover rounded-lg"
                   />
                 ) : (
-                  <div className="text-center text-gray-400">
+                  <div className="text-center text-muted-foreground">
                     <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No content available</p>
                   </div>
@@ -507,23 +508,25 @@ export default function ContentCoinDetail() {
               ))}
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Right Side - Trading Panel */}
-        <div className="w-96 bg-gray-850 flex flex-col">
+        <Card className="w-96 flex flex-col">
+          <CardContent className="p-0 flex-1 flex flex-col">
           {/* Market Stats - Always Visible */}
-          <div className="p-4 border-b border-gray-700">
+          <div className="p-4 border-b border-border">
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Market Cap</span>
+                <span className="text-sm text-muted-foreground">Market Cap</span>
                 <span className="text-sm font-semibold text-green-400">${tokenData?.marketCap || tokenData?.startingMarketCap || '0'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">24H Volume</span>
+                <span className="text-sm text-muted-foreground">24H Volume</span>
                 <span className="text-sm font-semibold">${tokenData?.volume24h || '0'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Creator Earnings</span>
+                <span className="text-sm text-muted-foreground">Creator Earnings</span>
                 <span className="text-sm font-semibold">${tokenData?.creatorEarnings || '0.02'}</span>
               </div>
             </div>
@@ -531,8 +534,8 @@ export default function ContentCoinDetail() {
 
           {/* Tabs Container */}
           <Tabs defaultValue="comments" className="flex-1 flex flex-col">
-            <div className="border-b border-gray-700 px-4 py-3">
-              <TabsList className="grid w-full grid-cols-4 bg-gray-800">
+            <div className="border-b border-border px-4 py-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="trading" className="flex items-center gap-1 text-xs">
                   <DollarSign className="h-3 w-3" />
                   Trading
@@ -575,7 +578,7 @@ export default function ContentCoinDetail() {
                   </div>
 
                   {/* Balance Display */}
-                  <div className="text-center text-sm text-gray-400">
+                  <div className="text-center text-sm text-muted-foreground">
                     Balance {tokenBalance ? formatUnits(tokenBalance, 18) : '0'} ETH
                   </div>
 
@@ -588,9 +591,9 @@ export default function ContentCoinDetail() {
                       placeholder="0.000111"
                       step="0.000001"
                       min="0"
-                      className="bg-gray-800 border-gray-600 text-white"
+                      className="bg-input border-input"
                     />
-                    <div className="flex justify-end text-xs text-gray-400">
+                    <div className="flex justify-end text-xs text-muted-foreground">
                       ETH
                     </div>
                   </div>
@@ -757,7 +760,8 @@ export default function ContentCoinDetail() {
               </TabsContent>
             </div>
           </Tabs>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
