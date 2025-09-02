@@ -87,131 +87,11 @@ export default function Channels() {
             </div>
           </div>
         ) : (
-          <>
-            {/* Mobile Horizontal Scroll */}
-            <div className="flex md:hidden space-x-3 overflow-x-auto scrollbar-hide pb-4">
-              {filteredChannels.map((channel) => (
-                <Link to={`/channel/${channel.slug}`} key={channel.id}>
-                  <Card className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group flex-shrink-0 w-64">
-                    <CardContent className="p-0">
-                      {/* Compact Channel Cover/Banner */}
-                      <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                        {channel.coverUrl ? (
-                          <img
-                            src={channel.coverUrl?.startsWith('baf') 
-                              ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}` 
-                              : channel.coverUrl
-                            }
-                            alt={`${channel.name} cover`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=200&background=6366f1&color=fff&format=png`;
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                            <span className="text-xl font-bold text-white">{channel.name.charAt(0)}</span>
-                          </div>
-                        )}
-
-                        {/* Overlay Avatar */}
-                        <div className="absolute bottom-2 left-2">
-                          <img
-                            src={channel.avatarUrl?.startsWith('baf') 
-                              ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}` 
-                              : channel.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`
-                            }
-                            alt={channel.name}
-                            className="w-6 h-6 rounded-full border border-white/50 object-cover"
-                            onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name)}&size=32&background=6366f1&color=fff`;
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Compact Channel Info */}
-                      <div className="p-3 space-y-2">
-                        {/* Name */}
-                        <div>
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <h3 className="font-semibold text-white text-sm truncate">
-                              {channel.name}
-                            </h3>
-                            <span className="text-green-400 text-xs font-mono">
-                              ${channel.ticker}
-                            </span>
-                          </div>
-                          <p className="text-gray-400 text-xs truncate">
-                            @{channel.creatorUsername || 'unknown'}
-                          </p>
-                        </div>
-
-                        {/* Stats with Icons */}
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-0.5">
-                              <span>📄</span>
-                              <span className="text-gray-400">{channel.postsCount || 0}</span>
-                            </div>
-                            <div className="flex items-center gap-0.5">
-                              <span>👥</span>
-                              <span className="text-gray-400">{channel.holders || 0}</span>
-                            </div>
-                            <div className="flex items-center gap-0.5">
-                              <span>💎</span>
-                              <span className="text-green-400">
-                                {channel.marketCap !== undefined ? `$${Math.floor(channel.marketCap/1000)}K` : 'N/A'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        {channel.coinAddress && (
-                          <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-                            <span>Token:</span>
-                            <code className="bg-gray-800 px-1 py-0.5 rounded font-mono">
-                              {channel.coinAddress.slice(0, 8)}...{channel.coinAddress.slice(-4)}
-                            </code>
-                            <button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                navigator.clipboard.writeText(channel.coinAddress);
-                              }}
-                              className="hover:text-white transition-colors"
-                            >
-                              <Copy className="w-3 h-3" />
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                window.open(`https://sepolia.basescan.org/token/${channel.coinAddress}`, '_blank');
-                              }}
-                              className="hover:text-white transition-colors"
-                            >
-                              <ExternalLink className="w-3 h-3" />
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Subscribe Button - Compact */}
-                        <SubscribeButton channelId={channel.id} />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-
-            {/* Desktop Grid */}
-            <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-              {filteredChannels.map((channel) => (
-                <Link to={`/channel/${channel.slug}`} key={channel.id}>
-                  <Card className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group">
-                    <CardContent className="p-0"></old_str>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+            {filteredChannels.map((channel) => (
+              <Link to={`/channel/${channel.slug}`} key={channel.id}>
+                <Card className="bg-gray-800/50 hover:bg-gray-700/50 transition-colors cursor-pointer group">
+                  <CardContent className="p-0">
                     {/* Compact Channel Cover/Banner */}
                     <div className="relative aspect-square overflow-hidden rounded-t-lg">
                       {channel.coverUrl ? (
@@ -323,8 +203,6 @@ export default function Channels() {
               </Link>
             ))}
           </div>
-          </>
-        </div></old_str>
         )}
       </div>
     </div>
