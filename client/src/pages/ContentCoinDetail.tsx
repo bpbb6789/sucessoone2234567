@@ -180,7 +180,7 @@ export default function ContentCoinDetail() {
   }, [tokenData]);
 
   // Get current chart data safely
-  const currentData = chartData[selectedPeriod] || null;
+  const currentData = chartData[selectedPeriod] || chartData["1D"];
 
   const handleAmountSelect = (newAmount: string) => {
     setBuyAmount(newAmount);
@@ -581,116 +581,108 @@ export default function ContentCoinDetail() {
             </div>
 
             {/* Tab Content */}
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="comments" className="h-full p-0 m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <div className="p-4 flex-1 overflow-y-auto">
-                  {commentData && commentData.length > 0 ? (
-                    <div className="space-y-3">
-                      {commentData.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.userAddress}`} />
-                            <AvatarFallback>{comment.userAddress.slice(2, 4)}</AvatarFallback>
+            <div className="flex-1 overflow-y-auto">
+              <TabsContent value="comments" className="p-4 space-y-0">
+                {commentData && commentData.length > 0 ? (
+                  <div className="space-y-3">
+                    {commentData.map((comment) => (
+                      <div key={comment.id} className="flex gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.userAddress}`} />
+                          <AvatarFallback>{comment.userAddress?.slice(2, 4) || 'XX'}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium">
+                              {comment.userAddress?.slice(0, 6)}...{comment.userAddress?.slice(-4)}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {comment.timestamp && formatTimeAgo(comment.timestamp)}
+                            </span>
+                          </div>
+                          <p className="text-sm">{comment.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No comments yet</p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="holders" className="p-4 space-y-0">
+                {processedHolders.length > 0 ? (
+                  <div className="space-y-3">
+                    {processedHolders.map((holder, index) => (
+                      <div key={holder.address} className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address}`} />
+                            <AvatarFallback>{holder.address?.slice(2, 4) || 'XX'}</AvatarFallback>
                           </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-medium">
-                                {comment.userAddress.slice(0, 6)}...{comment.userAddress.slice(-4)}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {comment.timestamp && formatTimeAgo(comment.timestamp)}
-                              </span>
-                            </div>
-                            <p className="text-sm">{comment.content}</p>
-                          </div>
+                          <span className="text-sm font-mono">
+                            {holder.address?.slice(0, 6)}...{holder.address?.slice(-4)}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-400 py-8">
-                      <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No comments yet</p>
-                    </div>
-                  )}
-                </div>
+                        <span className="text-sm">{holder.balance}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No holders yet</p>
+                  </div>
+                )}
               </TabsContent>
 
-              <TabsContent value="holders" className="h-full p-0 m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <div className="p-4 flex-1 overflow-y-auto">
-                  {processedHolders.length > 0 ? (
-                    <div className="space-y-3">
-                      {processedHolders.map((holder, index) => (
-                        <div key={holder.address} className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address}`} />
-                              <AvatarFallback>{holder.address.slice(2, 4)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm font-mono">
-                              {holder.address.slice(0, 6)}...{holder.address.slice(-4)}
-                            </span>
-                          </div>
-                          <span className="text-sm">{holder.balance}</span>
+              <TabsContent value="activity" className="p-4 space-y-0">
+                {tradesData && tradesData.length > 0 ? (
+                  <div className="space-y-3">
+                    {tradesData.map((trade) => (
+                      <div key={trade.id} className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${trade.type === 'buy' ? 'bg-green-400' : 'bg-red-400'}`} />
+                          <span className="text-sm font-mono">
+                            {trade.userAddress?.slice(0, 6)}...{trade.userAddress?.slice(-4)}
+                          </span>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-400 py-8">
-                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No holders yet</p>
-                    </div>
-                  )}
-                </div>
+                        <div className="text-right">
+                          <div className="text-sm">{trade.ethAmount} ETH</div>
+                          <div className="text-xs text-gray-400">
+                            {trade.timestamp && formatTimeAgo(trade.timestamp)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 py-8">
+                    <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No activity yet</p>
+                  </div>
+                )}
               </TabsContent>
 
-              <TabsContent value="activity" className="h-full p-0 m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <div className="p-4 flex-1 overflow-y-auto">
-                  {tradesData && tradesData.length > 0 ? (
-                    <div className="space-y-3">
-                      {tradesData.map((trade) => (
-                        <div key={trade.id} className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${trade.type === 'buy' ? 'bg-green-400' : 'bg-red-400'}`} />
-                            <span className="text-sm font-mono">
-                              {trade.userAddress.slice(0, 6)}...{trade.userAddress.slice(-4)}
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm">{trade.ethAmount} ETH</div>
-                            <div className="text-xs text-gray-400">
-                              {trade.timestamp && formatTimeAgo(trade.timestamp)}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-400 py-8">
-                      <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No activity yet</p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              <TabsContent value="details" className="h-full p-0 m-0 data-[state=active]:flex data-[state=active]:flex-col">
-                <div className="p-4 flex-1 overflow-y-auto">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-semibold mb-2">Token Details</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Name:</span>
-                          <span>{tokenData?.name || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Symbol:</span>
-                          <span>{tokenData?.symbol || 'N/A'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Address:</span>
-                          <span className="font-mono text-xs">{tokenData?.address || 'N/A'}</span>
-                        </div>
+              <TabsContent value="details" className="p-4 space-y-0">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold mb-2">Token Details</h3>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Name:</span>
+                        <span>{tokenData?.name || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Symbol:</span>
+                        <span>{tokenData?.symbol || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Address:</span>
+                        <span className="font-mono text-xs">{tokenData?.address || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
