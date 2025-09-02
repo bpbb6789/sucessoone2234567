@@ -36,6 +36,20 @@ interface ContentCoin {
   memeTokenAddress?: string;
 }
 
+interface Channel {
+  id: string;
+  name: string;
+  slug: string;
+  coverUrl?: string | null;
+  avatarUrl?: string | null;
+  creatorAvatar?: string | null; // Added for creator avatar in channel card
+  marketCap?: number | null;
+  ticker?: string | null;
+  createdAt: string;
+  holders?: number | null; // Added for holders count
+  currentPrice?: string | null; // Added for current price
+}
+
 const formatTimeAgo = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();
@@ -279,7 +293,7 @@ export default function ContentCoin() {
             ) : (
               // 4 Cards per Row Grid Layout
               <div className="grid grid-cols-4 gap-0.5">
-                {channels.slice(0, 4).map((channel, index) => (
+                {channels.slice(0, 4).map((channel: Channel, index: number) => (
                   <Link key={channel.id} to={`/channel/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
                     <div className="group cursor-pointer">
                       <Card className="bg-gray-900/90 hover:bg-gray-800/90 border-gray-700/50 transition-all duration-300 overflow-hidden rounded-xl h-20 relative">
@@ -316,21 +330,47 @@ export default function ContentCoin() {
 
                             {/* Content Overlay */}
                             <div className="absolute inset-0 p-2 flex flex-col justify-between">
-                              {/* Top Section - Market Cap Badge */}
+                              {/* Top Section - Price Badge */}
                               <div className="flex justify-end">
                                 <div className="bg-black/80 backdrop-blur-sm rounded px-1.5 py-0.5 flex items-center gap-1">
-                                  <span className="text-green-400 text-[8px]">▲</span>
+                                  <span className="text-green-400 text-[8px]">💰</span>
                                   <span className="text-white text-[9px] font-medium">
-                                    {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
+                                    ${channel.currentPrice || '0.00'}
                                   </span>
                                 </div>
                               </div>
 
                               {/* Bottom Section - Channel Info */}
                               <div className="space-y-0.5">
-                                <h3 className="text-white font-bold text-xs leading-tight truncate">
-                                  {channel.name}
-                                </h3>
+                                {/* Channel Name with Creator Avatar */}
+                                <div className="flex items-center gap-1">
+                                  {/* Creator Avatar */}
+                                  <div className="w-3 h-3 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex-shrink-0">
+                                    {channel.creatorAvatar ? (
+                                      <img
+                                        src={channel.creatorAvatar.startsWith('baf') 
+                                          ? `https://gateway.pinata.cloud/ipfs/${channel.creatorAvatar}` 
+                                          : channel.creatorAvatar
+                                        }
+                                        alt="Creator"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center">
+                                        <span className="text-white text-[6px]">👤</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <h3 className="text-white font-bold text-xs leading-tight truncate flex-1">
+                                    {channel.name}
+                                  </h3>
+                                </div>
+
+                                {/* Ticker and Time */}
                                 <div className="flex items-center gap-1 text-white/80 text-[10px]">
                                   <span className="bg-white/20 px-1 py-0.5 rounded text-[9px] font-medium">
                                     ${channel.ticker || channel.name.slice(0, 3).toUpperCase()}
@@ -339,6 +379,20 @@ export default function ContentCoin() {
                                   <span className="text-[9px]">
                                     {formatTimeAgo(channel.createdAt)}
                                   </span>
+                                </div>
+
+                                {/* Stats Row - Holders and Market Cap */}
+                                <div className="flex items-center justify-between text-[9px]">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-blue-400">👥</span>
+                                    <span className="text-white/80">{channel.holders || 0}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-green-400">📈</span>
+                                    <span className="text-green-400">
+                                      {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0K'}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>

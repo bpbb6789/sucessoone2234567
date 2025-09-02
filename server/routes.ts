@@ -1193,7 +1193,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: channel.updatedAt,
         postsCount: 0, // Will be populated when content management is implemented
         holderCount: 0, // Will be populated from blockchain data
-        marketCap: 0 // Will be populated from price data
+        marketCap: 0, // Will be populated from price data
+        creatorAvatar: channel.avatarUrl // Use channel avatar as creator avatar for now
       }));
 
       console.log(`Returning ${transformedChannels.length} channels with coin addresses:`, transformedChannels.map(c => ({ name: c.name, coinAddress: c.coinAddress, avatarUrl: c.avatarUrl, coverUrl: c.coverUrl })));
@@ -1267,7 +1268,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updatedAt: channel.updatedAt,
         postsCount: 0,
         holderCount: 0,
-        marketCap: 0
+        marketCap: 0,
+        creatorAvatar: channel.avatarUrl // Use channel avatar as creator avatar for now
       };
 
       res.json(transformedChannel);
@@ -3193,7 +3195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalLikes: parseInt(creator.totalLikes as string) || 0,
           totalComments: parseInt(creator.totalComments as string) || 0,
           memberSince: creator.firstCreated,
-          lastActive: creator.latestCreated,
+          lastActive: 'Today',
           rank: index + 1
         };
       });
@@ -3304,8 +3306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ====================
-  // ENHANCED SUBSCRIPTIONS API
+  // ==================== ENHANCED SUBSCRIPTIONS API
   // ====================
 
   // Subscribe to channel with preferences
@@ -3800,7 +3801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/leaderboard", async (req, res) => {
     try {
       const { category = 'overall' } = req.query;
-      
+
       // Get all user wallet profiles with their metrics
       const usersWithMetrics = await db
         .select({
@@ -3840,7 +3841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
         .leftJoin(
           sql`(
-            SELECT 
+            SELECT
               trader_address,
               COUNT(*) as count,
               SUM(CAST(amount AS DECIMAL)) as volume,
@@ -3858,9 +3859,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const totalViews = Math.floor(Math.random() * 50000); // TODO: Calculate from real analytics
         const totalLikes = Math.floor(Math.random() * 5000); // TODO: Calculate from real analytics
         const totalSubscribers = Math.floor(Math.random() * 1000); // TODO: Calculate from real analytics
-        
+
         // Calculate overall score based on various metrics
-        const overallScore = 
+        const overallScore =
           (user.contentsCreated * 10) +
           (user.channelsCreated * 20) +
           (user.tradesCount * 5) +
@@ -3874,38 +3875,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
           address: user.address,
           username: user.name || `User ${user.address.slice(0, 8)}`,
           avatar: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.address}`,
-          
+
           // Content metrics
           contentsCreated: user.contentsCreated,
           totalViews,
           totalLikes,
-          
+
           // Trading metrics
           tradesCount: user.tradesCount,
           volumeTraded: user.volumeTraded + ' ETH',
           uniqueTokensTraded: user.uniqueTokensTraded,
-          
+
           // Channel metrics
           channelsCreated: user.channelsCreated,
           totalSubscribers,
-          
+
           // Earnings metrics (mock for now)
           totalEarnings: (parseFloat(user.volumeTraded) * 0.1).toFixed(3) + ' ETH',
           creatorRewards: (user.contentsCreated * 0.05).toFixed(3) + ' ETH',
           tradingProfit: (parseFloat(user.volumeTraded) * 0.03).toFixed(3) + ' ETH',
-          
+
           // Overall score
           overallScore: Math.round(overallScore),
-          
+
           // Social info
           socialLinks: {
             x: Math.random() > 0.7,
             farcaster: Math.random() > 0.8,
             tiktok: Math.random() > 0.9,
           },
-          memberSince: new Date(user.createdAt).toLocaleDateString('en-US', { 
-            month: 'short', 
-            year: 'numeric' 
+          memberSince: new Date(user.createdAt).toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric'
           }),
           lastActive: 'Today',
         };
