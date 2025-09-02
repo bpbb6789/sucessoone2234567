@@ -4,76 +4,90 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, TrendingUp, TrendingDown, X, Music } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, TrendingUp, TrendingDown, X, Music, Trophy, Users, Coins, Activity, DollarSign, Calendar, Crown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from 'wouter';
-import { useCreatorCoins } from '@/hooks/useCreatorCoins';
+import { useQuery } from '@tanstack/react-query';
 
-interface LeaderboardEntry {
+interface UserRankingData {
   id: string;
   rank: number;
-  avatar: string;
+  address: string;
   username: string;
-  handle: string;
-  marketCap: string;
-  trend: 'up' | 'down';
-  trendAmount: string;
+  avatar: string;
+  
+  // Content metrics
+  contentsCreated: number;
+  totalViews: number;
+  totalLikes: number;
+  
+  // Trading metrics
+  tradesCount: number;
+  volumeTraded: string;
+  uniqueTokensTraded: number;
+  
+  // Channel metrics
+  channelsCreated: number;
+  totalSubscribers: number;
+  
+  // Earnings metrics
+  totalEarnings: string;
+  creatorRewards: string;
+  tradingProfit: string;
+  
+  // Overall score
+  overallScore: number;
+  
+  // Social info
   socialLinks: {
     x?: boolean;
     farcaster?: boolean;
     tiktok?: boolean;
   };
-  timeAgo: string;
-  coinAddress?: string;
+  memberSince: string;
+  lastActive: string;
+}
+
+interface GlobalStats {
+  totalUsers: number;
+  totalContent: number;
+  totalTrades: number;
+  totalVolume: string;
+  totalChannels: number;
+  totalEarnings: string;
 }
 
 const Leaderboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: creatorCoins, isLoading } = useCreatorCoins();
+  const [activeTab, setActiveTab] = useState('overall');
 
-  // Transform creator coins data to leaderboard format with real data
-  const leaderboardData: LeaderboardEntry[] = creatorCoins?.map((coin: any, index: number) => {
-    // Calculate real market cap from coin data
-    const realMarketCap = coin.marketCap ? parseFloat(coin.marketCap) : 0;
-    const volume24h = coin.volume24h ? parseFloat(coin.volume24h) : 0;
-    
-    // Use real creator data
-    const creatorAddress = coin.creatorAddress || '';
-    const displayName = coin.coinName || coin.title || `${creatorAddress.slice(0, 6)}...${creatorAddress.slice(-4)}`;
-    const handle = `@${coin.coinSymbol?.toLowerCase() || creatorAddress.slice(0, 8)}`;
-    
-    // Calculate trend based on volume or use holders growth
-    const hasGrowth = volume24h > 0 || (coin.holders && coin.holders > 1);
-    
-    return {
-      id: coin.id,
-      rank: index + 1,
-      avatar: coin.thumbnailCid ? `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}` : 
-              coin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` :
-              `https://api.dicebear.com/7.x/shapes/svg?seed=${displayName}`,
-      username: displayName,
-      handle: handle,
-      marketCap: realMarketCap > 0 ? `$${realMarketCap.toFixed(1)}` : 
-                volume24h > 0 ? `$${volume24h.toFixed(2)}` : 
-                '$0.0',
-      trend: hasGrowth ? 'up' : 'down',
-      trendAmount: volume24h > 0 ? `$${volume24h.toFixed(2)}` : 
-                   coin.holders ? `${coin.holders} holders` : 
-                   '$0.0',
-      socialLinks: {
-        x: !!coin.twitter,
-        farcaster: false, // Add when farcaster data available
-        tiktok: false, // Add when tiktok data available
-      },
-      timeAgo: coin.createdAt ? `${Math.floor((Date.now() - new Date(coin.createdAt).getTime()) / (1000 * 60 * 60 * 24))}d` : '0d',
-      coinAddress: coin.coinAddress,
-    };
-  }) || [];
+  // Fetch leaderboard data
+  const { data: leaderboardData, isLoading: isLoadingLeaderboard } = useQuery({
+    queryKey: ['leaderboard', activeTab],
+    queryFn: async () => {
+      const response = await fetch(`/api/leaderboard?category=${activeTab}`);
+      if (!response.ok) throw new Error('Failed to fetch leaderboard');
+      return response.json() as UserRankingData[];
+    },
+    refetchInterval: 300000 // Refetch every 5 minutes
+  });
 
-  const filteredData = leaderboardData.filter(entry =>
+  // Fetch global stats
+  const { data: globalStats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['leaderboard-stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/leaderboard/stats');
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return response.json() as GlobalStats;
+    },
+    refetchInterval: 300000
+  });
+
+  const filteredData = leaderboardData?.filter(entry =>
     entry.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    entry.handle.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    entry.address.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
 
   const getRankColor = (rank: number) => {
     switch (rank) {
@@ -86,18 +100,63 @@ const Leaderboard: React.FC = () => {
 
   const getRankBg = (rank: number) => {
     switch (rank) {
-      case 1: return 'bg-yellow-400/10';
-      case 2: return 'bg-gray-300/10';
-      case 3: return 'bg-amber-600/10';
-      default: return 'bg-gray-400/10';
+      case 1: return 'bg-yellow-400/10 border-yellow-400/20';
+      case 2: return 'bg-gray-300/10 border-gray-300/20';
+      case 3: return 'bg-amber-600/10 border-amber-600/20';
+      default: return 'bg-gray-400/5';
     }
   };
 
-  if (isLoading) {
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1: return <Crown className="w-5 h-5 text-yellow-400" />;
+      case 2: return <Trophy className="w-5 h-5 text-gray-300" />;
+      case 3: return <Trophy className="w-5 h-5 text-amber-600" />;
+      default: return <span className={`text-sm font-bold ${getRankColor(rank)}`}>{rank}</span>;
+    }
+  };
+
+  const getTabMetrics = (user: UserRankingData, tab: string) => {
+    switch (tab) {
+      case 'content':
+        return {
+          primary: `${user.contentsCreated} posts`,
+          secondary: `${user.totalViews.toLocaleString()} views`,
+          tertiary: `${user.totalLikes.toLocaleString()} likes`
+        };
+      case 'trading':
+        return {
+          primary: user.volumeTraded,
+          secondary: `${user.tradesCount} trades`,
+          tertiary: `${user.uniqueTokensTraded} tokens`
+        };
+      case 'channels':
+        return {
+          primary: `${user.channelsCreated} channels`,
+          secondary: `${user.totalSubscribers.toLocaleString()} subs`,
+          tertiary: 'Active creator'
+        };
+      case 'earnings':
+        return {
+          primary: user.totalEarnings,
+          secondary: user.creatorRewards,
+          tertiary: user.tradingProfit
+        };
+      default: // overall
+        return {
+          primary: `${user.overallScore} pts`,
+          secondary: `${user.contentsCreated}C • ${user.tradesCount}T`,
+          tertiary: user.totalEarnings
+        };
+    }
+  };
+
+  if (isLoadingLeaderboard || isLoadingStats) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="space-y-4">
+            <Skeleton className="w-full h-32" />
             {[...Array(10)].map((_, i) => (
               <Card key={i} className="bg-card">
                 <CardContent className="p-4">
@@ -123,21 +182,72 @@ const Leaderboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header with Global Stats */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold">Leaderboard</h1>
-              <p className="text-sm text-muted-foreground">Top performing creator coins</p>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <Trophy className="w-6 h-6 text-yellow-500" />
+                Platform Leaderboard
+              </h1>
+              <p className="text-sm text-muted-foreground">Top performers across all categories</p>
             </div>
           </div>
+
+          {/* Global Stats Cards */}
+          {globalStats && (
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+              <Card className="bg-card/50">
+                <CardContent className="p-3 text-center">
+                  <Users className="w-4 h-4 mx-auto mb-1 text-blue-500" />
+                  <div className="text-sm font-semibold">{globalStats.totalUsers.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Users</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardContent className="p-3 text-center">
+                  <Activity className="w-4 h-4 mx-auto mb-1 text-green-500" />
+                  <div className="text-sm font-semibold">{globalStats.totalContent.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Content</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardContent className="p-3 text-center">
+                  <TrendingUp className="w-4 h-4 mx-auto mb-1 text-purple-500" />
+                  <div className="text-sm font-semibold">{globalStats.totalTrades.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Trades</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardContent className="p-3 text-center">
+                  <DollarSign className="w-4 h-4 mx-auto mb-1 text-emerald-500" />
+                  <div className="text-sm font-semibold">{globalStats.totalVolume}</div>
+                  <div className="text-xs text-muted-foreground">Volume</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardContent className="p-3 text-center">
+                  <Coins className="w-4 h-4 mx-auto mb-1 text-orange-500" />
+                  <div className="text-sm font-semibold">{globalStats.totalChannels.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Channels</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/50">
+                <CardContent className="p-3 text-center">
+                  <Trophy className="w-4 h-4 mx-auto mb-1 text-yellow-500" />
+                  <div className="text-sm font-semibold">{globalStats.totalEarnings}</div>
+                  <div className="text-xs text-muted-foreground">Earnings</div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Search */}
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search creators..."
+              placeholder="Search users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -146,110 +256,132 @@ const Leaderboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Leaderboard */}
+      {/* Category Tabs */}
       <div className="container mx-auto px-4 py-6">
-        <div className="space-y-2">
-          {filteredData.map((entry) => (
-            <Card key={entry.id} className="bg-card hover:bg-card/80 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  {/* Left side - Rank, Avatar, User info */}
-                  <div className="flex items-center space-x-4">
-                    {/* Rank */}
-                    <div className={`w-8 h-8 rounded-full ${getRankBg(entry.rank)} flex items-center justify-center`}>
-                      <span className={`text-sm font-bold ${getRankColor(entry.rank)}`}>
-                        {entry.rank}
-                      </span>
-                    </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overall" className="flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
+              Overall
+            </TabsTrigger>
+            <TabsTrigger value="content" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Content
+            </TabsTrigger>
+            <TabsTrigger value="trading" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Trading
+            </TabsTrigger>
+            <TabsTrigger value="channels" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Channels
+            </TabsTrigger>
+            <TabsTrigger value="earnings" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Earnings
+            </TabsTrigger>
+          </TabsList>
 
-                    {/* Avatar */}
-                    <div className="relative">
-                      <img
-                        src={entry.avatar}
-                        alt={entry.username}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    </div>
+          <TabsContent value={activeTab} className="space-y-2">
+            {filteredData.map((user) => {
+              const metrics = getTabMetrics(user, activeTab);
+              return (
+                <Card key={user.id} className={`hover:bg-card/80 transition-colors ${getRankBg(user.rank)}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      {/* Left side - Rank, Avatar, User info */}
+                      <div className="flex items-center space-x-4">
+                        {/* Rank */}
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center`}>
+                          {getRankIcon(user.rank)}
+                        </div>
 
-                    {/* User info */}
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-foreground">{entry.username}</h3>
-                        <span className="text-sm text-muted-foreground">{entry.handle}</span>
+                        {/* Avatar */}
+                        <div className="relative">
+                          <img
+                            src={user.avatar}
+                            alt={user.username}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                          {user.rank <= 3 && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                              <Trophy className="w-3 h-3 text-yellow-900" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* User info */}
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <h3 className="font-semibold text-foreground">{user.username}</h3>
+                            <span className="text-sm text-muted-foreground">
+                              {user.address.slice(0, 6)}...{user.address.slice(-4)}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                            <Calendar className="w-3 h-3" />
+                            <span>Member since {user.memberSince}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Center - Metrics based on active tab */}
+                      <div className="flex items-center space-x-6">
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-foreground">{metrics.primary}</div>
+                          <div className="text-sm text-muted-foreground">{metrics.secondary}</div>
+                          <div className="text-xs text-muted-foreground">{metrics.tertiary}</div>
+                        </div>
+
+                        {/* Social Links */}
+                        <div className="flex items-center space-x-2">
+                          {user.socialLinks.x && (
+                            <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                              <X className="w-3 h-3 text-muted-foreground" />
+                            </div>
+                          )}
+                          {user.socialLinks.farcaster && (
+                            <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center">
+                              <div className="w-3 h-3 bg-purple-500 rounded-full" />
+                            </div>
+                          )}
+                          {user.socialLinks.tiktok && (
+                            <div className="w-6 h-6 bg-pink-500/20 rounded-full flex items-center justify-center">
+                              <Music className="w-3 h-3 text-pink-500" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Last Active */}
+                        <div className="text-sm text-muted-foreground">
+                          {user.lastActive}
+                        </div>
+                      </div>
+
+                      {/* Right side - Profile button */}
+                      <div>
+                        <Link to={`/profile/${user.address}`}>
+                          <Button 
+                            variant="outline"
+                            className="px-4 py-2 rounded-full font-medium"
+                          >
+                            View Profile
+                          </Button>
+                        </Link>
                       </div>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </TabsContent>
+        </Tabs>
 
-                  {/* Center - Market Cap and Trend */}
-                  <div className="flex items-center space-x-4">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-foreground">{entry.marketCap}</div>
-                      <div className={`flex items-center space-x-1 text-sm ${
-                        entry.trend === 'up' ? 'text-green-500' : 'text-pink-500'
-                      }`}>
-                        {entry.trend === 'up' ? (
-                          <TrendingUp className="w-4 h-4" />
-                        ) : (
-                          <TrendingDown className="w-4 h-4" />
-                        )}
-                        <span>{entry.trendAmount}</span>
-                      </div>
-                    </div>
-
-                    {/* Social Links */}
-                    <div className="flex items-center space-x-2">
-                      {entry.socialLinks.x && (
-                        <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
-                          <X className="w-3 h-3 text-muted-foreground" />
-                        </div>
-                      )}
-                      {entry.socialLinks.farcaster && (
-                        <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center">
-                          <div className="w-3 h-3 bg-purple-500 rounded-full" />
-                        </div>
-                      )}
-                      {entry.socialLinks.tiktok && (
-                        <div className="w-6 h-6 bg-pink-500/20 rounded-full flex items-center justify-center">
-                          <Music className="w-3 h-3 text-pink-500" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Time */}
-                    <div className="text-sm text-muted-foreground">
-                      {entry.timeAgo}
-                    </div>
-                  </div>
-
-                  {/* Right side - Buy button */}
-                  <div>
-                    {entry.coinAddress ? (
-                      <Link to={`/token/${entry.coinAddress}`}>
-                        <Button 
-                          className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-medium"
-                        >
-                          Buy
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Button 
-                        className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-medium"
-                        onClick={() => console.log(`Buy ${entry.username}`)}
-                      >
-                        Buy
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredData.length === 0 && !isLoading && (
+        {filteredData.length === 0 && !isLoadingLeaderboard && (
           <div className="text-center py-12">
+            <Trophy className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No results found</h3>
-            <p className="text-muted-foreground">Try adjusting your search query</p>
+            <p className="text-muted-foreground">Try adjusting your search query or check back later</p>
           </div>
         )}
       </div>

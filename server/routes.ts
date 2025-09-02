@@ -34,6 +34,7 @@ import { PrismaClient } from '../lib/generated/prisma/index.js';
 import { getTelegramService } from "./services/telegramService";
 import { adminAuth } from "./middleware/adminAuth"; // Assuming adminAuth middleware is defined elsewhere
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for trade IDs
+import * as admin from './admin'; // Import admin module
 
 
 const prisma = new PrismaClient();
@@ -3114,9 +3115,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      // Import getTokenHolders from zora.ts
-      const { getTokenHolders } = await import('./zora');
-
       // Get real holders data from blockchain
       const holdersData = await getTokenHolders(coinAddress);
 
@@ -3171,7 +3169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .from(walletProfiles)
             .where(eq(walletProfiles.address, creator.creatorAddress))
             .limit(1);
-          
+
           return profile[0] || null;
         } catch (error) {
           console.warn(`Failed to fetch profile for ${creator.creatorAddress}:`, error);
@@ -3184,7 +3182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Transform the data for frontend with profile data
       const creators = creatorsData.map((creator, index) => {
         const profile = profiles[index];
-        
+
         return {
           id: creator.creatorAddress,
           address: creator.creatorAddress,
