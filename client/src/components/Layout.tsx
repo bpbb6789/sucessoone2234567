@@ -21,8 +21,8 @@ export function Layout({ children }: LayoutProps) {
   const shouldHideHeaderOnMobile = isMobile && (isShortsPage || isFeedPage);
   const shouldHideMobileNavOnMobile = false; // Always show mobile nav
   
-  // Check if we're on contentcoin page to center content
-  const isContentCoinPage = location === '/contentcoin';
+  // Check if we're on contentcoin page to center content (includes home page)
+  const isContentCoinPage = location === '/contentcoin' || location === '/';
   const shouldUseSidebarMargin = !isMobile && !isContentCoinPage;
 
   return (
@@ -36,6 +36,8 @@ export function Layout({ children }: LayoutProps) {
           // Only add top padding if header is visible
           !shouldHideHeaderOnMobile && "pt-14",
           shouldUseSidebarMargin && (isExpanded ? "content-expanded" : "content-collapsed"),
+          // Center content for contentcoin page
+          isContentCoinPage && "content-centered",
           // Only add bottom padding if mobile nav is visible
           isMobile && !shouldHideMobileNavOnMobile && "pb-16"
         )}

@@ -338,6 +338,14 @@ nav[data-testid="sidebar"]::-webkit-scrollbar {
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
+  /* Center content override - removes sidebar margins completely */
+  .content-centered {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
   /* Mobile responsive adjustments */
   @media (max-width: 768px) {
     .content-expanded, .content-collapsed {
