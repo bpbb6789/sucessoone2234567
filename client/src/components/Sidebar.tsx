@@ -42,7 +42,9 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
       try {
         // Add timeout to prevent infinite loading
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => {
+          controller.abort(new Error('Request timeout'));
+        }, 10000); // 10 second timeout
 
         // For Zora-based channels, fetch price data from Zora's infrastructure
         // Check if this is a Zora channel by trying to get Zora price data first
@@ -155,8 +157,8 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
       } catch (error) {
         console.error('Error fetching channel stats:', error);
         // Handle different types of errors
-        if (error.name === 'AbortError') {
-          console.log('Request timed out');
+        if (error.name === 'AbortError' || controller.signal.aborted) {
+          console.log('Request was aborted or timed out');
         }
         setMarketCap('$0.00');
         setHolders(0);
