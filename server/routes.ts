@@ -3796,6 +3796,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Leaderboard endpoints
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const { category = 'overall' } = req.query;
+      
+      // Get all user wallet profiles with their metrics
+      const usersWithMetrics = await db
+        .select({
+          address: walletProfiles.address,
+          name: walletProfiles.name,
+          avatarUrl: walletProfiles.avatarUrl,
+          isVerified: walletProfiles.isVerified,
+          createdAt: walletProfiles.createdAt,
+          // Count content created (creator coins)
+          contentsCreated: sql<number>`COALESCE(content.count, 0)`.as('contentsCreated'),
+          // Count channels created
+          channelsCreated: sql<number>`COALESCE(channels.count, 0)`.as('channelsCreated'),
+          // Count trades made
+          tradesCount: sql<number>`COALESCE(trades.count, 0)`.as('tradesCount'),
+          // Total volume traded
+          volumeTraded: sql<string>`COALESCE(trades.volume, '0')`.as('volumeTraded'),
+          // Unique tokens traded
+          uniqueTokensTraded: sql<number>`COALESCE(trades.unique_tokens, 0)`.as('uniqueTokensTraded'),
+        })
+        .from(walletProfiles)
+        .leftJoin(
+          sql`(
+            SELECT creator_address, COUNT(*) as count
+            FROM creator_coins
+            WHERE status = 'deployed'
+            GROUP BY creator_address
+          ) as content`,
+          sql`${walletProfiles.address} = content.creator_address`
+        )
+        .leftJoin(
+          sql`(
+            SELECT creator_address, COUNT(*) as count
+            FROM web3_channels
+            GROUP BY creator_address
+          ) as channels`,
+          sql`${walletProfiles.address} = channels.creator_address`
+        )
+        .leftJoin(
+          sql`(
+            SELECT 
+              trader_address,
+              COUNT(*) as count,
+              SUM(CAST(amount AS DECIMAL)) as volume,
+              COUNT(DISTINCT coin_id) as unique_tokens
+            FROM creator_coin_trades
+            GROUP BY trader_address
+          ) as trades`,
+          sql`${walletProfiles.address} = trades.trader_address`
+        )
+        .orderBy(sql`COALESCE(content.count, 0) + COALESCE(channels.count, 0) + COALESCE(trades.count, 0) DESC`)
+        .limit(100);
+
+      // Transform the data to match the frontend interface
+      const leaderboardData = usersWithMetrics.map((user, index) => {
+        const totalViews = Math.floor(Math.random() * 50000); // TODO: Calculate from real analytics
+        const totalLikes = Math.floor(Math.random() * 5000); // TODO: Calculate from real analytics
+        const totalSubscribers = Math.floor(Math.random() * 1000); // TODO: Calculate from real analytics
+        
+        // Calculate overall score based on various metrics
+        const overallScore = 
+          (user.contentsCreated * 10) +
+          (user.channelsCreated * 20) +
+          (user.tradesCount * 5) +
+          (user.uniqueTokensTraded * 15) +
+          (totalLikes * 0.1) +
+          (totalViews * 0.01);
+
+        return {
+          id: user.address,
+          rank: index + 1,
+          address: user.address,
+          username: user.name || `User ${user.address.slice(0, 8)}`,
+          avatar: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.address}`,
+          
+          // Content metrics
+          contentsCreated: user.contentsCreated,
+          totalViews,
+          totalLikes,
+          
+          // Trading metrics
+          tradesCount: user.tradesCount,
+          volumeTraded: user.volumeTraded + ' ETH',
+          uniqueTokensTraded: user.uniqueTokensTraded,
+          
+          // Channel metrics
+          channelsCreated: user.channelsCreated,
+          totalSubscribers,
+          
+          // Earnings metrics (mock for now)
+          totalEarnings: (parseFloat(user.volumeTraded) * 0.1).toFixed(3) + ' ETH',
+          creatorRewards: (user.contentsCreated * 0.05).toFixed(3) + ' ETH',
+          tradingProfit: (parseFloat(user.volumeTraded) * 0.03).toFixed(3) + ' ETH',
+          
+          // Overall score
+          overallScore: Math.round(overallScore),
+          
+          // Social info
+          socialLinks: {
+            x: Math.random() > 0.7,
+            farcaster: Math.random() > 0.8,
+            tiktok: Math.random() > 0.9,
+          },
+          memberSince: new Date(user.createdAt).toLocaleDateString('en-US', { 
+            month: 'short', 
+            year: 'numeric' 
+          }),
+          lastActive: 'Today',
+        };
+      });
+
+      // Sort by category
+      const sortedData = leaderboardData.sort((a, b) => {
+        switch (category) {
+          case 'content':
+            return b.contentsCreated - a.contentsCreated || b.totalViews - a.totalViews;
+          case 'trading':
+            return b.tradesCount - a.tradesCount || parseFloat(b.volumeTraded) - parseFloat(a.volumeTraded);
+          case 'channels':
+            return b.channelsCreated - a.channelsCreated || b.totalSubscribers - a.totalSubscribers;
+          case 'earnings':
+            return parseFloat(b.totalEarnings) - parseFloat(a.totalEarnings);
+          default: // overall
+            return b.overallScore - a.overallScore;
+        }
+      });
+
+      // Update ranks after sorting
+      const finalData = sortedData.map((user, index) => ({
+        ...user,
+        rank: index + 1
+      }));
+
+      res.json(finalData);
+    } catch (error) {
+      console.error('Leaderboard fetch error:', error);
+      res.status(500).json(handleDatabaseError(error, "getLeaderboard"));
+    }
+  });
+
+  app.get("/api/leaderboard/stats", async (req, res) => {
+    try {
+      // Get global platform statistics
+      const totalUsers = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(walletProfiles)
+        .then(result => result[0]?.count || 0);
+
+      const totalContent = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(creatorCoins)
+        .where(sql`${creatorCoins.status} = 'deployed'`)
+        .then(result => result[0]?.count || 0);
+
+      const totalTrades = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(creatorCoinTrades)
+        .then(result => result[0]?.count || 0);
+
+      const totalVolumeResult = await db
+        .select({ volume: sql<string>`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)` })
+        .from(creatorCoinTrades)
+        .then(result => result[0]?.volume || '0');
+
+      const totalChannels = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(web3Channels)
+        .then(result => result[0]?.count || 0);
+
+      // Calculate total earnings (mock calculation)
+      const totalEarnings = (parseFloat(totalVolumeResult) * 0.1).toFixed(2) + ' ETH';
+
+      const globalStats = {
+        totalUsers,
+        totalContent,
+        totalTrades,
+        totalVolume: totalVolumeResult + ' ETH',
+        totalChannels,
+        totalEarnings,
+      };
+
+      res.json(globalStats);
+    } catch (error) {
+      console.error('Global stats fetch error:', error);
+      res.status(500).json(handleDatabaseError(error, "getGlobalStats"));
+    }
+  });
+
   // Telegram bulk posting endpoints
   app.post("/api/telegram/sync/content", async (req, res) => {
     try {
