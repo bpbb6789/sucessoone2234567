@@ -405,7 +405,7 @@ export default function ContentCoinDetail() {
       </div>
 
       {/* Main Content - Card Layout */}
-      <div className="flex gap-6 p-6 h-[calc(100vh-80px)]">
+      <div className="flex gap-2 p-6 h-[calc(100vh-80px)]">
         {/* Left Side - Chart Area */}
         <Card className="flex-1">
           <CardContent className="p-6">
