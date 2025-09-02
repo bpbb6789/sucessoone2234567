@@ -387,10 +387,17 @@ export default function ContentCoin() {
                                     <span className="text-blue-400">👥</span>
                                     <span className="text-white/80">{channel.holders || 0}</span>
                                   </div>
-                                  <div className="flex items-center gap-1">
-                                    <span className="text-green-400">📈</span>
+                                  <div className="flex items-center gap-0.5">
+                                    {/* Market Cap Arrow - Green up for positive, Red down for negative */}
+                                    <span className={`text-[8px] ${
+                                      (channel.marketCap && channel.marketCap > 0) 
+                                        ? 'text-green-400' 
+                                        : 'text-red-400'
+                                    }`}>
+                                      {(channel.marketCap && channel.marketCap > 0) ? '▲' : '▼'}
+                                    </span>
                                     <span className="text-green-400">
-                                      {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0K'}
+                                      {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
                                     </span>
                                   </div>
                                 </div>
