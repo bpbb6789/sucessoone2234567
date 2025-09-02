@@ -277,12 +277,12 @@ export default function ContentCoin() {
                 <p className="text-gray-400">No channels found</p>
               </div>
             ) : (
-              // Compact Card Layout
-              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-                {channels.map((channel, index) => (
+              // 4 Cards per Row Grid Layout
+              <div className="grid grid-cols-4 gap-2">
+                {channels.slice(0, 4).map((channel, index) => (
                   <Link key={channel.id} to={`/channel/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
-                    <div className="group cursor-pointer flex-shrink-0">
-                      <Card className="bg-gray-900/90 hover:bg-gray-800/90 border-gray-700/50 transition-all duration-300 overflow-hidden rounded-2xl w-64 h-32 relative">
+                    <div className="group cursor-pointer">
+                      <Card className="bg-gray-900/90 hover:bg-gray-800/90 border-gray-700/50 transition-all duration-300 overflow-hidden rounded-xl h-20 relative">
                         <CardContent className="p-0 h-full">
                           {/* Background Image with Overlay */}
                           <div className="relative w-full h-full">
@@ -315,26 +315,26 @@ export default function ContentCoin() {
                             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-300"></div>
 
                             {/* Content Overlay */}
-                            <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                            <div className="absolute inset-0 p-2 flex flex-col justify-between">
                               {/* Top Section - Rating-like Badge */}
                               <div className="flex justify-end">
-                                <div className="bg-black/60 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
-                                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                  <span className="text-white text-xs font-medium">LIVE</span>
+                                <div className="bg-black/60 backdrop-blur-sm rounded-full px-1.5 py-0.5 flex items-center gap-1">
+                                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                                  <span className="text-white text-[10px] font-medium">LIVE</span>
                                 </div>
                               </div>
 
                               {/* Bottom Section - Channel Info */}
-                              <div className="space-y-1">
-                                <h3 className="text-white font-bold text-lg leading-tight truncate">
+                              <div className="space-y-0.5">
+                                <h3 className="text-white font-bold text-xs leading-tight truncate">
                                   {channel.name}
                                 </h3>
-                                <div className="flex items-center gap-2 text-white/80 text-sm">
-                                  <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-medium">
-                                    ${channel.ticker || channel.name.slice(0, 4).toUpperCase()}
+                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
+                                  <span className="bg-white/20 px-1 py-0.5 rounded text-[9px] font-medium">
+                                    ${channel.ticker || channel.name.slice(0, 3).toUpperCase()}
                                   </span>
-                                  <span className="text-xs">•</span>
-                                  <span className="text-xs">
+                                  <span className="text-[8px]">•</span>
+                                  <span className="text-[9px]">
                                     {formatTimeAgo(channel.createdAt)}
                                   </span>
                                 </div>
