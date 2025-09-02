@@ -381,8 +381,8 @@ export default function ContentCoinDetail() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex gap-6 min-h-[600px]">
           {/* Left Side - Chart and Media */}
-          <div className="flex-[2] bg-card rounded-2xl p-6 border border-gray-700">
-            <div className="h-64 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-lg mb-6 relative overflow-hidden">
+          <div className="flex-1">
+            <div className="h-64 bg-gray-800 rounded-lg mb-6 relative overflow-hidden border border-gray-700">
               {currentView === "chart" ? (
                 <>
                   <svg className="w-full h-full" viewBox="0 0 400 220">
@@ -491,7 +491,8 @@ export default function ContentCoinDetail() {
           </div>
 
           {/* Right Side - Trading Panel */}
-          <div className="flex-1 max-w-sm bg-card rounded-2xl p-6 border border-gray-700">
+          <div className="flex-1">
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
             {/* Token Header */}
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-4">
@@ -651,6 +652,7 @@ export default function ContentCoinDetail() {
                   </div>
                 )}
               </div>
+            </div>
             </div>
           </div>
         </div>
