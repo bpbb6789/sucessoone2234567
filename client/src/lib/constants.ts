@@ -23,6 +23,7 @@ export const CATEGORY_ICONS = {
   "Shorts films": "🎬",
   Podcasts: "🎧",
   Books: "📚",
+  Onchain: "⛓️",
   Deployed: "🚀",
 } as const;
 
