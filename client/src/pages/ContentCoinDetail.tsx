@@ -191,6 +191,8 @@ export default function ContentCoinDetail() {
 
   // Chart data for trading view
   const chartData = useMemo(() => {
+    if (!tokenData) return null;
+    
     const defaultPrice = tokenData?.currentPrice || tokenData?.price || "0";
     
     return {
@@ -442,7 +444,7 @@ export default function ContentCoinDetail() {
           {/* Chart/Content Area */}
           <div className="h-80 bg-gray-800 rounded-lg mb-6 relative overflow-hidden">
             {viewMode === "chart" ? (
-              currentData && (
+              chartData && currentData ? (
                 <svg className="w-full h-full" viewBox="0 0 400 320">
                   <defs>
                     <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -464,6 +466,10 @@ export default function ContentCoinDetail() {
                     strokeLinejoin="round"
                   />
                 </svg>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <TrendingUp className="h-8 w-8 opacity-50" />
+                </div>
               )
             ) : (
               <div className="w-full h-full flex items-center justify-center">
