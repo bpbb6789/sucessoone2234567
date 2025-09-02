@@ -26,7 +26,7 @@ interface ContentCoin {
   thumbnailCid?: string | null;
   metadataUri?: string | null;
   coinAddress?: string | null;
-  deploymentTxHash?: string;
+  deploymentTxHash?: string | null;
   creatorAddress: string;
   status: string;
   createdAt: string;
@@ -291,12 +291,12 @@ export default function ContentCoin() {
                 <p className="text-gray-400">No channels found</p>
               </div>
             ) : (
-              // 4 Cards per Row Grid Layout
-              <div className="grid grid-cols-4 gap-0.5">
+              // Mobile: Horizontal scroll cards, Desktop: 4 Cards per Row Grid Layout
+              <div className="flex md:grid md:grid-cols-4 gap-2 md:gap-0.5 overflow-x-auto md:overflow-x-visible scrollbar-hide">
                 {channels.slice(0, 4).map((channel: Channel, index: number) => (
                   <Link key={channel.id} to={`/channel/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
                     <div className="group cursor-pointer">
-                      <Card className="bg-gray-900/90 hover:bg-gray-800/90 border-gray-700/50 transition-all duration-300 overflow-hidden rounded-xl h-20 relative">
+                      <Card className="bg-gray-900/90 hover:bg-gray-800/90 border-gray-700/50 transition-all duration-300 overflow-hidden rounded-xl h-20 relative w-64 md:w-auto flex-shrink-0">
                         <CardContent className="p-0 h-full">
                           {/* Background Image with Overlay */}
                           <div className="relative w-full h-full">
