@@ -511,10 +511,32 @@ export default function ContentCoinDetail() {
 
         {/* Right Side - Trading Panel */}
         <div className="w-96 bg-gray-850 flex flex-col">
-          {/* Tabs Header */}
+          {/* Market Stats - Always Visible */}
+          <div className="p-4 border-b border-gray-700">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Market Cap</span>
+                <span className="text-sm font-semibold text-green-400">${tokenData?.marketCap || tokenData?.startingMarketCap || '0'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">24H Volume</span>
+                <span className="text-sm font-semibold">${tokenData?.volume24h || '0'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Creator Earnings</span>
+                <span className="text-sm font-semibold">${tokenData?.creatorEarnings || '0.02'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs Container */}
           <Tabs defaultValue="comments" className="flex-1 flex flex-col">
             <div className="border-b border-gray-700 px-4 py-3">
-              <TabsList className="grid w-full grid-cols-3 bg-gray-800">
+              <TabsList className="grid w-full grid-cols-4 bg-gray-800">
+                <TabsTrigger value="trading" className="flex items-center gap-1 text-xs">
+                  <DollarSign className="h-3 w-3" />
+                  Trading
+                </TabsTrigger>
                 <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
                   <MessageCircle className="h-3 w-3" />
                   Comments
@@ -531,125 +553,108 @@ export default function ContentCoinDetail() {
               </TabsList>
             </div>
 
-            {/* Market Stats */}
-            <div className="p-4 border-b border-gray-700">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Market Cap</span>
-                  <span className="text-sm font-semibold text-green-400">${tokenData?.marketCap || tokenData?.startingMarketCap || '757.53'}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">24H Volume</span>
-                  <span className="text-sm font-semibold">${tokenData?.volume24h || '2.30'}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Creator Earnings</span>
-                  <span className="text-sm font-semibold">${tokenData?.creatorEarnings || '0.02'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Trading Section */}
-            <div className="p-4 border-b border-gray-700">
-              <div className="space-y-4">
-                {/* Buy/Sell Toggle */}
-                <div className="flex space-x-2">
-                  <Button
-                    className={`flex-1 ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-gray-700 hover:bg-gray-600"}`}
-                    onClick={() => setTradeMode("buy")}
-                  >
-                    Buy
-                  </Button>
-                  <Button
-                    className={`flex-1 ${tradeMode === "sell" ? "bg-red-500 hover:bg-red-600" : "bg-gray-700 hover:bg-gray-600"}`}
-                    onClick={() => setTradeMode("sell")}
-                  >
-                    Sell
-                  </Button>
-                </div>
-
-                {/* Balance Display */}
-                <div className="text-center text-sm text-gray-400">
-                  Balance {tokenBalance ? formatUnits(tokenBalance, 18) : '0'} ETH
-                </div>
-
-                {/* Amount Input */}
-                <div className="space-y-2">
-                  <Input
-                    type="number"
-                    value={buyAmount}
-                    onChange={(e) => setBuyAmount(e.target.value)}
-                    placeholder="0.000111"
-                    step="0.000001"
-                    min="0"
-                    className="bg-gray-800 border-gray-600 text-white"
-                  />
-                  <div className="flex justify-end text-xs text-gray-400">
-                    ETH
-                  </div>
-                </div>
-
-                {/* Quick Amount Buttons */}
-                <div className="grid grid-cols-4 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAmountSelect("0.001")}
-                    className="text-xs"
-                  >
-                    0.001 ETH
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAmountSelect("0.01")}
-                    className="text-xs"
-                  >
-                    0.01 ETH
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAmountSelect("0.1")}
-                    className="text-xs"
-                  >
-                    0.1 ETH
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleMaxAmount}
-                    className="text-xs"
-                  >
-                    Max
-                  </Button>
-                </div>
-
-                {/* Comment Input */}
-                <Textarea
-                  placeholder="Add a comment..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="bg-gray-800 border-gray-600 text-white resize-none h-20"
-                />
-
-                {/* Trade Button */}
-                <Button
-                  className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
-                  onClick={tradeMode === "buy" ? handleBuy : handleSell}
-                  disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
-                >
-                  {isWritePending ? 'Signing...' : 
-                   isTxConfirming ? 'Confirming...' :
-                   !address ? 'Connect Wallet' :
-                   !buyAmount ? 'Enter Amount' :
-                   `${tradeMode === "buy" ? "Buy" : "Sell"}`}
-                </Button>
-              </div>
-            </div>
-
             {/* Tab Content */}
             <div className="flex-1 overflow-y-auto">
+              {/* Trading Tab Content */}
+              <TabsContent value="trading" className="p-4 space-y-0">
+                <div className="space-y-4">
+                  {/* Buy/Sell Toggle */}
+                  <div className="flex space-x-2">
+                    <Button
+                      className={`flex-1 ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-gray-700 hover:bg-gray-600"}`}
+                      onClick={() => setTradeMode("buy")}
+                    >
+                      Buy
+                    </Button>
+                    <Button
+                      className={`flex-1 ${tradeMode === "sell" ? "bg-red-500 hover:bg-red-600" : "bg-gray-700 hover:bg-gray-600"}`}
+                      onClick={() => setTradeMode("sell")}
+                    >
+                      Sell
+                    </Button>
+                  </div>
+
+                  {/* Balance Display */}
+                  <div className="text-center text-sm text-gray-400">
+                    Balance {tokenBalance ? formatUnits(tokenBalance, 18) : '0'} ETH
+                  </div>
+
+                  {/* Amount Input */}
+                  <div className="space-y-2">
+                    <Input
+                      type="number"
+                      value={buyAmount}
+                      onChange={(e) => setBuyAmount(e.target.value)}
+                      placeholder="0.000111"
+                      step="0.000001"
+                      min="0"
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                    <div className="flex justify-end text-xs text-gray-400">
+                      ETH
+                    </div>
+                  </div>
+
+                  {/* Quick Amount Buttons */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAmountSelect("0.001")}
+                      className="text-xs"
+                    >
+                      0.001 ETH
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAmountSelect("0.01")}
+                      className="text-xs"
+                    >
+                      0.01 ETH
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAmountSelect("0.1")}
+                      className="text-xs"
+                    >
+                      0.1 ETH
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleMaxAmount}
+                      className="text-xs"
+                    >
+                      Max
+                    </Button>
+                  </div>
+
+                  {/* Comment Input */}
+                  <Textarea
+                    placeholder="Add a comment..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="bg-gray-800 border-gray-600 text-white resize-none h-20"
+                  />
+
+                  {/* Trade Button */}
+                  <Button
+                    className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
+                    onClick={tradeMode === "buy" ? handleBuy : handleSell}
+                    disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
+                  >
+                    {isWritePending ? 'Signing...' : 
+                     isTxConfirming ? 'Confirming...' :
+                     !address ? 'Connect Wallet' :
+                     !buyAmount ? 'Enter Amount' :
+                     `${tradeMode === "buy" ? "Buy" : "Sell"}`}
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Comments Tab Content */}
               <TabsContent value="comments" className="p-4 space-y-0">
                 {commentData && Array.isArray(commentData) && commentData.length > 0 ? (
                   <div className="space-y-3">
