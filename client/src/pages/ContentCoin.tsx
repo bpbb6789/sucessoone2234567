@@ -261,7 +261,7 @@ export default function ContentCoin() {
         </div>
 
         {/* Top Channels Section */}
-        <div className="space-y-6">
+        <div className="space-y-3 md:space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white mb-1">Top Channels</h2>
@@ -428,7 +428,7 @@ export default function ContentCoin() {
         </div>
 
         {/* Content Coins Section - Now Trending */}
-        <div className="space-y-6">
+        <div className="space-y-3 md:space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white mb-1">Now Trending</h2>
