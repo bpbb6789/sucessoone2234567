@@ -35,8 +35,9 @@ export function Layout({ children }: LayoutProps) {
           "transition-all duration-300",
           // Only add top padding if header is visible
           !shouldHideHeaderOnMobile && "pt-14",
-          shouldUseSidebarMargin && (isExpanded ? "content-expanded" : "content-collapsed"),
-          // Center content for contentcoin page
+          // Apply sidebar margins only for non-contentcoin pages
+          shouldUseSidebarMargin && !isContentCoinPage && (isExpanded ? "content-expanded" : "content-collapsed"),
+          // Center content for contentcoin page - ignores sidebar state completely
           isContentCoinPage && "content-centered",
           // Only add bottom padding if mobile nav is visible
           isMobile && !shouldHideMobileNavOnMobile && "pb-16"
