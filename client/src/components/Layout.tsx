@@ -23,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
   
   // Check if we're on contentcoin page to center content (includes home page)
   const isContentCoinPage = location === '/contentcoin' || location === '/';
-  const shouldUseSidebarMargin = !isMobile && !isContentCoinPage;
+  const shouldUseSidebarMargin = !isMobile;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100/30 to-gray-50 dark:from-purple-900/20 dark:to-black text-gray-900 dark:text-white transition-theme">

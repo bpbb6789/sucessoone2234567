@@ -338,18 +338,16 @@ nav[data-testid="sidebar"]::-webkit-scrollbar {
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* Center content override - truly centers content in viewport */
+  /* Center content override - centers content within available space */
   .content-centered {
-    margin-left: 0 !important;
-    width: 100vw !important;
     display: flex !important;
     justify-content: center !important;
     align-items: flex-start !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    position: relative !important;
-    left: 0 !important;
-    transform: none !important;
+  }
+
+  .content-centered > * {
+    max-width: 1280px !important;
+    width: 100% !important;
   }
 
   /* Mobile responsive adjustments */
