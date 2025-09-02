@@ -391,6 +391,12 @@ export default function ContentCoinDetail() {
           </Button>
         </Link>
         <div className="flex items-center gap-2">
+          <Link to={`/content-coin/trade/base/${tokenAddress}`}>
+            <Button variant="default" size="sm" className="bg-green-500 hover:bg-green-600 text-black">
+              <Zap className="h-4 w-4 mr-1" />
+              Trade
+            </Button>
+          </Link>
           <Button variant="ghost" size="sm">
             <Share2 className="h-4 w-4" />
           </Button>
