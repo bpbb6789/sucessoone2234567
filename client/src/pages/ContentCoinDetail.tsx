@@ -166,16 +166,16 @@ export default function ContentCoinDetail() {
     }));
   }, [holdersData]);
 
-  // Chart data for trading view - only define after we have tokenData
+  // Chart data for trading view
   const chartData = useMemo(() => {
-    if (!tokenData) return null;
+    const defaultPrice = tokenData?.price || "$0";
     
     return {
-      "1H": { points: "M50,150 L100,140 L150,130 L200,120 L250,110 L300,100 L350,90", price: tokenData.price || "$0" },
-      "1D": { points: "M50,160 L100,150 L150,140 L200,125 L250,105 L300,85 L350,65", price: tokenData.price || "$0" },
-      "1W": { points: "M50,170 L100,160 L150,155 L200,135 L250,115 L300,95 L350,75", price: tokenData.price || "$0" },
-      "1M": { points: "M50,180 L100,170 L150,165 L200,145 L250,125 L300,105 L350,85", price: tokenData.price || "$0" },
-      "All": { points: "M50,190 L100,180 L150,175 L200,155 L250,135 L300,115 L350,95", price: tokenData.price || "$0" },
+      "1H": { points: "M50,150 L100,140 L150,130 L200,120 L250,110 L300,100 L350,90", price: defaultPrice },
+      "1D": { points: "M50,160 L100,150 L150,140 L200,125 L250,105 L300,85 L350,65", price: defaultPrice },
+      "1W": { points: "M50,170 L100,160 L150,155 L200,135 L250,115 L300,95 L350,75", price: defaultPrice },
+      "1M": { points: "M50,180 L100,170 L150,165 L200,145 L250,125 L300,105 L350,85", price: defaultPrice },
+      "All": { points: "M50,190 L100,180 L150,175 L200,155 L250,135 L300,115 L350,95", price: defaultPrice },
     };
   }, [tokenData]);
 
@@ -354,8 +354,8 @@ export default function ContentCoinDetail() {
     );
   }
 
-  // Only access currentData after chartData is defined
-  const currentData = chartData ? chartData[selectedPeriod] : null;
+  // Get current chart data safely
+  const currentData = chartData?.[selectedPeriod] || null;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -384,12 +384,12 @@ export default function ContentCoinDetail() {
           {/* Price Display */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold">${tokenData.price || '0'}</h1>
+              <h1 className="text-3xl font-bold">${tokenData?.price || '0'}</h1>
               <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
                 +48%
               </Badge>
             </div>
-            <p className="text-gray-400">{tokenData.name} ({tokenData.symbol})</p>
+            <p className="text-gray-400">{tokenData?.name || 'Loading...'} ({tokenData?.symbol || '...'})</p>
           </div>
 
           {/* Chart Area */}
@@ -466,15 +466,15 @@ export default function ContentCoinDetail() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">Market Cap</span>
-                  <span className="text-sm font-semibold text-green-400">${tokenData.marketCap || '0'}</span>
+                  <span className="text-sm font-semibold text-green-400">${tokenData?.marketCap || '0'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">24H Volume</span>
-                  <span className="text-sm font-semibold">${tokenData.volume24h || '0'}</span>
+                  <span className="text-sm font-semibold">${tokenData?.volume24h || '0'}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">Creator Earnings</span>
-                  <span className="text-sm font-semibold">${tokenData.creatorEarnings || '0'}</span>
+                  <span className="text-sm font-semibold">${tokenData?.creatorEarnings || '0'}</span>
                 </div>
               </div>
             </div>
@@ -672,15 +672,15 @@ export default function ContentCoinDetail() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Name:</span>
-                        <span>{tokenData.name}</span>
+                        <span>{tokenData?.name || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Symbol:</span>
-                        <span>{tokenData.symbol}</span>
+                        <span>{tokenData?.symbol || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Address:</span>
-                        <span className="font-mono text-xs">{tokenData.address}</span>
+                        <span className="font-mono text-xs">{tokenData?.address || 'N/A'}</span>
                       </div>
                     </div>
                   </div>
