@@ -20,6 +20,10 @@ export function Layout({ children }: LayoutProps) {
   const isFeedPage = location === '/feed';
   const shouldHideHeaderOnMobile = isMobile && (isShortsPage || isFeedPage);
   const shouldHideMobileNavOnMobile = false; // Always show mobile nav
+  
+  // Check if we're on contentcoin page to center content
+  const isContentCoinPage = location === '/contentcoin';
+  const shouldUseSidebarMargin = !isMobile && !isContentCoinPage;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-100/30 to-gray-50 dark:from-purple-900/20 dark:to-black text-gray-900 dark:text-white transition-theme">
@@ -31,7 +35,7 @@ export function Layout({ children }: LayoutProps) {
           "transition-all duration-300",
           // Only add top padding if header is visible
           !shouldHideHeaderOnMobile && "pt-14",
-          !isMobile && (isExpanded ? "content-expanded" : "content-collapsed"),
+          shouldUseSidebarMargin && (isExpanded ? "content-expanded" : "content-collapsed"),
           // Only add bottom padding if mobile nav is visible
           isMobile && !shouldHideMobileNavOnMobile && "pb-16"
         )}
