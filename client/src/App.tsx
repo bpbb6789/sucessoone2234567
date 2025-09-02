@@ -120,7 +120,7 @@ function AppContent() {
                 <Route path="/create-pad" component={CreatePad} />
                 <Route path="/create-content-coin" component={CreateContentCoin} />
                 <Route path="/token/:id" component={TokenDetail} />
-                <Route path="/trade/:id" component={TokenTrade} />
+                <Route path="/content-coin/trade/:network/:address" component={TokenTrade} />
                 <Route path="/channel/:slug/manager" component={ChannelManager} />
                 <Route path="/dashboard/import" component={ContentImport} />
                 <Route path="/my-content" component={MyContent} />
