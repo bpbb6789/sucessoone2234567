@@ -311,16 +311,18 @@ export default function ContentCoin() {
                               </div>
                             </div>
 
-                            {/* Dark Overlay */}
-                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-300"></div>
+                            {/* Dark Overlay - Full Coverage */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/60 transition-colors duration-300"></div>
 
                             {/* Content Overlay */}
                             <div className="absolute inset-0 p-2 flex flex-col justify-between">
-                              {/* Top Section - Rating-like Badge */}
+                              {/* Top Section - Market Cap Badge */}
                               <div className="flex justify-end">
-                                <div className="bg-black/60 backdrop-blur-sm rounded-full px-1.5 py-0.5 flex items-center gap-1">
-                                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                                  <span className="text-white text-[10px] font-medium">LIVE</span>
+                                <div className="bg-black/80 backdrop-blur-sm rounded px-1.5 py-0.5 flex items-center gap-1">
+                                  <span className="text-green-400 text-[8px]">▲</span>
+                                  <span className="text-white text-[9px] font-medium">
+                                    {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
+                                  </span>
                                 </div>
                               </div>
 
