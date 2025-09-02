@@ -1,5 +1,5 @@
-"'use client'"
-// Using Zora SDK via TransactionComponent instead of direct contract calls
+"use client"
+// Zora SDK focused trading component - no PumpFun dependencies
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,235 +7,290 @@ import {
   CardFooter
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { MOCK_WETH_ADDRESS, UNIPUMP_ADDRESS } from "@/lib/addresses";
+import { MOCK_WETH_ADDRESS } from "@/lib/addresses";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import { useAccount, useReadContract } from "wagmi";
-import { Slippage } from "./Slippage";
-import TransactionComponent from "./Transaction";
+import { useBuyCreatorCoin, useSellCreatorCoin } from "@/hooks/useCreatorCoins";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 
-export function BuySell({ tokenData }: { tokenData: any }) {
+interface TokenData {
+  id: string;
+  coinAddress: string;
+  symbol: string;
+  name: string;
+}
+
+export function BuySell({ tokenData }: { tokenData: TokenData }) {
   const queryClient = useQueryClient()
   const { address } = useAccount()
-  const [amount, setAmount] = useState("0.0")
-  const [useWeth, setUseWeth] = useState(true)
-  const [approveWeth, setApproveWeth] = useState(false)
-  const { data } = useReadContract({
+  const { toast } = useToast()
+  const [buyAmount, setBuyAmount] = useState("")
+  const [sellAmount, setSellAmount] = useState("")
+  const [buyComment, setBuyComment] = useState("")
+  
+  // Zora SDK trading hooks
+  const buyMutation = useBuyCreatorCoin()
+  const sellMutation = useSellCreatorCoin()
+  
+  // Read user balances
+  const { data: wethBalance } = useReadContract({
     address: MOCK_WETH_ADDRESS,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: [address as Address]
   })
+  
   const { data: tokenBalance } = useReadContract({
-    address: tokenData.memeTokenAddress,
+    address: tokenData.coinAddress as Address,
     abi: erc20Abi,
     functionName: "balanceOf",
     args: [address as Address]
   })
 
-
-  function isTransactionDisabled() {
-    if (!amount || parseFloat(amount) <= 0) return true
-    if (data !== undefined) {
-      return data === BigInt(0)
+  const handleBuy = async () => {
+    if (!address || !buyAmount || parseFloat(buyAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid ETH amount to buy",
+        variant: "destructive"
+      })
+      return
     }
-    return false
-  }
-  function isSellTransactionDisabled() {
-    if (!amount || parseFloat(amount) <= 0) return true
-    if (tokenBalance !== undefined) {
-      return tokenBalance === BigInt(0)
+    
+    try {
+      await buyMutation.mutateAsync({
+        coinId: tokenData.id,
+        userAddress: address,
+        ethAmount: buyAmount,
+        comment: buyComment.trim() || undefined
+      })
+      
+      toast({
+        title: "Buy successful!",
+        description: `Purchased ${tokenData.symbol} tokens with ${buyAmount} ETH`
+      })
+      
+      setBuyAmount("")
+      setBuyComment("")
+    } catch (error) {
+      console.error('Buy failed:', error)
+      toast({
+        title: "Buy failed",
+        description: error instanceof Error ? error.message : "Transaction failed",
+        variant: "destructive"
+      })
     }
-    return false
   }
 
-  const isDisabled = isTransactionDisabled()
-  console.log("isDisabled", isDisabled);
-  const isSellDisabled = isSellTransactionDisabled()
+  const handleSell = async () => {
+    if (!address || !sellAmount || parseFloat(sellAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid token amount to sell",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    try {
+      await sellMutation.mutateAsync({
+        coinId: tokenData.id,
+        userAddress: address,
+        tokenAmount: sellAmount
+      })
+      
+      toast({
+        title: "Sell successful!",
+        description: `Sold ${sellAmount} ${tokenData.symbol} tokens`
+      })
+      
+      setSellAmount("")
+    } catch (error) {
+      console.error('Sell failed:', error)
+      toast({
+        title: "Sell failed",
+        description: error instanceof Error ? error.message : "Transaction failed",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const isBuyDisabled = !buyAmount || parseFloat(buyAmount) <= 0 || !address || buyMutation.isPending
+  const isSellDisabled = !sellAmount || parseFloat(sellAmount) <= 0 || !address || sellMutation.isPending
+  const hasWethBalance = wethBalance && wethBalance > 0n
+  const hasTokenBalance = tokenBalance && tokenBalance > 0n
 
   return (
     <Tabs defaultValue="Buy" className="w-[400px]">
       <TabsList className="grid h-[50px] w-full rounded-xl grid-cols-2">
-        <TabsTrigger value="Buy" className="h-full rounded-xl">Buy</TabsTrigger>
-        <TabsTrigger value="Sell" onClick={() => setUseWeth(true)} className="h-full rounded-xl">Sell</TabsTrigger>
+        <TabsTrigger value="Buy" className="h-full rounded-xl flex items-center gap-2">
+          <TrendingUp className="h-4 w-4" />
+          Buy
+        </TabsTrigger>
+        <TabsTrigger value="Sell" className="h-full rounded-xl flex items-center gap-2">
+          <TrendingDown className="h-4 w-4" />
+          Sell
+        </TabsTrigger>
       </TabsList>
+      
       <TabsContent value="Buy">
-        <Card>
-          <CardContent className="space-y-4 mt-4">
-            <div className="relative mb-2">
+        <Card className="bg-background/50 backdrop-blur-sm border-border/50">
+          <CardContent className="space-y-4 pt-6">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Amount (ETH)</label>
                 <Button
-                  variant="outline"
-                  onClick={() => setUseWeth(!useWeth)}
-                  className="bg-[#1c1f26]  text-slate-300 border-slate-700 hover:bg-slate-800"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setBuyAmount(hasWethBalance ? formatUnits(wethBalance!, 18) : "0")}
+                  className="text-xs text-muted-foreground hover:text-foreground"
                 >
-                  Switch To {!useWeth ? "USDC" : tokenData.symbol}
-                </Button>
-                <Slippage />
-              </div>
-              <div className="flex items-center mt-2 justify-end">
-                <Button
-                  variant="outline"
-                  className="bg-[#1c1f26]  text-slate-300 border-slate-700 hover:bg-slate-800"
-                >
-                  Max Balance {useWeth && data ? formatUnits(data, 18) : "0"}
+                  Max: {hasWethBalance ? formatUnits(wethBalance!, 18) : "0"} ETH
                 </Button>
               </div>
-              <div className="relative mt-2">
-                <Input value={amount} type="text" onChange={(e) => setAmount(e.target.value)} id="name" defaultValue="Pedro Duarte" />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                    {useWeth ? "W" : tokenData.symbol?.charAt(0)}
-                  </div>
-                  <span className="text-md text-slate-300">{useWeth ? "WETH" : tokenData.symbol}</span>
+              <div className="relative">
+                <Input 
+                  type="text" 
+                  value={buyAmount}
+                  onChange={(e) => setBuyAmount(e.target.value)}
+                  placeholder="0.0"
+                  className="pr-16 h-12 text-lg"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <span className="text-sm text-muted-foreground">ETH</span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 mb-6">
-              <Button
-                variant="outline"
-                onClick={() => setAmount("0.1")}
-                className="bg-[#1c1f26] text-slate-300 border-slate-700 hover:bg-slate-800"
-              >
-                0.1 {useWeth ? "WETH" : tokenData.symbol}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setAmount("0.0001")}
-                className="bg-[#1c1f26] text-slate-300 border-slate-700 hover:bg-slate-800"
-              >
-                0.0001 {useWeth ? "WETH" : tokenData.symbol}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setAmount("0.00002")}
-                className="bg-[#1c1f26] text-slate-300 border-slate-700 hover:bg-slate-800"
-              >
-                0.00002 {useWeth ? "WETH" : tokenData.symbol}
-              </Button>
+
+            <div className="flex gap-2">
+              {["0.001", "0.01", "0.1"].map((amount) => (
+                <Button
+                  key={amount}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBuyAmount(amount)}
+                  className="flex-1"
+                >
+                  {amount} ETH
+                </Button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Comment (Optional)</label>
+              <Textarea
+                value={buyComment}
+                onChange={(e) => setBuyComment(e.target.value)}
+                placeholder="Add a comment with your purchase..."
+                className="resize-none"
+                rows={3}
+              />
             </div>
           </CardContent>
+          
           <CardFooter>
-            {approveWeth ? (
-              <TransactionComponent
-                handleOnStatus2={(status) => {
-                  if (status.statusName === "success") {
-                    setApproveWeth(true)
-                    queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
-                  }
-                }}
-                cta="Buy"
-                contractAddress={UNIPUMP_ADDRESS}
-                contractAbi={PUMP_FUN_ABI}
-                functionName="buy"
-                args={[tokenData.memeTokenAddress, parseUnits(amount, 18), BigInt(0)]}
-              />
-            ) : (
-              <TransactionComponent
-                handleOnStatus2={(status) => {
-                  if (status.statusName === "success") {
-                    setApproveWeth(true)
-                  }
-                }}
-                disabled={isDisabled}
-                cta="Approve"
-                contractAddress={MOCK_WETH_ADDRESS}
-                contractAbi={erc20Abi}
-                functionName="approve"
-                args={[UNIPUMP_ADDRESS, parseUnits(amount, 18).toString()]}
-              />
-            )}
+            <Button 
+              onClick={handleBuy}
+              disabled={isBuyDisabled}
+              className="w-full h-12 text-lg font-semibold"
+              size="lg"
+            >
+              {buyMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Buying...
+                </>
+              ) : (
+                `Buy ${tokenData.symbol}`
+              )}
+            </Button>
           </CardFooter>
         </Card>
       </TabsContent>
+      
       <TabsContent value="Sell">
-        <Card>
-          <CardContent className="space-y-4 mt-4">
-            <div className="relative">
-              <div className="flex mb-2 items-center justify-end">
-                <Slippage />
-              </div>
-              <div className="flex items-center mt-2 justify-end">
+        <Card className="bg-background/50 backdrop-blur-sm border-border/50">
+          <CardContent className="space-y-4 pt-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Amount ({tokenData.symbol})</label>
                 <Button
-                  variant="outline"
-                  onClick={() => setAmount(tokenBalance ? formatUnits(tokenBalance, 18) : "0")}
-                  className="bg-[#1c1f26]  text-slate-300 border-slate-700 hover:bg-slate-800"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSellAmount(hasTokenBalance ? formatUnits(tokenBalance!, 18) : "0")}
+                  className="text-xs text-muted-foreground hover:text-foreground"
                 >
-                  Max Balance {useWeth && tokenBalance ? formatUnits(tokenBalance, 18) : "0"}
+                  Max: {hasTokenBalance ? formatUnits(tokenBalance!, 18) : "0"} {tokenData.symbol}
                 </Button>
               </div>
-              <div className="relative mt-2">
-                <Input value={amount} type="text" onChange={(e) => setAmount(e.target.value)} id="name" defaultValue="Pedro Duarte" />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">
-                    {tokenData.symbol?.charAt(0)}
-                  </div>
-                  <span className="text-md text-slate-300">{tokenData.symbol}</span>
+              <div className="relative">
+                <Input 
+                  type="text" 
+                  value={sellAmount}
+                  onChange={(e) => setSellAmount(e.target.value)}
+                  placeholder="0.0"
+                  className="pr-20 h-12 text-lg"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <span className="text-sm text-muted-foreground">{tokenData.symbol}</span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap mb-6">
-              <Button
-                variant="outline"
-                onClick={() => setAmount("0.1")}
-                className="bg-[#1c1f26] text-slate-300 border-slate-700 hover:bg-slate-800"
-              >
-                0.1 {tokenData.symbol}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setAmount("0.0001")}
-                className="bg-[#1c1f26] text-slate-300 border-slate-700 hover:bg-slate-800"
-              >
-                0.0001 {tokenData.symbol}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setAmount("0.00002")}
-                className="bg-[#1c1f26] text-slate-300 border-slate-700 hover:bg-slate-800"
-              >
-                0.00002 {tokenData.symbol}
-              </Button>
-            </div>
-          </CardContent>
-          <CardFooter>
-            {approveWeth ? (
-              <TransactionComponent
-                handleOnStatus2={(status) => {
-                  if (status.statusName === "success") {
-                    setApproveWeth(true)
-                    queryClient.invalidateQueries({ queryKey: ["getAllSales"] })
 
-                  }
-                }}
-                cta="Sell"
-                contractAddress={UNIPUMP_ADDRESS}
-                contractAbi={PUMP_FUN_ABI}
-                functionName="sell"
-                args={[tokenData.memeTokenAddress, parseUnits(amount, 18), BigInt(0)]}
-              />
-            ) : (
-              <TransactionComponent
-                handleOnStatus2={(status) => {
-                  if (status.statusName === "success") {
-                    setApproveWeth(true)
-                  }
-                }}
-                disabled={isSellDisabled}
-                cta="Approve"
-                contractAddress={MOCK_WETH_ADDRESS}
-                contractAbi={erc20Abi}
-                functionName="approve"
-                args={[UNIPUMP_ADDRESS, parseUnits(amount, 18).toString()]}
-              />
+            <div className="flex gap-2">
+              {["25%", "50%", "100%"].map((percent) => (
+                <Button
+                  key={percent}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!hasTokenBalance) return;
+                    const balance = parseFloat(formatUnits(tokenBalance!, 18));
+                    const percentage = parseInt(percent) / 100;
+                    setSellAmount((balance * percentage).toString());
+                  }}
+                  className="flex-1"
+                  disabled={!hasTokenBalance}
+                >
+                  {percent}
+                </Button>
+              ))}
+            </div>
+
+            {!hasTokenBalance && (
+              <div className="text-center text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                You don't own any {tokenData.symbol} tokens
+              </div>
             )}
+          </CardContent>
+          
+          <CardFooter>
+            <Button 
+              onClick={handleSell}
+              disabled={isSellDisabled}
+              className="w-full h-12 text-lg font-semibold"
+              size="lg"
+              variant="destructive"
+            >
+              {sellMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Selling...
+                </>
+              ) : (
+                `Sell ${tokenData.symbol}`
+              )}
+            </Button>
           </CardFooter>
         </Card>
       </TabsContent>

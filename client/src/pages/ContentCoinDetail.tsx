@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAccount } from "wagmi";
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useReadContract } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import {
   Play,
@@ -43,7 +43,8 @@ import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
 import { useState, useMemo } from "react";
 
 // Creator coin related hooks
-import { useBuyCreatorCoin, useSellCreatorCoin, type CreatorCoin } from "@/hooks/useCreatorCoins";
+import { useBuyCreatorCoin, useSellCreatorCoin, useCreatorCoin, useCreatorCoinPrice } from "@/hooks/useCreatorCoins";
+import type { CreatorCoin } from "@shared/schema";
 
 // Contract constants for Base Sepolia
 const CREATOR_COIN_TOKEN_ABI = [
@@ -108,22 +109,10 @@ export default function ContentCoinDetail() {
   const buyMutation = useBuyCreatorCoin();
   const sellMutation = useSellCreatorCoin();
 
-  // Direct contract interaction for onchain trading
-  const {
-    data: hash,
-    error: writeError,
-    writeContract
-  } = useWriteContract();
+  // Fetch creator coin data using the token address as ID
+  const { data: creatorCoin, isLoading: isLoadingCoin } = useCreatorCoin(tokenAddress || '');
+  const { data: priceData } = useCreatorCoinPrice(tokenAddress || '');
 
-  const { 
-    isLoading: isTxConfirming, 
-    isSuccess: isTxSuccess,
-    error: txError 
-  } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  const isWritePending = false;
 
   // Fetch creator coin data
   const { data: tokenData, isLoading: creatorCoinLoading, error: creatorCoinError } = useQuery({
@@ -645,10 +634,9 @@ export default function ContentCoinDetail() {
                   <Button
                     className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
                     onClick={tradeMode === "buy" ? handleBuy : handleSell}
-                    disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
+                    disabled={buyMutation.isPending || !address || !buyAmount || parseFloat(buyAmount) <= 0}
                   >
-                    {isWritePending ? 'Signing...' : 
-                     isTxConfirming ? 'Confirming...' :
+                    {buyMutation.isPending ? 'Processing...' :
                      !address ? 'Connect Wallet' :
                      !buyAmount ? 'Enter Amount' :
                      `${tradeMode === "buy" ? "Buy" : "Sell"}`}
