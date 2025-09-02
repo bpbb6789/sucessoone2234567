@@ -379,10 +379,10 @@ export default function ContentCoinDetail() {
 
       {/* Modern Trading Interface Layout */}
       <div className="max-w-7xl mx-auto p-6">
-        <div className="flex gap-6 min-h-[600px]">
+        <div className="flex gap-2 min-h-[600px]">
           {/* Left Side - Chart and Media */}
-          <div className="flex-1">
-            <div className="h-64 bg-gray-800 rounded-lg mb-6 relative overflow-hidden border border-gray-700">
+          <div className="flex-[2] bg-card rounded-2xl p-6 border">
+            <div className="h-64 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-lg mb-6 relative overflow-hidden">
               {currentView === "chart" ? (
                 <>
                   <svg className="w-full h-full" viewBox="0 0 400 220">
@@ -432,192 +432,174 @@ export default function ContentCoinDetail() {
               )}
             </div>
 
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex space-x-2">
-                <Button
-                  variant={selectedPeriod === "1H" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedPeriod("1H")}
-                >
-                  1H
-                </Button>
-                <Button
-                  variant={selectedPeriod === "1D" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedPeriod("1D")}
-                >
-                  1D
-                </Button>
-                <Button
-                  variant={selectedPeriod === "1W" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedPeriod("1W")}
-                >
-                  1W
-                </Button>
-                <Button
-                  variant={selectedPeriod === "1M" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedPeriod("1M")}
-                >
-                  1M
-                </Button>
-                <Button
-                  variant={selectedPeriod === "All" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedPeriod("All")}
-                >
-                  All
-                </Button>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant={currentView === "chart" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setCurrentView("chart")}
-                >
-                  Chart
-                </Button>
-                <Button
-                  variant={currentView === "image" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setCurrentView("image")}
-                >
-                  Media
-                </Button>
-              </div>
+            <div className="flex space-x-2">
+              <Button
+                variant={selectedPeriod === "1H" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedPeriod("1H")}
+              >
+                1H
+              </Button>
+              <Button
+                variant={selectedPeriod === "1D" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedPeriod("1D")}
+              >
+                1D
+              </Button>
+              <Button
+                variant={selectedPeriod === "1W" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedPeriod("1W")}
+              >
+                1W
+              </Button>
+              <Button
+                variant={selectedPeriod === "1M" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedPeriod("1M")}
+              >
+                1M
+              </Button>
+              <Button
+                variant={selectedPeriod === "All" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedPeriod("All")}
+              >
+                All
+              </Button>
             </div>
           </div>
 
           {/* Right Side - Trading Panel */}
-          <div className="flex-1">
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-            {/* Token Header */}
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${tokenData.creator || 'default'}`} />
-                  <AvatarFallback>{tokenData.creator?.slice(2, 4) || 'UN'}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="font-semibold text-lg">{tokenData.name}</h2>
-                  <p className="text-sm text-muted-foreground">{tokenData.symbol}</p>
-                </div>
-              </div>
-              
-              <div className="text-center mb-4">
-                <div className="text-2xl font-bold">{currentData.price}</div>
-                <div className="text-green-600 text-sm">+48% (24h)</div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Market Cap</div>
-                  <div className="font-semibold">${tokenData.marketCap}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Volume 24h</div>
-                  <div className="font-semibold">${tokenData.volume24h}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Buy/Sell Toggle */}
-            <div className="flex bg-muted rounded-lg p-1 mb-4">
-              <Button
-                variant={tradeMode === "buy" ? "default" : "ghost"}
-                className="flex-1"
-                onClick={() => setTradeMode("buy")}
-              >
-                Buy
+          <div className="flex-[1] bg-card rounded-2xl p-6 border">
+            <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1">
+              <Button variant="ghost" size="sm" className="gap-2 bg-background shadow-sm">
+                <MessageCircle className="h-4 w-4" />
+                Comments
               </Button>
-              <Button
-                variant={tradeMode === "sell" ? "default" : "ghost"}
-                className="flex-1"
-                onClick={() => setTradeMode("sell")}
-              >
-                Sell
+              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                <Crown className="h-4 w-4" />
+                Holders
+                <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{processedHolders.length}</span>
+              </Button>
+              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                <TrendingUp className="h-4 w-4" />
+                Activity
+              </Button>
+              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+                <Sparkles className="h-4 w-4" />
+                Details
               </Button>
             </div>
-
-            {/* Amount Input */}
-            <div className="space-y-4 mb-6">
-              <div className="relative">
-                <Input
-                  type="number"
-                  placeholder="0.000111"
-                  value={buyAmount}
-                  onChange={(e) => setBuyAmount(e.target.value)}
-                  className="pr-16"
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <span className="text-sm font-medium">ETH</span>
-                  <ChevronDown className="h-4 w-4" />
+            
+            <div className="space-y-6 mt-8">
+              {/* Market Stats */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Market Cap</span>
+                  <span className="text-sm font-medium text-green-500">↗ ${tokenData.marketCap}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">24H Volume</span>
+                  <span className="text-sm font-medium">⏰ ${tokenData.volume24h}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Creator Earnings</span>
+                  <span className="text-sm font-medium">${tokenData.creatorEarnings}</span>
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                {["0.001", "0.01", "0.1", "Max"].map((amount) => (
+              {/* Trading Section */}
+              <div className="space-y-4">
+                <div className="flex space-x-2">
                   <Button
-                    key={amount}
+                    className={`flex-1 ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-muted hover:bg-muted/80"}`}
+                    onClick={() => setTradeMode("buy")}
+                  >
+                    Buy
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={`flex-1 ${tradeMode === "sell" ? "bg-red-500 hover:bg-red-600 text-white border-red-500" : "bg-transparent"}`}
+                    onClick={() => setTradeMode("sell")}
+                  >
+                    Sell
+                  </Button>
+                </div>
+
+                <div className="text-center text-sm text-muted-foreground">
+                  Balance {tokenBalance ? formatUnits(tokenBalance, 18) : '0'} {tokenData.symbol}
+                </div>
+
+                <div className="flex items-center space-x-2 p-3 bg-muted rounded-lg border">
+                  <input
+                    type="number"
+                    value={buyAmount}
+                    onChange={(e) => setBuyAmount(e.target.value)}
+                    className="flex-1 bg-transparent border-none outline-none text-sm font-medium"
+                    placeholder="0.000111"
+                    step="0.000001"
+                    min="0"
+                  />
+                  <Button variant="outline" size="sm" className="flex items-center space-x-1 bg-background">
+                    <span className="text-xs font-medium">ETH</span>
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
-                    onClick={() => handleAmountSelect(amount)}
+                    className="flex-1 bg-transparent hover:bg-muted"
+                    onClick={() => handleAmountSelect("0.001")}
                   >
-                    {amount}
+                    0.001 ETH
                   </Button>
-                ))}
-              </div>
-            </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-transparent hover:bg-muted"
+                    onClick={() => handleAmountSelect("0.01")}
+                  >
+                    0.01 ETH
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-transparent hover:bg-muted"
+                    onClick={() => handleAmountSelect("0.1")}
+                  >
+                    0.1 ETH
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 bg-transparent hover:bg-muted"
+                    onClick={handleMaxAmount}
+                  >
+                    Max
+                  </Button>
+                </div>
 
-            {/* Comment Input */}
-            <Textarea
-              placeholder="Add a comment..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="resize-none mb-4"
-              rows={3}
-            />
+                <textarea
+                  placeholder="Add a comment..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="w-full p-3 bg-muted rounded-lg text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-ring"
+                />
 
-            {/* Trade Button */}
-            <Button
-              className={cn(
-                "w-full font-semibold py-6 text-lg",
-                tradeMode === "buy" 
-                  ? "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-red-500 hover:bg-red-600 text-white"
-              )}
-              onClick={tradeMode === "buy" ? handleBuy : handleSell}
-              disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
-            >
-              {isWritePending ? 'Signing...' : 
-               isTxConfirming ? 'Confirming...' :
-               !address ? 'Connect Wallet' :
-               !buyAmount ? 'Enter Amount' :
-               `${tradeMode === "buy" ? "Buy" : "Sell"} ${buyAmount} ETH worth`}
-            </Button>
-
-            {/* Token Tabs */}
-            <div className="mt-6">
-              <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1 mb-4">
-                <Button variant="ghost" size="sm" className="gap-2 bg-background shadow-sm">
-                  <MessageCircle className="h-4 w-4" />
-                  Comments
-                </Button>
-                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                  <Crown className="h-4 w-4" />
-                  Holders
-                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{processedHolders.length}</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                  <TrendingUp className="h-4 w-4" />
-                  Activity
-                </Button>
-                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                  <Sparkles className="h-4 w-4" />
-                  Details
+                <Button
+                  className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
+                  onClick={tradeMode === "buy" ? handleBuy : handleSell}
+                  disabled={isWritePending || isTxConfirming || !address || !buyAmount || parseFloat(buyAmount) <= 0}
+                >
+                  {isWritePending ? 'Signing...' : 
+                   isTxConfirming ? 'Confirming...' :
+                   !address ? 'Connect Wallet' :
+                   !buyAmount ? 'Enter Amount' :
+                   `${tradeMode === "buy" ? "Buy" : "Sell"} ${buyAmount} ETH worth`}
                 </Button>
               </div>
 
@@ -652,7 +634,6 @@ export default function ContentCoinDetail() {
                   </div>
                 )}
               </div>
-            </div>
             </div>
           </div>
         </div>
