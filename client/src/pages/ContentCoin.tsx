@@ -381,35 +381,37 @@ export default function ContentCoin() {
                                   </h3>
                                 </div>
 
-                                {/* Ticker and Time */}
-                                <div className="flex items-center gap-1 text-white/80 text-[10px]">
-                                  <span className="bg-white/20 px-1 py-0.5 rounded text-[9px] font-medium">
-                                    ${channel.ticker || channel.name.slice(0, 3).toUpperCase()}
-                                  </span>
-                                  <span className="text-[8px]">•</span>
-                                  <span className="text-[9px]">
-                                    {formatTimeAgo(channel.createdAt)}
-                                  </span>
-                                </div>
-
-                                {/* Stats Row - Holders and Market Cap */}
-                                <div className="flex items-center justify-between text-[9px]">
+                                {/* Ticker, Time and Stats on same line */}
+                                <div className="flex items-center justify-between text-white/80 text-[10px]">
                                   <div className="flex items-center gap-1">
-                                    <span className="text-blue-400 text-[8px]">HOLDERS</span>
-                                    <span className="text-white/80">{channel.holders || 0}</span>
+                                    <span className="bg-white/20 px-1 py-0.5 rounded text-[9px] font-medium">
+                                      ${channel.ticker || channel.name.slice(0, 3).toUpperCase()}
+                                    </span>
+                                    <span className="text-[8px]">•</span>
+                                    <span className="text-[9px]">
+                                      {formatTimeAgo(channel.createdAt)}
+                                    </span>
                                   </div>
-                                  <div className="flex items-center gap-0.5">
-                                    {/* Market Cap Arrow - Green up for positive, Red down for negative */}
-                                    <span className={`text-[10px] font-bold ${
-                                      (channel.marketCap && channel.marketCap > 0) 
-                                        ? 'text-red-400 dark:text-red-400' 
-                                        : 'text-green-400 dark:text-green-400'
-                                    }`}>
-                                      {(channel.marketCap && channel.marketCap > 0) ? '▼' : '▲'}
-                                    </span>
-                                    <span className="text-green-400 dark:text-green-400">
-                                      {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
-                                    </span>
+                                  
+                                  {/* Stats - Users and Market Cap */}
+                                  <div className="flex items-center gap-1 text-[9px]">
+                                    <div className="flex items-center gap-0.5">
+                                      <User className="w-2 h-2 text-blue-400" />
+                                      <span className="text-white/80">{channel.holders || 0}</span>
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                      {/* Market Cap Arrow - Green up for positive, Red down for negative */}
+                                      <span className={`text-[10px] font-bold ${
+                                        (channel.marketCap && channel.marketCap > 0) 
+                                          ? 'text-red-400 dark:text-red-400' 
+                                          : 'text-green-400 dark:text-green-400'
+                                      }`}>
+                                        {(channel.marketCap && channel.marketCap > 0) ? '▼' : '▲'}
+                                      </span>
+                                      <span className="text-green-400 dark:text-green-400">
+                                        {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
