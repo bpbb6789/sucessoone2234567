@@ -38,7 +38,7 @@ import {
 import { cn } from "@/lib/utils";
 // Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
-import ContentPreview from "@/components/ContentPreview";
+import { ContentPreview } from "@/components/ContentPreview";
 import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
 import { useState, useMemo } from "react";
 
