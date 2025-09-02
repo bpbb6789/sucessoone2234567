@@ -336,10 +336,10 @@ export default function ContentCoin() {
                                   {/* Market Cap Arrow - Green up for positive, Red down for negative */}
                                   <span className={`text-[8px] font-bold ${
                                     (channel.marketCap && channel.marketCap > 0) 
-                                      ? 'text-green-400' 
-                                      : 'text-red-400'
+                                      ? 'text-red-400' 
+                                      : 'text-green-400'
                                   }`}>
-                                    {(channel.marketCap && channel.marketCap > 0) ? '▲' : '▼'}
+                                    {(channel.marketCap && channel.marketCap > 0) ? '▼' : '▲'}
                                   </span>
                                   <span className="text-white text-[9px] font-medium">
                                     {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
@@ -398,10 +398,10 @@ export default function ContentCoin() {
                                     {/* Market Cap Arrow - Green up for positive, Red down for negative */}
                                     <span className={`text-[10px] font-bold ${
                                       (channel.marketCap && channel.marketCap > 0) 
-                                        ? 'text-green-400' 
-                                        : 'text-red-400'
+                                        ? 'text-red-400' 
+                                        : 'text-green-400'
                                     }`}>
-                                      {(channel.marketCap && channel.marketCap > 0) ? '▲' : '▼'}
+                                      {(channel.marketCap && channel.marketCap > 0) ? '▼' : '▲'}
                                     </span>
                                     <span className="text-green-400">
                                       {channel.marketCap ? `$${Math.floor(channel.marketCap/1000)}K` : '$0'}
