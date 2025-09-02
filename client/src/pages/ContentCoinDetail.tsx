@@ -514,7 +514,7 @@ export default function ContentCoinDetail() {
           {/* Tabs Header */}
           <Tabs defaultValue="comments" className="flex-1 flex flex-col">
             <div className="border-b border-gray-700 px-4 py-3">
-              <TabsList className="grid w-full grid-cols-4 bg-gray-800">
+              <TabsList className="grid w-full grid-cols-3 bg-gray-800">
                 <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
                   <MessageCircle className="h-3 w-3" />
                   Comments
@@ -527,10 +527,6 @@ export default function ContentCoinDetail() {
                 <TabsTrigger value="activity" className="flex items-center gap-1 text-xs">
                   <Activity className="h-3 w-3" />
                   Activity
-                </TabsTrigger>
-                <TabsTrigger value="details" className="flex items-center gap-1 text-xs">
-                  <Settings className="h-3 w-3" />
-                  Details
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -749,37 +745,9 @@ export default function ContentCoinDetail() {
               </TabsContent>
 
               <TabsContent value="details" className="p-4 space-y-0">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold mb-2">Token Details</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Name:</span>
-                        <span>{tokenData?.coinName || tokenData?.name || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Symbol:</span>
-                        <span>{tokenData?.coinSymbol || tokenData?.symbol || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Address:</span>
-                        <span className="font-mono text-xs">{tokenData?.coinAddress || tokenData?.address || 'N/A'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Creator:</span>
-                        <span className="font-mono text-xs">
-                          {tokenData?.creatorAddress ? 
-                            `${tokenData.creatorAddress.slice(0, 6)}...${tokenData.creatorAddress.slice(-4)}` : 
-                            'N/A'
-                          }
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Status:</span>
-                        <span className="capitalize">{tokenData?.status || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
+                <div className="text-center text-gray-400 py-8">
+                  <Settings className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Details coming soon</p>
                 </div>
               </TabsContent>
             </div>
