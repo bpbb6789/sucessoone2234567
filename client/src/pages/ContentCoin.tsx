@@ -262,13 +262,13 @@ export default function ContentCoin() {
             </Link>
           </div>
 
-          {/* Top Channels Carousel - Horizontal Card Layout */}
-          <div className="relative px-12">
+          {/* Top Channels - Compact Card Layout */}
+          <div className="relative">
             {channelsLoading ? (
               // Loading state
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1">
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide">
                 {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-20 w-full rounded-xl" />
+                  <Skeleton key={i} className="h-32 w-64 rounded-2xl flex-shrink-0" />
                 ))}
               </div>
             ) : channelsError || !channels || channels.length === 0 ? (
@@ -277,96 +277,76 @@ export default function ContentCoin() {
                 <p className="text-gray-400">No channels found</p>
               </div>
             ) : (
-              // Carousel Layout without arrows
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                  slidesToScroll: 1
-                }}
-                plugins={[
-                  Autoplay({
-                    delay: 3000,
-                    stopOnInteraction: true,
-                    stopOnMouseEnter: true
-                  })
-                ]}
-                className="w-full"
-              >
-                <CarouselContent className="-ml-4">
-                  {channels.map((channel, index) => (
-                    <CarouselItem key={channel.id} className="pl-4 basis-full md:basis-1/3">
-                      <Link to={`/channel/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
-                        <div className="group cursor-pointer">
-                          <Card className="bg-gray-900/80 hover:bg-gray-800/90 border-gray-700/30 transition-all duration-300 overflow-hidden rounded-2xl">
-                            <CardContent className="p-0">
-                              <div className="flex items-center gap-1 p-4">
-                                {/* Channel Image - Large Rounded */}
-                                <div className="relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden">
-                                  {channel.coverUrl || channel.avatarUrl ? (
-                                    <img
-                                      src={
-                                        (channel.coverUrl?.startsWith('baf') 
-                                          ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}` 
-                                          : channel.coverUrl) ||
-                                        (channel.avatarUrl?.startsWith('baf')
-                                          ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
-                                          : channel.avatarUrl)
-                                      }
-                                      alt={channel.name}
-                                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                      onError={(e) => {
-                                        const target = e.currentTarget as HTMLImageElement;
-                                        target.style.display = 'none';
-                                        target.nextElementSibling?.classList.remove('hidden');
-                                      }}
-                                    />
-                                  ) : null}
-                                  <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center ${(channel.coverUrl || channel.avatarUrl) ? 'hidden' : ''}`}>
-                                    <span className="text-white font-bold text-xl">{channel.name.charAt(0)}</span>
-                                  </div>
-                                </div>
+              // Compact Card Layout
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+                {channels.map((channel, index) => (
+                  <Link key={channel.id} to={`/channel/${channel.slug}`} data-testid={`channel-card-${channel.id}`}>
+                    <div className="group cursor-pointer flex-shrink-0">
+                      <Card className="bg-gray-900/90 hover:bg-gray-800/90 border-gray-700/50 transition-all duration-300 overflow-hidden rounded-2xl w-64 h-32 relative">
+                        <CardContent className="p-0 h-full">
+                          {/* Background Image with Overlay */}
+                          <div className="relative w-full h-full">
+                            {/* Background Image */}
+                            <div className="absolute inset-0">
+                              {channel.coverUrl || channel.avatarUrl ? (
+                                <img
+                                  src={
+                                    (channel.coverUrl?.startsWith('baf') 
+                                      ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}` 
+                                      : channel.coverUrl) ||
+                                    (channel.avatarUrl?.startsWith('baf')
+                                      ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
+                                      : channel.avatarUrl)
+                                  }
+                                  alt={channel.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  onError={(e) => {
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <div className={`w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 ${(channel.coverUrl || channel.avatarUrl) ? 'hidden' : ''}`}>
+                              </div>
+                            </div>
 
-                                {/* Channel Content */}
-                                <div className="flex-1 min-w-0">
-                                  {/* Channel Name with Coin Symbol */}
-                                  <div className="mb-2">
-                                    <h3 className="font-bold text-white text-base leading-tight truncate">
-                                      {channel.name} ({channel.name.slice(0, 4).toUpperCase()})
-                                    </h3>
-                                  </div>
+                            {/* Dark Overlay */}
+                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors duration-300"></div>
 
-                                  {/* Creator with Icon */}
-                                  <div className="flex items-center gap-2 text-gray-300 text-sm mb-1">
-                                    <User className="w-3 h-3" />
-                                    <span>{channel.name.split(' ')[0]} {channel.name.split(' ')[1] || 'Team'}</span>
-                                  </div>
-
-                                  {/* Contract Address */}
-                                  <div className="flex items-center gap-2 text-sm mb-1">
-                                    <DollarSign className="w-3 h-3 text-green-400" />
-                                    <span className="text-green-400 font-semibold text-[10px] truncate">
-                                      {channel.coinAddress ? `${channel.coinAddress.slice(0, 6)}...${channel.coinAddress.slice(-4)}` : 'Not deployed'}
-                                    </span>
-                                  </div>
-
-                                  {/* Created Date */}
-                                  <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                    <FileText className="w-3 h-3" />
-                                    <span className="text-[10px]">
-                                      {formatTimeAgo(channel.createdAt)}
-                                    </span>
-                                  </div>
+                            {/* Content Overlay */}
+                            <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                              {/* Top Section - Rating-like Badge */}
+                              <div className="flex justify-end">
+                                <div className="bg-black/60 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                  <span className="text-white text-xs font-medium">LIVE</span>
                                 </div>
                               </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      </Link>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
+
+                              {/* Bottom Section - Channel Info */}
+                              <div className="space-y-1">
+                                <h3 className="text-white font-bold text-lg leading-tight truncate">
+                                  {channel.name}
+                                </h3>
+                                <div className="flex items-center gap-2 text-white/80 text-sm">
+                                  <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-medium">
+                                    ${channel.ticker || channel.name.slice(0, 4).toUpperCase()}
+                                  </span>
+                                  <span className="text-xs">•</span>
+                                  <span className="text-xs">
+                                    {formatTimeAgo(channel.createdAt)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
           </div>
         </div>
