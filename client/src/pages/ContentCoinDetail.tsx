@@ -401,10 +401,12 @@ export default function ContentCoinDetail() {
           {/* Price Display */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold">{tokenData?.currentPrice ? `$${tokenData.currentPrice}` : '$0'}</h1>
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                +48%
-              </Badge>
+              <h1 className="text-3xl font-bold">{priceData?.price ? `$${priceData.price}` : (tokenData?.currentPrice ? `$${tokenData.currentPrice}` : '$0')}</h1>
+              {priceData?.priceChange24h !== undefined && (
+                <Badge className={`${priceData.priceChange24h >= 0 ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
+                  {priceData.priceChange24h >= 0 ? '+' : ''}{priceData.priceChange24h.toFixed(2)}%
+                </Badge>
+              )}
             </div>
             <p className="text-muted-foreground">{tokenData?.coinName || tokenData?.name || 'Loading...'} ({tokenData?.coinSymbol || tokenData?.symbol || '...'})</p>
           </div>
@@ -507,15 +509,15 @@ export default function ContentCoinDetail() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Market Cap</span>
-                <span className="text-sm font-semibold text-green-400">${tokenData?.marketCap || tokenData?.startingMarketCap || '0'}</span>
+                <span className="text-sm font-semibold text-green-400">${priceData?.marketCap || tokenData?.marketCap || tokenData?.startingMarketCap || '0'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">24H Volume</span>
-                <span className="text-sm font-semibold">${tokenData?.volume24h || '0'}</span>
+                <span className="text-sm font-semibold">${priceData?.volume24h || tokenData?.volume24h || '0'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Creator Earnings</span>
-                <span className="text-sm font-semibold">${tokenData?.creatorEarnings || '0.02'}</span>
+                <span className="text-sm font-semibold">${tokenData?.creatorEarnings || (priceData?.volume24h ? (parseFloat(priceData.volume24h) * 0.02).toFixed(4) : '0')}</span>
               </div>
             </div>
           </div>
