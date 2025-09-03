@@ -2012,6 +2012,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ==================== DOPPLER TRADING ENDPOINTS ====================
+
+  // Get Doppler token info
+  app.get("/api/doppler/tokens/:address", async (req, res) => {
+    try {
+      const { address } = req.params;
+      const dopplerService = getDopplerService(84532);
+      
+      // Get token info from database first
+      const pad = await storage.getPadByTokenAddress(address);
+      if (!pad) {
+        return res.status(404).json({ message: "Token not found" });
+      }
+
+      // Get current auction data
+      const currentPrice = await dopplerService.getCurrentPrice(address, pad.bondingCurveAddress);
+      const hasGraduated = await dopplerService.hasGraduated(address, pad.bondingCurveAddress);
+
+      const tokenInfo = {
+        address,
+        name: pad.tokenName,
+        symbol: pad.tokenSymbol,
+        currentPrice,
+        isActive: !hasGraduated,
+        timeRemaining: 86400, // 24 hours - get from contract
+        totalSupply: "1000000",
+        tokensForSale: "500000", 
+        tokensSold: "25",
+        auctionAddress: pad.bondingCurveAddress
+      };
+
+      res.json(tokenInfo);
+    } catch (error) {
+      console.error('Failed to get token info:', error);
+      res.status(500).json({ message: "Failed to get token info" });
+    }
+  });
+
+  // Get quote for buying tokens
+  app.post("/api/doppler/quote", async (req, res) => {
+    try {
+      const { tokenAddress, auctionAddress, ethAmount } = req.body;
+      const dopplerService = getDopplerService(84532);
+      
+      const ethWei = parseEther(ethAmount);
+      const tokenQuote = await dopplerService.getQuote(tokenAddress, auctionAddress, ethWei);
+      
+      res.json({
+        tokens: formatEther(tokenQuote),
+        ethAmount,
+        priceImpact: "0.5%" // Calculate actual price impact
+      });
+    } catch (error) {
+      console.error('Failed to get quote:', error);
+      res.status(500).json({ message: "Failed to get quote" });
+    }
+  });
+
+  // Buy tokens in Doppler auction
+  app.post("/api/doppler/buy", async (req, res) => {
+    try {
+      const { auctionAddress, ethAmount } = req.body;
+      const dopplerService = getDopplerService(84532);
+      
+      const ethWei = parseEther(ethAmount);
+      const txHash = await dopplerService.buyTokens(auctionAddress, ethWei);
+      
+      res.json({
+        success: true,
+        txHash,
+        message: "Trade executed successfully"
+      });
+    } catch (error) {
+      console.error('Failed to buy tokens:', error);
+      res.status(500).json({ 
+        success: false,
+        error: error.message || "Trade failed"
+      });
+    }
+  });
+
   // ==================== PAD DEPLOYMENT ENDPOINT ====================
 
   // Deploy pad token using Doppler V4 SDK

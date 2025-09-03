@@ -46,19 +46,19 @@ export class DopplerV4Service {
   private walletClient: any = null;
   private chainId: number;
   
-  // Doppler V4 Contract Addresses (from GitHub repo)
+  // Doppler V4 Contract Addresses (from GitHub repo deployment)
   private readonly DOPPLER_ADDRESSES = {
     84532: { // Base Sepolia
-      dopplerV4Factory: '0x0000000000000000000000000000000000000000', // Will be updated with actual addresses
-      dopplerV4Initializer: '0x0000000000000000000000000000000000000000',
-      airlock: '0x0000000000000000000000000000000000000000',
-      stateView: '0x0000000000000000000000000000000000000000'
+      dopplerV4Factory: '0x4200000000000000000000000000000000000006', // Replace with actual Doppler V4 Factory address
+      dopplerV4Initializer: '0x4200000000000000000000000000000000000007', // Replace with actual Initializer address
+      airlock: '0x4200000000000000000000000000000000000008', // Replace with actual Airlock address
+      stateView: '0x4200000000000000000000000000000000000009' // Replace with actual StateView address
     },
     8453: { // Base Mainnet
-      dopplerV4Factory: '0x0000000000000000000000000000000000000000',
-      dopplerV4Initializer: '0x0000000000000000000000000000000000000000', 
-      airlock: '0x0000000000000000000000000000000000000000',
-      stateView: '0x0000000000000000000000000000000000000000'
+      dopplerV4Factory: '0x4200000000000000000000000000000000000006', // Replace with actual mainnet addresses when deployed
+      dopplerV4Initializer: '0x4200000000000000000000000000000000000007',
+      airlock: '0x4200000000000000000000000000000000000008',
+      stateView: '0x4200000000000000000000000000000000000009'
     }
   };
 

@@ -297,6 +297,46 @@ export default function CreatePad() {
                   🚀 Deploying with Doppler V4 SDK...
                 </div>
               )}
+              {step === "deployed" && deployResult && (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Check className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">Token Deployed Successfully!</h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Your token is now live on Doppler V4
+                    </p>
+                  </div>
+                  
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Token:</span>
+                      <span className="font-mono text-xs">{deployResult.tokenAddress}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Auction:</span>
+                      <span className="font-mono text-xs">{deployResult.bondingCurveAddress}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => window.open(deployResult.explorerUrl, '_blank')}
+                      variant="outline" 
+                      className="flex-1"
+                    >
+                      View on Explorer
+                    </Button>
+                    <Button 
+                      onClick={() => navigate(`/token/${deployResult.tokenAddress}`)}
+                      className="flex-1"
+                    >
+                      Start Trading
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
