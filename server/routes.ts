@@ -2657,7 +2657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         address: user.creatorAddress,
         channelsCreated: channelsByOwner[user.creatorAddress] || 0,
         coinsCreated: parseInt(user.coinsCreated as string) || 0,
-        totalVolume: (Math.random() * 10).toFixed(2), // Mock data
+        totalVolume: '0.00', // Real trading volume calculation needed
         status: 'active' as const,
         joinedAt: user.joinedAt
       }));
@@ -2731,8 +2731,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create slug
       const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 
-      // Mock coin address (in production, deploy actual contract)
-      const mockCoinAddress = `0x${Math.random().toString(16).substr(2, 40)}`;
+      // Real coin address should come from actual contract deployment
+      const tempCoinAddress = `0x${'0'.repeat(40)}`; // Placeholder until real deployment
 
       const channelData = {
         owner: ownerAddress,
@@ -2740,13 +2740,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: name,
         slug: slug,
         ticker: ticker,
-        coinAddress: mockCoinAddress,
+        coinAddress: tempCoinAddress,
         chainId: 8453,
         category: category,
         description: `Admin created channel: ${name}`,
         zoraPlatform: 'admin',
         currency: 'ETH',
-        txHash: `0x${Math.random().toString(16).substr(2, 64)}`
+        txHash: `0x${'0'.repeat(64)}` // Real transaction hash needed
       };
 
       const channel = await storage.createWeb3Channel(channelData);
@@ -2808,7 +2808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         message: `Successfully withdrew ${amount} ETH`,
-        txHash: `0x${Math.random().toString(16).substr(2, 64)}`
+        txHash: `0x${'0'.repeat(64)}` // Real transaction hash needed
       });
     } catch (error) {
       console.error('Error withdrawing fees:', error);
@@ -3857,9 +3857,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Transform the data to match the frontend interface
       const leaderboardData = usersWithMetrics.map((user, index) => {
-        const totalViews = Math.floor(Math.random() * 50000); // TODO: Calculate from real analytics
-        const totalLikes = Math.floor(Math.random() * 5000); // TODO: Calculate from real analytics
-        const totalSubscribers = Math.floor(Math.random() * 1000); // TODO: Calculate from real analytics
+        const totalViews = 0; // Real analytics data needed
+        const totalLikes = parseInt(user.totalLikes) || 0; // Use real likes from database
+        const totalSubscribers = 0; // Real subscriber count needed
 
         // Calculate overall score based on various metrics
         const overallScore =
@@ -3891,19 +3891,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           channelsCreated: user.channelsCreated,
           totalSubscribers,
 
-          // Earnings metrics (mock for now)
-          totalEarnings: (parseFloat(user.volumeTraded) * 0.1).toFixed(3) + ' ETH',
-          creatorRewards: (user.contentsCreated * 0.05).toFixed(3) + ' ETH',
-          tradingProfit: (parseFloat(user.volumeTraded) * 0.03).toFixed(3) + ' ETH',
+          // Earnings metrics - use real transaction data only
+          totalEarnings: '0.000 ETH', // Calculate from actual trading fees
+          creatorRewards: '0.000 ETH', // Calculate from actual content monetization
+          tradingProfit: '0.000 ETH', // Calculate from actual trading profits
 
           // Overall score
           overallScore: Math.round(overallScore),
 
-          // Social info
+          // Social info - remove random generation
           socialLinks: {
-            x: Math.random() > 0.7,
-            farcaster: Math.random() > 0.8,
-            tiktok: Math.random() > 0.9,
+            x: false, // Real social verification needed
+            farcaster: false, // Real social verification needed  
+            tiktok: false, // Real social verification needed
           },
           memberSince: new Date(user.createdAt).toLocaleDateString('en-US', {
             month: 'short',
@@ -3971,8 +3971,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(web3Channels)
         .then(result => result[0]?.count || 0);
 
-      // Calculate total earnings (mock calculation)
-      const totalEarnings = (parseFloat(totalVolumeResult) * 0.1).toFixed(2) + ' ETH';
+      // Calculate total earnings from real transaction data only
+      const totalEarnings = '0.00 ETH'; // Sum of actual trading fees and rewards
 
       const globalStats = {
         totalUsers,

@@ -406,23 +406,10 @@ export async function getTokenHolders(coinAddress: string): Promise<{
     } catch (contractError) {
       console.warn(`⚠️ Contract call failed for ${coinAddress}, using fallback:`, contractError);
       
-      // Fallback: Generate realistic mock data based on contract address
-      const seed = parseInt(coinAddress.slice(-8), 16);
-      const numHolders = Math.max(1, Math.floor((seed % 500) + 1));
-      
-      const holders = Array.from({ length: Math.min(numHolders, 50) }, (_, i) => {
-        const mockAddress = `0x${(seed + i).toString(16).padStart(40, '0')}`;
-        const balance = Math.random() * (1000 - i * 10);
-        return {
-          address: mockAddress,
-          balance: balance.toFixed(6),
-          percentage: (balance / 10000) * 100
-        };
-      }).sort((a, b) => parseFloat(b.balance) - parseFloat(a.balance));
-
+      // No fallback - return empty if blockchain query fails
       return {
-        holders,
-        totalHolders: numHolders
+        holders: [],
+        totalHolders: 0
       };
     }
 
@@ -514,20 +501,8 @@ export async function getCoinPrice(coinAddress: string): Promise<{
     
     // Calculate price change based on recent trading activity
     let priceChange24h = 0;
-    try {
-      // This would ideally come from historical price data
-      // For now, calculate based on recent trading momentum
-      const recentActivity = volume24h / marketCap;
-      if (recentActivity > 0.1) {
-        priceChange24h = Math.random() * 20 - 5; // High activity: -5% to +15%
-      } else if (recentActivity > 0.05) {
-        priceChange24h = Math.random() * 10 - 3; // Medium activity: -3% to +7%
-      } else {
-        priceChange24h = Math.random() * 6 - 2; // Low activity: -2% to +4%
-      }
-    } catch (error) {
-      priceChange24h = 0;
-    }
+    // No mock price changes - use actual trading data only
+    priceChange24h = 0; // Will be calculated from real trading history in the future
     
     const result = {
       price: realPrice.toFixed(6),
@@ -551,7 +526,8 @@ export async function getBondingCurveProgress(coinAddress: string): Promise<numb
   try {
     // In a real implementation, this would query the bonding curve contract
     // For now, return a simulated progress
-    return Math.floor(Math.random() * 100);
+    // Return 0 instead of random progress - calculate from real liquidity data
+  return 0;
   } catch (error) {
     console.error('Error fetching bonding curve progress:', error);
     return 0;
