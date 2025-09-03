@@ -34,7 +34,8 @@ import { PrismaClient } from '../lib/generated/prisma/index.js';
 import { getTelegramService } from "./services/telegramService";
 import { adminAuth } from "./middleware/adminAuth"; // Assuming adminAuth middleware is defined elsewhere
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for trade IDs
-import * as admin from './admin'; // Import admin module
+// import * as admin from './admin'; // Import admin module
+import { registerAdvancedTradingRoutes } from './routes/advancedTrading';
 
 
 const prisma = new PrismaClient();
@@ -4079,6 +4080,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Register advanced trading routes
+  registerAdvancedTradingRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

@@ -570,11 +570,11 @@ export async function createUniswapV4Pool(params: {
     
     // Define pool key with ContentCoinHook
     const poolKey = {
-      currency0: '0x4200000000000000000000000000000000000006', // WETH on Base
-      currency1: params.coinAddress,
+      currency0: '0x4200000000000000000000000000000000000006' as `0x${string}`, // WETH on Base
+      currency1: params.coinAddress as `0x${string}`,
       fee: 3000, // 0.3% fee tier
       tickSpacing: 60,
-      hooks: CONTENT_COIN_HOOK
+      hooks: CONTENT_COIN_HOOK as `0x${string}`
     };
 
     // Calculate initial price (simplified - 1 ETH = 1M tokens)
