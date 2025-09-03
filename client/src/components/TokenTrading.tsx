@@ -28,10 +28,10 @@ export function TokenTrading({
   tokenAddress, 
   tokenName, 
   tokenSymbol,
-  currentPrice = "0.0001",
-  supply = "1000000",
-  marketCap = "100",
-  holders = 42
+  currentPrice = "0",
+  supply = "0", 
+  marketCap = "0",
+  holders = 0
 }: TokenTradingProps) {
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState('');

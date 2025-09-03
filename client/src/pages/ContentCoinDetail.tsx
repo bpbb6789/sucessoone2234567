@@ -53,6 +53,7 @@ import { useState, useMemo } from "react";
 // Creator coin related hooks
 import { useBuyCreatorCoin, useSellCreatorCoin, useCreatorCoin, useCreatorCoinPrice } from "@/hooks/useCreatorCoins";
 import type { CreatorCoin } from "@shared/schema";
+import { DexScreenerChart } from '@/components/DexScreenerChart';
 
 // Contract constants for Base Sepolia
 const CREATOR_COIN_TOKEN_ABI = [
@@ -570,36 +571,13 @@ export default function ContentCoinDetail() {
           </div>
 
           {/* Chart/Content Area */}
-          <div className="h-80 bg-muted rounded-lg mb-4 relative overflow-hidden">
-            {viewMode === "chart" ? (
-              chartData && currentData ? (
-                <svg className="w-full h-full" viewBox="0 0 400 320">
-                  <defs>
-                    <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity="0.05" />
-                    </linearGradient>
-                  </defs>
-
-                  {/* Area fill */}
-                  <path d={`${currentData.points} L350,300 L50,300 Z`} fill="url(#areaGradient)" />
-
-                  {/* Line */}
-                  <path
-                    d={currentData.points}
-                    fill="none"
-                    stroke="#10b981"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <TrendingUp className="h-8 w-8 opacity-50" />
-                </div>
-              )
-            ) : (
+          {viewMode === "chart" && tokenData?.address ? (
+            <DexScreenerChart 
+              tokenAddress={tokenData.address}
+              tokenSymbol={tokenData.coinSymbol || 'Token'}
+            />
+          ) : viewMode === "image" ? (
+            <div className="h-80 bg-muted rounded-lg mb-4 relative overflow-hidden">
               <div className="w-full h-full flex items-center justify-center">
                 {tokenData?.mediaCid ? (
                   <ContentPreview
@@ -616,24 +594,9 @@ export default function ContentCoinDetail() {
                   </div>
                 )}
               </div>
-            )}
-          </div>
-
-          {/* Time Period Buttons - Only show when chart is active */}
-          {viewMode === "chart" && (
-            <div className="flex space-x-2 flex-wrap">
-              {(['1H', '1D', '1W', '1M', 'All'] as const).map((period) => (
-                <Button
-                  key={period}
-                  variant={selectedPeriod === period ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedPeriod(period)}
-                >
-                  {period}
-                </Button>
-              ))}
             </div>
-          )}
+          ) : null}
+
           </CardContent>
         </Card>
 
@@ -645,15 +608,21 @@ export default function ContentCoinDetail() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Market Cap</span>
-                <span className="text-sm font-semibold text-green-400">${priceData?.marketCap || tokenData?.marketCap || tokenData?.startingMarketCap || '0'}</span>
+                <span className="text-sm font-semibold text-green-400">
+                  {priceData?.marketCap ? `$${priceData.marketCap}` : 'No trading data'}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">24H Volume</span>
-                <span className="text-sm font-semibold">${priceData?.volume24h || tokenData?.volume24h || '0'}</span>
+                <span className="text-sm font-semibold">
+                  {priceData?.volume24h ? `$${priceData.volume24h}` : 'No trading data'}
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Creator Earnings</span>
-                <span className="text-sm font-semibold">${tokenData?.creatorEarnings || (priceData?.volume24h ? (parseFloat(priceData.volume24h) * 0.02).toFixed(4) : '0')}</span>
+                <span className="text-sm font-semibold">
+                  {priceData?.volume24h ? `$${(parseFloat(priceData.volume24h) * 0.15).toFixed(4)}` : 'No trading data'}
+                </span>
               </div>
             </div>
           </div>

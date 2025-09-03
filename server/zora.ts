@@ -8,6 +8,8 @@ import { createPublicClient, createWalletClient, http } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { uploadJSONToIPFS } from './ipfs';
+import { formatEther, formatUnits, parseEther, parseUnits } from 'viem';
+import { getDexScreenerData, getEnhancedCoinPrice } from './dexscreener.js';
 
 // Initialize Zora SDK with API key
 const zoraApiKey = process.env.ZORA_API_KEY;
@@ -435,7 +437,7 @@ async function getUniswapV4Price(coinAddress: string): Promise<{
   }
 }
 
-// Get coin price from Zora/Uniswap V4 with real blockchain data
+// Get coin price from DexScreener and real blockchain data
 export async function getCoinPrice(coinAddress: string): Promise<{
   price: string;
   marketCap: string;
@@ -449,24 +451,42 @@ export async function getCoinPrice(coinAddress: string): Promise<{
     // Get real holders count
     const holdersData = await getTokenHolders(coinAddress);
     
-    // Try to get real price from Uniswap V4 pool first
+    // FIRST: Try DexScreener for real trading data
     let realPrice: number | null = null;
     let realVolume: number | null = null;
+    let realMarketCap: number | null = null;
+    let priceChange24h: number | null = null;
     
     try {
-      // Check if there's a Uniswap V4 pool for this token
-      const poolPrice = await getUniswapV4Price(coinAddress);
-      if (poolPrice) {
-        realPrice = poolPrice.price;
-        realVolume = poolPrice.volume24h;
+      console.log(`🔍 Checking DexScreener for trading data...`);
+      const dexData = await getDexScreenerData(coinAddress);
+      if (dexData.price && dexData.volume24h) {
+        realPrice = dexData.price;
+        realVolume = dexData.volume24h;
+        realMarketCap = dexData.marketCap;
+        priceChange24h = dexData.priceChange24h;
+        console.log(`✅ Found real trading data on DexScreener`);
       }
     } catch (error) {
-      console.log(`⚠️ No Uniswap V4 pool found for ${coinAddress}, using estimated pricing`);
+      console.log(`⚠️ DexScreener data not available for ${coinAddress}`);
     }
     
-    // If no real price available, return null/error - NO FALLBACKS
+    // SECOND: Try Uniswap V4 pools if no DexScreener data
     if (!realPrice) {
-      throw new Error(`No price data available for ${coinAddress} - no active trading pool found`);
+      try {
+        const poolPrice = await getUniswapV4Price(coinAddress);
+        if (poolPrice) {
+          realPrice = poolPrice.price;
+          realVolume = poolPrice.volume24h;
+        }
+      } catch (error) {
+        console.log(`⚠️ No Uniswap V4 pool found for ${coinAddress}`);
+      }
+    }
+    
+    // If no real price available anywhere - NO FALLBACKS
+    if (!realPrice) {
+      throw new Error(`No trading data available for ${coinAddress} - token not actively traded`);
     }
     
     // Get REAL token supply from blockchain - NO DEFAULTS
@@ -490,24 +510,20 @@ export async function getCoinPrice(coinAddress: string): Promise<{
       throw new Error(`Cannot fetch token supply for ${coinAddress} - contract may not exist`);
     }
     
-    const marketCap = realPrice * tokenSupply;
+    // Use DexScreener market cap if available, otherwise calculate from real data
+    const marketCap = realMarketCap || (realPrice * tokenSupply);
     
     // Volume calculation - ONLY real data, no estimations
     if (!realVolume) {
       throw new Error(`No trading volume data available for ${coinAddress} - no active trading detected`);
     }
     
-    // Calculate price change based on recent trading activity
-    let priceChange24h = 0;
-    // No mock price changes - use actual trading data only
-    priceChange24h = 0; // Will be calculated from real trading history in the future
-    
     const result = {
       price: realPrice.toFixed(6),
       marketCap: marketCap.toFixed(2),
       volume24h: realVolume.toFixed(2),
       holders: holdersData.totalHolders,
-      priceChange24h: Number(priceChange24h.toFixed(2))
+      priceChange24h: Number((priceChange24h || 0).toFixed(2))
     };
 
     console.log(`✅ Price data for ${coinAddress}:`, result);

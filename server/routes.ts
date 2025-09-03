@@ -3798,6 +3798,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // DexScreener API endpoint for real trading data
+  app.get('/api/dexscreener/:tokenAddress', async (req, res) => {
+    try {
+      const { tokenAddress } = req.params;
+      
+      if (!tokenAddress) {
+        return res.status(400).json({ error: 'Token address is required' });
+      }
+
+      console.log(`🔍 Fetching DexScreener data for: ${tokenAddress}`);
+      
+      // Import getDexScreenerData function
+      const { getDexScreenerData } = await import('./dexscreener.js');
+      const dexData = await getDexScreenerData(tokenAddress);
+      
+      if (!dexData.price) {
+        return res.status(404).json({ 
+          error: 'No trading data found',
+          message: 'Token not actively traded on DEX platforms'
+        });
+      }
+
+      // Return the real trading data
+      res.json({
+        price: dexData.price,
+        marketCap: dexData.marketCap,
+        volume24h: dexData.volume24h,
+        priceChange24h: dexData.priceChange24h,
+        pairUrl: dexData.chartData ? `https://dexscreener.com/base/${tokenAddress}` : undefined,
+        dexName: 'Uniswap V3'
+      });
+
+    } catch (error) {
+      console.error('DexScreener API error:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch trading data',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Leaderboard endpoints
   app.get("/api/leaderboard", async (req, res) => {
     try {

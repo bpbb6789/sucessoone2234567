@@ -581,14 +581,14 @@ export default function Feed() {
           avatar: coin.thumbnailCid ? `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}` : `/nfts/${(index % 9) + 1}.jpeg`
         },
         coinSymbol: coin.coinSymbol,
-        marketCap: coin.marketCap || `$${(Math.random() * 1000 + 100).toFixed(0)}K`,
-        price: coin.currentPrice || `${(Math.random() * 0.01 + 0.001).toFixed(6)}`,
-        change24h: Math.random() > 0.5 ? `+${(Math.random() * 50).toFixed(1)}%` : `-${(Math.random() * 20).toFixed(1)}%`,
-        holders: coin.holders || Math.floor(Math.random() * 1000) + 50,
-        likes: coin.likes || Math.floor(Math.random() * 5000) + 100,
-        comments: coin.comments || Math.floor(Math.random() * 500) + 20,
-        shares: coin.shares || Math.floor(Math.random() * 200) + 10,
-        views: Math.floor(Math.random() * 50000) + 1000,
+        marketCap: coin.marketCap || 'No trading data',
+        price: coin.currentPrice || 'No price',
+        change24h: coin.priceChange24h ? `${coin.priceChange24h > 0 ? '+' : ''}${coin.priceChange24h}%` : 'No data',
+        holders: coin.holders || 0,
+        likes: coin.likes || 0,
+        comments: coin.comments || 0,
+        shares: coin.shares || 0,
+        views: coin.views || 0,
       }));
       setContentsData(reels);
     }
