@@ -115,7 +115,7 @@ export async function createZoraMetadata(params: {
   }
 }
 
-// Create a creator coin using Zora SDK (actual API)
+// Create a CONTENT coin using Zora SDK (actual API) - Creator Coins have NO developer rewards!
 export async function createCreatorCoin(params: {
   name: string;
   symbol: string;
@@ -864,9 +864,10 @@ export async function buyCoin(params: {
       sqrtPriceLimitX96: 0n // No price limit
     };
 
-    // Encode hook data for trade referral (platform gets 15% of market rewards per trade)
+    // Encode hook data for trade referral using proper ABI encoding (platform gets 15% of market rewards per trade)
+    // Note: This only works for CONTENT COINS, not Creator Coins!
     const hookData = PLATFORM_REFERRER_ADDRESS !== '0x0000000000000000000000000000000000000000' 
-      ? `0x${PLATFORM_REFERRER_ADDRESS.slice(2).padStart(64, '0')}` // Encode platform address
+      ? `0x000000000000000000000000${PLATFORM_REFERRER_ADDRESS.slice(2).toLowerCase()}` // ABI encode address
       : '0x'; // No referral if address not set
 
     // For production, this would use the actual Uniswap V4 SDK to encode the transaction
