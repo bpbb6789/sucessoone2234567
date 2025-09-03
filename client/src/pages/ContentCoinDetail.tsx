@@ -609,19 +609,19 @@ export default function ContentCoinDetail() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Market Cap</span>
                 <span className="text-sm font-semibold text-green-400">
-                  {priceData?.marketCap ? `$${priceData.marketCap}` : 'No trading data'}
+                  ${priceData?.marketCap || '0'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">24H Volume</span>
                 <span className="text-sm font-semibold">
-                  {priceData?.volume24h ? `$${priceData.volume24h}` : 'No trading data'}
+                  ${priceData?.volume24h || '0'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Creator Earnings</span>
                 <span className="text-sm font-semibold">
-                  {priceData?.volume24h ? `$${(parseFloat(priceData.volume24h) * 0.15).toFixed(4)}` : 'No trading data'}
+                  ${priceData?.volume24h ? (parseFloat(priceData.volume24h) * 0.15).toFixed(4) : '0'}
                 </span>
               </div>
             </div>
