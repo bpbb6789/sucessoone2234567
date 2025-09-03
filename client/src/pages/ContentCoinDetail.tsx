@@ -628,7 +628,7 @@ export default function ContentCoinDetail() {
           </div>
 
           {/* Tabs Container */}
-          <Tabs defaultValue="comments" className="flex flex-col">
+          <Tabs defaultValue="trading" className="flex flex-col">
             <div className="border-b border-border px-4 py-3">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="trading" className="flex items-center gap-1 text-xs">

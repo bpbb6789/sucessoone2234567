@@ -2488,9 +2488,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Return mock data for tokens without trading activity
         const mockData = {
           price: "0.000001",
-          marketCap: "1000.00",
+          marketCap: "0.00",
           volume24h: "0.00",
-          holders: 1,
+          holders: 0,
           priceChange24h: 0,
           bondingCurveProgress: 0
         };
