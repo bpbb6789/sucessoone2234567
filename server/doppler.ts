@@ -1,9 +1,7 @@
 import { createPublicClient, createWalletClient, http, parseEther } from 'viem';
 import { base, baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
-import { ReadWriteFactory, DOPPLER_V4_ADDRESSES, ReadDoppler, ReadQuoter } from 'doppler-v4-sdk';
-import { createDrift } from '@delvtech/drift';
-import { viemAdapter } from '@delvtech/drift-viem';
+import { DopplerSDK, DynamicAuctionBuilder, DOPPLER_V4_ADDRESSES } from '@whetstone-research/doppler-sdk';
 
 export interface PadTokenConfig {
   name: string;
@@ -110,14 +108,11 @@ export class DopplerV4Service {
         console.log(`✅ Wallet client created with address: ${account.address}`);
 
         // Initialize Doppler SDK
-        this.drift = createDrift({
-          adapter: viemAdapter({ 
-            publicClient: this.publicClient,
-            walletClient: this.walletClient 
-          })
+        this.factory = new DopplerSDK({
+          publicClient: this.publicClient,
+          walletClient: this.walletClient,
+          chainId: this.chainId
         });
-        
-        this.factory = new ReadWriteFactory(this.addresses.airlock, this.drift);
         console.log('✅ Doppler V4 SDK initialized successfully');
       } else {
         console.log('⚠️ No DEPLOYER_PRIVATE_KEY found, deployments will fail');
@@ -169,8 +164,42 @@ export class DopplerV4Service {
 
       console.log('📝 Creating token with Doppler V4 SDK:', dopplerConfig);
 
-      // Deploy using Doppler V4 SDK
-      const result = await this.factory.preDeploy(dopplerConfig);
+      // Deploy using Doppler V4 SDK with builder pattern
+      const params = new DynamicAuctionBuilder()
+        .tokenConfig({ 
+          name: dopplerConfig.name, 
+          symbol: dopplerConfig.symbol, 
+          tokenURI: dopplerConfig.tokenURI 
+        })
+        .saleConfig({
+          initialSupply: dopplerConfig.totalSupply,
+          numTokensToSell: dopplerConfig.numTokensToSell,
+          numeraire: '0x4200000000000000000000000000000000000006' // WETH on Base
+        })
+        .poolConfig({ 
+          fee: dopplerConfig.fee, 
+          tickSpacing: dopplerConfig.tickSpacing 
+        })
+        .auctionByPriceRange({
+          priceRange: { startPrice: 0.000001, endPrice: 0.01 },
+          minProceeds: dopplerConfig.minProceeds,
+          maxProceeds: dopplerConfig.maxProceeds,
+          durationDays: Math.floor(dopplerConfig.duration / (24 * 3600)),
+          epochLength: dopplerConfig.epochLength
+        })
+        .withMigration({
+          type: 'uniswapV4',
+          fee: 3000,
+          tickSpacing: 60,
+          streamableFees: { 
+            lockDuration: 365 * 24 * 60 * 60, 
+            beneficiaries: dopplerConfig.recipients 
+          }
+        })
+        .withUserAddress(dopplerConfig.integrator)
+        .build();
+
+      const result = await this.factory.factory.createDynamicAuction(params);
       
       console.log('✅ Doppler deployment successful:', result);
         
