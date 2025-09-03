@@ -24,6 +24,9 @@ if (zoraApiKey) {
 const ZORA_FACTORY_ADDRESS = '0x777777751622c0d3258f214F9DF38E35BF45baF3' as const;
 const ZORA_HOOK_REGISTRY = '0x777777C4c14b133858c3982D41Dbf02509fc18d7' as const;
 
+// Platform address for developer rewards (15% create referral + 15% trade referral)
+const PLATFORM_REFERRER_ADDRESS = process.env.PLATFORM_REFERRER_ADDRESS || '0x0000000000000000000000000000000000000000' as const;
+
 // Create public client
 const publicClient = createPublicClient({
   chain: baseSepolia,
@@ -230,7 +233,7 @@ export async function createCreatorCoin(params: {
       chainId: baseSepolia.id,
       payoutRecipient: params.creatorAddress as `0x${string}`,
       currency: zoraCurrency,
-      platformReferrer: undefined // Optional platform referrer
+      platformReferrer: PLATFORM_REFERRER_ADDRESS as `0x${string}` // Platform gets 15% of market rewards (10% of total fees)
     };
 
     console.log('📋 Zora coin creation args:', coinArgs);
@@ -861,8 +864,10 @@ export async function buyCoin(params: {
       sqrtPriceLimitX96: 0n // No price limit
     };
 
-    // Encode hook data for trade referral (if any)
-    const hookData = '0x'; // Could include referral address here
+    // Encode hook data for trade referral (platform gets 15% of market rewards per trade)
+    const hookData = PLATFORM_REFERRER_ADDRESS !== '0x0000000000000000000000000000000000000000' 
+      ? `0x${PLATFORM_REFERRER_ADDRESS.slice(2).padStart(64, '0')}` // Encode platform address
+      : '0x'; // No referral if address not set
 
     // For production, this would use the actual Uniswap V4 SDK to encode the transaction
     // For now, we'll prepare the transaction structure for frontend execution
