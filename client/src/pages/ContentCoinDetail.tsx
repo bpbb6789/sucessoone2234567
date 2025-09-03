@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useParams, Link } from "wouter";
@@ -10,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient, useWriteContract } from 'wagmi';
 import { useReadContract } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -40,7 +39,7 @@ import { cn } from "@/lib/utils";
 // Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
 import { ContentPreview } from "@/components/ContentPreview";
-import { formatUnits, parseUnits, Address, erc20Abi, createPublicClient, http } from "viem";
+import { formatUnits, parseUnits, Address, erc20Abi, createPublicClient, http, parseEther } from "viem";
 import { baseSepolia } from "viem/chains";
 
 // Create public client for blockchain interactions
@@ -92,7 +91,7 @@ type HolderData = {
 function formatTimeAgo(date: Date): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
@@ -106,6 +105,8 @@ export default function ContentCoinDetail() {
   const params = useParams();
   const tokenAddress = params.address;
   const { address } = useAccount();
+  const publicClient = usePublicClient();
+  const { writeContract } = useWriteContract();
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState("");
   const [sellAmount, setSellAmount] = useState("");
@@ -193,10 +194,10 @@ export default function ContentCoinDetail() {
   // Chart data for trading view - now uses real price data
   const chartData = useMemo(() => {
     if (!tokenData) return null;
-    
+
     const defaultPrice = priceData?.price || tokenData?.currentPrice || tokenData?.price || "0";
     const priceChange = priceData?.priceChange24h || 0;
-    
+
     // Generate realistic price points based on actual data
     const generatePricePoints = (period: string) => {
       const basePrice = parseFloat(defaultPrice);
@@ -206,7 +207,7 @@ export default function ContentCoinDetail() {
       const height = 100;
       const startX = 50;
       const startY = 80;
-      
+
       for (let i = 0; i < numPoints; i++) {
         const x = startX + (i * width) / (numPoints - 1);
         // Create realistic price movement based on actual change
@@ -216,17 +217,17 @@ export default function ContentCoinDetail() {
         const randomVariation = (Math.sin(i * 0.5) * volatility);
         const priceMultiplier = 1 + trendFactor + randomVariation;
         const adjustedPrice = Math.max(0.001, basePrice * priceMultiplier);
-        
+
         // Convert price to Y coordinate (invert for SVG)
         const normalizedPrice = (adjustedPrice - basePrice * 0.8) / (basePrice * 0.4);
         const y = Math.max(30, Math.min(180, startY + height - (normalizedPrice * height * 0.8)));
-        
+
         points.push(i === 0 ? `M${x},${y}` : `L${x},${y}`);
       }
-      
+
       return points.join(' ');
     };
-    
+
     return {
       "1H": { points: generatePricePoints('1H'), price: defaultPrice },
       "1D": { points: generatePricePoints('1D'), price: defaultPrice },
@@ -264,7 +265,7 @@ export default function ContentCoinDetail() {
       });
       return;
     }
-    
+
     try {
       // Get user's ETH balance
       const balance = await publicClient.getBalance({
@@ -318,7 +319,7 @@ export default function ContentCoinDetail() {
       const balance = await publicClient.getBalance({ address: address as `0x${string}` });
       const balanceInEth = parseFloat(formatUnits(balance, 18));
       const requiredAmount = parseFloat(buyAmount) + 0.01; // Add gas estimate
-      
+
       if (balanceInEth < requiredAmount) {
         toast({
           title: "Insufficient balance",
@@ -332,16 +333,81 @@ export default function ContentCoinDetail() {
     }
 
     try {
-      // Show initial transaction toast
-      toast({
-        title: "Transaction initiated",
-        description: "Please confirm the transaction in your wallet...",
-      });
-      
       // Calculate minimum tokens with slippage protection
       const estimatedTokensNum = parseFloat(estimatedTokens.replace(/,/g, '')) || 0;
       const minTokensOut = (estimatedTokensNum * (1 - parseFloat(slippage) / 100)).toString();
-      
+
+      // For Zora-deployed tokens, use direct contract interaction
+      // First, check if this is a Zora token vs PumpFun token
+      const isZoraToken = tokenData.contractAddress && tokenData.contractAddress.length === 42;
+
+      if (isZoraToken) {
+        // Use Zora's pool manager contract directly via wagmi
+        const { request } = await publicClient.simulateContract({
+          address: '0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967' as `0x${string}`, // Uniswap V4 Pool Manager
+          abi: [
+            {
+              name: 'swap',
+              type: 'function',
+              stateMutability: 'payable',
+              inputs: [
+                {
+                  name: 'key',
+                  type: 'tuple',
+                  components: [
+                    { name: 'currency0', type: 'address' },
+                    { name: 'currency1', type: 'address' },
+                    { name: 'fee', type: 'uint24' },
+                    { name: 'tickSpacing', type: 'int24' },
+                    { name: 'hooks', type: 'address' }
+                  ]
+                },
+                {
+                  name: 'params',
+                  type: 'tuple', 
+                  components: [
+                    { name: 'zeroForOne', type: 'bool' },
+                    { name: 'amountSpecified', type: 'int256' },
+                    { name: 'sqrtPriceLimitX96', type: 'uint160' }
+                  ]
+                },
+                { name: 'hookData', type: 'bytes' }
+              ],
+              outputs: []
+            }
+          ],
+          functionName: 'swap',
+          args: [
+            {
+              currency0: '0x4200000000000000000000000000000000000006', // WETH
+              currency1: tokenData.contractAddress as `0x${string}`,
+              fee: 3000,
+              tickSpacing: 60,
+              hooks: '0x9ea932730A7787000042e34390B8E435dD839040' // ContentCoinHook
+            },
+            {
+              zeroForOne: true,
+              amountSpecified: parseEther(buyAmount),
+              sqrtPriceLimitX96: 0n
+            },
+            '0x' // No hook data for now
+          ],
+          value: parseEther(buyAmount),
+          account: address as `0x${string}`
+        });
+
+        const hash = await writeContract(request);
+
+        toast({
+          title: "Buy transaction submitted",
+          description: `Swapping ${buyAmount} ETH for ${tokenData.coinSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
+        });
+
+        setBuyAmount('');
+        return;
+      }
+
+      // Fallback to API for non-Zora tokens
       const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
         method: 'POST',
         headers: {
@@ -395,7 +461,7 @@ export default function ContentCoinDetail() {
       setBuyAmount("");
       setComment("");
       setEstimatedTokens("");
-      
+
       // Refresh data
       window.location.reload();
 
@@ -508,7 +574,7 @@ export default function ContentCoinDetail() {
     );
   }
 
-  
+
 
   return (
     <div className="min-h-screen">
@@ -750,11 +816,11 @@ export default function ContentCoinDetail() {
                       Advanced Settings
                       <ChevronDown className={`h-3 w-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
                     </Button>
-                    
+
                     {showAdvanced && (
                       <div className="space-y-3 p-3 border rounded-lg">
                         <div>
-                          <Label htmlFor="slippage" className="text-xs">Slippage Tolerance (%)</Label>
+                          <label htmlFor="slippage" className="text-xs">Slippage Tolerance (%)</label>
                           <Input
                             id="slippage"
                             type="number"
@@ -767,7 +833,7 @@ export default function ContentCoinDetail() {
                             className="mt-1 text-xs h-8"
                           />
                         </div>
-                        
+
                         {priceData && (
                           <div className="space-y-1 text-xs text-muted-foreground">
                             <div className="flex justify-between">
