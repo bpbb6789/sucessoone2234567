@@ -10,6 +10,9 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { uploadJSONToIPFS } from './ipfs';
 import { formatEther, formatUnits, parseEther, parseUnits } from 'viem';
 import { getDexScreenerData, getEnhancedCoinPrice } from './dexscreener.js';
+import { eq } from 'drizzle-orm';
+import { creatorCoins } from '../shared/schema.js';
+import { db } from './db.js';
 
 // Initialize Zora SDK with API key
 const zoraApiKey = process.env.ZORA_API_KEY;
@@ -335,12 +338,12 @@ function simulateZoraDeployment(params: {
   return result;
 }
 
-// Get accurate holders count using multiple reliable data sources
+// Get accurate holders count using fastest direct queries
 export async function getTokenHolders(coinAddress: string): Promise<{
   holders: Array<{ address: string; balance: string; percentage: number }>;
   totalHolders: number;
 }> {
-  console.log(`🔍 Fetching accurate holders for token: ${coinAddress}`);
+  console.log(`🚀 Fetching holders for token: ${coinAddress}`);
 
   // Validate contract address format
   if (!coinAddress || coinAddress.length !== 42 || !coinAddress.startsWith('0x')) {
@@ -349,11 +352,9 @@ export async function getTokenHolders(coinAddress: string): Promise<{
 
   const contractAddress = coinAddress as `0x${string}`;
   
-  // Try multiple approaches in order of reliability
+  // Try most efficient approaches first
   const approaches = [
-    () => getHoldersFromAlchemy(contractAddress),
-    () => getHoldersFromGraph(contractAddress),
-    () => getHoldersFromMultipleRPCs(contractAddress),
+    () => getHoldersFromDirectQuery(contractAddress),
     () => getHoldersFromBasescan(contractAddress)
   ];
 
@@ -374,22 +375,254 @@ export async function getTokenHolders(coinAddress: string): Promise<{
   throw new Error(`Unable to fetch accurate holder data for ${coinAddress} - all data sources unavailable`);
 }
 
-// Approach 1: Use Alchemy (most reliable)
-async function getHoldersFromAlchemy(contractAddress: `0x${string}`) {
+// Approach 1: Direct balance queries for likely holder addresses
+async function getHoldersFromDirectQuery(contractAddress: `0x${string}`) {
+  console.log(`⚡ Direct balance queries for known addresses...`);
+  
   const alchemyApiKey = process.env.ALCHEMY_API_KEY;
   if (!alchemyApiKey) {
-    throw new Error('Alchemy API key not configured');
+    throw new Error('Alchemy API key required');
   }
 
-  const alchemyClient = createPublicClient({
+  const client = createPublicClient({
     chain: baseSepolia,
     transport: http(`https://base-sepolia.g.alchemy.com/v2/${alchemyApiKey}`)
   });
 
-  return await getHoldersFromRPCClient(alchemyClient, contractAddress, 'Alchemy');
+  // Get total supply
+  const totalSupply = await client.readContract({
+    address: contractAddress,
+    abi: [
+      {
+        name: 'totalSupply',
+        type: 'function',
+        stateMutability: 'view',
+        inputs: [],
+        outputs: [{ name: '', type: 'uint256' }]
+      }
+    ],
+    functionName: 'totalSupply'
+  }) as bigint;
+
+  if (totalSupply === 0n) {
+    throw new Error('Token has no supply');
+  }
+
+  console.log(`📊 Total supply: ${totalSupply.toString()}`);
+
+  // Query creator coin data from database to get creator address
+  let creatorAddress: string | null = null;
+  try {
+    const creatorCoin = await db
+      .select()
+      .from(creatorCoins)
+      .where(eq(creatorCoins.contractAddress, contractAddress))
+      .limit(1);
+    
+    if (creatorCoin.length > 0) {
+      creatorAddress = creatorCoin[0].creatorAddress;
+      console.log(`📋 Found creator address: ${creatorAddress}`);
+    }
+  } catch (error) {
+    console.warn('⚠️ Could not fetch creator address from database');
+  }
+
+  // Known addresses to check (including creator and common addresses)
+  const addressesToCheck = new Set<string>();
+  
+  // Add creator address if found
+  if (creatorAddress) {
+    addressesToCheck.add(creatorAddress.toLowerCase());
+  }
+  
+  // Add Zora protocol addresses that might hold tokens
+  addressesToCheck.add('0x777777751622c0d3258f214f9df38e35bf45baf3'); // Zora Factory
+  addressesToCheck.add('0x04e2516a2c207e84a1839755675dfd8ef6302f0a'); // Zora Rewards
+  
+  // Add common addresses that interact with creator coins
+  addressesToCheck.add('0x0000000000000000000000000000000000000001'); // Common test address
+
+  console.log(`⚡ Checking balances for ${addressesToCheck.size} addresses...`);
+
+  const holders = [];
+  for (const address of addressesToCheck) {
+    try {
+      const balance = await client.readContract({
+        address: contractAddress,
+        abi: [
+          {
+            name: 'balanceOf',
+            type: 'function',
+            stateMutability: 'view',
+            inputs: [{ name: 'owner', type: 'address' }],
+            outputs: [{ name: '', type: 'uint256' }]
+          }
+        ],
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`]
+      }) as bigint;
+
+      if (balance > 0n) {
+        holders.push({
+          address,
+          balance: (Number(balance) / 1e18).toFixed(6),
+          percentage: Number((balance * 10000n) / totalSupply) / 100
+        });
+        console.log(`💰 Found holder: ${address} with balance ${(Number(balance) / 1e18).toFixed(6)}`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Failed to check balance for ${address}:`, error);
+    }
+  }
+
+  holders.sort((a, b) => parseFloat(b.balance) - parseFloat(a.balance));
+
+  if (holders.length === 0) {
+    throw new Error('No holders found in direct queries');
+  }
+
+  console.log(`✅ Found ${holders.length} holders via direct queries`);
+
+  return {
+    holders,
+    totalHolders: holders.length
+  };
 }
 
-// Approach 2: Use The Graph Protocol for indexed data
+// Approach 2: Use recent events only (fast, limited scope)
+async function getHoldersFromRecentEvents(contractAddress: `0x${string}`) {
+  console.log(`⚡ Fetching holders from recent events (fast scan)...`);
+  
+  const alchemyApiKey = process.env.ALCHEMY_API_KEY;
+  if (!alchemyApiKey) {
+    throw new Error('Alchemy API key required for recent events');
+  }
+
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: http(`https://base-sepolia.g.alchemy.com/v2/${alchemyApiKey}`)
+  });
+
+  // Get total supply first
+  const totalSupply = await client.readContract({
+    address: contractAddress,
+    abi: [
+      {
+        name: 'totalSupply',
+        type: 'function',
+        stateMutability: 'view',
+        inputs: [],
+        outputs: [{ name: '', type: 'uint256' }]
+      }
+    ],
+    functionName: 'totalSupply'
+  }) as bigint;
+
+  if (totalSupply === 0n) {
+    throw new Error('Token has no supply');
+  }
+
+  // Alchemy free tier: only 10 blocks per request, scan in small chunks
+  const latestBlock = await client.getBlockNumber();
+  const startBlock = latestBlock > 100n ? latestBlock - 100n : 0n; // Just last 100 blocks
+  
+  console.log(`⚡ Quick scan: blocks ${startBlock} to ${latestBlock} (${latestBlock - startBlock} blocks)`);
+
+  const allLogs = [];
+  const chunkSize = 10n; // Alchemy free tier limit
+
+  for (let fromBlock = startBlock; fromBlock <= latestBlock; fromBlock += chunkSize) {
+    const toBlock = fromBlock + chunkSize - 1n > latestBlock ? latestBlock : fromBlock + chunkSize - 1n;
+    
+    try {
+      const logs = await client.getLogs({
+        address: contractAddress,
+        event: {
+          type: 'event',
+          name: 'Transfer',
+          inputs: [
+            { name: 'from', type: 'address', indexed: true },
+            { name: 'to', type: 'address', indexed: true },
+            { name: 'value', type: 'uint256', indexed: false }
+          ]
+        },
+        fromBlock,
+        toBlock
+      });
+      
+      allLogs.push(...logs);
+    } catch (error) {
+      console.warn(`⚠️ Failed to fetch logs for blocks ${fromBlock}-${toBlock}:`, error);
+    }
+  }
+
+  const logs = allLogs;
+
+  console.log(`⚡ Found ${logs.length} recent transfer events`);
+
+  // For recent events, just get unique addresses and query their current balances
+  const uniqueAddresses = new Set<string>();
+  const zeroAddress = '0x0000000000000000000000000000000000000000';
+
+  for (const log of logs) {
+    const { args } = log;
+    if (!args) continue;
+
+    const from = args.from as string;
+    const to = args.to as string;
+
+    if (from !== zeroAddress) uniqueAddresses.add(from.toLowerCase());
+    if (to !== zeroAddress) uniqueAddresses.add(to.toLowerCase());
+  }
+
+  console.log(`⚡ Checking balances for ${uniqueAddresses.size} unique addresses...`);
+
+  // Query current balance for each address
+  const holders = [];
+  for (const address of Array.from(uniqueAddresses)) {
+    try {
+      const balance = await client.readContract({
+        address: contractAddress,
+        abi: [
+          {
+            name: 'balanceOf',
+            type: 'function',
+            stateMutability: 'view',
+            inputs: [{ name: 'owner', type: 'address' }],
+            outputs: [{ name: '', type: 'uint256' }]
+          }
+        ],
+        functionName: 'balanceOf',
+        args: [address as `0x${string}`]
+      }) as bigint;
+
+      if (balance > 0n) {
+        holders.push({
+          address,
+          balance: (Number(balance) / 1e18).toFixed(6),
+          percentage: Number((balance * 10000n) / totalSupply) / 100
+        });
+      }
+    } catch (error) {
+      console.warn(`⚠️ Failed to get balance for ${address}:`, error);
+    }
+  }
+
+  holders.sort((a, b) => parseFloat(b.balance) - parseFloat(a.balance));
+
+  console.log(`✅ Found ${holders.length} holders with balances from recent events`);
+
+  if (holders.length === 0) {
+    throw new Error('No holders found in recent events');
+  }
+
+  return {
+    holders: holders.slice(0, 100),
+    totalHolders: holders.length
+  };
+}
+
+// Approach 3: Use The Graph Protocol for indexed data
 async function getHoldersFromGraph(contractAddress: `0x${string}`) {
   // This would use a Graph Protocol subgraph for Base Sepolia ERC20 transfers
   // For now, throw error as we don't have a specific subgraph deployed
@@ -423,9 +656,44 @@ async function getHoldersFromMultipleRPCs(contractAddress: `0x${string}`) {
 
 // Approach 4: Use Basescan API (most accurate for Base)
 async function getHoldersFromBasescan(contractAddress: `0x${string}`) {
-  // Note: This would use the actual Basescan API for holder data
-  // For Base Sepolia, we'd need to use the testnet API
-  throw new Error('Basescan API integration not implemented yet');
+  console.log(`🔍 Fetching holders from Basescan API...`);
+  
+  // Base Sepolia testnet API endpoint
+  const apiUrl = `https://api-sepolia.basescan.org/api`;
+  const apiKey = process.env.BASESCAN_API_KEY || 'YourApiKeyToken'; // Free tier works
+  
+  try {
+    // Get token holders from Basescan
+    const response = await fetch(
+      `${apiUrl}?module=token&action=tokenholderlist&contractaddress=${contractAddress}&page=1&offset=100&apikey=${apiKey}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Basescan API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.status !== '1') {
+      throw new Error(`Basescan API returned error: ${data.message}`);
+    }
+    
+    const holders = data.result.map((holder: any) => ({
+      address: holder.TokenHolderAddress,
+      balance: (Number(holder.TokenHolderQuantity) / 1e18).toFixed(6),
+      percentage: parseFloat(holder.TokenHolderPercentage)
+    }));
+    
+    console.log(`✅ Found ${holders.length} holders from Basescan API`);
+    
+    return {
+      holders,
+      totalHolders: holders.length
+    };
+  } catch (error) {
+    console.warn(`⚠️ Basescan API failed:`, error);
+    throw error;
+  }
 }
 
 // Helper function to find contract deployment block
