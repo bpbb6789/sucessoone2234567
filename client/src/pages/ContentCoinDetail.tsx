@@ -33,13 +33,21 @@ import {
   ChevronDown,
   Crown,
   Sparkles,
-  Settings
+  Settings,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 // Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
 import { ContentPreview } from "@/components/ContentPreview";
-import { formatUnits, parseUnits, Address, erc20Abi } from "viem";
+import { formatUnits, parseUnits, Address, erc20Abi, createPublicClient, http } from "viem";
+import { baseSepolia } from "viem/chains";
+
+// Create public client for blockchain interactions
+const publicClient = createPublicClient({
+  chain: baseSepolia,
+  transport: http()
+});
 import { useState, useMemo } from "react";
 
 // Creator coin related hooks
@@ -104,6 +112,9 @@ export default function ContentCoinDetail() {
   const [selectedPeriod, setSelectedPeriod] = useState<"1H" | "1D" | "1W" | "1M" | "All">("1D");
   const [tradeMode, setTradeMode] = useState<"buy" | "sell">("buy");
   const [viewMode, setViewMode] = useState<"chart" | "image">("chart");
+  const [slippage, setSlippage] = useState("2"); // 2% default slippage
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [estimatedTokens, setEstimatedTokens] = useState("");
 
   // Trading mutations
   const buyMutation = useBuyCreatorCoin();
@@ -198,10 +209,48 @@ export default function ContentCoinDetail() {
 
   const handleAmountSelect = (newAmount: string) => {
     setBuyAmount(newAmount);
+    // Calculate estimated tokens when amount changes
+    calculateEstimatedTokens(newAmount);
   };
 
-  const handleMaxAmount = () => {
-    setBuyAmount("0");
+  // Calculate estimated tokens based on current price
+  const calculateEstimatedTokens = (ethAmount: string) => {
+    if (!ethAmount || !priceData?.price) {
+      setEstimatedTokens("");
+      return;
+    }
+    const estimated = parseFloat(ethAmount) / parseFloat(priceData.price);
+    setEstimatedTokens(estimated.toLocaleString());
+  };
+
+  const handleMaxAmount = async () => {
+    if (!address) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Get user's ETH balance
+      const balance = await publicClient.getBalance({
+        address: address as `0x${string}`
+      });
+      const balanceInEth = formatUnits(balance, 18);
+      // Leave some ETH for gas fees
+      const maxAmount = Math.max(0, parseFloat(balanceInEth) - 0.01).toString();
+      setBuyAmount(maxAmount);
+      calculateEstimatedTokens(maxAmount);
+    } catch (error) {
+      console.error('Error getting balance:', error);
+      toast({
+        title: "Error",
+        description: "Could not fetch wallet balance",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleBuy = async () => {
@@ -232,7 +281,35 @@ export default function ContentCoinDetail() {
       return;
     }
 
+    // Check user's ETH balance
     try {
+      const balance = await publicClient.getBalance({ address: address as `0x${string}` });
+      const balanceInEth = parseFloat(formatUnits(balance, 18));
+      const requiredAmount = parseFloat(buyAmount) + 0.01; // Add gas estimate
+      
+      if (balanceInEth < requiredAmount) {
+        toast({
+          title: "Insufficient balance",
+          description: `You need at least ${requiredAmount.toFixed(4)} ETH (including gas fees)`,
+          variant: "destructive"
+        });
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking balance:', error);
+    }
+
+    try {
+      // Show initial transaction toast
+      toast({
+        title: "Transaction initiated",
+        description: "Please confirm the transaction in your wallet...",
+      });
+      
+      // Calculate minimum tokens with slippage protection
+      const estimatedTokensNum = parseFloat(estimatedTokens.replace(/,/g, '')) || 0;
+      const minTokensOut = (estimatedTokensNum * (1 - parseFloat(slippage) / 100)).toString();
+      
       const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
         method: 'POST',
         headers: {
@@ -241,7 +318,8 @@ export default function ContentCoinDetail() {
         body: JSON.stringify({
           buyerAddress: address,
           ethAmount: buyAmount,
-          minTokensOut: '0'
+          minTokensOut,
+          slippageTolerance: slippage
         }),
       });
 
@@ -259,21 +337,35 @@ export default function ContentCoinDetail() {
       const result = await response.json();
 
       toast({
-        title: "Buy order submitted!",
-        description: `Buying ${buyAmount} ETH worth of ${tokenData.symbol} tokens`,
+        title: "Buy successful! 🎉",
+        description: `Successfully bought ${estimatedTokens} ${tokenData.coinSymbol || tokenData.symbol} tokens`,
       });
 
+      // Add comment if provided
       if (comment.trim()) {
-        await buyMutation.mutateAsync({
-          coinId: tokenData.id,
-          userAddress: address,
-          ethAmount: buyAmount,
-          comment: comment.trim()
-        });
+        try {
+          await fetch(`/api/creator-coins/${tokenData.id}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userAddress: address,
+              content: comment.trim(),
+              ethAmount: buyAmount,
+              type: 'buy'
+            })
+          });
+        } catch (commentError) {
+          console.error('Failed to add comment:', commentError);
+        }
       }
 
+      // Reset form
       setBuyAmount("");
       setComment("");
+      setEstimatedTokens("");
+      
+      // Refresh data
+      window.location.reload();
 
     } catch (error) {
       console.error('Buy failed:', error);
@@ -325,6 +417,19 @@ export default function ContentCoinDetail() {
         variant: "destructive"
       });
       return;
+    }
+
+    // Check user's token balance
+    if (tokenBalance) {
+      const balanceInTokens = parseFloat(formatUnits(tokenBalance, 18));
+      if (balanceInTokens < parseFloat(sellAmount)) {
+        toast({
+          title: "Insufficient tokens",
+          description: `You only have ${balanceInTokens.toFixed(4)} ${tokenData.coinSymbol} tokens`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     try {
@@ -574,18 +679,28 @@ export default function ContentCoinDetail() {
 
                   {/* Amount Input */}
                   <div className="space-y-2">
-                    <Input
-                      type="number"
-                      value={buyAmount}
-                      onChange={(e) => setBuyAmount(e.target.value)}
-                      placeholder="0.000111"
-                      step="0.000001"
-                      min="0"
-                      className="bg-input border-input"
-                    />
-                    <div className="flex justify-end text-xs text-muted-foreground">
-                      ETH
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        value={buyAmount}
+                        onChange={(e) => {
+                          setBuyAmount(e.target.value);
+                          calculateEstimatedTokens(e.target.value);
+                        }}
+                        placeholder="0.000111"
+                        step="0.000001"
+                        min="0"
+                        className="bg-input border-input pr-12"
+                      />
+                      <div className="absolute right-3 top-2 text-xs text-muted-foreground">
+                        ETH
+                      </div>
                     </div>
+                    {estimatedTokens && (
+                      <div className="text-xs text-muted-foreground text-center">
+                        ≈ {estimatedTokens} {tokenData?.coinSymbol || 'tokens'}
+                      </div>
+                    )}
                   </div>
 
                   {/* Quick Amount Buttons */}
@@ -624,24 +739,107 @@ export default function ContentCoinDetail() {
                     </Button>
                   </div>
 
+                  {/* Advanced Settings */}
+                  <div className="space-y-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAdvanced(!showAdvanced)}
+                      className="text-xs w-full justify-between"
+                    >
+                      Advanced Settings
+                      <ChevronDown className={`h-3 w-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                    </Button>
+                    
+                    {showAdvanced && (
+                      <div className="space-y-3 p-3 border rounded-lg">
+                        <div>
+                          <Label htmlFor="slippage" className="text-xs">Slippage Tolerance (%)</Label>
+                          <Input
+                            id="slippage"
+                            type="number"
+                            value={slippage}
+                            onChange={(e) => setSlippage(e.target.value)}
+                            placeholder="2"
+                            step="0.1"
+                            min="0.1"
+                            max="50"
+                            className="mt-1 text-xs h-8"
+                          />
+                        </div>
+                        
+                        {priceData && (
+                          <div className="space-y-1 text-xs text-muted-foreground">
+                            <div className="flex justify-between">
+                              <span>Current Price:</span>
+                              <span>${priceData.price}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Min. Price (with slippage):</span>
+                              <span>${(parseFloat(priceData.price) * (1 - parseFloat(slippage) / 100)).toFixed(6)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Comment Input */}
                   <Textarea
                     placeholder="Add a comment..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    className="bg-gray-800 border-gray-600 text-white resize-none h-20"
+                    className="bg-gray-800 border-gray-600 text-white resize-none h-16 text-sm"
                   />
+
+                  {/* Trade Confirmation */}
+                  {buyAmount && parseFloat(buyAmount) > 0 && (
+                    <div className="p-3 border rounded-lg bg-muted/50 space-y-2">
+                      <div className="text-xs font-medium">Trade Summary</div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span>You {tradeMode}:</span>
+                          <span>{buyAmount} ETH</span>
+                        </div>
+                        {estimatedTokens && (
+                          <div className="flex justify-between">
+                            <span>You receive:</span>
+                            <span>≈ {estimatedTokens} {tokenData?.coinSymbol}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span>Slippage:</span>
+                          <span>{slippage}%</span>
+                        </div>
+                        {priceData && (
+                          <div className="flex justify-between">
+                            <span>Price Impact:</span>
+                            <span className="text-yellow-400">~0.1%</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Trade Button */}
                   <Button
                     className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
                     onClick={tradeMode === "buy" ? handleBuy : handleSell}
-                    disabled={buyMutation.isPending || !address || !buyAmount || parseFloat(buyAmount) <= 0}
+                    disabled={buyMutation.isPending || sellMutation.isPending || !address || !buyAmount || parseFloat(buyAmount) <= 0}
+                    size="lg"
                   >
-                    {buyMutation.isPending ? 'Processing...' :
-                     !address ? 'Connect Wallet' :
-                     !buyAmount ? 'Enter Amount' :
-                     `${tradeMode === "buy" ? "Buy" : "Sell"}`}
+                    {(buyMutation.isPending || sellMutation.isPending) ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : !address ? (
+                      'Connect Wallet'
+                    ) : !buyAmount ? (
+                      'Enter Amount'
+                    ) : (
+                      `${tradeMode === "buy" ? "Buy" : "Sell"} ${tokenData?.coinSymbol || 'Tokens'}`
+                    )}
                   </Button>
                 </div>
               </TabsContent>
