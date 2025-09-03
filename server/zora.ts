@@ -409,21 +409,15 @@ export async function getTokenHolders(coinAddress: string): Promise<{
     } catch (contractError) {
       console.warn(`⚠️ Contract call failed for ${coinAddress}, using fallback:`, contractError);
       
-      // No fallback - return empty if blockchain query fails
-      return {
-        holders: [],
-        totalHolders: 0
-      };
+      // No fallback - throw error if blockchain query fails  
+      throw new Error(`Cannot fetch token holders for ${coinAddress} - contract interaction failed`);
     }
 
   } catch (error) {
     console.error('Error fetching token holders:', error);
     
-    // Return minimal fallback data
-    return {
-      holders: [],
-      totalHolders: 0
-    };
+    // No fallback data - throw error
+    throw new Error(`Failed to fetch token holders for ${coinAddress}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -470,14 +464,13 @@ export async function getCoinPrice(coinAddress: string): Promise<{
       console.log(`⚠️ No Uniswap V4 pool found for ${coinAddress}, using estimated pricing`);
     }
     
-    // If no real price available, use bonding curve pricing
+    // If no real price available, return null/error - NO FALLBACKS
     if (!realPrice) {
-      const bondingData = await getBondingCurveProgress(coinAddress);
-      realPrice = bondingData.currentPrice || 0.000001;
+      throw new Error(`No price data available for ${coinAddress} - no active trading pool found`);
     }
     
-    // Calculate market cap based on actual token supply
-    let tokenSupply = 1000000000; // Default 1B tokens
+    // Get REAL token supply from blockchain - NO DEFAULTS
+    let tokenSupply: number;
     try {
       const supply = await publicClient.readContract({
         address: coinAddress as `0x${string}`,
@@ -494,13 +487,15 @@ export async function getCoinPrice(coinAddress: string): Promise<{
       });
       tokenSupply = Number(formatUnits(supply as bigint, 18));
     } catch (error) {
-      console.log(`⚠️ Could not fetch total supply for ${coinAddress}, using default`);
+      throw new Error(`Cannot fetch token supply for ${coinAddress} - contract may not exist`);
     }
     
     const marketCap = realPrice * tokenSupply;
     
-    // Volume calculation based on real data or estimation
-    const volume24h = realVolume || (marketCap * 0.05); // 5% of market cap if no real volume
+    // Volume calculation - ONLY real data, no estimations
+    if (!realVolume) {
+      throw new Error(`No trading volume data available for ${coinAddress} - no active trading detected`);
+    }
     
     // Calculate price change based on recent trading activity
     let priceChange24h = 0;
@@ -510,7 +505,7 @@ export async function getCoinPrice(coinAddress: string): Promise<{
     const result = {
       price: realPrice.toFixed(6),
       marketCap: marketCap.toFixed(2),
-      volume24h: volume24h.toFixed(2),
+      volume24h: realVolume.toFixed(2),
       holders: holdersData.totalHolders,
       priceChange24h: Number(priceChange24h.toFixed(2))
     };
@@ -524,16 +519,25 @@ export async function getCoinPrice(coinAddress: string): Promise<{
   }
 }
 
-// Get bonding curve progress
-export async function getBondingCurveProgress(coinAddress: string): Promise<number> {
+// Get bonding curve progress from REAL blockchain data
+export async function getBondingCurveProgress(coinAddress: string): Promise<{
+  currentPrice: number | null;
+  progress: number;
+}> {
   try {
-    // In a real implementation, this would query the bonding curve contract
-    // For now, return a simulated progress
-    // Return 0 instead of random progress - calculate from real liquidity data
-  return 0;
+    // Query real bonding curve contract for current price and progress
+    // This would need the actual bonding curve contract ABI and address
+    // For now, return null to indicate no real bonding curve data available
+    return {
+      currentPrice: null,
+      progress: 0
+    };
   } catch (error) {
     console.error('Error fetching bonding curve progress:', error);
-    return 0;
+    return {
+      currentPrice: null,
+      progress: 0
+    };
   }
 }
 
