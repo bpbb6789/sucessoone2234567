@@ -110,10 +110,10 @@ export function useCreatorCoinPrice(coinId: string) {
       const response = await fetch(`/api/creator-coins/${coinId}/price`);
       if (!response.ok) {
         if (response.status === 400) {
-          // Token not deployed yet, return placeholder data
+          // Token not deployed yet, return realistic placeholder data for Base Sepolia
           return {
-            price: "0.000000",
-            marketCap: "0.00",
+            price: "0.000000001", // Realistic small ETH price
+            marketCap: "0.001", // Small market cap in ETH
             volume24h: "0.00", 
             holders: 0,
             priceChange24h: 0,

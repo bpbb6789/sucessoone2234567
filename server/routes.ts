@@ -2496,7 +2496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         console.log(`⚠️ No price data available for ${coinData.coinAddress}, returning mock data`);
-        
+
         res.json(mockData);
       }
     } catch (error) {
@@ -3818,19 +3818,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/dexscreener/:tokenAddress', async (req, res) => {
     try {
       const { tokenAddress } = req.params;
-      
+
       if (!tokenAddress) {
         return res.status(400).json({ error: 'Token address is required' });
       }
 
       console.log(`🔍 Fetching DexScreener data for: ${tokenAddress}`);
-      
+
       // Import getDexScreenerData function
       const { getDexScreenerData } = await import('./dexscreener.js');
       const dexData = await getDexScreenerData(tokenAddress);
-      
+
       if (!dexData.price) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           error: 'No trading data found',
           message: 'Token not actively traded on DEX platforms'
         });
@@ -3848,7 +3848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('DexScreener API error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to fetch trading data',
         message: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -3959,7 +3959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Social info - remove random generation
           socialLinks: {
             x: false, // Real social verification needed
-            farcaster: false, // Real social verification needed  
+            farcaster: false, // Real social verification needed
             tiktok: false, // Real social verification needed
           },
           memberSince: new Date(user.createdAt).toLocaleDateString('en-US', {
@@ -4140,6 +4140,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register advanced trading routes
   registerAdvancedTradingRoutes(app);
+
+  // Network health check
+  app.get('/api/network/health', async (req, res) => {
+    try {
+      const { checkBaseSepoliaHealth } = await import('./networkHealth');
+      const health = await checkBaseSepoliaHealth();
+
+      if (health.healthy) {
+        res.json({
+          network: 'Base Sepolia',
+          status: 'healthy',
+          blockNumber: health.blockNumber?.toString(),
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        res.status(503).json({
+          network: 'Base Sepolia',
+          status: 'unhealthy',
+          error: health.error,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        network: 'Base Sepolia',
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Get creator coin price data
+  app.get('/api/creator-coins/:id/price', async (req, res) => {
+    try {
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
+
+      if (!coin.length) {
+        return res.status(404).json({ message: "Creator coin not found" });
+      }
+
+      const coinData = coin[0];
+
+      if (!coinData.coinAddress || coinData.coinAddress === 'Deploying...' || coinData.coinAddress.length < 10) {
+        return res.status(400).json({ message: "Coin not yet deployed" });
+      }
+
+      try {
+        const priceData = await getCoinPrice(coinData.coinAddress);
+        const bondingProgress = await getBondingCurveProgress(coinData.coinAddress);
+
+        // Update coin with latest data
+        await db.update(creatorCoins)
+          .set({
+            currentPrice: priceData.price,
+            marketCap: priceData.marketCap,
+            volume24h: priceData.volume24h,
+            holders: priceData.holders,
+            bondingCurveProgress: bondingProgress.toString(),
+            updatedAt: new Date()
+          })
+          .where(eq(creatorCoins.id, req.params.id));
+
+        res.json({
+          ...priceData,
+          bondingCurveProgress: bondingProgress
+        });
+      } catch (priceError) {
+        // Return mock data for tokens without trading activity
+        const mockData = {
+          price: "0.000001",
+          marketCap: "0.00",
+          volume24h: "0.00",
+          holders: 0,
+          priceChange24h: 0,
+          bondingCurveProgress: 0
+        };
+
+        console.log(`⚠️ No price data available for ${coinData.coinAddress}, returning mock data`);
+
+        res.json(mockData);
+      }
+    } catch (error) {
+      res.status(500).json(handleDatabaseError(error, "getCreatorCoinPrice"));
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;

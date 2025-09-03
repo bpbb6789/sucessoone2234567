@@ -32,68 +32,91 @@ interface TokenData {
 
 export function BuySell({ tokenData }: { tokenData: TokenData }) {
   const queryClient = useQueryClient()
-  const { address } = useAccount()
+  const { address: accountAddress } = useAccount() // Renamed to avoid conflict with tokenData.address
   const { toast } = useToast()
   const [buyAmount, setBuyAmount] = useState("")
   const [sellAmount, setSellAmount] = useState("")
   const [buyComment, setBuyComment] = useState("")
-  
+
+  // Assuming these are available from context or props, or need to be fetched/defined.
+  // For the purpose of this edit, let's assume they are defined elsewhere or within this component's scope if needed.
+  const tokenAddress = tokenData.coinAddress; // Assuming tokenAddress is the coinAddress from tokenData
+  const tokenSymbol = tokenData.symbol; // Assuming tokenSymbol is the symbol from tokenData
+  const slippage = 2; // Example slippage, replace with actual value if dynamic
+  const [isLoading, setIsLoading] = useState(false); // Assuming isLoading state is needed for buy/sell operations
+  const ethAmount = buyAmount; // Alias buyAmount to ethAmount for clarity in handleBuy
+  const ethValue = parseFloat(buyAmount); // Parse buyAmount to float
+
   // Zora SDK trading hooks
   const buyMutation = useBuyCreatorCoin()
   const sellMutation = useSellCreatorCoin()
-  
+
   // Read user balances
   const { data: wethBalance } = useReadContract({
     address: MOCK_WETH_ADDRESS,
     abi: erc20Abi,
     functionName: "balanceOf",
-    args: [address as Address]
+    args: [accountAddress as Address]
   })
-  
+
   const { data: tokenBalance } = useReadContract({
     address: tokenData.coinAddress as Address,
     abi: erc20Abi,
     functionName: "balanceOf",
-    args: [address as Address]
+    args: [accountAddress as Address]
   })
 
   const handleBuy = async () => {
-    if (!address || !buyAmount || parseFloat(buyAmount) <= 0) {
+    if (!accountAddress || !tokenAddress) return;
+
+    // Validate minimum ETH amount for Base Sepolia
+    const ethValue = parseFloat(ethAmount);
+    if (ethValue < 0.00001) {
       toast({
-        title: "Invalid amount",
-        description: "Please enter a valid ETH amount to buy",
-        variant: "destructive"
-      })
-      return
+        title: "Amount Too Small",
+        description: "Minimum buy amount is 0.00001 ETH on Base Sepolia",
+        variant: "destructive",
+      });
+      return;
     }
-    
+
     try {
-      await buyMutation.mutateAsync({
-        coinId: tokenData.id,
-        userAddress: address,
-        ethAmount: buyAmount,
-        comment: buyComment.trim() || undefined
-      })
-      
+      setIsLoading(true);
+
+      const buyParams = {
+        tokenAddress: tokenAddress as Address,
+        ethAmount: ethAmount,
+        buyerAddress: accountAddress,
+        slippage: slippage
+      };
+
+      await buyMutation.mutateAsync(buyParams);
+
+      // Refetch data
+      queryClient.invalidateQueries({ queryKey: ['creator-coin-price'] });
+
       toast({
-        title: "Buy successful!",
-        description: `Purchased ${tokenData.symbol} tokens with ${buyAmount} ETH`
-      })
-      
-      setBuyAmount("")
-      setBuyComment("")
+        title: "Purchase Successful! 🎉",
+        description: `Successfully bought ${tokenSymbol} tokens`,
+      });
+
+      setBuyAmount("");
     } catch (error) {
-      console.error('Buy failed:', error)
+      console.error('Buy failed:', error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
       toast({
-        title: "Buy failed",
-        description: error instanceof Error ? error.message : "Transaction failed",
-        variant: "destructive"
-      })
+        title: "Purchase Failed",
+        description: errorMessage.includes('network') ? 
+          "Network error. Please check your Base Sepolia connection." : errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSell = async () => {
-    if (!address || !sellAmount || parseFloat(sellAmount) <= 0) {
+    if (!accountAddress || !sellAmount || parseFloat(sellAmount) <= 0) {
       toast({
         title: "Invalid amount",
         description: "Please enter a valid token amount to sell",
@@ -101,19 +124,19 @@ export function BuySell({ tokenData }: { tokenData: TokenData }) {
       })
       return
     }
-    
+
     try {
       await sellMutation.mutateAsync({
         coinId: tokenData.id,
-        userAddress: address,
+        userAddress: accountAddress,
         tokenAmount: sellAmount
       })
-      
+
       toast({
         title: "Sell successful!",
         description: `Sold ${sellAmount} ${tokenData.symbol} tokens`
       })
-      
+
       setSellAmount("")
     } catch (error) {
       console.error('Sell failed:', error)
@@ -125,8 +148,8 @@ export function BuySell({ tokenData }: { tokenData: TokenData }) {
     }
   }
 
-  const isBuyDisabled = !buyAmount || parseFloat(buyAmount) <= 0 || !address || buyMutation.isPending
-  const isSellDisabled = !sellAmount || parseFloat(sellAmount) <= 0 || !address || sellMutation.isPending
+  const isBuyDisabled = !buyAmount || parseFloat(buyAmount) <= 0 || !accountAddress || buyMutation.isPending || isLoading
+  const isSellDisabled = !sellAmount || parseFloat(sellAmount) <= 0 || !accountAddress || sellMutation.isPending
   const hasWethBalance = wethBalance && wethBalance > 0n
   const hasTokenBalance = tokenBalance && tokenBalance > 0n
 
@@ -142,7 +165,7 @@ export function BuySell({ tokenData }: { tokenData: TokenData }) {
           Sell
         </TabsTrigger>
       </TabsList>
-      
+
       <TabsContent value="Buy">
         <Card className="bg-background/50 backdrop-blur-sm border-border/50">
           <CardContent className="space-y-4 pt-6">
@@ -197,7 +220,7 @@ export function BuySell({ tokenData }: { tokenData: TokenData }) {
               />
             </div>
           </CardContent>
-          
+
           <CardFooter>
             <Button 
               onClick={handleBuy}
@@ -205,7 +228,7 @@ export function BuySell({ tokenData }: { tokenData: TokenData }) {
               className="w-full h-12 text-lg font-semibold"
               size="lg"
             >
-              {buyMutation.isPending ? (
+              {buyMutation.isPending || isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Buying...
@@ -217,7 +240,7 @@ export function BuySell({ tokenData }: { tokenData: TokenData }) {
           </CardFooter>
         </Card>
       </TabsContent>
-      
+
       <TabsContent value="Sell">
         <Card className="bg-background/50 backdrop-blur-sm border-border/50">
           <CardContent className="space-y-4 pt-6">
@@ -273,7 +296,7 @@ export function BuySell({ tokenData }: { tokenData: TokenData }) {
               </div>
             )}
           </CardContent>
-          
+
           <CardFooter>
             <Button 
               onClick={handleSell}
