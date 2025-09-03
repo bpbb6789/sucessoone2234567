@@ -25,7 +25,7 @@ const ZORA_FACTORY_ADDRESS = '0x777777751622c0d3258f214F9DF38E35BF45baF3' as con
 const ZORA_HOOK_REGISTRY = '0x777777C4c14b133858c3982D41Dbf02509fc18d7' as const;
 
 // Platform address for developer rewards (15% create referral + 15% trade referral)
-const PLATFORM_REFERRER_ADDRESS = process.env.PLATFORM_REFERRER_ADDRESS || '0x0000000000000000000000000000000000000000' as const;
+const PLATFORM_REFERRER_ADDRESS = '0x71527294D2a4dF27266580b6E07723721944Bf93' as const;
 
 // Create public client
 const publicClient = createPublicClient({
