@@ -63,7 +63,7 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
           if (zoraResponse.ok) {
             const zoraData = await zoraResponse.json();
             isZoraChannel = true;
-            
+
             if (zoraData.marketCap && parseFloat(zoraData.marketCap) > 0) {
               const marketCap = parseFloat(zoraData.marketCap);
               if (marketCap >= 1000000) {
@@ -74,7 +74,7 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
                 marketCapValue = `$${marketCap.toFixed(2)}`;
               }
             }
-            
+
             holderCount = zoraData.holders || 0;
           }
         } catch (zoraError) {

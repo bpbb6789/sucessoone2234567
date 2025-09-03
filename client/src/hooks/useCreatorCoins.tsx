@@ -108,11 +108,32 @@ export function useCreatorCoinPrice(coinId: string) {
     queryKey: ['/api/creator-coins', coinId, 'price'],
     queryFn: async () => {
       const response = await fetch(`/api/creator-coins/${coinId}/price`);
-      if (!response.ok) throw new Error('Failed to fetch price data');
+      if (!response.ok) {
+        if (response.status === 400) {
+          // Token not deployed yet, return placeholder data
+          return {
+            price: "0.000000",
+            marketCap: "0.00",
+            volume24h: "0.00", 
+            holders: 0,
+            priceChange24h: 0,
+            bondingCurveProgress: 0
+          };
+        }
+        throw new Error('Failed to fetch price data');
+      }
       return response.json();
     },
     enabled: !!coinId,
-    refetchInterval: 30000 // Refetch every 30 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds
+    retry: (failureCount, error) => {
+      // Don't retry if it's a 400 error (coin not deployed)
+      if (error && error.message?.includes('400')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
   });
 }
 
