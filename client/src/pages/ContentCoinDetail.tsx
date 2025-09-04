@@ -55,7 +55,7 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 import { useState, useMemo, useEffect } from "react";
-import { useAccount, usePublicClient, useReadContract, useWriteContract } from 'wagmi'
+// Removed wagmi hooks for auction integration - using Zora SDK via API routes
 
 // Creator coin related hooks
 import {
@@ -132,16 +132,7 @@ export default function ContentCoinDetail() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [estimatedTokens, setEstimatedTokens] = useState("");
 
-  // Doppler auction state
-  const [auctionInfo, setAuctionInfo] = useState<{
-    isActive: boolean;
-    currentPrice: string;
-    timeRemaining: number;
-    auctionAddress: string;
-    tokensForSale: string;
-    tokensSold: string;
-  } | null>(null);
-  const [loadingAuction, setLoadingAuction] = useState(false);
+  // Removed auction state - using instant trading now
 
   // Trading mutations
   const buyMutation = useBuyCreatorCoin();
@@ -153,29 +144,7 @@ export default function ContentCoinDetail() {
   );
   const { data: priceData } = useCreatorCoinPrice(tokenAddress || "");
 
-  // Check for Doppler auction info
-  useEffect(() => {
-    const checkForAuction = async () => {
-      if (!tokenAddress) return;
-
-      setLoadingAuction(true);
-      try {
-        const response = await fetch(`/api/doppler/tokens/${tokenAddress}`);
-        if (response.ok) {
-          const auctionData = await response.json();
-          if (auctionData.isActive) {
-            setAuctionInfo(auctionData);
-          }
-        }
-      } catch (error) {
-        console.log("No active auction for this token");
-      } finally {
-        setLoadingAuction(false);
-      }
-    };
-
-    checkForAuction();
-  }, [tokenAddress]);
+  // Removed auction check - using instant trading via Zora SDK
 
   // Fetch creator coin data
   const {
@@ -307,7 +276,7 @@ export default function ContentCoinDetail() {
     calculateEstimatedTokens(newAmount);
   };
 
-  // Calculate estimated tokens based on current price (auction or regular)
+  // Calculate estimated tokens based on current bonding curve price
   const calculateEstimatedTokens = async (ethAmount: string) => {
     if (!ethAmount) {
       setEstimatedTokens("");
@@ -315,28 +284,13 @@ export default function ContentCoinDetail() {
     }
 
     try {
-      // If token is in auction, use Doppler quote API
-      if (auctionInfo && auctionInfo.isActive) {
-        const response = await fetch(`/api/doppler/quote`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            tokenAddress,
-            auctionAddress: auctionInfo.auctionAddress,
-            ethAmount,
-          }),
-        });
-        const { tokens } = await response.json();
-        setEstimatedTokens(tokens);
-      } else {
-        // Use regular price calculation
-        if (!priceData?.price) {
-          setEstimatedTokens("");
-          return;
-        }
-        const estimated = parseFloat(ethAmount) / parseFloat(priceData.price);
-        setEstimatedTokens(estimated.toLocaleString());
+      // Use real-time bonding curve price calculation
+      if (!priceData?.price) {
+        setEstimatedTokens("");
+        return;
       }
+      const estimated = parseFloat(ethAmount) / parseFloat(priceData.price);
+      setEstimatedTokens(estimated.toLocaleString());
     } catch (error) {
       console.error("Failed to calculate estimated tokens:", error);
       setEstimatedTokens("");
@@ -401,44 +355,7 @@ export default function ContentCoinDetail() {
       return;
     }
 
-    // Handle Doppler auction buy
-    if (auctionInfo && auctionInfo.isActive) {
-      try {
-        const response = await fetch(`/api/doppler/buy`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            auctionAddress: auctionInfo.auctionAddress,
-            ethAmount: buyAmount,
-          }),
-        });
-
-        const result = await response.json();
-        if (result.success) {
-          toast({
-            title: "Auction bid successful! 🎉",
-            description: `Successfully bid ${buyAmount} ETH in the auction`,
-          });
-
-          // Reset form and refresh data
-          setBuyAmount("");
-          setEstimatedTokens("");
-          window.location.reload();
-          return;
-        } else {
-          throw new Error(result.error || "Auction bid failed");
-        }
-      } catch (error) {
-        console.error("Auction bid failed:", error);
-        toast({
-          title: "Auction bid failed",
-          description:
-            error instanceof Error ? error.message : "Transaction failed",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
+    // Instant trading via Zora bonding curve - no auction
 
     // Check user's ETH balance
     try {
@@ -657,7 +574,7 @@ export default function ContentCoinDetail() {
 
     // Check user's token balance
     if (tokenBalance) {
-      const balanceInTokens = parseFloat(formatUnits(tokenBalance, 18));
+      const balanceInTokens = parseFloat(formatUnits(BigInt(tokenBalance), 18));
       if (balanceInTokens < parseFloat(sellAmount)) {
         toast({
           title: "Insufficient tokens",
@@ -893,150 +810,172 @@ export default function ContentCoinDetail() {
                 {/* Trading Tab Content */}
                 <TabsContent value="trading" className="p-4 space-y-0">
                   <div className="space-y-4">
-                    {/* Auction Status Banner */}
-                    {auctionInfo && auctionInfo.isActive && (
-                      <div className="p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                            <span className="text-sm font-semibold text-blue-400">
-                              Live Auction
-                            </span>
+                    {/* Market Stats Banner */}
+                    <div className="p-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/30 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                          <span className="text-sm font-semibold text-green-400">
+                            Instant Trading
+                          </span>
+                        </div>
+                        <div className="text-xs text-green-300">
+                          Bonding Curve Active
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <div className="text-muted-foreground">
+                            Current Price
                           </div>
-                          <div className="text-xs text-blue-300">
-                            {Math.floor(auctionInfo.timeRemaining / 3600)}h{" "}
-                            {Math.floor(
-                              (auctionInfo.timeRemaining % 3600) / 60,
-                            )}
-                            m left
+                          <div className="font-semibold text-green-400">
+                            ${priceData?.price || tokenData?.currentPrice || "0.00"}
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <div className="text-muted-foreground">
-                              Auction Price
-                            </div>
-                            <div className="font-semibold text-blue-400">
-                              ${auctionInfo.currentPrice}
-                            </div>
+                        <div>
+                          <div className="text-muted-foreground">
+                            Market Cap
                           </div>
-                          <div>
-                            <div className="text-muted-foreground">
-                              Progress
-                            </div>
-                            <div className="font-semibold">
-                              {auctionInfo.tokensSold}% sold
-                            </div>
+                          <div className="font-semibold">
+                            ${priceData?.marketCap || tokenData?.marketCap || "0"}
                           </div>
                         </div>
                       </div>
-                    )}
+                    </div>
 
-                    {/* Buy/Sell Toggle - Modified for auction */}
+                    {/* Buy/Sell Toggle - Instant Trading */}
                     <div className="flex space-x-2">
                       <Button
                         className={`flex-1 ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-gray-700 hover:bg-gray-600"}`}
                         onClick={() => setTradeMode("buy")}
                       >
-                        {auctionInfo?.isActive ? "Bid" : "Buy"}
+                        Buy
                       </Button>
                       <Button
                         className={`flex-1 ${tradeMode === "sell" ? "bg-red-500 hover:bg-red-600" : "bg-gray-700 hover:bg-gray-600"}`}
                         onClick={() => setTradeMode("sell")}
-                        disabled={auctionInfo?.isActive} // Disable sell during auction
                       >
                         Sell
                       </Button>
                     </div>
 
-                    {/* Auction disabled sell message */}
-                    {auctionInfo?.isActive && tradeMode === "sell" && (
-                      <div className="text-center p-3 bg-muted/50 rounded-lg">
-                        <p className="text-sm text-muted-foreground">
-                          Selling is disabled during active auction
-                        </p>
-                      </div>
-                    )}
 
                     {/* Balance Display */}
                     <div className="text-center text-sm text-muted-foreground">
                       Balance{" "}
-                      {tokenBalance ? formatUnits(tokenBalance, 18) : "0"} ETH
+                      {tokenBalance ? formatUnits(BigInt(tokenBalance), 18) : "0"} ETH
                     </div>
 
-                    {/* Amount Input - Show only if not selling during auction */}
-                    {!(auctionInfo?.isActive && tradeMode === "sell") && (
-                      <div className="space-y-2">
-                        <div className="relative">
-                          <Input
-                            type="number"
-                            value={buyAmount}
-                            onChange={(e) => {
+                    {/* Amount Input */}
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          value={tradeMode === "buy" ? buyAmount : sellAmount}
+                          onChange={(e) => {
+                            if (tradeMode === "buy") {
                               setBuyAmount(e.target.value);
                               calculateEstimatedTokens(e.target.value);
-                            }}
-                            placeholder={
-                              auctionInfo?.isActive ? "0.001" : "0.000111"
+                            } else {
+                              setSellAmount(e.target.value);
                             }
-                            step="0.000001"
-                            min="0"
-                            className="bg-input border-input pr-12"
-                          />
-                          <div className="absolute right-3 top-2 text-xs text-muted-foreground">
-                            ETH
-                          </div>
+                          }}
+                          placeholder={tradeMode === "buy" ? "0.000111" : "0.0"}
+                          step="0.000001"
+                          min="0"
+                          className="bg-input border-input pr-12"
+                        />
+                        <div className="absolute right-3 top-2 text-xs text-muted-foreground">
+                          {tradeMode === "buy" ? "ETH" : tokenData?.coinSymbol || "TOKENS"}
                         </div>
-                        {estimatedTokens && (
-                          <div className="text-xs text-muted-foreground text-center">
-                            ≈ {estimatedTokens}{" "}
-                            {tokenData?.coinSymbol || "tokens"}
-                            {auctionInfo?.isActive && (
-                              <span className="ml-1 text-blue-400">
-                                (auction price)
-                              </span>
-                            )}
-                          </div>
-                        )}
                       </div>
-                    )}
+                      {tradeMode === "buy" && estimatedTokens && (
+                        <div className="text-xs text-muted-foreground text-center">
+                          ≈ {estimatedTokens}{" "}
+                          {tokenData?.coinSymbol || "tokens"}
+                        </div>
+                      )}
+                      {tradeMode === "sell" && sellAmount && (
+                        <div className="text-xs text-muted-foreground text-center">
+                          ≈ {(parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Quick Amount Buttons - Show only if not selling during auction */}
-                    {!(auctionInfo?.isActive && tradeMode === "sell") && (
-                      <div className="grid grid-cols-4 gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAmountSelect("0.001")}
-                          className="text-xs"
-                        >
-                          0.001 ETH
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAmountSelect("0.01")}
-                          className="text-xs"
-                        >
-                          0.01 ETH
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAmountSelect("0.1")}
-                          className="text-xs"
-                        >
-                          0.1 ETH
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleMaxAmount}
-                          className="text-xs"
-                        >
-                          Max
-                        </Button>
-                      </div>
-                    )}
+                    {/* Quick Amount Buttons */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {tradeMode === "buy" ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAmountSelect("0.001")}
+                            className="text-xs"
+                          >
+                            0.001 ETH
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAmountSelect("0.01")}
+                            className="text-xs"
+                          >
+                            0.01 ETH
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAmountSelect("0.1")}
+                            className="text-xs"
+                          >
+                            0.1 ETH
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleMaxAmount}
+                            className="text-xs"
+                          >
+                            Max
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.25).toString() : "0")}
+                            className="text-xs"
+                          >
+                            25%
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.5).toString() : "0")}
+                            className="text-xs"
+                          >
+                            50%
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.75).toString() : "0")}
+                            className="text-xs"
+                          >
+                            75%
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSellAmount(tokenBalance ? formatUnits(BigInt(tokenBalance), 18) : "0")}
+                            className="text-xs"
+                          >
+                            Max
+                          </Button>
+                        </>
+                      )}
+                    </div>
 
                     {/* Advanced Settings */}
                     <div className="space-y-2">
@@ -1132,42 +1071,32 @@ export default function ContentCoinDetail() {
                       </div>
                     )}
 
-                    {/* Trade Button - Show only if not selling during auction */}
-                    {!(auctionInfo?.isActive && tradeMode === "sell") && (
-                      <Button
-                        className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
-                        onClick={tradeMode === "buy" ? handleBuy : handleSell}
-                        disabled={
-                          buyMutation.isPending ||
-                          sellMutation.isPending ||
-                          !address ||
-                          !buyAmount ||
-                          parseFloat(buyAmount) <= 0 ||
-                          loadingAuction
-                        }
-                        size="lg"
-                      >
-                        {loadingAuction ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Checking auction...
-                          </>
-                        ) : buyMutation.isPending || sellMutation.isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : !address ? (
-                          "Connect Wallet"
-                        ) : !buyAmount ? (
-                          "Enter Amount"
-                        ) : auctionInfo?.isActive && tradeMode === "buy" ? (
-                          `Place Bid - ${buyAmount} ETH`
-                        ) : (
-                          `${tradeMode === "buy" ? "Buy" : "Sell"} ${tokenData?.coinSymbol || "Tokens"}`
-                        )}
-                      </Button>
-                    )}
+                    {/* Trade Button */}
+                    <Button
+                      className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
+                      onClick={tradeMode === "buy" ? handleBuy : handleSell}
+                      disabled={
+                        buyMutation.isPending ||
+                        sellMutation.isPending ||
+                        !address ||
+                        (tradeMode === "buy" && (!buyAmount || parseFloat(buyAmount) <= 0)) ||
+                        (tradeMode === "sell" && (!sellAmount || parseFloat(sellAmount) <= 0))
+                      }
+                      size="lg"
+                    >
+                      {buyMutation.isPending || sellMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : !address ? (
+                        "Connect Wallet"
+                      ) : (tradeMode === "buy" && !buyAmount) || (tradeMode === "sell" && !sellAmount) ? (
+                        "Enter Amount"
+                      ) : (
+                        `${tradeMode === "buy" ? "Buy" : "Sell"} ${tokenData?.coinSymbol || "Tokens"}`
+                      )}
+                    </Button>
                   </div>
                 </TabsContent>
 

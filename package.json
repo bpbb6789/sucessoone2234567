@@ -53,6 +53,7 @@
     "@wagmi/core": "^2.19.0",
     "@walletconnect/types": "^2.21.8",
     "@whetstone-research/doppler-sdk": "^0.0.1-alpha.14",
+    "@zoralabs/coins": "^2.1.2",
     "@zoralabs/coins-sdk": "^0.2.1",
     "child_process": "^1.0.2",
     "class-variance-authority": "^0.7.1",
