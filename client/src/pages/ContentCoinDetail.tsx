@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -9,8 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAccount, useReadContract } from 'wagmi';
-import { usePublicClient, useWriteContract } from 'wagmi';
+import { useAccount } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import {
   Play,
@@ -33,36 +32,49 @@ import {
   Crown,
   Sparkles,
   Settings,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 // Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
 import { ContentPreview } from "@/components/ContentPreview";
-import { formatUnits, parseUnits, Address, erc20Abi, createPublicClient, http, parseEther } from "viem";
+import {
+  formatUnits,
+  parseUnits,
+  Address,
+  erc20Abi,
+  createPublicClient,
+  http,
+  parseEther,
+} from "viem";
 import { baseSepolia } from "viem/chains";
 
 // Create public client for blockchain interactions
 const publicClient = createPublicClient({
   chain: baseSepolia,
-  transport: http()
+  transport: http(),
 });
 import { useState, useMemo, useEffect } from "react";
 
 // Creator coin related hooks
-import { useBuyCreatorCoin, useSellCreatorCoin, useCreatorCoin, useCreatorCoinPrice } from "@/hooks/useCreatorCoins";
+import {
+  useBuyCreatorCoin,
+  useSellCreatorCoin,
+  useCreatorCoin,
+  useCreatorCoinPrice,
+} from "@/hooks/useCreatorCoins";
 import type { CreatorCoin } from "@shared/schema";
-import { DexScreenerChart } from '@/components/DexScreenerChart';
+import { DexScreenerChart } from "@/components/DexScreenerChart";
 
 // Contract constants for Base Sepolia
 const CREATOR_COIN_TOKEN_ABI = [
   {
-    "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
-    "name": "balanceOf",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  }
+    inputs: [{ internalType: "address", name: "account", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const;
 
 type CommentData = {
@@ -71,7 +83,7 @@ type CommentData = {
   content: string;
   timestamp?: Date;
   ethAmount?: string;
-  type?: 'buy' | 'sell' | 'comment';
+  type?: "buy" | "sell" | "comment";
 };
 
 type TradeData = {
@@ -79,7 +91,7 @@ type TradeData = {
   userAddress: string;
   ethAmount: string;
   timestamp?: Date;
-  type: 'buy' | 'sell';
+  type: "buy" | "sell";
 };
 
 type HolderData = {
@@ -105,19 +117,20 @@ export default function ContentCoinDetail() {
   const params = useParams();
   const tokenAddress = params.address;
   const { address } = useAccount();
-  const publicClient = usePublicClient();
-  const { writeContract } = useWriteContract();
+  // Removed unused wagmi hooks for auction integration
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState("");
   const [sellAmount, setSellAmount] = useState("");
   const [comment, setComment] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState<"1H" | "1D" | "1W" | "1M" | "All">("1D");
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "1H" | "1D" | "1W" | "1M" | "All"
+  >("1D");
   const [tradeMode, setTradeMode] = useState<"buy" | "sell">("buy");
   const [viewMode, setViewMode] = useState<"chart" | "image">("chart");
   const [slippage, setSlippage] = useState("2"); // 2% default slippage
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [estimatedTokens, setEstimatedTokens] = useState("");
-  
+
   // Doppler auction state
   const [auctionInfo, setAuctionInfo] = useState<{
     isActive: boolean;
@@ -134,14 +147,16 @@ export default function ContentCoinDetail() {
   const sellMutation = useSellCreatorCoin();
 
   // Fetch creator coin data using the token address as ID
-  const { data: creatorCoin, isLoading: isLoadingCoin } = useCreatorCoin(tokenAddress || '');
-  const { data: priceData } = useCreatorCoinPrice(tokenAddress || '');
+  const { data: creatorCoin, isLoading: isLoadingCoin } = useCreatorCoin(
+    tokenAddress || "",
+  );
+  const { data: priceData } = useCreatorCoinPrice(tokenAddress || "");
 
   // Check for Doppler auction info
   useEffect(() => {
     const checkForAuction = async () => {
       if (!tokenAddress) return;
-      
+
       setLoadingAuction(true);
       try {
         const response = await fetch(`/api/doppler/tokens/${tokenAddress}`);
@@ -152,7 +167,7 @@ export default function ContentCoinDetail() {
           }
         }
       } catch (error) {
-        console.log('No active auction for this token');
+        console.log("No active auction for this token");
       } finally {
         setLoadingAuction(false);
       }
@@ -161,24 +176,31 @@ export default function ContentCoinDetail() {
     checkForAuction();
   }, [tokenAddress]);
 
-
   // Fetch creator coin data
-  const { data: tokenData, isLoading: creatorCoinLoading, error: creatorCoinError } = useQuery({
+  const {
+    data: tokenData,
+    isLoading: creatorCoinLoading,
+    error: creatorCoinError,
+  } = useQuery({
     queryKey: [`/api/creator-coins/${tokenAddress}`],
     queryFn: async () => {
       const response = await fetch(`/api/creator-coins/${tokenAddress}`);
-      if (!response.ok) throw new Error('Failed to fetch creator coin');
+      if (!response.ok) throw new Error("Failed to fetch creator coin");
       return response.json();
     },
     enabled: !!tokenAddress,
   });
 
   // Fetch comments
-  const { data: commentData, isLoading: commentsLoading } = useQuery<CommentData[]>({
+  const { data: commentData, isLoading: commentsLoading } = useQuery<
+    CommentData[]
+  >({
     queryKey: [`/api/creator-coins/${tokenAddress}/comments`],
     queryFn: async () => {
-      const response = await fetch(`/api/creator-coins/${tokenAddress}/comments`);
-      if (!response.ok) throw new Error('Failed to fetch comments');
+      const response = await fetch(
+        `/api/creator-coins/${tokenAddress}/comments`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch comments");
       return response.json();
     },
     enabled: !!tokenAddress,
@@ -189,40 +211,36 @@ export default function ContentCoinDetail() {
     queryKey: [`/api/creator-coins/${tokenAddress}/trades`],
     queryFn: async () => {
       const response = await fetch(`/api/creator-coins/${tokenAddress}/trades`);
-      if (!response.ok) throw new Error('Failed to fetch trades');
+      if (!response.ok) throw new Error("Failed to fetch trades");
       return response.json();
     },
     enabled: !!tokenAddress,
   });
 
   // Fetch holders
-  const { data: holdersData, isLoading: holdersLoading } = useQuery<HolderData[]>({
+  const { data: holdersData, isLoading: holdersLoading } = useQuery<
+    HolderData[]
+  >({
     queryKey: [`/api/creator-coins/${tokenAddress}/holders`],
     queryFn: async () => {
-      const response = await fetch(`/api/creator-coins/${tokenAddress}/holders`);
-      if (!response.ok) throw new Error('Failed to fetch holders');
+      const response = await fetch(
+        `/api/creator-coins/${tokenAddress}/holders`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch holders");
       return response.json();
     },
     enabled: !!tokenAddress,
   });
 
-  // Get user token balance
-  const { data: tokenBalance } = useReadContract({
-    address: tokenData?.address as Address,
-    abi: CREATOR_COIN_TOKEN_ABI,
-    functionName: 'balanceOf',
-    args: [address as Address],
-    query: {
-      enabled: !!(tokenData?.address && address),
-    },
-  });
+  // Removed direct contract balance read for auction integration
+  const tokenBalance = "0"; // Mock balance for now
 
   // Process holders data with proper typing
   const processedHolders = useMemo(() => {
     if (!holdersData || !Array.isArray(holdersData)) return [];
-    return holdersData.map(holder => ({
+    return holdersData.map((holder) => ({
       address: holder.address,
-      balance: holder.balance
+      balance: holder.balance,
     }));
   }, [holdersData]);
 
@@ -230,7 +248,8 @@ export default function ContentCoinDetail() {
   const chartData = useMemo(() => {
     if (!tokenData) return null;
 
-    const defaultPrice = priceData?.price || tokenData?.currentPrice || tokenData?.price || "0";
+    const defaultPrice =
+      priceData?.price || tokenData?.currentPrice || tokenData?.price || "0";
     const priceChange = priceData?.priceChange24h || 0;
 
     // Generate realistic price points based on actual data
@@ -247,33 +266,39 @@ export default function ContentCoinDetail() {
         const x = startX + (i * width) / (numPoints - 1);
         // Create realistic price movement based on actual change
         const timeProgress = i / (numPoints - 1);
-        const volatility = period === '1H' ? 0.02 : period === '1D' ? 0.05 : 0.1;
+        const volatility =
+          period === "1H" ? 0.02 : period === "1D" ? 0.05 : 0.1;
         const trendFactor = (priceChange / 100) * timeProgress;
-        const randomVariation = (Math.sin(i * 0.5) * volatility);
+        const randomVariation = Math.sin(i * 0.5) * volatility;
         const priceMultiplier = 1 + trendFactor + randomVariation;
         const adjustedPrice = Math.max(0.001, basePrice * priceMultiplier);
 
         // Convert price to Y coordinate (invert for SVG)
-        const normalizedPrice = (adjustedPrice - basePrice * 0.8) / (basePrice * 0.4);
-        const y = Math.max(30, Math.min(180, startY + height - (normalizedPrice * height * 0.8)));
+        const normalizedPrice =
+          (adjustedPrice - basePrice * 0.8) / (basePrice * 0.4);
+        const y = Math.max(
+          30,
+          Math.min(180, startY + height - normalizedPrice * height * 0.8),
+        );
 
         points.push(i === 0 ? `M${x},${y}` : `L${x},${y}`);
       }
 
-      return points.join(' ');
+      return points.join(" ");
     };
 
     return {
-      "1H": { points: generatePricePoints('1H'), price: defaultPrice },
-      "1D": { points: generatePricePoints('1D'), price: defaultPrice },
-      "1W": { points: generatePricePoints('1W'), price: defaultPrice },
-      "1M": { points: generatePricePoints('1M'), price: defaultPrice },
-      "All": { points: generatePricePoints('All'), price: defaultPrice },
+      "1H": { points: generatePricePoints("1H"), price: defaultPrice },
+      "1D": { points: generatePricePoints("1D"), price: defaultPrice },
+      "1W": { points: generatePricePoints("1W"), price: defaultPrice },
+      "1M": { points: generatePricePoints("1M"), price: defaultPrice },
+      All: { points: generatePricePoints("All"), price: defaultPrice },
     };
   }, [priceData, tokenData]);
 
   // Get current chart data safely
-  const currentData = chartData?.[selectedPeriod] || chartData?.["1D"] || { points: "M50,160 L350,160", price: "0" };
+  const currentData = chartData?.[selectedPeriod] ||
+    chartData?.["1D"] || { points: "M50,160 L350,160", price: "0" };
 
   const handleAmountSelect = (newAmount: string) => {
     setBuyAmount(newAmount);
@@ -292,13 +317,13 @@ export default function ContentCoinDetail() {
       // If token is in auction, use Doppler quote API
       if (auctionInfo && auctionInfo.isActive) {
         const response = await fetch(`/api/doppler/quote`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             tokenAddress,
             auctionAddress: auctionInfo.auctionAddress,
-            ethAmount
-          })
+            ethAmount,
+          }),
         });
         const { tokens } = await response.json();
         setEstimatedTokens(tokens);
@@ -312,7 +337,7 @@ export default function ContentCoinDetail() {
         setEstimatedTokens(estimated.toLocaleString());
       }
     } catch (error) {
-      console.error('Failed to calculate estimated tokens:', error);
+      console.error("Failed to calculate estimated tokens:", error);
       setEstimatedTokens("");
     }
   };
@@ -322,7 +347,7 @@ export default function ContentCoinDetail() {
       toast({
         title: "Wallet not connected",
         description: "Please connect your wallet first",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -330,7 +355,7 @@ export default function ContentCoinDetail() {
     try {
       // Get user's ETH balance
       const balance = await publicClient.getBalance({
-        address: address as `0x${string}`
+        address: address as `0x${string}`,
       });
       const balanceInEth = formatUnits(balance, 18);
       // Leave some ETH for gas fees
@@ -338,11 +363,11 @@ export default function ContentCoinDetail() {
       setBuyAmount(maxAmount);
       calculateEstimatedTokens(maxAmount);
     } catch (error) {
-      console.error('Error getting balance:', error);
+      console.error("Error getting balance:", error);
       toast({
         title: "Error",
         description: "Could not fetch wallet balance",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -352,7 +377,7 @@ export default function ContentCoinDetail() {
       toast({
         title: "Wallet not connected",
         description: "Please connect your wallet to trade",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -361,7 +386,7 @@ export default function ContentCoinDetail() {
       toast({
         title: "Invalid amount",
         description: "Please enter a valid ETH amount",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -370,7 +395,7 @@ export default function ContentCoinDetail() {
       toast({
         title: "Token not found",
         description: "Unable to find token information",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -379,21 +404,21 @@ export default function ContentCoinDetail() {
     if (auctionInfo && auctionInfo.isActive) {
       try {
         const response = await fetch(`/api/doppler/buy`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             auctionAddress: auctionInfo.auctionAddress,
-            ethAmount: buyAmount
-          })
+            ethAmount: buyAmount,
+          }),
         });
-        
+
         const result = await response.json();
         if (result.success) {
           toast({
             title: "Auction bid successful! 🎉",
             description: `Successfully bid ${buyAmount} ETH in the auction`,
           });
-          
+
           // Reset form and refresh data
           setBuyAmount("");
           setEstimatedTokens("");
@@ -403,11 +428,12 @@ export default function ContentCoinDetail() {
           throw new Error(result.error || "Auction bid failed");
         }
       } catch (error) {
-        console.error('Auction bid failed:', error);
+        console.error("Auction bid failed:", error);
         toast({
           title: "Auction bid failed",
-          description: error instanceof Error ? error.message : "Transaction failed",
-          variant: "destructive"
+          description:
+            error instanceof Error ? error.message : "Transaction failed",
+          variant: "destructive",
         });
         return;
       }
@@ -415,7 +441,9 @@ export default function ContentCoinDetail() {
 
     // Check user's ETH balance
     try {
-      const balance = await publicClient.getBalance({ address: address as `0x${string}` });
+      const balance = await publicClient.getBalance({
+        address: address as `0x${string}`,
+      });
       const balanceInEth = parseFloat(formatUnits(balance, 18));
       const requiredAmount = parseFloat(buyAmount) + 0.01; // Add gas estimate
 
@@ -423,76 +451,82 @@ export default function ContentCoinDetail() {
         toast({
           title: "Insufficient balance",
           description: `You need at least ${requiredAmount.toFixed(4)} ETH (including gas fees)`,
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
     } catch (error) {
-      console.error('Error checking balance:', error);
+      console.error("Error checking balance:", error);
     }
 
     try {
       // Calculate minimum tokens with slippage protection
-      const estimatedTokensNum = parseFloat(estimatedTokens.replace(/,/g, '')) || 0;
-      const minTokensOut = (estimatedTokensNum * (1 - parseFloat(slippage) / 100)).toString();
+      const estimatedTokensNum =
+        parseFloat(estimatedTokens.replace(/,/g, "")) || 0;
+      const minTokensOut = (
+        estimatedTokensNum *
+        (1 - parseFloat(slippage) / 100)
+      ).toString();
 
       // For Zora-deployed tokens, use direct contract interaction
       // First, check if this is a Zora token vs PumpFun token
-      const isZoraToken = tokenData.contractAddress && tokenData.contractAddress.length === 42;
+      const isZoraToken =
+        tokenData.contractAddress && tokenData.contractAddress.length === 42;
 
       if (isZoraToken) {
         // Use Zora's pool manager contract directly via wagmi
         const { request } = await publicClient.simulateContract({
-          address: '0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967' as `0x${string}`, // Uniswap V4 Pool Manager
+          address:
+            "0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967" as `0x${string}`, // Uniswap V4 Pool Manager
           abi: [
             {
-              name: 'swap',
-              type: 'function',
-              stateMutability: 'payable',
+              name: "swap",
+              type: "function",
+              stateMutability: "payable",
               inputs: [
                 {
-                  name: 'key',
-                  type: 'tuple',
+                  name: "key",
+                  type: "tuple",
                   components: [
-                    { name: 'currency0', type: 'address' },
-                    { name: 'currency1', type: 'address' },
-                    { name: 'fee', type: 'uint24' },
-                    { name: 'tickSpacing', type: 'int24' },
-                    { name: 'hooks', type: 'address' }
-                  ]
+                    { name: "currency0", type: "address" },
+                    { name: "currency1", type: "address" },
+                    { name: "fee", type: "uint24" },
+                    { name: "tickSpacing", type: "int24" },
+                    { name: "hooks", type: "address" },
+                  ],
                 },
                 {
-                  name: 'params',
-                  type: 'tuple', 
+                  name: "params",
+                  type: "tuple",
                   components: [
-                    { name: 'zeroForOne', type: 'bool' },
-                    { name: 'amountSpecified', type: 'int256' },
-                    { name: 'sqrtPriceLimitX96', type: 'uint160' }
-                  ]
+                    { name: "zeroForOne", type: "bool" },
+                    { name: "amountSpecified", type: "int256" },
+                    { name: "sqrtPriceLimitX96", type: "uint160" },
+                  ],
                 },
-                { name: 'hookData', type: 'bytes' }
+                { name: "hookData", type: "bytes" },
               ],
-              outputs: []
-            }
+              outputs: [],
+            },
           ],
-          functionName: 'swap',
+          functionName: "swap",
           args: [
             {
-              currency0: '0x4200000000000000000000000000000000000006', // WETH
+              currency0: "0x4200000000000000000000000000000000000006", // WETH
               currency1: tokenData.contractAddress as `0x${string}`,
               fee: 3000,
               tickSpacing: 60,
-              hooks: '0x9ea932730A7787000042e34390B8E435dD839040' // ContentCoinHook
+              hooks: "0x9ea932730A7787000042e34390B8E435dD839040", // ContentCoinHook
             },
             {
               zeroForOne: true,
               amountSpecified: parseEther(buyAmount),
-              sqrtPriceLimitX96: 0n
+              sqrtPriceLimitX96: 0n,
             },
-            '0x' // No hook data for now
+            "0x", // No hook data for now
           ],
           value: parseEther(buyAmount),
-          account: address as `0x${string}`
+          account: address as `0x${string}`,
         });
 
         const hash = await writeContract(request);
@@ -502,26 +536,26 @@ export default function ContentCoinDetail() {
           description: `Swapping ${buyAmount} ETH for ${tokenData.coinSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
         });
 
-        setBuyAmount('');
+        setBuyAmount("");
         return;
       }
 
       // Fallback to API for non-Zora tokens
       const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           buyerAddress: address,
           ethAmount: buyAmount,
           minTokensOut,
-          slippageTolerance: slippage
+          slippageTolerance: slippage,
         }),
       });
 
       if (!response.ok) {
-        let errorMessage = 'Buy transaction failed';
+        let errorMessage = "Buy transaction failed";
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorData.message || errorMessage;
@@ -542,17 +576,17 @@ export default function ContentCoinDetail() {
       if (comment.trim()) {
         try {
           await fetch(`/api/creator-coins/${tokenData.id}/comments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               userAddress: address,
               content: comment.trim(),
               ethAmount: buyAmount,
-              type: 'buy'
-            })
+              type: "buy",
+            }),
           });
         } catch (commentError) {
-          console.error('Failed to add comment:', commentError);
+          console.error("Failed to add comment:", commentError);
         }
       }
 
@@ -563,18 +597,21 @@ export default function ContentCoinDetail() {
 
       // Refresh data
       window.location.reload();
-
     } catch (error) {
-      console.error('Buy failed:', error);
+      console.error("Buy failed:", error);
 
       let errorMessage = "Failed to execute buy order";
       if (error instanceof Error) {
         if (error.message.includes("500")) {
           errorMessage = "Server error occurred. Please try again.";
-        } else if (error.message.includes("replacement transaction underpriced")) {
-          errorMessage = "Transaction failed due to gas pricing. Please try again with higher gas.";
+        } else if (
+          error.message.includes("replacement transaction underpriced")
+        ) {
+          errorMessage =
+            "Transaction failed due to gas pricing. Please try again with higher gas.";
         } else if (error.message.includes("Pool doesn't exist")) {
-          errorMessage = "Trading pool is being created. Please wait a moment and try again.";
+          errorMessage =
+            "Trading pool is being created. Please wait a moment and try again.";
         } else {
           errorMessage = error.message;
         }
@@ -583,7 +620,7 @@ export default function ContentCoinDetail() {
       toast({
         title: "Transaction failed",
         description: errorMessage,
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -593,7 +630,7 @@ export default function ContentCoinDetail() {
       toast({
         title: "Wallet not connected",
         description: "Please connect your wallet to trade",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -602,7 +639,7 @@ export default function ContentCoinDetail() {
       toast({
         title: "Invalid amount",
         description: "Please enter a valid token amount to sell",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -611,7 +648,7 @@ export default function ContentCoinDetail() {
       toast({
         title: "Token not found",
         description: "Unable to find token information",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -623,7 +660,7 @@ export default function ContentCoinDetail() {
         toast({
           title: "Insufficient tokens",
           description: `You only have ${balanceInTokens.toFixed(4)} ${tokenData.coinSymbol} tokens`,
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
@@ -633,21 +670,22 @@ export default function ContentCoinDetail() {
       const result = await sellMutation.mutateAsync({
         coinId: tokenData.id,
         userAddress: address,
-        tokenAmount: sellAmount
+        tokenAmount: sellAmount,
       });
 
       toast({
         title: "Sell successful!",
-        description: `Sold ${sellAmount} tokens for ${(result as any)?.ethReceived || 'unknown'} ETH`
+        description: `Sold ${sellAmount} tokens for ${(result as any)?.ethReceived || "unknown"} ETH`,
       });
 
       setSellAmount("");
     } catch (error) {
-      console.error('Sell failed:', error);
+      console.error("Sell failed:", error);
       toast({
         title: "Sell failed",
-        description: error instanceof Error ? error.message : "Transaction failed",
-        variant: "destructive"
+        description:
+          error instanceof Error ? error.message : "Transaction failed",
+        variant: "destructive",
       });
     }
   };
@@ -672,8 +710,6 @@ export default function ContentCoinDetail() {
       </div>
     );
   }
-
-
 
   return (
     <div className="min-h-screen">
@@ -700,467 +736,565 @@ export default function ContentCoinDetail() {
         {/* Left Side - Chart Area */}
         <Card className="flex-1">
           <CardContent className="p-4">
-          {/* Price Display */}
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold">{priceData?.price ? `$${priceData.price}` : (tokenData?.currentPrice ? `$${tokenData.currentPrice}` : '$0')}</h1>
-              {priceData?.priceChange24h !== undefined && (
-                <Badge className={`${priceData.priceChange24h >= 0 ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'}`}>
-                  {priceData.priceChange24h >= 0 ? '+' : ''}{priceData.priceChange24h.toFixed(2)}%
-                </Badge>
-              )}
-            </div>
-            <p className="text-muted-foreground">{tokenData?.coinName || tokenData?.name || 'Loading...'} ({tokenData?.coinSymbol || tokenData?.symbol || '...'})</p>
-          </div>
-
-          {/* Chart/Image Toggle */}
-          <div className="flex items-center gap-2 mb-4">
-            <Button
-              variant={viewMode === "chart" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("chart")}
-              className={`${viewMode === "chart" ? "bg-white text-black" : ""}`}
-            >
-              <TrendingUp className="h-4 w-4 mr-1" />
-              Chart
-            </Button>
-            <Button
-              variant={viewMode === "image" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("image")}
-              className={`${viewMode === "image" ? "bg-white text-black" : ""}`}
-            >
-              <Image className="h-4 w-4 mr-1" />
-              Content
-            </Button>
-          </div>
-
-          {/* Chart/Content Area */}
-          {viewMode === "chart" && tokenData?.address ? (
-            <DexScreenerChart 
-              tokenAddress={tokenData.address}
-              tokenSymbol={tokenData.coinSymbol || 'Token'}
-            />
-          ) : viewMode === "image" ? (
-            <div className="h-80 bg-muted rounded-lg mb-4 relative overflow-hidden">
-              <div className="w-full h-full flex items-center justify-center">
-                {tokenData?.mediaCid ? (
-                  <ContentPreview
-                    mediaCid={tokenData.mediaCid}
-                    thumbnailCid={tokenData.thumbnailCid}
-                    contentType={tokenData.contentType}
-                    title={tokenData.title || tokenData.coinName}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                ) : (
-                  <div className="text-center text-muted-foreground">
-                    <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No content available</p>
-                  </div>
+            {/* Price Display */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-3xl font-bold">
+                  {priceData?.price
+                    ? `$${priceData.price}`
+                    : tokenData?.currentPrice
+                      ? `$${tokenData.currentPrice}`
+                      : "$0"}
+                </h1>
+                {priceData?.priceChange24h !== undefined && (
+                  <Badge
+                    className={`${priceData.priceChange24h >= 0 ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}`}
+                  >
+                    {priceData.priceChange24h >= 0 ? "+" : ""}
+                    {priceData.priceChange24h.toFixed(2)}%
+                  </Badge>
                 )}
               </div>
+              <p className="text-muted-foreground">
+                {tokenData?.coinName || tokenData?.name || "Loading..."} (
+                {tokenData?.coinSymbol || tokenData?.symbol || "..."})
+              </p>
             </div>
-          ) : null}
 
+            {/* Chart/Image Toggle */}
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                variant={viewMode === "chart" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("chart")}
+                className={`${viewMode === "chart" ? "bg-white text-black" : ""}`}
+              >
+                <TrendingUp className="h-4 w-4 mr-1" />
+                Chart
+              </Button>
+              <Button
+                variant={viewMode === "image" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("image")}
+                className={`${viewMode === "image" ? "bg-white text-black" : ""}`}
+              >
+                <Image className="h-4 w-4 mr-1" />
+                Content
+              </Button>
+            </div>
+
+            {/* Chart/Content Area */}
+            {viewMode === "chart" && tokenData?.address ? (
+              <DexScreenerChart
+                tokenAddress={tokenData.address}
+                tokenSymbol={tokenData.coinSymbol || "Token"}
+              />
+            ) : viewMode === "image" ? (
+              <div className="h-80 bg-muted rounded-lg mb-4 relative overflow-hidden">
+                <div className="w-full h-full flex items-center justify-center">
+                  {tokenData?.mediaCid ? (
+                    <ContentPreview
+                      mediaCid={tokenData.mediaCid}
+                      thumbnailCid={tokenData.thumbnailCid}
+                      contentType={tokenData.contentType}
+                      title={tokenData.title || tokenData.coinName}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="text-center text-muted-foreground">
+                      <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No content available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
         {/* Right Side - Trading Panel */}
         <Card className="w-96">
           <CardContent className="p-0">
-          {/* Market Stats - Always Visible */}
-          <div className="p-4 border-b border-border">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Market Cap</span>
-                <span className="text-sm font-semibold text-green-400">
-                  ${priceData?.marketCap || '0'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">24H Volume</span>
-                <span className="text-sm font-semibold">
-                  ${priceData?.volume24h || '0'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Creator Earnings</span>
-                <span className="text-sm font-semibold">
-                  ${priceData?.volume24h ? (parseFloat(priceData.volume24h) * 0.15).toFixed(4) : '0'}
-                </span>
+            {/* Market Stats - Always Visible */}
+            <div className="p-4 border-b border-border">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Market Cap
+                  </span>
+                  <span className="text-sm font-semibold text-green-400">
+                    ${priceData?.marketCap || "0"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    24H Volume
+                  </span>
+                  <span className="text-sm font-semibold">
+                    ${priceData?.volume24h || "0"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">
+                    Creator Earnings
+                  </span>
+                  <span className="text-sm font-semibold">
+                    $
+                    {priceData?.volume24h
+                      ? (parseFloat(priceData.volume24h) * 0.15).toFixed(4)
+                      : "0"}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Tabs Container */}
-          <Tabs defaultValue="trading" className="flex flex-col">
-            <div className="border-b border-border px-4 py-3">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="trading" className="flex items-center gap-1 text-xs">
-                  <DollarSign className="h-3 w-3" />
-                  Trading
-                </TabsTrigger>
-                <TabsTrigger value="comments" className="flex items-center gap-1 text-xs">
-                  <MessageCircle className="h-3 w-3" />
-                  Comments
-                </TabsTrigger>
-                <TabsTrigger value="holders" className="flex items-center gap-1 text-xs">
-                  <Users className="h-3 w-3" />
-                  Holders
-                  <Badge variant="secondary" className="text-xs ml-1">{processedHolders.length}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="activity" className="flex items-center gap-1 text-xs">
-                  <Activity className="h-3 w-3" />
-                  Activity
-                </TabsTrigger>
-              </TabsList>
-            </div>
+            {/* Tabs Container */}
+            <Tabs defaultValue="trading" className="flex flex-col">
+              <div className="border-b border-border px-4 py-3">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger
+                    value="trading"
+                    className="flex items-center gap-1 text-xs"
+                  >
+                    <DollarSign className="h-3 w-3" />
+                    Trade
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="comments"
+                    className="flex items-center gap-1 text-xs"
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    Comments
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="holders"
+                    className="flex items-center gap-1 text-xs"
+                  >
+                    <Users className="h-3 w-3" />
+                    Holders
+                    <Badge variant="secondary" className="text-xs ml-1">
+                      {processedHolders.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="activity"
+                    className="flex items-center gap-1 text-xs"
+                  >
+                    <Activity className="h-3 w-3" />
+                    Activity
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-            {/* Tab Content */}
-            <div className="max-h-[500px] overflow-y-auto">
-              {/* Trading Tab Content */}
-              <TabsContent value="trading" className="p-4 space-y-0">
-                <div className="space-y-4">
-                  {/* Auction Status Banner */}
-                  {auctionInfo && auctionInfo.isActive && (
-                    <div className="p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                          <span className="text-sm font-semibold text-blue-400">Live Auction</span>
+              {/* Tab Content */}
+              <div className="max-h-[500px] overflow-y-auto">
+                {/* Trading Tab Content */}
+                <TabsContent value="trading" className="p-4 space-y-0">
+                  <div className="space-y-4">
+                    {/* Auction Status Banner */}
+                    {auctionInfo && auctionInfo.isActive && (
+                      <div className="p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                            <span className="text-sm font-semibold text-blue-400">
+                              Live Auction
+                            </span>
+                          </div>
+                          <div className="text-xs text-blue-300">
+                            {Math.floor(auctionInfo.timeRemaining / 3600)}h{" "}
+                            {Math.floor(
+                              (auctionInfo.timeRemaining % 3600) / 60,
+                            )}
+                            m left
+                          </div>
                         </div>
-                        <div className="text-xs text-blue-300">
-                          {Math.floor(auctionInfo.timeRemaining / 3600)}h {Math.floor((auctionInfo.timeRemaining % 3600) / 60)}m left
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 text-xs">
-                        <div>
-                          <div className="text-muted-foreground">Auction Price</div>
-                          <div className="font-semibold text-blue-400">${auctionInfo.currentPrice}</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground">Progress</div>
-                          <div className="font-semibold">{auctionInfo.tokensSold}% sold</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Buy/Sell Toggle - Modified for auction */}
-                  <div className="flex space-x-2">
-                    <Button
-                      className={`flex-1 ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-gray-700 hover:bg-gray-600"}`}
-                      onClick={() => setTradeMode("buy")}
-                    >
-                      {auctionInfo?.isActive ? "Bid" : "Buy"}
-                    </Button>
-                    <Button
-                      className={`flex-1 ${tradeMode === "sell" ? "bg-red-500 hover:bg-red-600" : "bg-gray-700 hover:bg-gray-600"}`}
-                      onClick={() => setTradeMode("sell")}
-                      disabled={auctionInfo?.isActive} // Disable sell during auction
-                    >
-                      Sell
-                    </Button>
-                  </div>
-                  
-                  {/* Auction disabled sell message */}
-                  {auctionInfo?.isActive && tradeMode === "sell" && (
-                    <div className="text-center p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Selling is disabled during active auction</p>
-                    </div>
-                  )}
-
-                  {/* Balance Display */}
-                  <div className="text-center text-sm text-muted-foreground">
-                    Balance {tokenBalance ? formatUnits(tokenBalance, 18) : '0'} ETH
-                  </div>
-
-                  {/* Amount Input - Show only if not selling during auction */}
-                  {!(auctionInfo?.isActive && tradeMode === "sell") && (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          value={buyAmount}
-                          onChange={(e) => {
-                            setBuyAmount(e.target.value);
-                            calculateEstimatedTokens(e.target.value);
-                          }}
-                          placeholder={auctionInfo?.isActive ? "0.001" : "0.000111"}
-                          step="0.000001"
-                          min="0"
-                          className="bg-input border-input pr-12"
-                        />
-                        <div className="absolute right-3 top-2 text-xs text-muted-foreground">
-                          ETH
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <div className="text-muted-foreground">
+                              Auction Price
+                            </div>
+                            <div className="font-semibold text-blue-400">
+                              ${auctionInfo.currentPrice}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">
+                              Progress
+                            </div>
+                            <div className="font-semibold">
+                              {auctionInfo.tokensSold}% sold
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      {estimatedTokens && (
-                        <div className="text-xs text-muted-foreground text-center">
-                          ≈ {estimatedTokens} {tokenData?.coinSymbol || 'tokens'}
-                          {auctionInfo?.isActive && (
-                            <span className="ml-1 text-blue-400">(auction price)</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
 
-                  {/* Quick Amount Buttons - Show only if not selling during auction */}
-                  {!(auctionInfo?.isActive && tradeMode === "sell") && (
-                    <div className="grid grid-cols-4 gap-2">
+                    {/* Buy/Sell Toggle - Modified for auction */}
+                    <div className="flex space-x-2">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAmountSelect("0.001")}
-                        className="text-xs"
+                        className={`flex-1 ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-gray-700 hover:bg-gray-600"}`}
+                        onClick={() => setTradeMode("buy")}
                       >
-                        0.001 ETH
+                        {auctionInfo?.isActive ? "Bid" : "Buy"}
                       </Button>
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAmountSelect("0.01")}
-                        className="text-xs"
+                        className={`flex-1 ${tradeMode === "sell" ? "bg-red-500 hover:bg-red-600" : "bg-gray-700 hover:bg-gray-600"}`}
+                        onClick={() => setTradeMode("sell")}
+                        disabled={auctionInfo?.isActive} // Disable sell during auction
                       >
-                        0.01 ETH
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAmountSelect("0.1")}
-                        className="text-xs"
-                      >
-                        0.1 ETH
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleMaxAmount}
-                        className="text-xs"
-                      >
-                        Max
+                        Sell
                       </Button>
                     </div>
-                  )}
 
-                  {/* Advanced Settings */}
-                  <div className="space-y-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowAdvanced(!showAdvanced)}
-                      className="text-xs w-full justify-between"
-                    >
-                      Advanced Settings
-                      <ChevronDown className={`h-3 w-3 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-                    </Button>
+                    {/* Auction disabled sell message */}
+                    {auctionInfo?.isActive && tradeMode === "sell" && (
+                      <div className="text-center p-3 bg-muted/50 rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          Selling is disabled during active auction
+                        </p>
+                      </div>
+                    )}
 
-                    {showAdvanced && (
-                      <div className="space-y-3 p-3 border rounded-lg">
-                        <div>
-                          <label htmlFor="slippage" className="text-xs">Slippage Tolerance (%)</label>
+                    {/* Balance Display */}
+                    <div className="text-center text-sm text-muted-foreground">
+                      Balance{" "}
+                      {tokenBalance ? formatUnits(tokenBalance, 18) : "0"} ETH
+                    </div>
+
+                    {/* Amount Input - Show only if not selling during auction */}
+                    {!(auctionInfo?.isActive && tradeMode === "sell") && (
+                      <div className="space-y-2">
+                        <div className="relative">
                           <Input
-                            id="slippage"
                             type="number"
-                            value={slippage}
-                            onChange={(e) => setSlippage(e.target.value)}
-                            placeholder="2"
-                            step="0.1"
-                            min="0.1"
-                            max="50"
-                            className="mt-1 text-xs h-8"
+                            value={buyAmount}
+                            onChange={(e) => {
+                              setBuyAmount(e.target.value);
+                              calculateEstimatedTokens(e.target.value);
+                            }}
+                            placeholder={
+                              auctionInfo?.isActive ? "0.001" : "0.000111"
+                            }
+                            step="0.000001"
+                            min="0"
+                            className="bg-input border-input pr-12"
                           />
+                          <div className="absolute right-3 top-2 text-xs text-muted-foreground">
+                            ETH
+                          </div>
                         </div>
-
-                        {priceData && (
-                          <div className="space-y-1 text-xs text-muted-foreground">
-                            <div className="flex justify-between">
-                              <span>Current Price:</span>
-                              <span>${priceData.price}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Min. Price (with slippage):</span>
-                              <span>${(parseFloat(priceData.price) * (1 - parseFloat(slippage) / 100)).toFixed(6)}</span>
-                            </div>
+                        {estimatedTokens && (
+                          <div className="text-xs text-muted-foreground text-center">
+                            ≈ {estimatedTokens}{" "}
+                            {tokenData?.coinSymbol || "tokens"}
+                            {auctionInfo?.isActive && (
+                              <span className="ml-1 text-blue-400">
+                                (auction price)
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
                     )}
-                  </div>
 
-                  {/* Comment Input */}
-                  <Textarea
-                    placeholder="Add a comment..."
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="bg-gray-800 border-gray-600 text-white resize-none h-16 text-sm"
-                  />
-
-                  {/* Trade Confirmation */}
-                  {buyAmount && parseFloat(buyAmount) > 0 && (
-                    <div className="p-3 border rounded-lg bg-muted/50 space-y-2">
-                      <div className="text-xs font-medium">Trade Summary</div>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span>You {tradeMode}:</span>
-                          <span>{buyAmount} ETH</span>
-                        </div>
-                        {estimatedTokens && (
-                          <div className="flex justify-between">
-                            <span>You receive:</span>
-                            <span>≈ {estimatedTokens} {tokenData?.coinSymbol}</span>
-                          </div>
-                        )}
-                        <div className="flex justify-between">
-                          <span>Slippage:</span>
-                          <span>{slippage}%</span>
-                        </div>
-                        {priceData && (
-                          <div className="flex justify-between">
-                            <span>Price Impact:</span>
-                            <span className="text-yellow-400">~0.1%</span>
-                          </div>
-                        )}
+                    {/* Quick Amount Buttons - Show only if not selling during auction */}
+                    {!(auctionInfo?.isActive && tradeMode === "sell") && (
+                      <div className="grid grid-cols-4 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAmountSelect("0.001")}
+                          className="text-xs"
+                        >
+                          0.001 ETH
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAmountSelect("0.01")}
+                          className="text-xs"
+                        >
+                          0.01 ETH
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAmountSelect("0.1")}
+                          className="text-xs"
+                        >
+                          0.1 ETH
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleMaxAmount}
+                          className="text-xs"
+                        >
+                          Max
+                        </Button>
                       </div>
+                    )}
+
+                    {/* Advanced Settings */}
+                    <div className="space-y-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAdvanced(!showAdvanced)}
+                        className="text-xs w-full justify-between"
+                      >
+                        Advanced Settings
+                        <ChevronDown
+                          className={`h-3 w-3 transition-transform ${showAdvanced ? "rotate-180" : ""}`}
+                        />
+                      </Button>
+
+                      {showAdvanced && (
+                        <div className="space-y-3 p-3 border rounded-lg">
+                          <div>
+                            <label htmlFor="slippage" className="text-xs">
+                              Slippage Tolerance (%)
+                            </label>
+                            <Input
+                              id="slippage"
+                              type="number"
+                              value={slippage}
+                              onChange={(e) => setSlippage(e.target.value)}
+                              placeholder="2"
+                              step="0.1"
+                              min="0.1"
+                              max="50"
+                              className="mt-1 text-xs h-8"
+                            />
+                          </div>
+
+                          {priceData && (
+                            <div className="space-y-1 text-xs text-muted-foreground">
+                              <div className="flex justify-between">
+                                <span>Current Price:</span>
+                                <span>${priceData.price}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>Min. Price (with slippage):</span>
+                                <span>
+                                  $
+                                  {(
+                                    parseFloat(priceData.price) *
+                                    (1 - parseFloat(slippage) / 100)
+                                  ).toFixed(6)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Comment Input */}
+                    <Textarea
+                      placeholder="Add a comment..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      className="bg-gray-800 border-gray-600 text-white resize-none h-16 text-sm"
+                    />
+
+                    {/* Trade Confirmation */}
+                    {buyAmount && parseFloat(buyAmount) > 0 && (
+                      <div className="p-3 border rounded-lg bg-muted/50 space-y-2">
+                        <div className="text-xs font-medium">Trade Summary</div>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span>You {tradeMode}:</span>
+                            <span>{buyAmount} ETH</span>
+                          </div>
+                          {estimatedTokens && (
+                            <div className="flex justify-between">
+                              <span>You receive:</span>
+                              <span>
+                                ≈ {estimatedTokens} {tokenData?.coinSymbol}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span>Slippage:</span>
+                            <span>{slippage}%</span>
+                          </div>
+                          {priceData && (
+                            <div className="flex justify-between">
+                              <span>Price Impact:</span>
+                              <span className="text-yellow-400">~0.1%</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Trade Button - Show only if not selling during auction */}
+                    {!(auctionInfo?.isActive && tradeMode === "sell") && (
+                      <Button
+                        className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
+                        onClick={tradeMode === "buy" ? handleBuy : handleSell}
+                        disabled={
+                          buyMutation.isPending ||
+                          sellMutation.isPending ||
+                          !address ||
+                          !buyAmount ||
+                          parseFloat(buyAmount) <= 0 ||
+                          loadingAuction
+                        }
+                        size="lg"
+                      >
+                        {loadingAuction ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Checking auction...
+                          </>
+                        ) : buyMutation.isPending || sellMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : !address ? (
+                          "Connect Wallet"
+                        ) : !buyAmount ? (
+                          "Enter Amount"
+                        ) : auctionInfo?.isActive && tradeMode === "buy" ? (
+                          `Place Bid - ${buyAmount} ETH`
+                        ) : (
+                          `${tradeMode === "buy" ? "Buy" : "Sell"} ${tokenData?.coinSymbol || "Tokens"}`
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </TabsContent>
+
+                {/* Comments Tab Content */}
+                <TabsContent value="comments" className="p-4 space-y-0">
+                  {commentData &&
+                  Array.isArray(commentData) &&
+                  commentData.length > 0 ? (
+                    <div className="space-y-3">
+                      {commentData.map((comment) => (
+                        <div key={comment.id} className="flex gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage
+                              src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.userAddress || "default"}`}
+                            />
+                            <AvatarFallback>
+                              {comment.userAddress?.slice(2, 4) || "XX"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-medium">
+                                {comment.userAddress
+                                  ? `${comment.userAddress.slice(0, 6)}...${comment.userAddress.slice(-4)}`
+                                  : "Anonymous"}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {comment.timestamp &&
+                                  formatTimeAgo(new Date(comment.timestamp))}
+                              </span>
+                            </div>
+                            <p className="text-sm">{comment.content || ""}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-400 py-8">
+                      <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No comments yet</p>
                     </div>
                   )}
+                </TabsContent>
 
-                  {/* Trade Button - Show only if not selling during auction */}
-                  {!(auctionInfo?.isActive && tradeMode === "sell") && (
-                    <Button
-                      className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
-                      onClick={tradeMode === "buy" ? handleBuy : handleSell}
-                      disabled={buyMutation.isPending || sellMutation.isPending || !address || !buyAmount || parseFloat(buyAmount) <= 0 || loadingAuction}
-                      size="lg"
-                    >
-                      {loadingAuction ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Checking auction...
-                        </>
-                      ) : (buyMutation.isPending || sellMutation.isPending) ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : !address ? (
-                        'Connect Wallet'
-                      ) : !buyAmount ? (
-                        'Enter Amount'
-                      ) : auctionInfo?.isActive && tradeMode === "buy" ? (
-                        `Place Bid - ${buyAmount} ETH`
-                      ) : (
-                        `${tradeMode === "buy" ? "Buy" : "Sell"} ${tokenData?.coinSymbol || 'Tokens'}`
-                      )}
-                    </Button>
+                <TabsContent value="holders" className="p-4 space-y-0">
+                  {processedHolders && processedHolders.length > 0 ? (
+                    <div className="space-y-3">
+                      {processedHolders.map((holder, index) => (
+                        <div
+                          key={holder.address || index}
+                          className="flex justify-between items-center"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage
+                                src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address || "default"}`}
+                              />
+                              <AvatarFallback>
+                                {holder.address?.slice(2, 4) || "XX"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-mono">
+                              {holder.address
+                                ? `${holder.address.slice(0, 6)}...${holder.address.slice(-4)}`
+                                : "Unknown"}
+                            </span>
+                          </div>
+                          <span className="text-sm">
+                            {holder.balance || "0"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-400 py-8">
+                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No holders yet</p>
+                    </div>
                   )}
-                </div>
-              </TabsContent>
+                </TabsContent>
 
-              {/* Comments Tab Content */}
-              <TabsContent value="comments" className="p-4 space-y-0">
-                {commentData && Array.isArray(commentData) && commentData.length > 0 ? (
-                  <div className="space-y-3">
-                    {commentData.map((comment) => (
-                      <div key={comment.id} className="flex gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.userAddress || 'default'}`} />
-                          <AvatarFallback>{comment.userAddress?.slice(2, 4) || 'XX'}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium">
-                              {comment.userAddress ? 
-                                `${comment.userAddress.slice(0, 6)}...${comment.userAddress.slice(-4)}` : 
-                                'Anonymous'
-                              }
-                            </span>
-                            <span className="text-xs text-gray-400">
-                              {comment.timestamp && formatTimeAgo(new Date(comment.timestamp))}
+                <TabsContent value="activity" className="p-4 space-y-0">
+                  {tradesData &&
+                  Array.isArray(tradesData) &&
+                  tradesData.length > 0 ? (
+                    <div className="space-y-3">
+                      {tradesData.map((trade) => (
+                        <div
+                          key={trade.id}
+                          className="flex justify-between items-center"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-2 h-2 rounded-full ${trade.type === "buy" ? "bg-green-400" : "bg-red-400"}`}
+                            />
+                            <span className="text-sm font-mono">
+                              {trade.userAddress
+                                ? `${trade.userAddress.slice(0, 6)}...${trade.userAddress.slice(-4)}`
+                                : "Unknown"}
                             </span>
                           </div>
-                          <p className="text-sm">{comment.content || ''}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-400 py-8">
-                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No comments yet</p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="holders" className="p-4 space-y-0">
-                {processedHolders && processedHolders.length > 0 ? (
-                  <div className="space-y-3">
-                    {processedHolders.map((holder, index) => (
-                      <div key={holder.address || index} className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address || 'default'}`} />
-                            <AvatarFallback>{holder.address?.slice(2, 4) || 'XX'}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm font-mono">
-                            {holder.address ? 
-                              `${holder.address.slice(0, 6)}...${holder.address.slice(-4)}` : 
-                              'Unknown'
-                            }
-                          </span>
-                        </div>
-                        <span className="text-sm">{holder.balance || '0'}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-400 py-8">
-                    <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No holders yet</p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="activity" className="p-4 space-y-0">
-                {tradesData && Array.isArray(tradesData) && tradesData.length > 0 ? (
-                  <div className="space-y-3">
-                    {tradesData.map((trade) => (
-                      <div key={trade.id} className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${trade.type === 'buy' ? 'bg-green-400' : 'bg-red-400'}`} />
-                          <span className="text-sm font-mono">
-                            {trade.userAddress ? 
-                              `${trade.userAddress.slice(0, 6)}...${trade.userAddress.slice(-4)}` : 
-                              'Unknown'
-                            }
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm">{trade.ethAmount || '0'} ETH</div>
-                          <div className="text-xs text-gray-400">
-                            {trade.timestamp && formatTimeAgo(new Date(trade.timestamp))}
+                          <div className="text-right">
+                            <div className="text-sm">
+                              {trade.ethAmount || "0"} ETH
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {trade.timestamp &&
+                                formatTimeAgo(new Date(trade.timestamp))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-400 py-8">
-                    <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No activity yet</p>
-                  </div>
-                )}
-              </TabsContent>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-400 py-8">
+                      <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No activity yet</p>
+                    </div>
+                  )}
+                </TabsContent>
 
-              <TabsContent value="details" className="p-4 space-y-0">
-                <div className="text-center text-gray-400 py-8">
-                  <Settings className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Details coming soon</p>
-                </div>
-              </TabsContent>
-            </div>
-          </Tabs>
+                <TabsContent value="details" className="p-4 space-y-0">
+                  <div className="text-center text-gray-400 py-8">
+                    <Settings className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Details coming soon</p>
+                  </div>
+                </TabsContent>
+              </div>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

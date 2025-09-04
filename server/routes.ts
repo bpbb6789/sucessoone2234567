@@ -2018,29 +2018,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/doppler/tokens/:address", async (req, res) => {
     try {
       const { address } = req.params;
-      const dopplerService = getDopplerService(84532);
       
-      // Get token info from database first
-      const pad = await storage.getPadByTokenAddress(address);
-      if (!pad) {
-        return res.status(404).json({ message: "Token not found" });
+      // Check if address is a content coin ID or token address
+      let contentCoin;
+      
+      // Try to find by ID first (UUID format)
+      contentCoin = await storage.getCreatorCoin(address);
+      
+      // If not found by ID, try to find by meme token address
+      if (!contentCoin) {
+        const allCoins = await storage.getAllCreatorCoins();
+        contentCoin = allCoins.find(coin => 
+          coin.memeTokenAddress === address || 
+          coin.zoraTokenAddress === address
+        );
+      }
+      
+      if (!contentCoin) {
+        return res.status(404).json({ message: "Content coin not found" });
       }
 
-      // Get current auction data
-      const currentPrice = await dopplerService.getCurrentPrice(address, pad.bondingCurveAddress);
-      const hasGraduated = await dopplerService.hasGraduated(address, pad.bondingCurveAddress);
-
+      // For now, return mock auction data - integrate with actual Doppler later
       const tokenInfo = {
-        address,
-        name: pad.tokenName,
-        symbol: pad.tokenSymbol,
-        currentPrice,
-        isActive: !hasGraduated,
-        timeRemaining: 86400, // 24 hours - get from contract
+        address: contentCoin.memeTokenAddress || address,
+        name: contentCoin.coinName,
+        symbol: contentCoin.coinSymbol,
+        currentPrice: "0.0001",
+        isActive: true, // Mock active auction
+        timeRemaining: 7200, // 2 hours remaining
         totalSupply: "1000000",
         tokensForSale: "500000", 
-        tokensSold: "25",
-        auctionAddress: pad.bondingCurveAddress
+        tokensSold: "15",
+        auctionAddress: contentCoin.memeTokenAddress || address
       };
 
       res.json(tokenInfo);
