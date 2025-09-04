@@ -2023,11 +2023,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let contentCoin;
       
       // Try to find content coin by ID first (UUID format)
-      const allImports = await storage.getAllContentImports();
-      contentCoin = allImports.find(coin => 
-        coin.id === address || 
-        coin.coinAddress === address
-      );
+      try {
+        const coins = await db.select().from(creatorCoins);
+        contentCoin = coins.find(coin => 
+          coin.id === address || 
+          coin.coinAddress === address
+        );
+      } catch (error) {
+        console.warn('Failed to fetch creator coins:', error);
+      }
       
       if (!contentCoin) {
         // For demo purposes, return mock auction data even if coin not found

@@ -55,6 +55,7 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 import { useState, useMemo, useEffect } from "react";
+import { useAccount, usePublicClient, useReadContract, useWriteContract } from 'wagmi'
 
 // Creator coin related hooks
 import {
