@@ -1,0 +1,104 @@
+Got it — you have a **content detail page** showing a creator token’s live auction status, price, chart, trading, comments, holders, and more.
+
+Since you’re moving **away from auctions** and want a **no-auction bonding curve model (like Zora)**, here’s how to **update this page UI and UX** accordingly:
+
+---
+
+# How to update your Content Detail Page for **No-Auction, Instant Trading**
+
+---
+
+### 1. Remove or hide all auction-related UI elements
+
+* **Remove:**
+
+  * Live Auction timer/countdown (e.g., “2h 0m left”)
+  * Auction Price display
+  * Progress bar showing % sold
+  * Bid button & auction bidding inputs
+
+* **Why:**
+  There is no auction phase, so this info is irrelevant.
+
+---
+
+### 2. Show the current **token price from the bonding curve pool**
+
+* Fetch the real-time spot price from the Uniswap V4 pool linked to the creator token.
+* Display a **single “Current Price”** instead of auction price.
+
+---
+
+### 3. Update Trading UI to allow **instant buy & sell**
+
+* Replace the “Bid” section with:
+
+  * **Buy amount input** (amount of tokens or base currency)
+  * **Sell amount input**
+  * Show **max balance** for buy and sell (based on user wallet and token holdings)
+  * Real-time price estimation based on bonding curve swap simulation
+  * Clear “Buy” and “Sell” buttons that trigger Uniswap V4 swaps directly
+
+---
+
+### 4. Show Market Stats from real liquidity data
+
+* Market Cap: calculated as `total supply * current price`
+* 24h Volume: fetched from Uniswap V4 or subgraph data
+* Creator Earnings: fees collected from swaps (if any)
+* Holders count and Activity feed remain the same
+
+---
+
+### 5. Comments & Social Features
+
+* Keep comments, creator info, and activity feed intact
+* Add **token-holder perks info** (e.g., “Holding 100+ tokens unlocks exclusive content”)
+
+---
+
+### 6. Advanced Settings / Extra Features (Optional)
+
+* Add a section for **staking or rewards** if applicable
+* Voting or polls for token holders
+* Direct links to external DEX explorers (Dexscreener, Geckoterminal)
+
+---
+
+# Summary of UI Element Changes
+
+| Old Auction UI              | New Bonding Curve UI              |
+| --------------------------- | --------------------------------- |
+| Live Auction Timer          | N/A                               |
+| Auction Price               | Current Spot Price (from pool)    |
+| Progress Bar (% Sold)       | Liquidity / Market Cap info       |
+| Bid Button & Auction Inputs | Instant Buy/Sell inputs & buttons |
+| Comments & Holder Counts    | Same                              |
+| Creator Earnings            | Same                              |
+
+---
+
+# Technical Notes for Dev
+
+* Use Zora SDK or direct Uniswap V4 pool calls to get:
+
+  * Current spot price
+  * Liquidity info
+  * Total supply of the token
+
+* Use `swap()` function on Uniswap V4 pool contract for buy/sell transactions
+
+* Update frontend logic to:
+
+  * Disable auction-related hooks
+  * Listen to pool events for price and liquidity updates
+
+---
+
+Would you like me to help you with:
+
+* Code snippets for React components to do this?
+* Example Uniswap V4 pool integration for live price and swaps?
+* Design wireframes for updated UX?
+
+Let me know!
