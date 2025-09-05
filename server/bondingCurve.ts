@@ -2,6 +2,9 @@ import { ethers } from "ethers";
 import { db } from "./db";
 import { creatorCoins } from "../shared/schema";
 import { eq } from "drizzle-orm";
+import { createPublicClient, createWalletClient, http, PublicClient, WalletClient, Account } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { baseSepolia } from "viem/chains";
 
 // Bonding Curve Factory ABI (minimal interface)
 const BONDING_CURVE_FACTORY_ABI = [

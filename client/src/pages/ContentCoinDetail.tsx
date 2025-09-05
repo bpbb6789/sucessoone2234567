@@ -118,7 +118,7 @@ function formatTimeAgo(date: Date): string {
 // Utility function to format token balance
 function formatTokenBalance(balance: bigint | string | null): string {
   if (!balance || balance === 0n) return "0";
-  
+
   if (typeof balance === "bigint") {
     const formatted = formatUnits(balance, 18);
     const num = parseFloat(formatted);
@@ -130,7 +130,7 @@ function formatTokenBalance(balance: bigint | string | null): string {
       return num.toLocaleString(undefined, { maximumFractionDigits: 6 });
     }
   }
-  
+
   return balance.toString();
 }
 
@@ -564,74 +564,48 @@ export default function ContentCoinDetail() {
     }
 
     try {
-      let response;
+      // Check if bonding curve is available first
+      const bondingResponse = await fetch(`/api/creator-coins/${tokenAddress}/bonding-curve-info`);
+      const bondingData = await bondingResponse.json();
 
-      // Use bonding curve trading if available (better pricing)
-      if (bondingCurveData?.enabled && bondingCurveData?.curveAddress) {
+      if (!bondingData.enabled) {
         toast({
-          title: "Using Bonding Curve Trading",
-          description: "Better pricing through automated market making",
+          title: "Trading Not Available",
+          description: "Bonding curve is being deployed. Please wait a moment.",
+          variant: "destructive",
         });
-
-        // Direct bonding curve interaction would go here
-        // For now, fall back to existing API
-        response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            buyerAddress: address,
-            ethAmount: buyAmount,
-            slippageTolerance: slippage,
-            useBondingCurve: true,
-          }),
-        });
-      } else {
-        // Calculate minimum tokens with slippage protection
-        const estimatedTokensNum =
-          parseFloat(estimatedTokens.replace(/,/g, "")) || 0;
-        const minTokensOut = (
-          estimatedTokensNum *
-          (1 - parseFloat(slippage) / 100)
-        ).toString();
-
-        // Use existing PumpFun trading system
-        response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            buyerAddress: address,
-            ethAmount: buyAmount,
-            minTokensOut,
-            slippageTolerance: slippage,
-          }),
-        });
+        return;
       }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Transaction failed");
-      }
+      const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          buyerAddress: address,
+          ethAmount: buyAmount,
+          minTokensOut: '0' // Add slippage protection later
+        })
+      });
 
       const result = await response.json();
 
+      if (!response.ok) {
+        throw new Error(result.error || 'Trading system temporarily unavailable');
+      }
+
       toast({
-        title: "Buy successful!",
-        description: `Purchased ${result.trade?.tokensReceived || estimatedTokens} tokens`,
+        title: "Buy Order Prepared",
+        description: `Will receive approximately ${result.trade?.tokensReceived || '0'} tokens`,
       });
 
-      // Reset form
-      setBuyAmount("");
-      setEstimatedTokens("");
+      // Refresh data
+      // queryClient.invalidateQueries({
+      //   queryKey: [`/api/creator-coins/${tokenAddress}`]
+      // });
+      window.location.reload(); // Reload to ensure all data is fresh
 
-      // Refetch data
-      window.location.reload();
     } catch (error) {
-      console.error("Buy failed:", error);
-
+      console.error('Buy failed:', error);
       let errorMessage = "Failed to execute buy order";
       if (error instanceof Error) {
         if (error.message.includes("500")) {
@@ -650,7 +624,7 @@ export default function ContentCoinDetail() {
       }
 
       toast({
-        title: "Transaction failed",
+        title: "Buy Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -1152,7 +1126,7 @@ export default function ContentCoinDetail() {
                                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                                   <div className="text-sm text-red-400">
                                     You'll receive: <span className="font-semibold">
-                                      ≈ {bondingCurveData?.enabled && tradingStats.currentPrice
+                                      ≈ {bondingCurveData?.enabled && tradingStats.currentPrice !== "0" && tradingStats.currentPrice
                                         ? (parseFloat(sellAmount) * parseFloat(tradingStats.currentPrice)).toFixed(6)
                                         : (parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
                                     </span>
@@ -1274,7 +1248,7 @@ export default function ContentCoinDetail() {
                             <div className="space-y-1 text-xs text-muted-foreground">
                               <div className="flex justify-between">
                                 <span>Current Price:</span>
-                                <span>${bondingCurveData?.enabled && tradingStats.currentPrice !== "0"
+                                <span>${bondingCurveData?.enabled && tradingStats.currentPrice !== "0" && tradingStats.currentPrice
                                   ? tradingStats.currentPrice
                                   : priceData?.price || "0"}</span>
                               </div>
@@ -1283,7 +1257,7 @@ export default function ContentCoinDetail() {
                                 <span>
                                   $
                                   {(
-                                    parseFloat(bondingCurveData?.enabled && tradingStats.currentPrice !== "0"
+                                    parseFloat(bondingCurveData?.enabled && tradingStats.currentPrice !== "0" && tradingStats.currentPrice
                                       ? tradingStats.currentPrice
                                       : priceData?.price || "0") *
                                     (1 - parseFloat(slippage) / 100)
