@@ -1,0 +1,55 @@
+Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+/api/creator-coins/9648f56b-8d26-431e-9a14-0a532af800f9/price:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: Object
+/api/creator-coins/9648f56b-8d26-431e-9a14-0a532af800f9/price:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+/api/creator-coins/9648f56b-8d26-431e-9a14-0a532af800f9/price:1  Failed to load resource: the server responded with a status of 404 (Not Found)Understand this error
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: Object
+ContentCoinDetail.tsx:429 🎯 Bonding curve quote received: Object
+ContentCoinDetail.tsx:431 🎯 Tokens calculated: 0.000031496031496047
+ContentCoinDetail.tsx:429 🎯 Bonding curve quote received: Object
+ContentCoinDetail.tsx:431 🎯 Tokens calculated: 0.000031496031496047
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: Object
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: Object
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: Object
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: {enabled: true, curveAddress: '0x63883C7FA401072eBa77c0E12E08cD721756c3eF', factoryAddress: '0x787b9de286a18da63805e9df943286bba2ca0c3d', info: {…}}
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: {enabled: true, curveAddress: '0x63883C7FA401072eBa77c0E12E08cD721756c3eF', factoryAddress: '0x787b9de286a18da63805e9df943286bba2ca0c3d', info: {…}}
+useCreatorCoins.tsx:110  GET https://57c49043-29f5-4a00-8f68-a7c4d8dd16e8-00-19478y3ao0wcm.janeway.replit.dev/api/creator-coins/9648f56b-8d26-431e-9a14-0a532af800f9/price 404 (Not Found)
+queryFn @ useCreatorCoins.tsx:110
+fetchFn @ chunk-A67CSFD6.js?v=e3a99a14:879
+run @ chunk-A67CSFD6.js?v=e3a99a14:507
+start @ chunk-A67CSFD6.js?v=e3a99a14:550
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:918
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:2314Understand this error
+useCreatorCoins.tsx:110  GET https://57c49043-29f5-4a00-8f68-a7c4d8dd16e8-00-19478y3ao0wcm.janeway.replit.dev/api/creator-coins/9648f56b-8d26-431e-9a14-0a532af800f9/price 404 (Not Found)
+queryFn @ useCreatorCoins.tsx:110
+fetchFn @ chunk-A67CSFD6.js?v=e3a99a14:879
+run @ chunk-A67CSFD6.js?v=e3a99a14:507
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:532
+Promise.then
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:528
+Promise.catch
+run @ chunk-A67CSFD6.js?v=e3a99a14:511
+start @ chunk-A67CSFD6.js?v=e3a99a14:550
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:918
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:2314Understand this error
+useCreatorCoins.tsx:110  GET https://57c49043-29f5-4a00-8f68-a7c4d8dd16e8-00-19478y3ao0wcm.janeway.replit.dev/api/creator-coins/9648f56b-8d26-431e-9a14-0a532af800f9/price 404 (Not Found)
+queryFn @ useCreatorCoins.tsx:110
+fetchFn @ chunk-A67CSFD6.js?v=e3a99a14:879
+run @ chunk-A67CSFD6.js?v=e3a99a14:507
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:532
+Promise.then
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:528
+Promise.catch
+run @ chunk-A67CSFD6.js?v=e3a99a14:511
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:532
+Promise.then
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:528
+Promise.catch
+run @ chunk-A67CSFD6.js?v=e3a99a14:511
+start @ chunk-A67CSFD6.js?v=e3a99a14:550
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:918
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:2314Understand this error
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: {enabled: true, curveAddress: '0x63883C7FA401072eBa77c0E12E08cD721756c3eF', factoryAddress: '0x787b9de286a18da63805e9df943286bba2ca0c3d', info: {…}}
