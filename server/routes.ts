@@ -2566,8 +2566,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        const priceData = await getCoinPrice(coinData.coinAddress);
-        const bondingProgress = await getBondingCurveProgress(coinData.coinAddress);
+        // Use PumpFun pricing system for real bonding curve data
+        const { getPumpFunPrice } = await import('./pumpfun');
+        const priceData = await getPumpFunPrice(coinData.coinAddress);
+        const bondingProgress = priceData.bondingProgress;
 
         // Update coin with latest data
         await db.update(creatorCoins)
