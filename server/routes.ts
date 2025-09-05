@@ -2665,6 +2665,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bonding Curve API Routes
+  // Deploy bonding curve for a creator coin
+  app.post("/api/creator-coins/:id/deploy-bonding-curve", async (req, res) => {
+    try {
+      const creatorCoinId = req.params.id;
+      
+      console.log(`🚀 Deploying bonding curve for coin: ${creatorCoinId}`);
+
+      // Get creator coin data
+      const coin = await db
+        .select()
+        .from(creatorCoins)
+        .where(eq(creatorCoins.id, creatorCoinId))
+        .limit(1);
+
+      if (!coin.length) {
+        return res.status(404).json({ error: "Creator coin not found" });
+      }
+
+      const coinData = coin[0];
+
+      if (!coinData.contractAddress) {
+        return res.status(400).json({ error: "Token contract not deployed yet" });
+      }
+
+      if (coinData.hasBondingCurve) {
+        return res.status(400).json({ 
+          error: "Bonding curve already deployed",
+          curveAddress: coinData.bondingCurveExchangeAddress 
+        });
+      }
+
+      // Deploy bonding curve
+      const result = await bondingCurveService.deployBondingCurve(
+        coinData.contractAddress,
+        coinData.creatorAddress,
+        coinData.id
+      );
+
+      if (result.success) {
+        res.json({
+          success: true,
+          curveAddress: result.curveAddress,
+          transactionHash: result.transactionHash,
+          message: "Bonding curve deployed successfully"
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: result.error
+        });
+      }
+
+    } catch (error) {
+      console.error("Deploy bonding curve error:", error);
+      res.status(500).json({ error: "Failed to deploy bonding curve" });
+    }
+  });
+
   app.get("/api/creator-coins/:id/bonding-curve-info", async (req, res) => {
     try {
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
@@ -2711,6 +2769,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/creator-coins/:id/bonding-curve-buy-quote", async (req, res) => {
     try {
       const { ethAmount } = req.body;
+      const creatorCoinId = req.params.id;
+
+      if (!ethAmount) {
+        return res.status(400).json({ error: "ETH amount is required" });
+      }
+
+      console.log(`🎯 Getting buy quote for ${ethAmount} ETH on coin ${creatorCoinId}`);
+
+      // Get creator coin data
+      const coin = await db
+        .select()
+        .from(creatorCoins)
+        .where(eq(creatorCoins.id, creatorCoinId))
+        .limit(1);
+
+      if (!coin.length) {
+        return res.status(404).json({ error: "Creator coin not found" });
+      }
+
+      const coinData = coin[0];
+
+      // If bonding curve is available, use it
+      if (coinData.hasBondingCurve && coinData.bondingCurveExchangeAddress) {
+        try {
+          const tokensOut = await bondingCurveService.calculateBuyTokens(
+            coinData.bondingCurveExchangeAddress,
+            ethAmount
+          );
+          
+          if (tokensOut) {
+            console.log(`✅ Bonding curve quote: ${tokensOut} tokens for ${ethAmount} ETH`);
+            return res.json({
+              tokensOut: tokensOut.toString(),
+              ethAmount,
+              source: "bonding_curve"
+            });
+          }
+        } catch (error) {
+          console.error("Bonding curve quote failed:", error);
+        }
+      }
+
+      // Fallback to price-based calculation
+      const currentPrice = coinData.currentPrice || "0.00001";
+      const estimatedTokens = parseFloat(ethAmount) / parseFloat(currentPrice);
+      const tokensOutWei = ethers.utils.parseUnits(estimatedTokens.toString(), 18);
+
+      console.log(`📊 Price-based quote: ${estimatedTokens} tokens for ${ethAmount} ETH`);
+
+      res.json({
+        tokensOut: tokensOutWei.toString(),
+        ethAmount,
+        source: "price_estimate",
+        currentPrice
+      });
+
+    } catch (error) {
+      console.error("Buy quote error:", error);
+      res.status(500).json({ error: "Failed to get buy quote" });
+    }
+  }); = req.body;
 
       if (!ethAmount || isNaN(parseFloat(ethAmount))) {
         return res.status(400).json({ message: "Valid ethAmount required" });

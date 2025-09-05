@@ -30,9 +30,9 @@ const CHAIN_ID = 84532;
 
 // Contract addresses (to be set after deployment)
 // Updated with deployed factory address on Base Sepolia
-const BONDING_CURVE_FACTORY_ADDRESS = "0x787b9de286a18da63805e9df943286bba2ca0c3d" as Address;
-const PLATFORM_ADMIN_ADDRESS = process.env.PLATFORM_ADMIN_ADDRESS || "";
-const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || "";
+const BONDING_CURVE_FACTORY_ADDRESS = process.env.BONDING_CURVE_FACTORY_ADDRESS || "0x787b9de286a18da63805e9df943286bba2ca0c3d" as Address;
+const PLATFORM_ADMIN_ADDRESS = process.env.PLATFORM_ADMIN_ADDRESS || "0x64170da71cfA3Cf1169D5b4403693CaEDb1E157c";
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || process.env.PRIVATE_KEY || "";
 
 interface BondingCurveInfo {
   tokenAddress: string;
@@ -345,21 +345,40 @@ export async function getBondingCurveInfo(creatorCoinId: string): Promise<{
       };
     }
 
+    // Try to deploy bonding curve if it doesn't exist
+    if (!coin.hasBondingCurve && coin.contractAddress && coin.creatorAddress) {
+      console.log(`🚀 Attempting to deploy bonding curve for ${coin.coinName}`);
+      
+      const deployResult = await bondingCurveService.deployBondingCurve(
+        coin.contractAddress,
+        coin.creatorAddress,
+        coin.id
+      );
+
+      if (deployResult.success) {
+        console.log(`✅ Bonding curve deployed at ${deployResult.curveAddress}`);
+        // Update the bonding curve address for this session
+        bondingCurveAddress = deployResult.curveAddress!;
+      } else {
+        console.error(`❌ Bonding curve deployment failed: ${deployResult.error}`);
+      }
+    }
+
     // Fetch bonding curve details from the contract
     const bondingCurveInfo = await bondingCurveService.getBondingCurveInfo(bondingCurveAddress);
 
     if (!bondingCurveInfo) {
       console.error(`💥 Failed to fetch bonding curve info for address: ${bondingCurveAddress}`);
       
-      // Return reasonable defaults instead of complete failure
+      // Return reasonable defaults for better UX
       return {
         enabled: true,
         curveAddress: bondingCurveAddress,
         info: {
-          currentPrice: "0.00001",
+          currentPrice: "0.0001", // Higher default price
           supply: "1000000000",
-          reserve: "0.1", // 0.1 ETH reserve
-          marketCap: "10000"
+          reserve: "0.5", // 0.5 ETH reserve
+          marketCap: "100000" // $100k default
         },
         error: 'Using fallback values - contract data unavailable'
       };
