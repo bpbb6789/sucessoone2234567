@@ -16,6 +16,7 @@ import {
   createUniswapV4Pool, // Import createUniswapV4Pool function
   addInitialLiquidity // Import addInitialLiquidity function
 } from './zora';
+import { bondingCurveService } from "./bondingCurve";
 import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema,
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
@@ -2566,6 +2567,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn(`⚠️ Pool setup failed (coin still deployed):`, poolError);
       }
 
+      // Deploy bonding curve for automated market making
+      console.log(`🔄 Deploying bonding curve for automated market making...`);
+      let bondingCurveDeployed = false;
+      let bondingCurveAddress = null;
+      let bondingCurveTxHash = null;
+
+      try {
+        if (bondingCurveService.isConfigured()) {
+          const bondingCurveResult = await bondingCurveService.deployBondingCurve(
+            deploymentResult.coinAddress,
+            coinData.creatorAddress,
+            coinId
+          );
+
+          if (bondingCurveResult.success) {
+            console.log(`✅ Bonding curve deployed successfully at: ${bondingCurveResult.curveAddress}`);
+            bondingCurveDeployed = true;
+            bondingCurveAddress = bondingCurveResult.curveAddress;
+            bondingCurveTxHash = bondingCurveResult.transactionHash;
+          } else {
+            console.warn(`⚠️ Bonding curve deployment failed: ${bondingCurveResult.error}`);
+          }
+        } else {
+          console.log(`ℹ️ Bonding curve service not configured - skipping bonding curve deployment`);
+        }
+      } catch (bondingCurveError) {
+        console.warn(`⚠️ Bonding curve deployment failed (coin still deployed):`, bondingCurveError);
+      }
+
       // Update coin with deployment info
       await db.update(creatorCoins)
         .set({
@@ -2591,7 +2621,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: coinId,
           coinAddress: deploymentResult.coinAddress,
           txHash: deploymentResult.txHash,
-          factoryAddress: deploymentResult.factoryAddress
+          factoryAddress: deploymentResult.factoryAddress,
+          bondingCurve: bondingCurveDeployed ? {
+            address: bondingCurveAddress,
+            txHash: bondingCurveTxHash,
+            enabled: true
+          } : {
+            enabled: false,
+            reason: bondingCurveService.isConfigured() ? "Deployment failed" : "Service not configured"
+          }
         }
       });
     } catch (error) {
@@ -2610,6 +2648,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to deploy creator coin",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Bonding Curve API Routes
+  app.get("/api/creator-coins/:id/bonding-curve-info", async (req, res) => {
+    try {
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
+      
+      if (!coin.length) {
+        return res.status(404).json({ message: "Creator coin not found" });
+      }
+
+      const coinData = coin[0];
+
+      if (!coinData.hasBondingCurve || !coinData.bondingCurveExchangeAddress) {
+        return res.json({
+          enabled: false,
+          message: "Bonding curve not deployed for this coin"
+        });
+      }
+
+      const curveInfo = await bondingCurveService.getBondingCurveInfo(coinData.bondingCurveExchangeAddress);
+      
+      if (!curveInfo) {
+        return res.status(500).json({ message: "Failed to fetch bonding curve information" });
+      }
+
+      res.json({
+        enabled: true,
+        curveAddress: coinData.bondingCurveExchangeAddress,
+        factoryAddress: coinData.bondingCurveFactoryAddress,
+        info: {
+          tokenAddress: curveInfo.tokenAddress,
+          creatorAddress: curveInfo.creatorAddress,
+          supply: curveInfo.supply.toString(),
+          reserve: curveInfo.reserve.toString(),
+          currentPrice: curveInfo.currentPrice.toString(),
+          marketCap: curveInfo.marketCap.toString()
+        }
+      });
+
+    } catch (error) {
+      console.error("Bonding curve info error:", error);
+      res.status(500).json({ message: "Failed to fetch bonding curve info" });
+    }
+  });
+
+  app.post("/api/creator-coins/:id/bonding-curve-buy-quote", async (req, res) => {
+    try {
+      const { ethAmount } = req.body;
+
+      if (!ethAmount || isNaN(parseFloat(ethAmount))) {
+        return res.status(400).json({ message: "Valid ethAmount required" });
+      }
+
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
+      
+      if (!coin.length) {
+        return res.status(404).json({ message: "Creator coin not found" });
+      }
+
+      const coinData = coin[0];
+
+      if (!coinData.hasBondingCurve || !coinData.bondingCurveExchangeAddress) {
+        return res.status(400).json({ message: "Bonding curve not available for this coin" });
+      }
+
+      const tokensOut = await bondingCurveService.calculateBuyTokens(coinData.bondingCurveExchangeAddress, ethAmount);
+      
+      if (tokensOut === null) {
+        return res.status(500).json({ message: "Failed to calculate buy quote" });
+      }
+
+      res.json({
+        ethAmount,
+        tokensOut: tokensOut.toString(),
+        curveAddress: coinData.bondingCurveExchangeAddress
+      });
+
+    } catch (error) {
+      console.error("Bonding curve buy quote error:", error);
+      res.status(500).json({ message: "Failed to calculate buy quote" });
+    }
+  });
+
+  app.post("/api/creator-coins/:id/bonding-curve-sell-quote", async (req, res) => {
+    try {
+      const { tokenAmount } = req.body;
+
+      if (!tokenAmount || isNaN(parseFloat(tokenAmount))) {
+        return res.status(400).json({ message: "Valid tokenAmount required" });
+      }
+
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
+      
+      if (!coin.length) {
+        return res.status(404).json({ message: "Creator coin not found" });
+      }
+
+      const coinData = coin[0];
+
+      if (!coinData.hasBondingCurve || !coinData.bondingCurveExchangeAddress) {
+        return res.status(400).json({ message: "Bonding curve not available for this coin" });
+      }
+
+      const ethOut = await bondingCurveService.calculateSellTokens(coinData.bondingCurveExchangeAddress, tokenAmount);
+      
+      if (ethOut === null) {
+        return res.status(500).json({ message: "Failed to calculate sell quote" });
+      }
+
+      res.json({
+        tokenAmount,
+        ethOut: ethOut.toString(),
+        curveAddress: coinData.bondingCurveExchangeAddress
+      });
+
+    } catch (error) {
+      console.error("Bonding curve sell quote error:", error);
+      res.status(500).json({ message: "Failed to calculate sell quote" });
     }
   });
 

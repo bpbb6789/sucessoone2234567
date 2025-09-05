@@ -422,6 +422,12 @@ export const creatorCoins = pgTable("creator_coins", {
   uniswapV4Pool: text("uniswap_v4_pool"), // Associated Uniswap V4 pool
   hookAddress: text("hook_address"), // Hook contract address
   
+  // Bonding Curve Integration
+  bondingCurveFactoryAddress: text("bonding_curve_factory_address"), // BondingCurveFactory address
+  bondingCurveExchangeAddress: text("bonding_curve_exchange_address"), // Individual BondingCurveExchange address
+  bondingCurveDeploymentTxHash: text("bonding_curve_deployment_tx_hash"), // TX hash of bonding curve deployment
+  hasBondingCurve: boolean("has_bonding_curve").default(false), // Whether bonding curve is deployed
+  
   // Trading & Economics
   currency: text("currency").notNull().default("ETH"), // 'ETH', 'ZORA', etc.
   startingMarketCap: text("starting_market_cap").notNull().default("LOW"), // 'LOW', 'HIGH'
@@ -599,6 +605,11 @@ export const insertCreatorCoinSchema = createInsertSchema(creatorCoins).omit({
   comments: true, // Auto-calculated
   shares: true, // Auto-calculated
   deploymentTxHash: true, // Set during deployment
+  // Bonding Curve fields set during deployment
+  bondingCurveFactoryAddress: true, // Set during bonding curve deployment
+  bondingCurveExchangeAddress: true, // Set during bonding curve deployment
+  bondingCurveDeploymentTxHash: true, // Set during bonding curve deployment
+  hasBondingCurve: true, // Set during bonding curve deployment
 });
 
 // Notifications system for all platform activities
