@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-// Removed wagmi imports for auction integration
+import { useAccount, useReadContract } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import {
   Play,
@@ -117,7 +117,7 @@ function formatTimeAgo(date: Date): string {
 export default function ContentCoinDetail() {
   const params = useParams();
   const tokenAddress = params.address;
-  const address = "0x1234567890123456789012345678901234567890"; // Mock address for testing
+  const address = useAccount()?.address; // Use real wallet address
   // Removed unused wagmi hooks for auction integration
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState("");
@@ -201,8 +201,14 @@ export default function ContentCoinDetail() {
     enabled: !!tokenAddress,
   });
 
-  // Removed direct contract balance read for auction integration
-  const tokenBalance = "0"; // Mock balance for now
+  // Get real token balance from blockchain
+  const { data: tokenBalance } = useReadContract({
+    address: tokenData?.coinAddress as Address,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [address as Address],
+    query: { enabled: !!address && !!tokenData?.coinAddress }
+  });
 
   // Process holders data with proper typing
   const processedHolders = useMemo(() => {
@@ -446,8 +452,8 @@ export default function ContentCoinDetail() {
           account: address as `0x${string}`,
         });
 
-        // Removed direct contract calls for auction integration
-        const hash = "0x" + Math.random().toString(16).slice(2, 66);
+        // Execute real Zora swap transaction
+        const hash = await walletClient.writeContract(request);
 
         toast({
           title: "Buy transaction submitted",
@@ -458,7 +464,7 @@ export default function ContentCoinDetail() {
         return;
       }
 
-      // Fallback to API for non-Zora tokens
+      // Use Zora SDK via API for all tokens
       const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
         method: "POST",
         headers: {
@@ -572,8 +578,8 @@ export default function ContentCoinDetail() {
     }
 
     // Check user's token balance
-    if (tokenBalance) {
-      const balanceInTokens = parseFloat(formatUnits(BigInt(tokenBalance), 18));
+    if (tokenBalance && tokenBalance > 0n) {
+      const balanceInTokens = parseFloat(formatUnits(tokenBalance, 18));
       if (balanceInTokens < parseFloat(sellAmount)) {
         toast({
           title: "Insufficient tokens",
@@ -582,6 +588,13 @@ export default function ContentCoinDetail() {
         });
         return;
       }
+    } else {
+      toast({
+        title: "No tokens to sell",
+        description: `You don't own any ${tokenData.coinSymbol} tokens`,
+        variant: "destructive",
+      });
+      return;
     }
 
     try {

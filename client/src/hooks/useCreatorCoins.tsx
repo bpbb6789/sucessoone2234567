@@ -110,15 +110,7 @@ export function useCreatorCoinPrice(coinId: string) {
       const response = await fetch(`/api/creator-coins/${coinId}/price`);
       if (!response.ok) {
         if (response.status === 400) {
-          // Token not deployed yet, return realistic placeholder data for Base Sepolia
-          return {
-            price: "0.000000001", // Realistic small ETH price
-            marketCap: "0.001", // Small market cap in ETH
-            volume24h: "0.00", 
-            holders: 0,
-            priceChange24h: 0,
-            bondingCurveProgress: 0
-          };
+          throw new Error('Token not deployed yet - no price data available');
         }
         throw new Error('Failed to fetch price data');
       }
@@ -127,8 +119,8 @@ export function useCreatorCoinPrice(coinId: string) {
     enabled: !!coinId,
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: (failureCount, error) => {
-      // Don't retry if it's a 400 error (coin not deployed)
-      if (error && error.message?.includes('400')) {
+      // Don't retry if it's a 400 error (coin not deployed) or no trading data
+      if (error && (error.message?.includes('400') || error.message?.includes('no active trading'))) {
         return false;
       }
       return failureCount < 3;

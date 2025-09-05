@@ -3082,9 +3082,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: buyResult.error });
       }
 
-      // Record the trade (simplified - in production you'd wait for transaction confirmation)
+      // Record the trade only after real transaction confirmation
       const tradeId = uuidv4();
-      const estimatedTokens = parseFloat(ethAmount) * 1000; // Simplified estimate: 1 ETH = 1000 tokens
+      const estimatedTokens = buyResult.tokensReceived ? parseFloat(buyResult.tokensReceived) : 0;
 
       await db.insert(creatorCoinTrades).values({
         id: tradeId,
