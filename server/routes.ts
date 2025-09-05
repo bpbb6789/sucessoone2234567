@@ -871,9 +871,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tokens", async (req, res) => {
     try {
       // Get all tokens from storage (database)
-      const tokens = await storage.getAllTokens();
-      res.json(tokens);
+      const dbTokens = await storage.getAllTokens();
+      
+      // Also check for tokens that might be in PumpFun contract but not in database
+      // Look at creator coins that might have been created with PumpFun
+      const allCreatorCoins = await db.select().from(creatorCoins).where(sql`coin_address IS NOT NULL`);
+      
+      const pumpFunTokens = [];
+      
+      // Check each creator coin to see if it exists in PumpFun system
+      for (const coin of allCreatorCoins) {
+        if (coin.coinAddress && coin.coinAddress !== 'Deploying...') {
+          try {
+            const { getBondingCurveData } = await import('./pumpfun');
+            const pumpFunData = await getBondingCurveData(coin.coinAddress);
+            
+            if (pumpFunData && pumpFunData.tokenMint !== '0x0000000000000000000000000000000000000000') {
+              // This token exists in PumpFun system
+              console.log(`📊 Found PumpFun token: ${coin.coinAddress} (${coin.coinName})`);
+              
+              // Calculate price from bonding curve
+              const price = Number(pumpFunData.virtualEthReserves) / Number(pumpFunData.virtualTokenReserves);
+              const totalSupply = Number(pumpFunData.tokenTotalSupply) / 1e18;
+              const marketCap = price * totalSupply;
+              
+              pumpFunTokens.push({
+                id: coin.id,
+                address: coin.coinAddress,
+                name: coin.coinName || 'Unknown Token',
+                symbol: coin.coinSymbol || 'UNK',
+                description: coin.description || 'Token created with PumpFun bonding curve',
+                creator: coin.creatorAddress,
+                price: price.toFixed(8),
+                marketCap: marketCap.toFixed(2),
+                volume24h: Number(pumpFunData.realEthReserves) / 1e18,
+                holders: 0, // Would need to fetch from chain
+                totalSupply: totalSupply.toString(),
+                createdAt: coin.createdAt?.toISOString() || new Date().toISOString(),
+                imageUri: coin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` : undefined
+              });
+            }
+          } catch (error) {
+            console.log(`❌ Error checking PumpFun for ${coin.coinAddress}:`, error.message);
+          }
+        }
+      }
+      
+      console.log(`📊 Found ${dbTokens.length} database tokens and ${pumpFunTokens.length} PumpFun tokens`);
+      
+      // Combine database tokens with discovered PumpFun tokens
+      const allTokens = [...dbTokens, ...pumpFunTokens];
+      res.json(allTokens);
     } catch (error) {
+      console.error('Error fetching tokens:', error);
       res.status(500).json(handleDatabaseError(error, "getAllTokens"));
     }
   });
