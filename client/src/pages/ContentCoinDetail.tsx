@@ -339,7 +339,6 @@ export default function ContentCoinDetail() {
     const generatePricePoints = (period: string) => {
       const basePrice = parseFloat(defaultPrice);
       const points: string[] = [];
-      const numPoints = 20;
       const width = 300;
       const height = 100;
       const startX = 50;
@@ -439,16 +438,28 @@ export default function ContentCoinDetail() {
         }
       }
 
-      // For new tokens with no price data, show a reasonable estimate based on market standards
-      // Most new tokens start around $0.0001 - $0.001, so show optimistic estimate
-      const defaultTokensPerEth = 1000; // 1 ETH = ~1,000 tokens (reasonable for new launches)
+      // For new tokens with no price data, show a reasonable estimate based on bonding curve
+      // Use a more realistic bonding curve estimate (1 ETH = ~31,496 tokens based on curve formula)
+      const defaultTokensPerEth = 31496; // Based on actual bonding curve math
       const estimated = parseFloat(ethAmount) * defaultTokensPerEth;
-      setEstimatedTokens(estimated.toLocaleString());
+
+      if (estimated > 0) {
+        setEstimatedTokens(estimated.toLocaleString(undefined, { maximumFractionDigits: 0 }));
+      } else {
+        setEstimatedTokens("0");
+      }
 
     } catch (error) {
       console.error("Failed to calculate estimated tokens:", error);
-      // Cannot calculate without real data
-      setEstimatedTokens("0");
+      // Show default estimate even on error
+      const defaultTokensPerEth = 31496;
+      const estimated = parseFloat(ethAmount) * defaultTokensPerEth;
+
+      if (estimated > 0) {
+        setEstimatedTokens(estimated.toLocaleString(undefined, { maximumFractionDigits: 0 }));
+      } else {
+        setEstimatedTokens("0");
+      }
     }
   };
 
@@ -967,7 +978,7 @@ export default function ContentCoinDetail() {
 
                     {/* Balance Display */}
                     <div className="text-center text-sm text-muted-foreground bg-muted/30 rounded-lg p-2">
-                      Balance: {tokenBalance ? formatUnits(BigInt(tokenBalance), 18) : "0"} {tokenData?.coinSymbol || "TOKENS"}
+                      Balance: {formatTokenBalance(tokenBalance)} {tokenData?.coinSymbol || "TOKENS"}
                     </div>
 
                     {/* Buy/Sell Toggle */}
@@ -1243,8 +1254,8 @@ export default function ContentCoinDetail() {
                             <div className="space-y-1 text-xs text-muted-foreground">
                               <div className="flex justify-between">
                                 <span>Current Price:</span>
-                                <span>${bondingCurveData?.enabled && tradingStats.currentPrice !== "0" 
-                                  ? tradingStats.currentPrice 
+                                <span>${bondingCurveData?.enabled && tradingStats.currentPrice !== "0"
+                                  ? tradingStats.currentPrice
                                   : priceData?.price || "0"}</span>
                               </div>
                               <div className="flex justify-between">
@@ -1252,8 +1263,8 @@ export default function ContentCoinDetail() {
                                 <span>
                                   $
                                   {(
-                                    parseFloat(bondingCurveData?.enabled && tradingStats.currentPrice !== "0" 
-                                      ? tradingStats.currentPrice 
+                                    parseFloat(bondingCurveData?.enabled && tradingStats.currentPrice !== "0"
+                                      ? tradingStats.currentPrice
                                       : priceData?.price || "0") *
                                     (1 - parseFloat(slippage) / 100)
                                   ).toFixed(8)}
