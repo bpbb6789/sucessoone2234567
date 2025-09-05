@@ -2586,19 +2586,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           bondingCurveProgress: bondingProgress
         });
       } catch (priceError) {
-        // Return mock data for tokens without trading activity
-        const mockData = {
-          price: "0.000001",
-          marketCap: "0.00",
-          volume24h: "0.00",
-          holders: 0,
-          priceChange24h: 0,
-          bondingCurveProgress: 0
-        };
-
-        console.log(`⚠️ No price data available for ${coinData.coinAddress}, returning mock data`);
-
-        res.json(mockData);
+        console.log(`❌ No trading data available for ${coinData.coinAddress}:`, priceError);
+        
+        return res.status(404).json({
+          message: "No trading data available",
+          error: "Token not actively traded - no price data found",
+          details: priceError instanceof Error ? priceError.message : "Unknown error"
+        });
       }
     } catch (error) {
       res.status(500).json(handleDatabaseError(error, "getCreatorCoinPrice"));
@@ -4309,19 +4303,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           bondingCurveProgress: bondingProgress
         });
       } catch (priceError) {
-        // Return mock data for tokens without trading activity
-        const mockData = {
-          price: "0.000001",
-          marketCap: "0.00",
-          volume24h: "0.00",
-          holders: 0,
-          priceChange24h: 0,
-          bondingCurveProgress: 0
-        };
-
-        console.log(`⚠️ No price data available for ${coinData.coinAddress}, returning mock data`);
-
-        res.json(mockData);
+        console.log(`❌ No trading data available for ${coinData.coinAddress}:`, priceError);
+        
+        return res.status(404).json({
+          message: "No trading data available",
+          error: "Token not actively traded - no price data found",
+          details: priceError instanceof Error ? priceError.message : "Unknown error"
+        });
       }
     } catch (error) {
       res.status(500).json(handleDatabaseError(error, "getCreatorCoinPrice"));
