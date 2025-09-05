@@ -404,39 +404,40 @@ export default function ContentCoinDetail() {
         }
       }
 
-      // Use bonding curve current price if available
-      let priceToUse = "0";
+      // Use bonding curve current price if available and greater than 0
+      let priceToUse = null;
       
-      if (bondingCurveData?.enabled && bondingCurveData?.info?.currentPrice) {
+      if (bondingCurveData?.enabled && bondingCurveData?.info?.currentPrice && parseFloat(bondingCurveData.info.currentPrice) > 0) {
         priceToUse = bondingCurveData.info.currentPrice;
-      } else if (priceData?.price) {
+      } else if (priceData?.price && parseFloat(priceData.price) > 0) {
         priceToUse = priceData.price;
-      } else if (tokenData?.currentPrice) {
+      } else if (tokenData?.currentPrice && parseFloat(tokenData.currentPrice) > 0) {
         priceToUse = tokenData.currentPrice;
       }
 
-      // Ensure we have a valid price to prevent division by zero
-      const price = parseFloat(priceToUse);
-      if (price <= 0) {
-        // Use a default minimum price to prevent infinity
-        const defaultPrice = 0.00001; // $0.00001 per token
-        const estimated = parseFloat(ethAmount) / defaultPrice;
-        setEstimatedTokens(estimated.toLocaleString());
-        return;
+      if (priceToUse) {
+        const price = parseFloat(priceToUse);
+        const estimated = parseFloat(ethAmount) / price;
+        
+        // Ensure the result is reasonable (not infinity or NaN)
+        if (isFinite(estimated) && !isNaN(estimated) && estimated > 0) {
+          setEstimatedTokens(estimated.toLocaleString());
+          return;
+        }
       }
 
-      const estimated = parseFloat(ethAmount) / price;
-      
-      // Ensure the result is reasonable (not infinity or NaN)
-      if (!isFinite(estimated) || isNaN(estimated)) {
-        setEstimatedTokens("0");
-        return;
-      }
-
+      // For new tokens with no price data, show a reasonable estimate
+      // Assume initial price of about $0.0001 per token (1 ETH = ~10,000 tokens)
+      const defaultTokensPerEth = 10000;
+      const estimated = parseFloat(ethAmount) * defaultTokensPerEth;
       setEstimatedTokens(estimated.toLocaleString());
+      
     } catch (error) {
       console.error("Failed to calculate estimated tokens:", error);
-      setEstimatedTokens("");
+      // Show default estimate even on error
+      const defaultTokensPerEth = 10000;
+      const estimated = parseFloat(ethAmount) * defaultTokensPerEth;
+      setEstimatedTokens(estimated.toLocaleString());
     }
   };
 
