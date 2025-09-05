@@ -1,0 +1,40 @@
+VM248:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError	@	VM248:1
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+Object
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+Object
+ContentCoinDetail.tsx:429 🎯 Bonding curve quote received: 
+Object
+ContentCoinDetail.tsx:431 🎯 Tokens calculated: 0.000031496031496047
+ContentCoinDetail.tsx:429 🎯 Bonding curve quote received: 
+Object
+ContentCoinDetail.tsx:431 🎯 Tokens calculated: 0.000031496031496047
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+Object
+ContentCoinDetail.tsx:429 🎯 Bonding curve quote received: 
+Object
+ContentCoinDetail.tsx:431 🎯 Tokens calculated: 0.000002817090697865
+ContentCoinDetail.tsx:429 🎯 Bonding curve quote received: 
+Object
+ContentCoinDetail.tsx:431 🎯 Tokens calculated: 0.000002817090697865
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+Object
+:8000/api/creator-co…-0a532af800f9/buy:1 
+ Failed to load resource: the server responded with a status of 400 (Bad Request)
+ContentCoinDetail.tsx:633 Buy failed: Error: Failed to get swap quote from Zora protocol
+    at handleBuy (ContentCoinDetail.tsx:616:15)
+handleBuy	@	ContentCoinDetail.tsx:633
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+Object
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+{enabled: true, curveAddress: '0x63883C7FA401072eBa77c0E12E08cD721756c3eF', factoryAddress: '0x787b9de286a18da63805e9df943286bba2ca0c3d', info: {…}}
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+{enabled: true, curveAddress: '0x63883C7FA401072eBa77c0E12E08cD721756c3eF', factoryAddress: '0x787b9de286a18da63805e9df943286bba2ca0c3d', info: {…}}
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+{enabled: true, curveAddress: '0x63883C7FA401072eBa77c0E12E08cD721756c3eF', factoryAddress: '0x787b9de286a18da63805e9df943286bba2ca0c3d', info: {…}}
+ContentCoinDetail.tsx:235 🔍 Bonding curve data received: 
+{enabled: true, curveAddress: '0x63883C7FA401072eBa77c0E12E08cD721756c3eF', factoryAddress: '0x787b9de286a18da63805e9df943286bba2ca0c3d', info: {…}}
+﻿
+
