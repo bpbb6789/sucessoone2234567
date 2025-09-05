@@ -2475,7 +2475,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Allow redeployment of failed coins
       if (coinData.status !== 'pending' && coinData.status !== 'failed') {
         console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending or failed`);
-        return res.status(400).json({ message: `Coin cannot be deployed (current status: ${coinData.status}). Only pending or failed coins can be deployed.` });
+        return res.status(400).json({ 
+          message: `Coin cannot be deployed (current status: ${coinData.status}). Only pending or failed coins can be deployed.`,
+          currentStatus: coinData.status,
+          allowedStatuses: ['pending', 'failed']
+        });
+      }
+
+      // Check if metadata URI exists before starting deployment
+      if (!coinData.metadataUri || coinData.metadataUri.trim() === '') {
+        console.error(`❌ No metadata URI found for coin ${coinId}`);
+        return res.status(400).json({ 
+          message: "Cannot deploy coin without valid metadata URI. Please re-upload the content.",
+          details: "Metadata creation failed during upload process"
+        });
       }
 
       console.log(`⏳ Updating coin status to 'creating'...`);

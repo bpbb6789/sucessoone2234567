@@ -377,7 +377,7 @@ export async function getTokenHolders(coinAddress: string): Promise<{
   throw new Error(`Unable to fetch accurate holder data for ${coinAddress} - all data sources unavailable`);
 }
 
-// Approach 1: Direct balance queries for likely holder addresses
+// Approach 1: Direct balance queries for known holder addresses
 async function getHoldersFromDirectQuery(contractAddress: `0x${string}`) {
   console.log(`⚡ Direct balance queries for known addresses...`);
 
@@ -1417,7 +1417,7 @@ async function getZoraSwapQuote(params: {
   try {
     // Query Uniswap V4 pool for current price and calculate tokens out
     const POOL_MANAGER = '0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967' as const;
-    
+
     // This would normally use the actual Zora SDK to get precise quotes
     // For now, calculate based on current pool state
     const poolKey = {
@@ -1430,7 +1430,7 @@ async function getZoraSwapQuote(params: {
 
     // Get current pool price and calculate tokens out
     const ethAmountWei = BigInt(Math.floor(parseFloat(params.ethAmount) * 1e18));
-    
+
     // Query the actual Uniswap V4 pool to get real token amounts
     try {
       const poolState = await publicClient.readContract({
@@ -1461,7 +1461,7 @@ async function getZoraSwapQuote(params: {
       const sqrtPriceX96 = poolState[0];
       const price = Number(sqrtPriceX96) ** 2 / (2 ** 192);
       const tokensOut = (parseFloat(params.ethAmount) / price).toString();
-      
+
       return {
         tokensOut,
         priceImpact: 0.5 // Real price impact would be calculated from pool depth
@@ -1482,7 +1482,7 @@ async function getZoraSellQuote(params: {
 }): Promise<{ ethOut: string; priceImpact: number }> {
   try {
     const POOL_MANAGER = '0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967' as const;
-    
+
     // Query the actual Uniswap V4 pool to get real ETH amounts
     try {
       const poolState = await publicClient.readContract({
@@ -1513,7 +1513,7 @@ async function getZoraSellQuote(params: {
       const sqrtPriceX96 = poolState[0];
       const price = Number(sqrtPriceX96) ** 2 / (2 ** 192);
       const ethOut = (parseFloat(params.tokenAmount) * price).toString();
-      
+
       return {
         ethOut,
         priceImpact: 0.5 // Real price impact would be calculated from pool depth
