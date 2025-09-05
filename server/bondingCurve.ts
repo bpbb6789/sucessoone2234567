@@ -29,7 +29,8 @@ const PROVIDER_URL = "https://sepolia.base.org";
 const CHAIN_ID = 84532;
 
 // Contract addresses (to be set after deployment)
-const BONDING_CURVE_FACTORY_ADDRESS = process.env.BONDING_CURVE_FACTORY_ADDRESS || "";
+// Updated with deployed factory address on Base Sepolia
+const BONDING_CURVE_FACTORY_ADDRESS = "0x787b9de286a18da63805e9df943286bba2ca0c3d" as Address;
 const PLATFORM_ADMIN_ADDRESS = process.env.PLATFORM_ADMIN_ADDRESS || "";
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || "";
 
@@ -57,7 +58,7 @@ class BondingCurveService {
 
   constructor() {
     this.provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL);
-    
+
     if (DEPLOYER_PRIVATE_KEY) {
       this.wallet = new ethers.Wallet(DEPLOYER_PRIVATE_KEY, this.provider);
     }
@@ -76,8 +77,8 @@ class BondingCurveService {
    */
   isConfigured(): boolean {
     return !!(
-      BONDING_CURVE_FACTORY_ADDRESS && 
-      PLATFORM_ADMIN_ADDRESS && 
+      BONDING_CURVE_FACTORY_ADDRESS &&
+      PLATFORM_ADMIN_ADDRESS &&
       DEPLOYER_PRIVATE_KEY &&
       this.factoryContract
     );
@@ -87,7 +88,7 @@ class BondingCurveService {
    * Deploy a bonding curve for a content coin
    */
   async deployBondingCurve(
-    tokenAddress: string, 
+    tokenAddress: string,
     creatorAddress: string,
     coinId: string
   ): Promise<DeployBondingCurveResult> {
@@ -179,7 +180,7 @@ class BondingCurveService {
         this.provider
       );
 
-      const [tokenAddress, creatorAddress, platformAddress, supply, reserve] = 
+      const [tokenAddress, creatorAddress, platformAddress, supply, reserve] =
         await curveContract.getInfo();
 
       const currentPrice = await curveContract.getCurrentPrice();

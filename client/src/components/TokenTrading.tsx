@@ -14,6 +14,35 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { formatUnits, parseUnits } from 'viem';
 import { useWallet } from '@/hooks/useWallet';
 
+// Bonding curve factory configuration
+const pumpFunConfig = {
+  address: '0x787b9de286a18da63805e9df943286bba2ca0c3d' as `0x${string}`,
+  abi: [
+    {
+      name: 'buy',
+      type: 'function',
+      stateMutability: 'payable',
+      inputs: [
+        { name: 'token', type: 'address' },
+        { name: 'minTokensOut', type: 'uint256' },
+        { name: 'deadline', type: 'uint256' }
+      ],
+      outputs: [{ name: 'tokensOut', type: 'uint256' }]
+    },
+    {
+      name: 'sell',
+      type: 'function',
+      stateMutability: 'nonpayable',
+      inputs: [
+        { name: 'token', type: 'address' },
+        { name: 'tokenAmount', type: 'uint256' },
+        { name: 'minEthOut', type: 'uint256' }
+      ],
+      outputs: [{ name: 'ethOut', type: 'uint256' }]
+    }
+  ]
+} as const;
+
 interface TokenTradingProps {
   tokenAddress: Address;
   tokenName: string;
