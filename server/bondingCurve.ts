@@ -327,12 +327,39 @@ export async function getBondingCurveInfo(creatorCoinId: string): Promise<{
     });
 
     // Check if bonding curve is enabled and has an exchange address
-    const bondingCurveAddress = coin.bondingCurveExchangeAddress || coin.bondingCurveAddress;
-    
+    let bondingCurveAddress = coin.bondingCurveExchangeAddress || coin.bondingCurveAddress;
+
     if (!bondingCurveAddress || !coin.hasBondingCurve) {
-      console.log(`⚠️ No bonding curve deployed for coin: ${coin.coinName}`);
-      
-      // Return default values instead of error for better UX
+      // Auto-deploy bonding curve for creator coins without one
+      console.log(`🚀 Auto-deploying bonding curve for ${coin.coinName}`);
+
+      if (coin.contractAddress && coin.creatorAddress) {
+        const deployResult = await bondingCurveService.deployBondingCurve(
+          coin.contractAddress,
+          coin.creatorAddress,
+          coin.id
+        );
+
+        if (deployResult.success) {
+          console.log(`✅ Auto-deployed bonding curve at ${deployResult.curveAddress}`);
+          // Update the bonding curve address for this session
+          bondingCurveAddress = deployResult.curveAddress!;
+          return {
+            enabled: true,
+            curveAddress: deployResult.curveAddress,
+            info: {
+              currentPrice: "0.0001", // Initial price
+              supply: "0", // No supply yet
+              reserve: "0", // No reserve yet
+              marketCap: "0" // No market cap yet
+            }
+          };
+        } else {
+          console.error(`❌ Auto-deployment failed: ${deployResult.error}`);
+        }
+      }
+
+      // Return reasonable defaults for better UX
       return {
         enabled: false,
         info: {
@@ -345,31 +372,12 @@ export async function getBondingCurveInfo(creatorCoinId: string): Promise<{
       };
     }
 
-    // Try to deploy bonding curve if it doesn't exist
-    if (!coin.hasBondingCurve && coin.contractAddress && coin.creatorAddress) {
-      console.log(`🚀 Attempting to deploy bonding curve for ${coin.coinName}`);
-      
-      const deployResult = await bondingCurveService.deployBondingCurve(
-        coin.contractAddress,
-        coin.creatorAddress,
-        coin.id
-      );
-
-      if (deployResult.success) {
-        console.log(`✅ Bonding curve deployed at ${deployResult.curveAddress}`);
-        // Update the bonding curve address for this session
-        bondingCurveAddress = deployResult.curveAddress!;
-      } else {
-        console.error(`❌ Bonding curve deployment failed: ${deployResult.error}`);
-      }
-    }
-
     // Fetch bonding curve details from the contract
     const bondingCurveInfo = await bondingCurveService.getBondingCurveInfo(bondingCurveAddress);
 
     if (!bondingCurveInfo) {
       console.error(`💥 Failed to fetch bonding curve info for address: ${bondingCurveAddress}`);
-      
+
       // Return reasonable defaults for better UX
       return {
         enabled: true,
@@ -403,7 +411,7 @@ export async function getBondingCurveInfo(creatorCoinId: string): Promise<{
     };
   } catch (error) {
     console.error(`💥 Error in getBondingCurveInfo for coin ${creatorCoinId}:`, error);
-    
+
     // Return safe defaults on error
     return {
       enabled: false,

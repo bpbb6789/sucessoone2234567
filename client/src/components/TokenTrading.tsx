@@ -53,12 +53,12 @@ interface TokenTradingProps {
   holders?: number;
 }
 
-export function TokenTrading({ 
-  tokenAddress, 
-  tokenName, 
+export function TokenTrading({
+  tokenAddress,
+  tokenName,
   tokenSymbol,
   currentPrice = "0",
-  supply = "0", 
+  supply = "0",
   marketCap = "0",
   holders = 0
 }: TokenTradingProps) {
@@ -279,7 +279,7 @@ export function TokenTrading({
                 </div>
               )}
 
-              <Button 
+              <Button
                 onClick={handleBuy}
                 disabled={(isLoading || isWritePending || isTxLoading) || !buyAmount || !isConnected}
                 className="w-full bg-green-600 hover:bg-green-700"
@@ -319,7 +319,7 @@ export function TokenTrading({
                 </div>
               )}
 
-              <Button 
+              <Button
                 onClick={handleSell}
                 disabled={(isLoading || isWritePending || isTxLoading) || !sellAmount || !isConnected || (userBalance !== undefined && BigInt(sellAmount) > userBalance)}
                 className="w-full bg-red-600 hover:bg-red-700"

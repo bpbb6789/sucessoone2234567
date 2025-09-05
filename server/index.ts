@@ -40,6 +40,8 @@ app.use((req, res, next) => {
   next();
 });
 
+// Zora SDK removed - using bonding curve system exclusively
+
 (async () => {
   // Test database connection
   const { testDatabaseConnection } = await import("./db.js");
@@ -51,7 +53,7 @@ app.use((req, res, next) => {
 
   // Initialize Telegram service
   initializeTelegramService();
-  
+
   // Initialize Telegram leaderboard scheduler
   const { initializeTelegramLeaderboard } = await import("./services/telegramLeaderboard.js");
   initializeTelegramLeaderboard();

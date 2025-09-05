@@ -37,6 +37,7 @@ import { adminAuth } from "./middleware/adminAuth"; // Assuming adminAuth middle
 import { v4 as uuidv4 } from 'uuid'; // Import uuid for trade IDs
 // import * as admin from './admin'; // Import admin module
 import { registerAdvancedTradingRoutes } from './routes/advancedTrading';
+import { ethers } from 'ethers';
 
 
 const prisma = new PrismaClient();
@@ -873,29 +874,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get all tokens from storage (database)
       const dbTokens = await storage.getAllTokens();
-      
+
       // Also check for tokens that might be in PumpFun contract but not in database
       // Look at creator coins that might have been created with PumpFun
       const allCreatorCoins = await db.select().from(creatorCoins).where(sql`coin_address IS NOT NULL`);
-      
+
       const pumpFunTokens = [];
-      
+
       // Scan TokenFactory contract for tokens created through proper system
       try {
         const { getTokenFactoryTokens, getBondingCurveData } = await import('./pumpfun');
         const factoryTokens = await getTokenFactoryTokens();
-        
+
         console.log(`🔍 Found ${factoryTokens.length} tokens in TokenFactory contract`);
-        
+
         for (const token of factoryTokens) {
           try {
             // Get bonding curve data for pricing
             const bondingCurveData = await getBondingCurveData(token.address);
-            
+
             let price = 0;
             let marketCap = 0;
             let volume24h = 0;
-            
+
             if (bondingCurveData && bondingCurveData.tokenMint !== '0x0000000000000000000000000000000000000000') {
               // Calculate price from bonding curve
               price = Number(bondingCurveData.virtualEthReserves) / Number(bondingCurveData.virtualTokenReserves);
@@ -903,7 +904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               marketCap = price * totalSupply;
               volume24h = Number(bondingCurveData.realEthReserves) / 1e18;
             }
-            
+
             pumpFunTokens.push({
               id: `factory-${token.index}`,
               address: token.address,
@@ -920,7 +921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               imageUri: undefined,
               isTokenFactory: true
             });
-            
+
             console.log(`✅ Added TokenFactory token: ${token.name} (${token.symbol}) at ${token.address}`);
           } catch (error) {
             console.log(`❌ Error processing TokenFactory token ${token.address}:`, error.message);
@@ -929,9 +930,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error('❌ Error scanning TokenFactory:', error);
       }
-      
+
       console.log(`📊 Found ${dbTokens.length} database tokens and ${pumpFunTokens.length} PumpFun tokens`);
-      
+
       // Combine database tokens with discovered PumpFun tokens
       const allTokens = [...dbTokens, ...pumpFunTokens];
       res.json(allTokens);
@@ -2081,21 +2082,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/doppler/tokens/:address", async (req, res) => {
     try {
       const { address } = req.params;
-      
+
       // Check if address is a content coin ID or token address
       let contentCoin;
-      
+
       // Try to find content coin by ID first (UUID format)
       try {
         const coins = await db.select().from(creatorCoins);
-        contentCoin = coins.find(coin => 
-          coin.id === address || 
+        contentCoin = coins.find(coin =>
+          coin.id === address ||
           coin.coinAddress === address
         );
       } catch (error) {
         console.warn('Failed to fetch creator coins:', error);
       }
-      
+
       if (!contentCoin) {
         // For demo purposes, return mock auction data even if coin not found
         const mockTokenInfo = {
@@ -2106,7 +2107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isActive: true, // Active auction for demo
           timeRemaining: 3600, // 1 hour remaining
           totalSupply: "1000000",
-          tokensForSale: "500000", 
+          tokensForSale: "500000",
           tokensSold: "25",
           auctionAddress: address
         };
@@ -2122,7 +2123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true, // Mock active auction
         timeRemaining: 7200, // 2 hours remaining
         totalSupply: "1000000",
-        tokensForSale: "500000", 
+        tokensForSale: "500000",
         tokensSold: "15",
         auctionAddress: contentCoin.coinAddress || address
       };
@@ -2138,11 +2139,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/doppler/quote", async (req, res) => {
     try {
       const { tokenAddress, auctionAddress, ethAmount } = req.body;
-      
+
       // Mock quote calculation - replace with actual Doppler integration
       const ethValue = parseFloat(ethAmount);
       const tokensEstimated = (ethValue * 10000).toString(); // Mock calculation
-      
+
       res.json({
         tokens: tokensEstimated,
         ethAmount,
@@ -2158,10 +2159,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/doppler/buy", async (req, res) => {
     try {
       const { auctionAddress, ethAmount } = req.body;
-      
+
       // Mock auction buy - replace with actual Doppler integration
       const tokensReceived = (parseFloat(ethAmount) * 10000).toString();
-      
+
       res.json({
         success: true,
         transactionHash: "0x" + Math.random().toString(16).slice(2, 66),
@@ -2169,7 +2170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Failed to buy tokens:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         success: false,
         error: error.message || "Trade failed"
       });
@@ -2475,7 +2476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Allow redeployment of failed coins
       if (coinData.status !== 'pending' && coinData.status !== 'failed') {
         console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending or failed`);
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: `Coin cannot be deployed (current status: ${coinData.status}). Only pending or failed coins can be deployed.`,
           currentStatus: coinData.status,
           allowedStatuses: ['pending', 'failed']
@@ -2485,7 +2486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if metadata URI exists before starting deployment
       if (!coinData.metadataUri || coinData.metadataUri.trim() === '') {
         console.error(`❌ No metadata URI found for coin ${coinId}`);
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "Cannot deploy coin without valid metadata URI. Please re-upload the content.",
           details: "Metadata creation failed during upload process"
         });
@@ -2604,7 +2605,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             if (bondingCurveResult.success) {
               console.log(`✅ Bonding curve deployed successfully at: ${bondingCurveResult.curveAddress}`);
-              
+
               // Update coin with bonding curve info
               await db.update(creatorCoins)
                 .set({
@@ -2669,7 +2670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/creator-coins/:id/deploy-bonding-curve", async (req, res) => {
     try {
       const creatorCoinId = req.params.id;
-      
+
       console.log(`🚀 Deploying bonding curve for coin: ${creatorCoinId}`);
 
       // Get creator coin data
@@ -2690,9 +2691,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (coinData.hasBondingCurve) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Bonding curve already deployed",
-          curveAddress: coinData.bondingCurveExchangeAddress 
+          curveAddress: coinData.bondingCurveExchangeAddress
         });
       }
 
@@ -2726,7 +2727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/creator-coins/:id/bonding-curve-info", async (req, res) => {
     try {
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
-      
+
       if (!coin.length) {
         return res.status(404).json({ message: "Creator coin not found" });
       }
@@ -2741,7 +2742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const curveInfo = await bondingCurveService.getBondingCurveInfo(coinData.bondingCurveExchangeAddress);
-      
+
       if (!curveInfo) {
         return res.status(500).json({ message: "Failed to fetch bonding curve information" });
       }
@@ -2771,8 +2772,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { ethAmount } = req.body;
       const creatorCoinId = req.params.id;
 
-      if (!ethAmount) {
-        return res.status(400).json({ error: "ETH amount is required" });
+      if (!ethAmount || isNaN(parseFloat(ethAmount))) {
+        return res.status(400).json({ error: "Valid ethAmount required" });
       }
 
       console.log(`🎯 Getting buy quote for ${ethAmount} ETH on coin ${creatorCoinId}`);
@@ -2797,7 +2798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             coinData.bondingCurveExchangeAddress,
             ethAmount
           );
-          
+
           if (tokensOut) {
             console.log(`✅ Bonding curve quote: ${tokensOut} tokens for ${ethAmount} ETH`);
             return res.json({
@@ -2829,40 +2830,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Buy quote error:", error);
       res.status(500).json({ error: "Failed to get buy quote" });
     }
-  }); = req.body;
-
-      if (!ethAmount || isNaN(parseFloat(ethAmount))) {
-        return res.status(400).json({ message: "Valid ethAmount required" });
-      }
-
-      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
-      
-      if (!coin.length) {
-        return res.status(404).json({ message: "Creator coin not found" });
-      }
-
-      const coinData = coin[0];
-
-      if (!coinData.hasBondingCurve || !coinData.bondingCurveExchangeAddress) {
-        return res.status(400).json({ message: "Bonding curve not available for this coin" });
-      }
-
-      const tokensOut = await bondingCurveService.calculateBuyTokens(coinData.bondingCurveExchangeAddress, ethAmount);
-      
-      if (tokensOut === null) {
-        return res.status(500).json({ message: "Failed to calculate buy quote" });
-      }
-
-      res.json({
-        ethAmount,
-        tokensOut: tokensOut.toString(),
-        curveAddress: coinData.bondingCurveExchangeAddress
-      });
-
-    } catch (error) {
-      console.error("Bonding curve buy quote error:", error);
-      res.status(500).json({ message: "Failed to calculate buy quote" });
-    }
   });
 
   app.post("/api/creator-coins/:id/bonding-curve-sell-quote", async (req, res) => {
@@ -2874,7 +2841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
-      
+
       if (!coin.length) {
         return res.status(404).json({ message: "Creator coin not found" });
       }
@@ -2886,7 +2853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const ethOut = await bondingCurveService.calculateSellTokens(coinData.bondingCurveExchangeAddress, tokenAmount);
-      
+
       if (ethOut === null) {
         return res.status(500).json({ message: "Failed to calculate sell quote" });
       }
@@ -2941,7 +2908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (priceError) {
         console.log(`❌ No trading data available for ${coinData.coinAddress}:`, priceError);
-        
+
         return res.status(404).json({
           message: "No trading data available",
           error: "Token not actively traded - no price data found",
@@ -3420,13 +3387,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Detect trading system based on token creation method and route accordingly
       console.log(`🔍 Detecting trading system for token: ${coinAddress}`);
-      
+
       // First try PumpFun system (for tokens created via PumpFun)
       const { getBondingCurveData, buyTokensPumpFun } = await import('./pumpfun');
       const pumpFunData = await getBondingCurveData(coinAddress);
-      
+
       let buyResult;
-      
+
       if (pumpFunData && pumpFunData.tokenMint !== '0x0000000000000000000000000000000000000000') {
         // Token exists in PumpFun system - use PumpFun trading
         console.log(`✅ Using PumpFun trading system for ${coinAddress}`);
@@ -3527,13 +3494,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Detect trading system and route sell accordingly
       console.log(`🔍 Detecting trading system for sell of token: ${coinAddress}`);
-      
+
       // First try PumpFun system (for tokens created via PumpFun)
       const { getBondingCurveData, sellTokensPumpFun } = await import('./pumpfun');
       const pumpFunData = await getBondingCurveData(coinAddress);
-      
+
       let sellResult;
-      
+
       if (pumpFunData && pumpFunData.tokenMint !== '0x0000000000000000000000000000000000000000') {
         // Token exists in PumpFun system - use PumpFun trading
         console.log(`✅ Using PumpFun sell system for ${coinAddress}`);
@@ -4699,7 +4666,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (priceError) {
         console.log(`❌ No trading data available for ${coinData.coinAddress}:`, priceError);
-        
+
         return res.status(404).json({
           message: "No trading data available",
           error: "Token not actively traded - no price data found",

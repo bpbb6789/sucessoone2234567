@@ -122,7 +122,7 @@ export async function createZoraMetadata(params: {
         : undefined
     };
 
-    console.log('📤 Uploading metadata to IPFS:', JSON.stringify(metadata, null, 2));
+    console.log('Uploading metadata to IPFS:', JSON.stringify(metadata, null, 2));
 
     // Upload metadata to IPFS and return the URI
     const metadataCid = await uploadJSONToIPFS(metadata);
@@ -675,14 +675,14 @@ async function getHoldersFromBasescan(contractAddress: `0x${string}`) {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
+
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
         'User-Agent': 'PumpIt-DApp/1.0'
       }
     });
-    
+
     clearTimeout(timeoutId);
 
     if (!response.ok) {
