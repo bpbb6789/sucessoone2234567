@@ -115,6 +115,25 @@ function formatTimeAgo(date: Date): string {
   return `${diffInDays}d ago`;
 }
 
+// Utility function to format token balance
+function formatTokenBalance(balance: bigint | string | null): string {
+  if (!balance || balance === 0n) return "0";
+  
+  if (typeof balance === "bigint") {
+    const formatted = formatUnits(balance, 18);
+    const num = parseFloat(formatted);
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(2) + "M";
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(2) + "K";
+    } else {
+      return num.toLocaleString(undefined, { maximumFractionDigits: 6 });
+    }
+  }
+  
+  return balance.toString();
+}
+
 export default function ContentCoinDetail() {
   const params = useParams();
   const tokenAddress = params.address;
@@ -339,6 +358,7 @@ export default function ContentCoinDetail() {
     const generatePricePoints = (period: string) => {
       const basePrice = parseFloat(defaultPrice);
       const points: string[] = [];
+      const numPoints = 20;
       const width = 300;
       const height = 100;
       const startX = 50;
