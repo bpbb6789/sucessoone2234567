@@ -2724,13 +2724,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Use bonding curve system for real price data
         const bondingCurveInfo = await bondingCurveService.getBondingCurveInfo(coinData.id);
-        const priceData = {
-          price: bondingCurveInfo.info?.currentPrice || '0.00001',
-          marketCap: bondingCurveInfo.info?.marketCap || '10000',
-          volume24h: '0',
-          bondingProgress: parseInt(bondingCurveInfo.info?.supply || '0') / 1000000
-        };
-        const bondingProgress = priceData.bondingProgress;
+        
+        // Handle null bonding curve info gracefully
+        let priceData;
+        if (bondingCurveInfo && bondingCurveInfo.info) {
+          priceData = {
+            price: bondingCurveInfo.info.currentPrice || '0.00001',
+            marketCap: bondingCurveInfo.info.marketCap || '10000',
+            volume24h: '0',
+            holders: 0,
+            bondingProgress: parseInt(bondingCurveInfo.info.supply || '0') / 1000000
+          };
+        } else {
+          // Fallback to default values when bonding curve info is not available
+          priceData = {
+            price: coinData.currentPrice || '0.00001',
+            marketCap: coinData.marketCap || '10000',
+            volume24h: coinData.volume24h || '0',
+            holders: coinData.holders || 0,
+            bondingProgress: parseFloat(coinData.bondingCurveProgress || '0')
+          };
+        }
 
         // Update coin with latest data
         await db.update(creatorCoins)
@@ -2739,23 +2753,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
             marketCap: priceData.marketCap,
             volume24h: priceData.volume24h,
             holders: priceData.holders,
-            bondingCurveProgress: bondingProgress.toString(),
+            bondingCurveProgress: priceData.bondingProgress.toString(),
             updatedAt: new Date()
           })
           .where(eq(creatorCoins.id, req.params.id));
 
         res.json({
-          ...priceData,
-          bondingCurveProgress: bondingProgress
+          price: priceData.price,
+          marketCap: priceData.marketCap,
+          volume24h: priceData.volume24h,
+          holders: priceData.holders,
+          bondingCurveProgress: priceData.bondingProgress
         });
       } catch (priceError) {
         console.log(`❌ No trading data available for ${coinData.coinAddress}:`, priceError);
 
-        return res.status(404).json({
-          message: "No trading data available",
-          error: "Token not actively traded - no price data found",
-          details: priceError instanceof Error ? priceError.message : "Unknown error"
-        });
+        // Return fallback price data instead of 404
+        const fallbackPriceData = {
+          price: coinData.currentPrice || '0.00001',
+          marketCap: coinData.marketCap || '10000',
+          volume24h: coinData.volume24h || '0',
+          holders: coinData.holders || 0,
+          bondingCurveProgress: parseFloat(coinData.bondingCurveProgress || '0')
+        };
+
+        res.json(fallbackPriceData);
       }
     } catch (error) {
       res.status(500).json(handleDatabaseError(error, "getCreatorCoinPrice"));
@@ -4471,54 +4493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get creator coin price data
-  app.get('/api/creator-coins/:id/price', async (req, res) => {
-    try {
-      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
-
-      if (!coin.length) {
-        return res.status(404).json({ message: "Creator coin not found" });
-      }
-
-      const coinData = coin[0];
-
-      if (!coinData.coinAddress || coinData.coinAddress === 'Deploying...' || coinData.coinAddress.length < 10) {
-        return res.status(400).json({ message: "Coin not yet deployed" });
-      }
-
-      try {
-        const priceData = await getCoinPrice(coinData.coinAddress);
-        const bondingProgress = await getBondingCurveProgress(coinData.coinAddress);
-
-        // Update coin with latest data
-        await db.update(creatorCoins)
-          .set({
-            currentPrice: priceData.price,
-            marketCap: priceData.marketCap,
-            volume24h: priceData.volume24h,
-            holders: priceData.holders,
-            bondingCurveProgress: bondingProgress.toString(),
-            updatedAt: new Date()
-          })
-          .where(eq(creatorCoins.id, req.params.id));
-
-        res.json({
-          ...priceData,
-          bondingCurveProgress: bondingProgress
-        });
-      } catch (priceError) {
-        console.log(`❌ No trading data available for ${coinData.coinAddress}:`, priceError);
-
-        return res.status(404).json({
-          message: "No trading data available",
-          error: "Token not actively traded - no price data found",
-          details: priceError instanceof Error ? priceError.message : "Unknown error"
-        });
-      }
-    } catch (error) {
-      res.status(500).json(handleDatabaseError(error, "getCreatorCoinPrice"));
-    }
-  });
+  
 
 
   const httpServer = createServer(app);
