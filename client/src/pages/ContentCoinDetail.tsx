@@ -212,7 +212,9 @@ export default function ContentCoinDetail() {
         `/api/creator-coins/${tokenAddress}/bonding-curve-info`,
       );
       if (!response.ok) throw new Error("Failed to fetch bonding curve info");
-      return response.json();
+      const data = await response.json();
+      console.log('🔍 Bonding curve data received:', data);
+      return data;
     },
     enabled: !!tokenAddress,
     refetchInterval: 5000, // Refresh every 5 seconds for live data
@@ -230,14 +232,19 @@ export default function ContentCoinDetail() {
   // Calculate trading statistics from bonding curve data
   const tradingStats = useMemo(() => {
     if (!bondingCurveData || !bondingCurveData.enabled) {
+      // Fallback to price data from API if bonding curve not available
+      const fallbackPrice = priceData?.price || tokenData?.currentPrice || "0";
+      const fallbackMarketCap = priceData?.marketCap || tokenData?.marketCap || "0";
+      const fallbackVolume = priceData?.volume24h || "0";
+      
       return {
-        currentPrice: "0",
-        marketCap: "0",
-        volume24h: "0",
+        currentPrice: fallbackPrice,
+        marketCap: fallbackMarketCap,
+        volume24h: fallbackVolume,
         creatorEarnings: "0",
         platformEarnings: "0",
-        holders: 0,
-        supply: "0",
+        holders: processedHolders.length,
+        supply: tokenData?.totalSupply || "0",
         reserve: "0"
       };
     }
@@ -1023,8 +1030,8 @@ export default function ContentCoinDetail() {
 
                     {/* Balance Display */}
                     <div className="text-center text-sm text-muted-foreground">
-                      Balance{" "}
-                      {tokenBalance ? formatUnits(BigInt(tokenBalance), 18) : "0"} ETH
+                      Token Balance:{" "}
+                      {tokenBalance ? formatUnits(BigInt(tokenBalance), 18) : "0"} {tokenData?.coinSymbol || "TOKENS"}
                     </div>
 
                     {/* Amount Input */}

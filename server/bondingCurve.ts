@@ -287,6 +287,82 @@ class BondingCurveService {
 // Export singleton instance
 export const bondingCurveService = new BondingCurveService();
 
+// Get bonding curve information for a creator coin
+export async function getBondingCurveInfo(creatorCoinId: string): Promise<{
+  enabled: boolean;
+  curveAddress?: string;
+  info?: {
+    currentPrice: string;
+    supply: string;
+    reserve: string;
+    marketCap: string;
+  };
+  error?: string;
+}> {
+  try {
+    console.log(`📊 Getting bonding curve info for creator coin: ${creatorCoinId}`);
+
+    // Get creator coin data from database
+    const creatorCoin = await db
+      .select()
+      .from(creatorCoins)
+      .where(eq(creatorCoins.id, creatorCoinId))
+      .limit(1);
+
+    if (creatorCoin.length === 0) {
+      console.log(`❌ Creator coin not found: ${creatorCoinId}`);
+      return {
+        enabled: false,
+        error: 'Creator coin not found'
+      };
+    }
+
+    const coin = creatorCoin[0];
+    console.log(`📋 Found creator coin:`, {
+      name: coin.coinName,
+      symbol: coin.coinSymbol,
+      contractAddress: coin.contractAddress,
+      bondingCurveAddress: coin.bondingCurveAddress
+    });
+
+    if (!coin.bondingCurveAddress) {
+      console.log(`⚠️ No bonding curve deployed for coin: ${coin.coinName}`);
+      return {
+        enabled: false,
+        error: 'No bonding curve deployed for this coin'
+      };
+    }
+
+    // Fetch bonding curve details from the contract
+    const bondingCurveInfo = await bondingCurveService.getBondingCurveInfo(coin.bondingCurveAddress);
+
+    if (!bondingCurveInfo) {
+      console.error(`💥 Failed to fetch bonding curve info for address: ${coin.bondingCurveAddress}`);
+      return {
+        enabled: true,
+        curveAddress: coin.bondingCurveAddress,
+        error: 'Failed to fetch bonding curve details from contract'
+      };
+    }
+
+    // Format the bonding curve information
+    const formattedInfo = formatBondingCurveInfo(bondingCurveInfo);
+
+    return {
+      enabled: true,
+      curveAddress: coin.bondingCurveAddress,
+      info: formattedInfo,
+      error: undefined
+    };
+  } catch (error) {
+    console.error(`💥 Error in getBondingCurveInfo for coin ${creatorCoinId}:`, error);
+    return {
+      enabled: false,
+      error: error instanceof Error ? error.message : 'An unknown error occurred'
+    };
+  }
+}
+
 // Helper function to format bonding curve info for API responses
 export function formatBondingCurveInfo(info: BondingCurveInfo) {
   return {
