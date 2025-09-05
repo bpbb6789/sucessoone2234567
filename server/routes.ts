@@ -3066,14 +3066,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
       }
 
-      // Use PumpFun bonding curve for efficient trading (much lower gas costs)
-      const { buyTokensPumpFun } = await import('./pumpfun');
-      const buyResult = await buyTokensPumpFun({
-        coinAddress,
-        buyerAddress,
-        ethAmount,
-        minTokensOut
-      });
+      // Detect trading system based on token creation method and route accordingly
+      console.log(`🔍 Detecting trading system for token: ${coinAddress}`);
+      
+      // First try PumpFun system (for tokens created via PumpFun)
+      const { getBondingCurveData, buyTokensPumpFun } = await import('./pumpfun');
+      const pumpFunData = await getBondingCurveData(coinAddress);
+      
+      let buyResult;
+      
+      if (pumpFunData && pumpFunData.tokenMint !== '0x0000000000000000000000000000000000000000') {
+        // Token exists in PumpFun system - use PumpFun trading
+        console.log(`✅ Using PumpFun trading system for ${coinAddress}`);
+        buyResult = await buyTokensPumpFun({
+          coinAddress,
+          buyerAddress,
+          ethAmount,
+          minTokensOut
+        });
+      } else {
+        // Token was created via Zora SDK - use Zora trading system
+        console.log(`✅ Using Zora SDK trading system for ${coinAddress}`);
+        const { buyCoin } = await import('./zora');
+        buyResult = await buyCoin({
+          coinAddress,
+          buyerAddress,
+          ethAmount,
+          minTokensOut
+        });
+      }
 
       if (!buyResult.success) {
         return res.status(400).json({ error: buyResult.error });
@@ -3152,16 +3173,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
       }
 
-      // Import PumpFun trading functions for efficient bonding curve trading
-      const { sellTokensPumpFun } = await import('./pumpfun');
-
-      // Execute sell transaction using PumpFun bonding curve
-      const sellResult = await sellTokensPumpFun({
-        coinAddress,
-        sellerAddress: userAddress,
-        tokenAmount,
-        minEthOut
-      });
+      // Detect trading system and route sell accordingly
+      console.log(`🔍 Detecting trading system for sell of token: ${coinAddress}`);
+      
+      // First try PumpFun system (for tokens created via PumpFun)
+      const { getBondingCurveData, sellTokensPumpFun } = await import('./pumpfun');
+      const pumpFunData = await getBondingCurveData(coinAddress);
+      
+      let sellResult;
+      
+      if (pumpFunData && pumpFunData.tokenMint !== '0x0000000000000000000000000000000000000000') {
+        // Token exists in PumpFun system - use PumpFun trading
+        console.log(`✅ Using PumpFun sell system for ${coinAddress}`);
+        sellResult = await sellTokensPumpFun({
+          coinAddress,
+          sellerAddress: userAddress,
+          tokenAmount,
+          minEthOut
+        });
+      } else {
+        // Token was created via Zora SDK - use Zora trading system
+        console.log(`✅ Using Zora SDK sell system for ${coinAddress}`);
+        const { sellCoin } = await import('./zora');
+        sellResult = await sellCoin({
+          coinAddress,
+          sellerAddress: userAddress,
+          tokenAmount,
+          minEthOut
+        });
+      }
 
       if (!sellResult.success) {
         return res.status(400).json({ error: sellResult.error });
