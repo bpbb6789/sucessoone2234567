@@ -3150,11 +3150,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
       }
 
-      // Import trading functions from zora.ts
-      const { sellCoin } = await import('./zora');
+      // Import PumpFun trading functions for efficient bonding curve trading
+      const { sellTokensPumpFun } = await import('./pumpfun');
 
-      // Execute sell transaction
-      const sellResult = await sellCoin({
+      // Execute sell transaction using PumpFun bonding curve
+      const sellResult = await sellTokensPumpFun({
         coinAddress,
         sellerAddress: userAddress,
         tokenAmount,
