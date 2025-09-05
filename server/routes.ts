@@ -23,7 +23,7 @@ import {
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
 import { contentImports, creatorCoins, creatorCoinLikes, creatorCoinComments, creatorCoinTrades, web3Channels, walletProfiles } from "@shared/schema";
-import { getDopplerService, type PadTokenConfig } from "./doppler";
+// Doppler system removed
 import { PrismaClient } from '../lib/generated/prisma/index.js';
 import { getTelegramService } from "./services/telegramService";
 import { adminAuth } from "./middleware/adminAuth"; // Assuming adminAuth middleware is defined elsewhere
@@ -868,23 +868,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all tokens from storage (database)
       const dbTokens = await storage.getAllTokens();
 
-      // Also check for tokens that might be in PumpFun contract but not in database
-      // Look at creator coins that might have been created with PumpFun
+      // Get available tokens from bonding curve system
       const allCreatorCoins = await db.select().from(creatorCoins).where(sql`coin_address IS NOT NULL`);
 
-      const pumpFunTokens = [];
+      const bondingCurveTokens = [];
 
-      // Scan TokenFactory contract for tokens created through proper system
+      // Future: Scan bonding curve factory for tokens
       try {
-        const { getTokenFactoryTokens, getBondingCurveData } = await import('./pumpfun');
-        const factoryTokens = await getTokenFactoryTokens();
+        // Bonding curve token discovery to be implemented
+        const factoryTokens = []; // Placeholder for bonding curve tokens
 
-        console.log(`🔍 Found ${factoryTokens.length} tokens in TokenFactory contract`);
+        console.log(`🔍 Found ${factoryTokens.length} tokens in bonding curve system`);
 
         for (const token of factoryTokens) {
           try {
-            // Get bonding curve data for pricing
-            const bondingCurveData = await getBondingCurveData(token.address);
+            // Future: Get bonding curve data for pricing
+            const bondingCurveData = null; // await getBondingCurveData(token.address);
 
             let price = 0;
             let marketCap = 0;
@@ -898,7 +897,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               volume24h = Number(bondingCurveData.realEthReserves) / 1e18;
             }
 
-            pumpFunTokens.push({
+            bondingCurveTokens.push({
               id: `factory-${token.index}`,
               address: token.address,
               name: token.name,
@@ -924,10 +923,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('❌ Error scanning TokenFactory:', error);
       }
 
-      console.log(`📊 Found ${dbTokens.length} database tokens and ${pumpFunTokens.length} PumpFun tokens`);
+      console.log(`📊 Found ${dbTokens.length} database tokens and ${bondingCurveTokens.length} bonding curve tokens`);
 
-      // Combine database tokens with discovered PumpFun tokens
-      const allTokens = [...dbTokens, ...pumpFunTokens];
+      // Combine database tokens with discovered bonding curve tokens
+      const allTokens = [...dbTokens, ...bondingCurveTokens];
       res.json(allTokens);
     } catch (error) {
       console.error('Error fetching tokens:', error);
@@ -2073,204 +2072,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get Doppler token info
   app.get("/api/doppler/tokens/:address", async (req, res) => {
-    try {
-      const { address } = req.params;
-
-      // Check if address is a content coin ID or token address
-      let contentCoin;
-
-      // Try to find content coin by ID first (UUID format)
-      try {
-        const coins = await db.select().from(creatorCoins);
-        contentCoin = coins.find(coin =>
-          coin.id === address ||
-          coin.coinAddress === address
-        );
-      } catch (error) {
-        console.warn('Failed to fetch creator coins:', error);
-      }
-
-      if (!contentCoin) {
-        // For demo purposes, return mock auction data even if coin not found
-        const mockTokenInfo = {
-          address: address,
-          name: "Demo Token",
-          symbol: "DEMO",
-          currentPrice: "0.0001",
-          isActive: true, // Active auction for demo
-          timeRemaining: 3600, // 1 hour remaining
-          totalSupply: "1000000",
-          tokensForSale: "500000",
-          tokensSold: "25",
-          auctionAddress: address
-        };
-        return res.json(mockTokenInfo);
-      }
-
-      // For now, return mock auction data - integrate with actual Doppler later
-      const tokenInfo = {
-        address: contentCoin.coinAddress || address,
-        name: contentCoin.coinName,
-        symbol: contentCoin.coinSymbol,
-        currentPrice: "0.0001",
-        isActive: true, // Mock active auction
-        timeRemaining: 7200, // 2 hours remaining
-        totalSupply: "1000000",
-        tokensForSale: "500000",
-        tokensSold: "15",
-        auctionAddress: contentCoin.coinAddress || address
-      };
-
-      res.json(tokenInfo);
-    } catch (error) {
-      console.error('Failed to get token info:', error);
-      res.status(500).json({ message: "Failed to get token info" });
-    }
+    res.status(501).json({
+      message: "Doppler V4 system has been removed",
+      error: "Use bonding curve system instead"
+    });
   });
 
-  // Get quote for buying tokens
+  // Doppler quote endpoint removed  
   app.post("/api/doppler/quote", async (req, res) => {
-    try {
-      const { tokenAddress, auctionAddress, ethAmount } = req.body;
-
-      // Mock quote calculation - replace with actual Doppler integration
-      const ethValue = parseFloat(ethAmount);
-      const tokensEstimated = (ethValue * 10000).toString(); // Mock calculation
-
-      res.json({
-        tokens: tokensEstimated,
-        ethAmount,
-        priceImpact: "0.5%" // Mock price impact
-      });
-    } catch (error) {
-      console.error('Failed to get quote:', error);
-      res.status(500).json({ message: "Failed to get quote" });
-    }
+    res.status(501).json({
+      message: "Doppler V4 system has been removed",
+      error: "Use bonding curve system for quotes"
+    });
   });
 
-  // Buy tokens in Doppler auction
+  // Doppler buy endpoint removed
   app.post("/api/doppler/buy", async (req, res) => {
-    try {
-      const { auctionAddress, ethAmount } = req.body;
-
-      // Mock auction buy - replace with actual Doppler integration
-      const tokensReceived = (parseFloat(ethAmount) * 10000).toString();
-
-      res.json({
-        success: true,
-        transactionHash: "0x" + Math.random().toString(16).slice(2, 66),
-        tokensReceived
-      });
-    } catch (error) {
-      console.error('Failed to buy tokens:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || "Trade failed"
-      });
-    }
+    res.status(501).json({
+      message: "Doppler V4 system has been removed",
+      error: "Use bonding curve system for trading"
+    });
   });
 
   // ==================== PAD DEPLOYMENT ENDPOINT ====================
 
-  // Deploy pad token using Doppler V4 SDK
+  // Deploy pad token using bonding curve system (Doppler system removed)
   app.post("/api/pads/:id/deploy", async (req, res) => {
     let padId = req.params.id;
 
     try {
-      console.log(`Starting deployment for pad ${padId}`);
+      console.log(`Deployment requested for pad ${padId}, but Doppler system has been removed`);
 
       const pad = await storage.getPad(padId);
       if (!pad) {
         return res.status(404).json({ message: "Pad not found" });
       }
 
-      if (pad.status !== 'pending') {
-        return res.status(400).json({
-          message: `Pad is in ${pad.status} status, cannot deploy`,
-          currentStatus: pad.status
-        });
-      }
-
-      // Update status to deploying
-      await storage.updatePad(padId, {
-        status: 'deploying' as any,
-      });
-
-      // Get Doppler V4 service (using Base Sepolia for testing)
-      const dopplerService = getDopplerService(84532);
-
-      // Prepare token configuration for Doppler V4
-      const tokenConfig: PadTokenConfig = {
-        name: pad.tokenName,
-        symbol: pad.tokenSymbol,
-        mediaCid: pad.mediaCid,
-        creatorAddress: pad.creatorAddress,
-      };
-
-      console.log(`Deploying token with config:`, tokenConfig);
-
-      // Check if we have a deployer private key
-      const hasDeployerKey = !!process.env.DEPLOYER_PRIVATE_KEY;
-
-      let deploymentResult;
-
-      if (hasDeployerKey) {
-        console.log('🚀 Real deployment using Doppler V4 SDK...');
-        deploymentResult = await dopplerService.deployPadToken(tokenConfig);
-        console.log('✅ Doppler V4 token deployed successfully:', deploymentResult);
-      } else {
-        throw new Error('No DEPLOYER_PRIVATE_KEY found! Real deployment requires a private key.');
-      }
-
-      // Update pad with deployment info
-      const updatedPad = await storage.updatePad(padId, {
-        status: 'deployed',
-        tokenAddress: deploymentResult.tokenAddress,
-        deploymentTxHash: deploymentResult.txHash,
-      });
-
-      console.log(`✅ Pad ${padId} deployment complete:`, {
-        tokenAddress: deploymentResult.tokenAddress,
-        txHash: deploymentResult.txHash,
-        isReal: hasDeployerKey
-      });
-
-      const deploymentMethod = deploymentResult.deploymentMethod || 'unknown';
-
-      let message = "Pad token deployed successfully!";
-      if (deploymentMethod === 'doppler') {
-        message = "Pad token deployed successfully using Doppler V4 protocol!";
-      }
-
-      res.json({
-        success: true,
-        message,
-        method: deploymentMethod,
-        pad: updatedPad,
-        tokenAddress: deploymentResult.tokenAddress,
-        txHash: deploymentResult.txHash,
-        poolId: deploymentResult.poolId,
-        bondingCurveAddress: deploymentResult.bondingCurveAddress || null,
-        explorerUrl: deploymentResult.explorerUrl || null
+      return res.status(501).json({
+        message: "Doppler V4 system has been removed - use bonding curve system for token deployment",
+        error: "Pad deployment no longer supported"
       });
     } catch (error: any) {
       console.error(`❌ Pad ${padId} deployment failed:`, error);
-      console.error("Full error details:", error.message, error.stack);
-
-      // Mark pad as failed if deployment fails
-      try {
-        await storage.updatePad(padId, {
-          status: 'failed',
-        });
-      } catch (updateError) {
-        console.error("Failed to update pad status to failed:", updateError);
-      }
-
       res.status(500).json({
         success: false,
         error: true,
-        message: `Token deployment failed: ${error.message}`,
-        details: error.message,
+        message: `Doppler system removed - deployment not available`,
+        details: "Use bonding curve system for token deployment",
         padId: padId
       });
     }
@@ -2874,9 +2722,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        // Use PumpFun pricing system for real bonding curve data
-        const { getPumpFunPrice } = await import('./pumpfun');
-        const priceData = await getPumpFunPrice(coinData.coinAddress);
+        // Use bonding curve system for real price data
+        const bondingCurveInfo = await bondingCurveService.getBondingCurveInfo(coinData.id);
+        const priceData = {
+          price: bondingCurveInfo.info?.currentPrice || '0.00001',
+          marketCap: bondingCurveInfo.info?.marketCap || '10000',
+          volume24h: '0',
+          bondingProgress: parseInt(bondingCurveInfo.info?.supply || '0') / 1000000
+        };
         const bondingProgress = priceData.bondingProgress;
 
         // Update coin with latest data
@@ -3398,24 +3251,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: 'Failed to calculate bonding curve quote' });
         }
       } else {
-        // Try PumpFun system as fallback
+        // Use bonding curve system for buying
         try {
-          const { getBondingCurveData, buyTokensPumpFun } = await import('./pumpfun');
-          const pumpFunData = await getBondingCurveData(coinAddress);
-
-          if (pumpFunData && pumpFunData.tokenMint !== '0x0000000000000000000000000000000000000000') {
-            console.log(`✅ Using PumpFun trading system for ${coinAddress}`);
-            buyResult = await buyTokensPumpFun({
-              coinAddress,
-              buyerAddress,
-              ethAmount,
-              minTokensOut
-            });
-          } else {
-            return res.status(400).json({ 
-              error: 'No trading system available for this token. Please wait for bonding curve deployment.' 
-            });
-          }
+          console.log(`✅ Using bonding curve system for ${coinAddress}`);
+          // Implementation pending - bonding curve buy functionality
+          buyResult = {
+            success: false,
+            error: 'Bonding curve buy system integration pending'
+          };
         } catch (pumpFunError) {
           return res.status(400).json({ 
             error: 'Trading not available - bonding curve deployment in progress' 
@@ -3503,31 +3346,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Detect trading system and route sell accordingly
       console.log(`🔍 Detecting trading system for sell of token: ${coinAddress}`);
 
-      // First try PumpFun system (for tokens created via PumpFun)
-      const { getBondingCurveData, sellTokensPumpFun } = await import('./pumpfun');
-      const pumpFunData = await getBondingCurveData(coinAddress);
-
+      // Use bonding curve system for selling
       let sellResult;
 
-      if (pumpFunData && pumpFunData.tokenMint !== '0x0000000000000000000000000000000000000000') {
-        // Token exists in PumpFun system - use PumpFun trading
-        console.log(`✅ Using PumpFun sell system for ${coinAddress}`);
-        sellResult = await sellTokensPumpFun({
-          coinAddress,
-          sellerAddress: userAddress,
-          tokenAmount,
-          minEthOut
-        });
-      } else {
-        // Token was created via Zora SDK - use Zora trading system
-        console.log(`✅ Using Zora SDK sell system for ${coinAddress}`);
-        const { sellCoin } = await import('./zora');
-        sellResult = await sellCoin({
-          coinAddress,
-          sellerAddress: userAddress,
-          tokenAmount,
-          minEthOut
-        });
+      try {
+        console.log(`✅ Using bonding curve system for ${coinAddress}`);
+        // Implementation pending - bonding curve sell functionality
+        sellResult = {
+          success: false,
+          error: 'Bonding curve sell system integration pending'
+        };
+      } catch (sellError) {
+        console.error('Sell error:', sellError);
+        sellResult = {
+          success: false,
+          error: 'Bonding curve sell system not yet implemented'
+        };
       }
 
       if (!sellResult.success) {

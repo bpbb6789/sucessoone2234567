@@ -50,7 +50,7 @@ import ContentCoin from '@/pages/ContentCoin'
 import ContentCoinDetail from "./pages/ContentCoinDetail";
 import TokenDetail from '@/pages/TokenDetail'
 import TokenTrade from '@/pages/TokenTrade'
-import PumpTokens from '@/pages/PumpTokens'
+// PumpTokens page removed - import PumpTokens from '@/pages/PumpTokens'
 import NotFound from '@/pages/not-found'
 import Channels from "./pages/Channels";
 import Contents from "@/pages/Contents";
@@ -121,7 +121,7 @@ function AppContent() {
                 <Route path="/create-pad" component={CreatePad} />
                 <Route path="/create-content-coin" component={CreateContentCoin} />
                 <Route path="/token/:id" component={TokenDetail} />
-                <Route path="/pumptokens" component={PumpTokens} />
+                {/* PumpTokens route removed - <Route path="/pumptokens" component={PumpTokens} /> */}
                 <Route path="/content-coin/trade/:network/:address" component={TokenTrade} />
                 <Route path="/channel/:slug/manager" component={ChannelManager} />
                 <Route path="/dashboard/import" component={ContentImport} />
