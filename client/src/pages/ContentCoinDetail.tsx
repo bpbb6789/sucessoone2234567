@@ -423,14 +423,6 @@ export default function ContentCoinDetail() {
 
       // Refetch data
       window.location.reload();
-
-      // Reset form
-      setBuyAmount("");
-      setComment("");
-      setEstimatedTokens("");
-
-      // Refresh data
-      window.location.reload();
     } catch (error) {
       console.error("Buy failed:", error);
 
