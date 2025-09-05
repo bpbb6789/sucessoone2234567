@@ -47,7 +47,6 @@ import {
   http,
   parseEther,
 } from "viem";
-import { ethers } from "ethers";
 import { baseSepolia } from "viem/chains";
 
 // Create public client for blockchain interactions
@@ -215,52 +214,7 @@ export default function ContentCoinDetail() {
       return response.json();
     },
     enabled: !!tokenAddress,
-    refetchInterval: 5000, // Refresh every 5 seconds for live data
   });
-
-  // Calculate trading statistics from bonding curve data
-  const tradingStats = useMemo(() => {
-    if (!bondingCurveData || !bondingCurveData.enabled) {
-      return {
-        currentPrice: "0",
-        marketCap: "0",
-        volume24h: "0",
-        creatorEarnings: "0",
-        platformEarnings: "0",
-        holders: 0,
-        supply: "0",
-        reserve: "0"
-      };
-    }
-
-    const info = bondingCurveData.info;
-    if (!info) return { currentPrice: "0", marketCap: "0", volume24h: "0", creatorEarnings: "0", platformEarnings: "0", holders: 0, supply: "0", reserve: "0" };
-
-    // Format price from wei to readable format
-    const currentPrice = parseFloat(ethers.utils.formatEther(info.currentPrice || "0"));
-    const marketCap = parseFloat(ethers.utils.formatEther(info.marketCap || "0"));
-    const supply = parseFloat(ethers.utils.formatEther(info.supply || "0"));
-    const reserve = parseFloat(ethers.utils.formatEther(info.reserve || "0"));
-
-    // Estimate volume from reserve (this would be more accurate with trading history)
-    const volume24h = reserve * 0.1; // Rough estimate
-    
-    // Calculate earnings (0.5% creator + 0.3% platform fees from trades)
-    const totalTradingVolume = reserve * 2; // Rough estimate
-    const creatorEarnings = totalTradingVolume * 0.005;
-    const platformEarnings = totalTradingVolume * 0.003;
-
-    return {
-      currentPrice: currentPrice.toFixed(8),
-      marketCap: marketCap.toFixed(6),
-      volume24h: volume24h.toFixed(6),
-      creatorEarnings: creatorEarnings.toFixed(6),
-      platformEarnings: platformEarnings.toFixed(6),
-      holders: processedHolders.length,
-      supply: supply.toFixed(0),
-      reserve: reserve.toFixed(6)
-    };
-  }, [bondingCurveData, processedHolders]);
 
   // Get real token balance from blockchain using publicClient
   const [tokenBalance, setTokenBalance] = useState<bigint>(0n);
@@ -707,9 +661,7 @@ export default function ContentCoinDetail() {
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">
-                  {bondingCurveData?.enabled && tradingStats.currentPrice !== "0"
-                    ? `$${parseFloat(tradingStats.currentPrice).toFixed(8)}`
-                    : priceData?.price
+                  {priceData?.price
                     ? `$${priceData.price}`
                     : tokenData?.currentPrice
                       ? `$${tokenData.currentPrice}`
@@ -723,12 +675,6 @@ export default function ContentCoinDetail() {
                     {priceData.priceChange24h.toFixed(2)}%
                   </Badge>
                 )}
-                {bondingCurveData?.enabled && (
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                    <Activity className="h-3 w-3 mr-1" />
-                    Live Trading
-                  </Badge>
-                )}
               </div>
               <div className="flex items-center gap-2">
                 <p className="text-muted-foreground">
@@ -738,7 +684,7 @@ export default function ContentCoinDetail() {
                 {bondingCurveData?.enabled && (
                   <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
                     <Activity className="h-3 w-3 mr-1" />
-                    Bonding Curve Active
+                    Bonding Curve
                   </Badge>
                 )}
               </div>
@@ -806,9 +752,7 @@ export default function ContentCoinDetail() {
                     Market Cap
                   </span>
                   <span className="text-sm font-semibold text-green-400">
-                    ${bondingCurveData?.enabled && tradingStats.marketCap !== "0" 
-                      ? tradingStats.marketCap 
-                      : priceData?.marketCap || "0"}
+                    ${priceData?.marketCap || "0"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -816,9 +760,7 @@ export default function ContentCoinDetail() {
                     24H Volume
                   </span>
                   <span className="text-sm font-semibold">
-                    ${bondingCurveData?.enabled && tradingStats.volume24h !== "0" 
-                      ? tradingStats.volume24h 
-                      : priceData?.volume24h || "0"}
+                    ${priceData?.volume24h || "0"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -826,39 +768,10 @@ export default function ContentCoinDetail() {
                     Creator Earnings
                   </span>
                   <span className="text-sm font-semibold">
-                    ${bondingCurveData?.enabled && tradingStats.creatorEarnings !== "0" 
-                      ? tradingStats.creatorEarnings 
+                    $
+                    {priceData?.volume24h
+                      ? (parseFloat(priceData.volume24h) * 0.15).toFixed(4)
                       : "0"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Platform Earnings
-                  </span>
-                  <span className="text-sm font-semibold">
-                    ${bondingCurveData?.enabled && tradingStats.platformEarnings !== "0" 
-                      ? tradingStats.platformEarnings 
-                      : "0"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Supply in Curve
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {bondingCurveData?.enabled && tradingStats.supply !== "0" 
-                      ? `${parseFloat(tradingStats.supply).toLocaleString()} tokens`
-                      : "0 tokens"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    ETH Reserve
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {bondingCurveData?.enabled && tradingStats.reserve !== "0" 
-                      ? `${tradingStats.reserve} ETH`
-                      : "0 ETH"}
                   </span>
                 </div>
                 
@@ -970,9 +883,7 @@ export default function ContentCoinDetail() {
                             Market Cap
                           </div>
                           <div className="font-semibold">
-                            ${bondingCurveData?.enabled && tradingStats.marketCap !== "0" 
-                              ? tradingStats.marketCap 
-                              : priceData?.marketCap || tokenData?.marketCap || "0"}
+                            ${priceData?.marketCap || tokenData?.marketCap || "0"}
                           </div>
                         </div>
                       </div>
@@ -1070,9 +981,7 @@ export default function ContentCoinDetail() {
                       </div>
                       {sellAmount && (
                         <div className="text-xs text-muted-foreground text-center">
-                          You'll receive: ≈ {bondingCurveData?.enabled && tradingStats.currentPrice !== "0"
-                            ? (parseFloat(sellAmount) * parseFloat(tradingStats.currentPrice)).toFixed(6)
-                            : (parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
+                          You'll receive: ≈ {(parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
                         </div>
                       )}
                     </div>
@@ -1185,34 +1094,22 @@ export default function ContentCoinDetail() {
                             />
                           </div>
 
-                          {(bondingCurveData?.enabled || priceData) && (
+                          {priceData && (
                             <div className="space-y-1 text-xs text-muted-foreground">
                               <div className="flex justify-between">
                                 <span>Current Price:</span>
-                                <span>${bondingCurveData?.enabled && tradingStats.currentPrice !== "0" 
-                                  ? tradingStats.currentPrice 
-                                  : priceData?.price || "0"}</span>
+                                <span>${priceData.price}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span>Min. Price (with slippage):</span>
                                 <span>
                                   $
                                   {(
-                                    parseFloat(bondingCurveData?.enabled && tradingStats.currentPrice !== "0" 
-                                      ? tradingStats.currentPrice 
-                                      : priceData?.price || "0") *
+                                    parseFloat(priceData.price) *
                                     (1 - parseFloat(slippage) / 100)
-                                  ).toFixed(8)}
+                                  ).toFixed(6)}
                                 </span>
                               </div>
-                              {bondingCurveData?.enabled && (
-                                <div className="flex justify-between">
-                                  <span>Curve Address:</span>
-                                  <span className="font-mono text-[10px]">
-                                    {bondingCurveData.curveAddress?.slice(0, 6)}...{bondingCurveData.curveAddress?.slice(-4)}
-                                  </span>
-                                </div>
-                              )}
                             </div>
                           )}
                         </div>
