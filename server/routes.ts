@@ -879,42 +879,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const pumpFunTokens = [];
       
-      // Check each creator coin to see if it exists in PumpFun system
-      for (const coin of allCreatorCoins) {
-        if (coin.coinAddress && coin.coinAddress !== 'Deploying...') {
+      // Scan TokenFactory contract for tokens created through proper system
+      try {
+        const { getTokenFactoryTokens, getBondingCurveData } = await import('./pumpfun');
+        const factoryTokens = await getTokenFactoryTokens();
+        
+        console.log(`🔍 Found ${factoryTokens.length} tokens in TokenFactory contract`);
+        
+        for (const token of factoryTokens) {
           try {
-            const { getBondingCurveData } = await import('./pumpfun');
-            const pumpFunData = await getBondingCurveData(coin.coinAddress);
+            // Get bonding curve data for pricing
+            const bondingCurveData = await getBondingCurveData(token.address);
             
-            if (pumpFunData && pumpFunData.tokenMint !== '0x0000000000000000000000000000000000000000') {
-              // This token exists in PumpFun system
-              console.log(`📊 Found PumpFun token: ${coin.coinAddress} (${coin.coinName})`);
-              
+            let price = 0;
+            let marketCap = 0;
+            let volume24h = 0;
+            
+            if (bondingCurveData && bondingCurveData.tokenMint !== '0x0000000000000000000000000000000000000000') {
               // Calculate price from bonding curve
-              const price = Number(pumpFunData.virtualEthReserves) / Number(pumpFunData.virtualTokenReserves);
-              const totalSupply = Number(pumpFunData.tokenTotalSupply) / 1e18;
-              const marketCap = price * totalSupply;
-              
-              pumpFunTokens.push({
-                id: coin.id,
-                address: coin.coinAddress,
-                name: coin.coinName || 'Unknown Token',
-                symbol: coin.coinSymbol || 'UNK',
-                description: coin.description || 'Token created with PumpFun bonding curve',
-                creator: coin.creatorAddress,
-                price: price.toFixed(8),
-                marketCap: marketCap.toFixed(2),
-                volume24h: Number(pumpFunData.realEthReserves) / 1e18,
-                holders: 0, // Would need to fetch from chain
-                totalSupply: totalSupply.toString(),
-                createdAt: coin.createdAt?.toISOString() || new Date().toISOString(),
-                imageUri: coin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` : undefined
-              });
+              price = Number(bondingCurveData.virtualEthReserves) / Number(bondingCurveData.virtualTokenReserves);
+              const totalSupply = Number(bondingCurveData.tokenTotalSupply) / 1e18;
+              marketCap = price * totalSupply;
+              volume24h = Number(bondingCurveData.realEthReserves) / 1e18;
             }
+            
+            pumpFunTokens.push({
+              id: `factory-${token.index}`,
+              address: token.address,
+              name: token.name,
+              symbol: token.symbol,
+              description: `Token created via TokenFactory contract with bonding curve`,
+              creator: 'TokenFactory Contract',
+              price: price.toFixed(8),
+              marketCap: marketCap.toFixed(2),
+              volume24h: volume24h,
+              holders: 0, // Would need to fetch from chain
+              totalSupply: (Number(token.totalSupply) / 1e18).toString(),
+              createdAt: new Date().toISOString(), // Would need to get from creation event
+              imageUri: undefined,
+              isTokenFactory: true
+            });
+            
+            console.log(`✅ Added TokenFactory token: ${token.name} (${token.symbol}) at ${token.address}`);
           } catch (error) {
-            console.log(`❌ Error checking PumpFun for ${coin.coinAddress}:`, error.message);
+            console.log(`❌ Error processing TokenFactory token ${token.address}:`, error.message);
           }
         }
+      } catch (error) {
+        console.error('❌ Error scanning TokenFactory:', error);
       }
       
       console.log(`📊 Found ${dbTokens.length} database tokens and ${pumpFunTokens.length} PumpFun tokens`);

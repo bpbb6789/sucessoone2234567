@@ -1,8 +1,39 @@
 import { createPublicClient, createWalletClient, http, encodeFunctionData, formatUnits } from 'viem';
 import { baseSepolia } from 'viem/chains';
 
-// PumpFun contract configuration
-const PUMP_FUN_ADDRESS = '0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201' as const;
+// PumpFun contract configuration - Updated with correct TokenFactory address
+const PUMP_FUN_ADDRESS = '0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201' as const; // Legacy PumpFun
+const TOKEN_FACTORY_ADDRESS = '0x24408Fc5a7f57c3b24E85B9f97016F582391C9A9' as const; // Correct TokenFactory
+
+// TokenFactory ABI - for scanning created tokens
+const TOKEN_FACTORY_ABI = [
+  {
+    "inputs": [],
+    "name": "currentTokenIndex",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "name": "tokens",
+    "outputs": [
+      {"internalType": "address", "name": "tokenAddress", "type": "address"},
+      {"internalType": "string", "name": "tokenName", "type": "string"},
+      {"internalType": "string", "name": "tokenSymbol", "type": "string"},
+      {"internalType": "uint256", "name": "totalSupply", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "contractAddress",
+    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "stateMutability": "view",
+    "type": "function"
+  }
+] as const;
 
 const PUMP_FUN_ABI = [
   {
@@ -29,8 +60,8 @@ const PUMP_FUN_ABI = [
   },
   {
     type: "function",
-    name: "getBondingCurve",
-    inputs: [{ name: "mint", type: "address", internalType: "address" }],
+    name: "bondingCurve",
+    inputs: [{ name: "token", type: "address", internalType: "address" }],
     outputs: [
       {
         name: "",
@@ -93,13 +124,62 @@ interface BondingCurve {
   complete: boolean;
 }
 
+// Function to scan TokenFactory for tokens created through proper contract
+export async function getTokenFactoryTokens() {
+  try {
+    const publicClient = createPublicClient({
+      chain: baseSepolia,
+      transport: http(),
+    });
+
+    // Get the current token index to know how many tokens exist
+    const currentIndex = await publicClient.readContract({
+      address: TOKEN_FACTORY_ADDRESS,
+      abi: TOKEN_FACTORY_ABI,
+      functionName: 'currentTokenIndex',
+    });
+
+    console.log(`🔍 Found ${currentIndex} tokens in TokenFactory contract`);
+
+    const tokens = [];
+    for (let i = 0; i < Number(currentIndex); i++) {
+      try {
+        const tokenData = await publicClient.readContract({
+          address: TOKEN_FACTORY_ADDRESS,
+          abi: TOKEN_FACTORY_ABI,
+          functionName: 'tokens',
+          args: [BigInt(i)],
+        });
+
+        if (tokenData && tokenData[0] !== '0x0000000000000000000000000000000000000000') {
+          tokens.push({
+            address: tokenData[0],
+            name: tokenData[1],
+            symbol: tokenData[2],
+            totalSupply: tokenData[3],
+            index: i
+          });
+          console.log(`📊 TokenFactory Token ${i}: ${tokenData[1]} (${tokenData[2]}) at ${tokenData[0]}`);
+        }
+      } catch (error) {
+        console.error(`❌ Error fetching token ${i}:`, (error as Error).message);
+      }
+    }
+
+    return tokens;
+  } catch (error) {
+    console.error('Error scanning TokenFactory:', error);
+    return [];
+  }
+}
+
 // Get bonding curve data for a token
 export async function getBondingCurveData(tokenAddress: string): Promise<BondingCurve | null> {
   try {
     const data = await publicClient.readContract({
       address: PUMP_FUN_ADDRESS,
       abi: PUMP_FUN_ABI,
-      functionName: 'getBondingCurve',
+      functionName: 'bondingCurve',
       args: [tokenAddress as `0x${string}`]
     }) as any;
 
@@ -153,7 +233,7 @@ export async function calculateEthFromTokens(bondingCurve: BondingCurve, tokenAm
       address: PUMP_FUN_ADDRESS,
       abi: PUMP_FUN_ABI,
       functionName: 'calculateEthCost',
-      args: [bondingCurve, tokenAmount]
+      args: [bondingCurve as any, tokenAmount]
     }) as bigint;
 
     return ethCost;
