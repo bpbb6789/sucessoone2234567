@@ -3064,8 +3064,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
       }
 
-      // Use the improved buy function from zora.ts that handles pool creation
-      const buyResult = await buyCoin({
+      // Use PumpFun bonding curve for efficient trading (much lower gas costs)
+      const { buyTokensPumpFun } = await import('./pumpfun');
+      const buyResult = await buyTokensPumpFun({
         coinAddress,
         buyerAddress,
         ethAmount,
