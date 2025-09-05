@@ -2546,70 +2546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`✅ Zora Creator Coin deployed successfully:`, deploymentResult);
 
-      // Create Uniswap V4 pool and add initial liquidity
-      console.log(`🏊 Creating Uniswap V4 pool and adding initial liquidity...`);
-      try {
-        // Create pool
-        const poolResult = await createUniswapV4Pool({
-          coinAddress: deploymentResult.coinAddress,
-          creatorAddress: coinData.creatorAddress,
-          initialLiquidityETH: '0.1', // 0.1 ETH initial liquidity
-          initialLiquidityTokens: '100000' // 100k tokens initial liquidity
-        });
-
-        if (poolResult.success) {
-          console.log(`✅ Pool created successfully: ${poolResult.poolId}`);
-
-          // Add initial liquidity
-          const liquidityResult = await addInitialLiquidity({
-            coinAddress: deploymentResult.coinAddress,
-            creatorAddress: coinData.creatorAddress,
-            ethAmount: '0.1',
-            tokenAmount: '100000'
-          });
-
-          if (liquidityResult.success) {
-            console.log(`✅ Initial liquidity added successfully`);
-          } else {
-            console.warn(`⚠️ Initial liquidity addition failed: ${liquidityResult.error}`);
-          }
-        } else {
-          console.warn(`⚠️ Pool creation failed: ${poolResult.error}`);
-        }
-      } catch (poolError) {
-        console.warn(`⚠️ Pool setup failed (coin still deployed):`, poolError);
-      }
-
-      // Deploy bonding curve for automated market making
-      console.log(`🔄 Deploying bonding curve for automated market making...`);
-      let bondingCurveDeployed = false;
-      let bondingCurveAddress = null;
-      let bondingCurveTxHash = null;
-
-      try {
-        if (bondingCurveService.isConfigured()) {
-          const bondingCurveResult = await bondingCurveService.deployBondingCurve(
-            deploymentResult.coinAddress,
-            coinData.creatorAddress,
-            coinId
-          );
-
-          if (bondingCurveResult.success) {
-            console.log(`✅ Bonding curve deployed successfully at: ${bondingCurveResult.curveAddress}`);
-            bondingCurveDeployed = true;
-            bondingCurveAddress = bondingCurveResult.curveAddress;
-            bondingCurveTxHash = bondingCurveResult.transactionHash;
-          } else {
-            console.warn(`⚠️ Bonding curve deployment failed: ${bondingCurveResult.error}`);
-          }
-        } else {
-          console.log(`ℹ️ Bonding curve service not configured - skipping bonding curve deployment`);
-        }
-      } catch (bondingCurveError) {
-        console.warn(`⚠️ Bonding curve deployment failed (coin still deployed):`, bondingCurveError);
-      }
-
-      // Update coin with deployment info
+      // Update coin with deployment info immediately (before additional services)
       await db.update(creatorCoins)
         .set({
           status: 'deployed',
@@ -2618,6 +2555,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updatedAt: new Date()
         })
         .where(eq(creatorCoins.id, coinId));
+
+      // Start pool creation and bonding curve deployment asynchronously (non-blocking)
+      console.log(`🏊 Starting async pool and bonding curve setup...`);
+      setImmediate(async () => {
+        try {
+          // Create Uniswap V4 pool and add initial liquidity
+          console.log(`🏊 Creating Uniswap V4 pool and adding initial liquidity...`);
+          const poolResult = await createUniswapV4Pool({
+            coinAddress: deploymentResult.coinAddress,
+            creatorAddress: coinData.creatorAddress,
+            initialLiquidityETH: '0.1', // 0.1 ETH initial liquidity
+            initialLiquidityTokens: '100000' // 100k tokens initial liquidity
+          });
+
+          if (poolResult.success) {
+            console.log(`✅ Pool created successfully: ${poolResult.poolId}`);
+
+            // Add initial liquidity
+            const liquidityResult = await addInitialLiquidity({
+              coinAddress: deploymentResult.coinAddress,
+              creatorAddress: coinData.creatorAddress,
+              ethAmount: '0.1',
+              tokenAmount: '100000'
+            });
+
+            if (liquidityResult.success) {
+              console.log(`✅ Initial liquidity added successfully`);
+            } else {
+              console.warn(`⚠️ Initial liquidity addition failed: ${liquidityResult.error}`);
+            }
+          } else {
+            console.warn(`⚠️ Pool creation failed: ${poolResult.error}`);
+          }
+        } catch (poolError) {
+          console.warn(`⚠️ Pool setup failed (coin still deployed):`, poolError);
+        }
+
+        // Deploy bonding curve for automated market making
+        try {
+          console.log(`🔄 Deploying bonding curve for automated market making...`);
+          if (bondingCurveService.isConfigured()) {
+            const bondingCurveResult = await bondingCurveService.deployBondingCurve(
+              deploymentResult.coinAddress,
+              coinData.creatorAddress,
+              coinId
+            );
+
+            if (bondingCurveResult.success) {
+              console.log(`✅ Bonding curve deployed successfully at: ${bondingCurveResult.curveAddress}`);
+              
+              // Update coin with bonding curve info
+              await db.update(creatorCoins)
+                .set({
+                  hasBondingCurve: true,
+                  bondingCurveExchangeAddress: bondingCurveResult.curveAddress,
+                  bondingCurveFactoryAddress: bondingCurveResult.factoryAddress,
+                  updatedAt: new Date()
+                })
+                .where(eq(creatorCoins.id, coinId));
+            } else {
+              console.warn(`⚠️ Bonding curve deployment failed: ${bondingCurveResult.error}`);
+            }
+          } else {
+            console.log(`ℹ️ Bonding curve service not configured - skipping bonding curve deployment`);
+          }
+        } catch (bondingCurveError) {
+          console.warn(`⚠️ Bonding curve deployment failed (coin still deployed):`, bondingCurveError);
+        }
+      });
 
       // Trigger notification for successful creator coin creation
       await triggerNotification('creator_coin_created', {
@@ -2635,14 +2641,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           coinAddress: deploymentResult.coinAddress,
           txHash: deploymentResult.txHash,
           factoryAddress: deploymentResult.factoryAddress,
-          bondingCurve: bondingCurveDeployed ? {
-            address: bondingCurveAddress,
-            txHash: bondingCurveTxHash,
-            enabled: true
-          } : {
-            enabled: false,
-            reason: bondingCurveService.isConfigured() ? "Deployment failed" : "Service not configured"
-          }
+          status: 'deployed',
+          message: 'Creator coin deployed successfully. Pool and bonding curve setup is running in background.'
         }
       });
     } catch (error) {

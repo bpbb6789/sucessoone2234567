@@ -53,7 +53,7 @@ const getRpcTransports = () => {
 
 const publicClient = createPublicClient({
   chain: baseSepolia,
-  transport: http(getRpcTransports()[0]) // Use first available transport
+  transport: getRpcTransports()[0] // Use first available transport
 });
 
 // Get deployment account (server-side signing for demonstration)
@@ -271,9 +271,9 @@ export async function createCreatorCoin(params: {
       }
     );
 
-    // Add timeout to the deployment
+    // Add timeout to the deployment (3 minutes for blockchain operations)
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Deployment timeout after 60 seconds')), 60000)
+      setTimeout(() => reject(new Error('Deployment timeout after 3 minutes')), 180000)
     );
 
     const result = await Promise.race([deployPromise, timeoutPromise]);
@@ -418,7 +418,7 @@ async function getHoldersFromDirectQuery(contractAddress: `0x${string}`) {
     const creatorCoin = await db
       .select()
       .from(creatorCoins)
-      .where(eq(creatorCoins.contractAddress, contractAddress))
+      .where(eq(creatorCoins.coinAddress, contractAddress))
       .limit(1);
 
     if (creatorCoin.length > 0) {
@@ -673,12 +673,17 @@ async function getHoldersFromBasescan(contractAddress: `0x${string}`) {
 
     const url = `${BASESCAN_API_URL}?module=token&action=tokenholderlist&contractaddress=${contractAddress}&page=1&offset=100&apikey=${BASESCAN_API_KEY}`;
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
     const response = await fetch(url, {
-      timeout: 10000, // 10 second timeout
+      signal: controller.signal,
       headers: {
         'User-Agent': 'PumpIt-DApp/1.0'
       }
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1184,11 +1189,11 @@ export async function addInitialLiquidity(params: {
     // Define liquidity parameters
     const liquidityParams = {
       poolKey: {
-        currency0: '0x4200000000000000000000000000000000000006', // WETH
-        currency1: params.coinAddress,
+        currency0: '0x4200000000000000000000000000000000000006' as `0x${string}`, // WETH
+        currency1: params.coinAddress as `0x${string}`,
         fee: 3000,
         tickSpacing: 60,
-        hooks: '0x9ea932730A7787000042e34390B8E435dD839040'
+        hooks: '0x9ea932730A7787000042e34390B8E435dD839040' as `0x${string}`
       },
       tickLower: -887220, // Full range liquidity
       tickUpper: 887220,
@@ -1327,7 +1332,7 @@ export async function buyCoin(params: {
 
     // Encode hook data for trade referral using proper ABI encoding (platform gets 15% of market rewards per trade)
     // Note: This only works for CONTENT COINS, not Creator Coins!
-    const hookData = PLATFORM_REFERRER_ADDRESS !== '0x0000000000000000000000000000000000000000'
+    const hookData = (PLATFORM_REFERRER_ADDRESS as string) !== '0x0000000000000000000000000000000000000000'
       ? `0x000000000000000000000000${PLATFORM_REFERRER_ADDRESS.slice(2).toLowerCase()}` // ABI encode address
       : '0x'; // No referral if address not set
 
