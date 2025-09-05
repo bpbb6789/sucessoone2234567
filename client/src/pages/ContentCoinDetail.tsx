@@ -407,9 +407,13 @@ export default function ContentCoinDetail() {
 
         if (response.ok) {
           const quote = await response.json();
+          console.log('🎯 Bonding curve quote received:', quote);
           const tokensOut = parseFloat(formatUnits(BigInt(quote.tokensOut), 18));
+          console.log('🎯 Tokens calculated:', tokensOut);
           setEstimatedTokens(tokensOut.toLocaleString());
           return;
+        } else {
+          console.error('❌ Quote API failed:', response.status, await response.text());
         }
       }
 
