@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import {
   Play,
@@ -318,6 +318,15 @@ export default function ContentCoinDetail() {
     fetchBalance();
   }, [address, tokenData?.coinAddress]);
 
+  // Auto-calculate estimated tokens when buy amount changes
+  useEffect(() => {
+    if (buyAmount && parseFloat(buyAmount) > 0) {
+      calculateEstimatedTokens(buyAmount);
+    } else {
+      setEstimatedTokens("");
+    }
+  }, [buyAmount, bondingCurveData, priceData, tokenData]);
+
   // Chart data for trading view - now uses real price data
   const chartData = useMemo(() => {
     if (!tokenData) return null;
@@ -426,18 +435,13 @@ export default function ContentCoinDetail() {
         }
       }
 
-      // For new tokens with no price data, show a reasonable estimate
-      // Assume initial price of about $0.0001 per token (1 ETH = ~10,000 tokens)
-      const defaultTokensPerEth = 10000;
-      const estimated = parseFloat(ethAmount) * defaultTokensPerEth;
-      setEstimatedTokens(estimated.toLocaleString());
+      // No valid price data available - cannot calculate tokens
+      setEstimatedTokens("0");
       
     } catch (error) {
       console.error("Failed to calculate estimated tokens:", error);
-      // Show default estimate even on error
-      const defaultTokensPerEth = 10000;
-      const estimated = parseFloat(ethAmount) * defaultTokensPerEth;
-      setEstimatedTokens(estimated.toLocaleString());
+      // Cannot calculate without real data
+      setEstimatedTokens("0");
     }
   };
 
@@ -1090,7 +1094,7 @@ export default function ContentCoinDetail() {
                             <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                               <div className="text-sm text-red-400">
                                 You'll receive: <span className="font-semibold">
-                                  ≈ {bondingCurveData?.enabled && tradingStats.currentPrice !== "0"
+                                  ≈ {bondingCurveData?.enabled && tradingStats.currentPrice
                                     ? (parseFloat(sellAmount) * parseFloat(tradingStats.currentPrice)).toFixed(6)
                                     : (parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
                                 </span>
