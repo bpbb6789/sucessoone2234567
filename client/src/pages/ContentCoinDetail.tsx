@@ -218,6 +218,15 @@ export default function ContentCoinDetail() {
     refetchInterval: 5000, // Refresh every 5 seconds for live data
   });
 
+  // Process holders data with proper typing
+  const processedHolders = useMemo(() => {
+    if (!holdersData || !Array.isArray(holdersData)) return [];
+    return holdersData.map((holder) => ({
+      address: holder.address,
+      balance: holder.balance,
+    }));
+  }, [holdersData]);
+
   // Calculate trading statistics from bonding curve data
   const tradingStats = useMemo(() => {
     if (!bondingCurveData || !bondingCurveData.enabled) {
@@ -244,7 +253,7 @@ export default function ContentCoinDetail() {
 
     // Estimate volume from reserve (this would be more accurate with trading history)
     const volume24h = reserve * 0.1; // Rough estimate
-    
+
     // Calculate earnings (0.5% creator + 0.3% platform fees from trades)
     const totalTradingVolume = reserve * 2; // Rough estimate
     const creatorEarnings = totalTradingVolume * 0.005;
@@ -264,10 +273,10 @@ export default function ContentCoinDetail() {
 
   // Get real token balance from blockchain using publicClient
   const [tokenBalance, setTokenBalance] = useState<bigint>(0n);
-  
+
   useEffect(() => {
     if (!address || !tokenData?.coinAddress) return;
-    
+
     async function fetchBalance() {
       try {
         const balance = await publicClient.readContract({
@@ -282,18 +291,9 @@ export default function ContentCoinDetail() {
         setTokenBalance(0n);
       }
     }
-    
+
     fetchBalance();
   }, [address, tokenData?.coinAddress]);
-
-  // Process holders data with proper typing
-  const processedHolders = useMemo(() => {
-    if (!holdersData || !Array.isArray(holdersData)) return [];
-    return holdersData.map((holder) => ({
-      address: holder.address,
-      balance: holder.balance,
-    }));
-  }, [holdersData]);
 
   // Chart data for trading view - now uses real price data
   const chartData = useMemo(() => {
@@ -372,7 +372,7 @@ export default function ContentCoinDetail() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ethAmount })
         });
-        
+
         if (response.ok) {
           const quote = await response.json();
           const tokensOut = parseFloat(formatUnits(BigInt(quote.tokensOut), 18));
@@ -380,7 +380,7 @@ export default function ContentCoinDetail() {
           return;
         }
       }
-      
+
       // Fallback to simple price calculation
       if (!priceData?.price) {
         setEstimatedTokens("");
@@ -476,14 +476,14 @@ export default function ContentCoinDetail() {
 
     try {
       let response;
-      
+
       // Use bonding curve trading if available (better pricing)
       if (bondingCurveData?.enabled && bondingCurveData?.curveAddress) {
         toast({
           title: "Using Bonding Curve Trading",
           description: "Better pricing through automated market making",
         });
-        
+
         // Direct bonding curve interaction would go here
         // For now, fall back to existing API
         response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
@@ -528,7 +528,7 @@ export default function ContentCoinDetail() {
       }
 
       const result = await response.json();
-      
+
       toast({
         title: "Buy successful!",
         description: `Purchased ${result.trade?.tokensReceived || estimatedTokens} tokens`,
@@ -861,7 +861,7 @@ export default function ContentCoinDetail() {
                       : "0 ETH"}
                   </span>
                 </div>
-                
+
                 {/* Bonding Curve Stats */}
                 {bondingCurveData?.enabled && bondingCurveData?.info && (
                   <>
@@ -1052,7 +1052,7 @@ export default function ContentCoinDetail() {
                           {tokenData?.coinSymbol || "tokens"}
                         </div>
                       )}
-                      
+
                       {/* Sell Amount Input */}
                       <div className="relative mt-4">
                         <Input
@@ -1114,7 +1114,7 @@ export default function ContentCoinDetail() {
                           Max
                         </Button>
                       </div>
-                      
+
                       <div className="text-xs font-medium text-muted-foreground">Quick Sell Amounts</div>
                       <div className="grid grid-cols-4 gap-2">
                         <Button
