@@ -6,15 +6,8 @@ import { uploadFileToIPFS, uploadJSONToIPFS } from './ipfs';
 import {
   createZoraMetadata,
   createCreatorCoin,
-  getCoinPrice,
-  getBondingCurveProgress,
   validateContentForTokenization,
-  generateThumbnail,
-  buyCoin, // Import buyCoin function
-  sellCoin, // Import sellCoin function
-  getTokenHolders, // Import getTokenHolders function
-  createUniswapV4Pool, // Import createUniswapV4Pool function
-  addInitialLiquidity // Import addInitialLiquidity function
+  generateThumbnail
 } from './zora';
 import { bondingCurveService } from "./bondingCurve";
 import {
@@ -2563,12 +2556,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           // Create Uniswap V4 pool and add initial liquidity
           console.log(`🏊 Creating Uniswap V4 pool and adding initial liquidity...`);
-          const poolResult = await createUniswapV4Pool({
-            coinAddress: deploymentResult.coinAddress,
-            creatorAddress: coinData.creatorAddress,
-            initialLiquidityETH: '0.1', // 0.1 ETH initial liquidity
-            initialLiquidityTokens: '100000' // 100k tokens initial liquidity
-          });
+          // Pool creation removed - using bonding curve system
+          const poolResult = { success: false, error: 'Pool creation deprecated' };
 
           if (poolResult.success) {
             console.log(`✅ Pool created successfully: ${poolResult.poolId}`);
