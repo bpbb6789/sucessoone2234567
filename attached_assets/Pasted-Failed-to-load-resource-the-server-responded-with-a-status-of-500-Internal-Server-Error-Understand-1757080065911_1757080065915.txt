@@ -1,0 +1,133 @@
+Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+CreateContentCoin.tsx:180 🚀 Starting content upload...
+CreateContentCoin.tsx:207 Uploading content with data: Object
+CreateContentCoin.tsx:231 ✅ Upload successful: Object
+CreateContentCoin.tsx:261 🚀 Starting coin deployment... Object
+api/creator-coins/b13d630d-1e06-4e40-b1de-2033c1a9a098/deploy:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+CreateContentCoin.tsx:300 ❌ Deployment failed: Error: 500: {"message":"Failed to deploy creator coin","error":"Deployment timed out. Please check your transaction and try again if needed."}
+    at throwIfResNotOk (queryClient.ts:6:11)
+    at async apiRequest (queryClient.ts:35:3)
+    at async Object.mutationFn (useCreatorCoins.tsx:95:24)
+onError @ CreateContentCoin.tsx:300Understand this error
+CreateContentCoin.tsx:261 🚀 Starting coin deployment... {coinId: 'b13d630d-1e06-4e40-b1de-2033c1a9a098', coinName: 'CAT MAN'}coinId: "b13d630d-1e06-4e40-b1de-2033c1a9a098"coinName: "CAT MAN"[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+queryClient.ts:28  POST https://9c12bdd6-f342-40f7-8a2a-08a2479ae472-00-1m4mspdugj55i.worf.replit.dev:3000/api/creator-coins/b13d630d-1e06-4e40-b1de-2033c1a9a098/deploy 500 (Internal Server Error)
+apiRequest @ queryClient.ts:28
+mutationFn @ useCreatorCoins.tsx:95
+fn @ chunk-A67CSFD6.js?v=4bf9e5f9:1234
+run @ chunk-A67CSFD6.js?v=4bf9e5f9:507
+start @ chunk-A67CSFD6.js?v=4bf9e5f9:550
+execute @ chunk-A67CSFD6.js?v=4bf9e5f9:1270
+await in execute
+mutate @ chunk-A67CSFD6.js?v=4bf9e5f9:2692
+(anonymous) @ chunk-A67CSFD6.js?v=4bf9e5f9:3415
+handleDeploy @ CreateContentCoin.tsx:281
+callCallback2 @ chunk-J4NESBNT.js?v=4bf9e5f9:3674
+invokeGuardedCallbackDev @ chunk-J4NESBNT.js?v=4bf9e5f9:3699
+invokeGuardedCallback @ chunk-J4NESBNT.js?v=4bf9e5f9:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-J4NESBNT.js?v=4bf9e5f9:3736
+executeDispatch @ chunk-J4NESBNT.js?v=4bf9e5f9:7014
+processDispatchQueueItemsInOrder @ chunk-J4NESBNT.js?v=4bf9e5f9:7034
+processDispatchQueue @ chunk-J4NESBNT.js?v=4bf9e5f9:7043
+dispatchEventsForPlugins @ chunk-J4NESBNT.js?v=4bf9e5f9:7051
+(anonymous) @ chunk-J4NESBNT.js?v=4bf9e5f9:7174
+batchedUpdates$1 @ chunk-J4NESBNT.js?v=4bf9e5f9:18913
+batchedUpdates @ chunk-J4NESBNT.js?v=4bf9e5f9:3579
+dispatchEventForPluginEventSystem @ chunk-J4NESBNT.js?v=4bf9e5f9:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-J4NESBNT.js?v=4bf9e5f9:5478
+dispatchEvent @ chunk-J4NESBNT.js?v=4bf9e5f9:5472
+dispatchDiscreteEvent @ chunk-J4NESBNT.js?v=4bf9e5f9:5449Understand this error
+CreateContentCoin.tsx:300 ❌ Deployment failed: Error: 500: {"message":"Failed to deploy creator coin","error":"Deployment timed out. Please check your transaction and try again if needed."}
+    at throwIfResNotOk (queryClient.ts:6:11)
+    at async apiRequest (queryClient.ts:35:3)
+    at async Object.mutationFn (useCreatorCoins.tsx:95:24)
+onError @ CreateContentCoin.tsx:300
+(anonymous) @ chunk-A67CSFD6.js?v=4bf9e5f9:2716
+batch @ chunk-A67CSFD6.js?v=4bf9e5f9:598
+notify_fn3 @ chunk-A67CSFD6.js?v=4bf9e5f9:2707
+onMutationUpdate @ chunk-A67CSFD6.js?v=4bf9e5f9:2674
+(anonymous) @ chunk-A67CSFD6.js?v=4bf9e5f9:1385
+(anonymous) @ chunk-A67CSFD6.js?v=4bf9e5f9:1384
+batch @ chunk-A67CSFD6.js?v=4bf9e5f9:598
+dispatch_fn2 @ chunk-A67CSFD6.js?v=4bf9e5f9:1383
+execute @ chunk-A67CSFD6.js?v=4bf9e5f9:1322
+await in execute
+mutate @ chunk-A67CSFD6.js?v=4bf9e5f9:2692
+(anonymous) @ chunk-A67CSFD6.js?v=4bf9e5f9:3415
+handleDeploy @ CreateContentCoin.tsx:281
+callCallback2 @ chunk-J4NESBNT.js?v=4bf9e5f9:3674
+invokeGuardedCallbackDev @ chunk-J4NESBNT.js?v=4bf9e5f9:3699
+invokeGuardedCallback @ chunk-J4NESBNT.js?v=4bf9e5f9:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-J4NESBNT.js?v=4bf9e5f9:3736
+executeDispatch @ chunk-J4NESBNT.js?v=4bf9e5f9:7014
+processDispatchQueueItemsInOrder @ chunk-J4NESBNT.js?v=4bf9e5f9:7034
+processDispatchQueue @ chunk-J4NESBNT.js?v=4bf9e5f9:7043
+dispatchEventsForPlugins @ chunk-J4NESBNT.js?v=4bf9e5f9:7051
+(anonymous) @ chunk-J4NESBNT.js?v=4bf9e5f9:7174
+batchedUpdates$1 @ chunk-J4NESBNT.js?v=4bf9e5f9:18913
+batchedUpdates @ chunk-J4NESBNT.js?v=4bf9e5f9:3579
+dispatchEventForPluginEventSystem @ chunk-J4NESBNT.js?v=4bf9e5f9:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-J4NESBNT.js?v=4bf9e5f9:5478
+dispatchEvent @ chunk-J4NESBNT.js?v=4bf9e5f9:5472
+dispatchDiscreteEvent @ chunk-J4NESBNT.js?v=4bf9e5f9:5449Understand this error
+VM545:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM545:1
+ot @ VM545:1
+await in ot
+st @ VM545:1
+(anonymous) @ VM545:1
+(anonymous) @ VM545:1
+2VM545:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM545:1
+ot @ VM545:1
+await in ot
+st @ VM545:1
+ft @ VM545:1
+(anonymous) @ VM545:1
+vt @ VM545:1
+(anonymous) @ VM545:1
+setTimeout
+Pt @ VM545:1
+(anonymous) @ VM545:1
+requestIdleCallback
+yt @ VM545:1
+$t @ VM545:1
+analyticsTracker @ VM545:1
+u @ VM545:1
+N @ VM545:1
+q @ VM545:1
+(anonymous) @ VM545:1
+(anonymous) @ VM545:1
+s @ VM545:1
+(anonymous) @ VM545:1
+(anonymous) @ VM545:1
+n @ VM545:1
+VM545:1  POST https://cca-lite.coinbase.com/metrics net::ERR_ABORTED 401 (Unauthorized)
+_t @ VM545:1
+(anonymous) @ VM545:1
+requestIdleCallback
+yt @ VM545:1
+Qt @ VM545:1
+(anonymous) @ VM545:1
+setTimeout
+ht @ VM545:1
+Ht @ VM545:1
+analyticsTracker @ VM545:1
+u @ VM545:1
+N @ VM545:1
+q @ VM545:1
+(anonymous) @ VM545:1
+(anonymous) @ VM545:1
+s @ VM545:1
+(anonymous) @ VM545:1
+(anonymous) @ VM545:1
+n @ VM545:1Understand this error
+4VM545:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM545:1
+ot @ VM545:1
+await in ot
+st @ VM545:1
+(anonymous) @ VM545:1
+(anonymous) @ VM545:1
