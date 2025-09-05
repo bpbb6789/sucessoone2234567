@@ -391,80 +391,7 @@ export default function ContentCoinDetail() {
         (1 - parseFloat(slippage) / 100)
       ).toString();
 
-      // For Zora-deployed tokens, use direct contract interaction
-      // First, check if this is a Zora token vs PumpFun token
-      const isZoraToken =
-        tokenData.contractAddress && tokenData.contractAddress.length === 42;
-
-      if (isZoraToken) {
-        // Use Zora's pool manager contract directly via wagmi
-        const { request } = await publicClient.simulateContract({
-          address:
-            "0x38EB8B22Df3Ae7fb21e92881151B365Df14ba967" as `0x${string}`, // Uniswap V4 Pool Manager
-          abi: [
-            {
-              name: "swap",
-              type: "function",
-              stateMutability: "payable",
-              inputs: [
-                {
-                  name: "key",
-                  type: "tuple",
-                  components: [
-                    { name: "currency0", type: "address" },
-                    { name: "currency1", type: "address" },
-                    { name: "fee", type: "uint24" },
-                    { name: "tickSpacing", type: "int24" },
-                    { name: "hooks", type: "address" },
-                  ],
-                },
-                {
-                  name: "params",
-                  type: "tuple",
-                  components: [
-                    { name: "zeroForOne", type: "bool" },
-                    { name: "amountSpecified", type: "int256" },
-                    { name: "sqrtPriceLimitX96", type: "uint160" },
-                  ],
-                },
-                { name: "hookData", type: "bytes" },
-              ],
-              outputs: [],
-            },
-          ],
-          functionName: "swap",
-          args: [
-            {
-              currency0: "0x4200000000000000000000000000000000000006", // WETH
-              currency1: tokenData.contractAddress as `0x${string}`,
-              fee: 3000,
-              tickSpacing: 60,
-              hooks: "0x9ea932730A7787000042e34390B8E435dD839040", // ContentCoinHook
-            },
-            {
-              zeroForOne: true,
-              amountSpecified: parseEther(buyAmount),
-              sqrtPriceLimitX96: 0n,
-            },
-            "0x", // No hook data for now
-          ],
-          value: parseEther(buyAmount),
-          account: address as `0x${string}`,
-        });
-
-        // Execute real Zora swap transaction
-        const hash = await walletClient.writeContract(request);
-
-        toast({
-          title: "Buy transaction submitted",
-          description: `Swapping ${buyAmount} ETH for ${tokenData.coinSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
-        });
-
-        setBuyAmount("");
-        return;
-      }
-
-      // Use Zora SDK via API for all tokens
+      // Use PumpFun bonding curve for all trading (much lower gas costs)
       const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
         method: "POST",
         headers: {
@@ -479,40 +406,23 @@ export default function ContentCoinDetail() {
       });
 
       if (!response.ok) {
-        let errorMessage = "Buy transaction failed";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (parseError) {
-          errorMessage = `Server error: ${response.status} ${response.statusText}`;
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Transaction failed");
       }
 
       const result = await response.json();
-
+      
       toast({
-        title: "Buy successful! 🎉",
-        description: `Successfully bought ${estimatedTokens} ${tokenData.coinSymbol || tokenData.symbol} tokens`,
+        title: "Buy successful!",
+        description: `Purchased ${result.trade?.tokensReceived || estimatedTokens} tokens`,
       });
 
-      // Add comment if provided
-      if (comment.trim()) {
-        try {
-          await fetch(`/api/creator-coins/${tokenData.id}/comments`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userAddress: address,
-              content: comment.trim(),
-              ethAmount: buyAmount,
-              type: "buy",
-            }),
-          });
-        } catch (commentError) {
-          console.error("Failed to add comment:", commentError);
-        }
-      }
+      // Reset form
+      setBuyAmount("");
+      setEstimatedTokens("");
+
+      // Refetch data
+      window.location.reload();
 
       // Reset form
       setBuyAmount("");
@@ -598,18 +508,35 @@ export default function ContentCoinDetail() {
     }
 
     try {
-      const result = await sellMutation.mutateAsync({
-        coinId: tokenData.id,
-        userAddress: address,
-        tokenAmount: sellAmount,
+      // Use PumpFun bonding curve for selling (much lower gas costs)
+      const response = await fetch(`/api/creator-coins/${tokenData.id}/sell`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userAddress: address,
+          tokenAmount: sellAmount,
+          minEthOut: undefined, // Let backend calculate slippage protection
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Sell transaction failed");
+      }
+
+      const result = await response.json();
 
       toast({
         title: "Sell successful!",
-        description: `Sold ${sellAmount} tokens for ${(result as any)?.ethReceived || "unknown"} ETH`,
+        description: `Sold ${sellAmount} tokens for ${result.ethReceived || "unknown"} ETH`,
       });
 
       setSellAmount("");
+
+      // Refetch data
+      window.location.reload();
     } catch (error) {
       console.error("Sell failed:", error);
       toast({
