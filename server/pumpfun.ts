@@ -83,7 +83,7 @@ const publicClient = createPublicClient({
 });
 
 interface BondingCurve {
-  tokenMint: string;
+  tokenMint: `0x${string}`;
   virtualTokenReserves: bigint;
   virtualEthReserves: bigint;
   realTokenReserves: bigint;
@@ -108,7 +108,7 @@ export async function getBondingCurveData(tokenAddress: string): Promise<Bonding
     }
 
     return {
-      tokenMint: data.tokenMint,
+      tokenMint: data.tokenMint as `0x${string}`,
       virtualTokenReserves: data.virtualTokenReserves,
       virtualEthReserves: data.virtualEthReserves,
       realTokenReserves: data.realTokenReserves,
@@ -222,7 +222,7 @@ export async function buyTokensPumpFun(params: {
         ]
       }),
       value: ethAmountWei,
-      gas: 150000n // Much lower gas than Zora hooks (200k vs 500k)
+      gas: 120000n // Optimized gas limit for PumpFun bonding curve trades
     };
 
     console.log(`✅ PumpFun buy prepared: ${formatUnits(tokensReceived, 18)} tokens for ${params.ethAmount} ETH`);

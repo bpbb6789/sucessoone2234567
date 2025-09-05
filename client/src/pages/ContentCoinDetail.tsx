@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import {
   Play,
@@ -201,14 +201,29 @@ export default function ContentCoinDetail() {
     enabled: !!tokenAddress,
   });
 
-  // Get real token balance from blockchain
-  const { data: tokenBalance } = useReadContract({
-    address: tokenData?.coinAddress as Address,
-    abi: erc20Abi,
-    functionName: "balanceOf",
-    args: [address as Address],
-    query: { enabled: !!address && !!tokenData?.coinAddress }
-  });
+  // Get real token balance from blockchain using publicClient
+  const [tokenBalance, setTokenBalance] = useState<bigint>(0n);
+  
+  useEffect(() => {
+    if (!address || !tokenData?.coinAddress) return;
+    
+    async function fetchBalance() {
+      try {
+        const balance = await publicClient.readContract({
+          address: tokenData.coinAddress as Address,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [address as Address],
+        });
+        setTokenBalance(balance);
+      } catch (error) {
+        console.error('Error fetching token balance:', error);
+        setTokenBalance(0n);
+      }
+    }
+    
+    fetchBalance();
+  }, [address, tokenData?.coinAddress]);
 
   // Process holders data with proper typing
   const processedHolders = useMemo(() => {
