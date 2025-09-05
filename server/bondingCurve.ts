@@ -51,7 +51,7 @@ interface DeployBondingCurveResult {
 }
 
 class BondingCurveService {
-  private provider: ethers.JsonRpcProvider;
+  private provider: ethers.providers.JsonRpcProvider;
   private wallet?: ethers.Wallet;
   private factoryContract?: ethers.Contract;
 
@@ -212,7 +212,7 @@ class BondingCurveService {
         this.provider
       );
 
-      const ethAmountWei = ethers.parseEther(ethAmount);
+      const ethAmountWei = ethers.utils.parseEther(ethAmount);
       return await curveContract.calculateBuyTokens(ethAmountWei);
 
     } catch (error) {
@@ -232,7 +232,7 @@ class BondingCurveService {
         this.provider
       );
 
-      const tokenAmountWei = ethers.parseUnits(tokenAmount, 18);
+      const tokenAmountWei = ethers.utils.parseUnits(tokenAmount, 18);
       return await curveContract.calculateSellTokens(tokenAmountWei);
 
     } catch (error) {
@@ -292,9 +292,9 @@ export function formatBondingCurveInfo(info: BondingCurveInfo) {
     tokenAddress: info.tokenAddress,
     creatorAddress: info.creatorAddress,
     platformAddress: info.platformAddress,
-    supply: ethers.formatUnits(info.supply, 18),
-    reserve: ethers.formatEther(info.reserve),
-    currentPrice: ethers.formatEther(info.currentPrice),
-    marketCap: ethers.formatEther(info.marketCap)
+    supply: ethers.utils.formatUnits(info.supply, 18),
+    reserve: ethers.utils.formatEther(info.reserve),
+    currentPrice: ethers.utils.formatEther(info.currentPrice),
+    marketCap: ethers.utils.formatEther(info.marketCap)
   };
 }
