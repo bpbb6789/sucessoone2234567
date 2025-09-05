@@ -126,7 +126,6 @@ export default function ContentCoinDetail() {
   const [selectedPeriod, setSelectedPeriod] = useState<
     "1H" | "1D" | "1W" | "1M" | "All"
   >("1D");
-  const [tradeMode, setTradeMode] = useState<"buy" | "sell">("buy");
   const [viewMode, setViewMode] = useState<"chart" | "image">("chart");
   const [slippage, setSlippage] = useState("2"); // 2% default slippage
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -843,19 +842,45 @@ export default function ContentCoinDetail() {
                       </div>
                     </div>
 
-                    {/* Buy/Sell Toggle - Instant Trading */}
+                    {/* Buy/Sell Buttons - Instant Trading */}
                     <div className="flex space-x-2">
                       <Button
-                        className={`flex-1 ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-gray-700 hover:bg-gray-600"}`}
-                        onClick={() => setTradeMode("buy")}
+                        className="flex-1 bg-green-500 hover:bg-green-600"
+                        onClick={handleBuy}
+                        disabled={
+                          buyMutation.isPending ||
+                          !address ||
+                          !buyAmount ||
+                          parseFloat(buyAmount) <= 0
+                        }
                       >
-                        Buy
+                        {buyMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Buying...
+                          </>
+                        ) : (
+                          "Buy"
+                        )}
                       </Button>
                       <Button
-                        className={`flex-1 ${tradeMode === "sell" ? "bg-red-500 hover:bg-red-600" : "bg-gray-700 hover:bg-gray-600"}`}
-                        onClick={() => setTradeMode("sell")}
+                        className="flex-1 bg-red-500 hover:bg-red-600"
+                        onClick={handleSell}
+                        disabled={
+                          sellMutation.isPending ||
+                          !address ||
+                          !sellAmount ||
+                          parseFloat(sellAmount) <= 0
+                        }
                       >
-                        Sell
+                        {sellMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Selling...
+                          </>
+                        ) : (
+                          "Sell"
+                        )}
                       </Button>
                     </div>
 
@@ -871,110 +896,122 @@ export default function ContentCoinDetail() {
                       <div className="relative">
                         <Input
                           type="number"
-                          value={tradeMode === "buy" ? buyAmount : sellAmount}
+                          value={buyAmount}
                           onChange={(e) => {
-                            if (tradeMode === "buy") {
-                              setBuyAmount(e.target.value);
-                              calculateEstimatedTokens(e.target.value);
-                            } else {
-                              setSellAmount(e.target.value);
-                            }
+                            setBuyAmount(e.target.value);
+                            calculateEstimatedTokens(e.target.value);
                           }}
-                          placeholder={tradeMode === "buy" ? "0.000111" : "0.0"}
+                          placeholder="Enter ETH amount to buy"
                           step="0.000001"
                           min="0"
                           className="bg-input border-input pr-12"
                         />
                         <div className="absolute right-3 top-2 text-xs text-muted-foreground">
-                          {tradeMode === "buy" ? "ETH" : tokenData?.coinSymbol || "TOKENS"}
+                          ETH
                         </div>
                       </div>
-                      {tradeMode === "buy" && estimatedTokens && (
+                      {estimatedTokens && (
                         <div className="text-xs text-muted-foreground text-center">
-                          ≈ {estimatedTokens}{" "}
+                          You'll receive: ≈ {estimatedTokens}{" "}
                           {tokenData?.coinSymbol || "tokens"}
                         </div>
                       )}
-                      {tradeMode === "sell" && sellAmount && (
+                      
+                      {/* Sell Amount Input */}
+                      <div className="relative mt-4">
+                        <Input
+                          type="number"
+                          value={sellAmount}
+                          onChange={(e) => setSellAmount(e.target.value)}
+                          placeholder="Enter token amount to sell"
+                          step="0.000001"
+                          min="0"
+                          className="bg-input border-input pr-16"
+                        />
+                        <div className="absolute right-3 top-2 text-xs text-muted-foreground">
+                          {tokenData?.coinSymbol || "TOKENS"}
+                        </div>
+                      </div>
+                      {sellAmount && (
                         <div className="text-xs text-muted-foreground text-center">
-                          ≈ {(parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
+                          You'll receive: ≈ {(parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
                         </div>
                       )}
                     </div>
 
                     {/* Quick Amount Buttons */}
-                    <div className="grid grid-cols-4 gap-2">
-                      {tradeMode === "buy" ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAmountSelect("0.001")}
-                            className="text-xs"
-                          >
-                            0.001 ETH
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAmountSelect("0.01")}
-                            className="text-xs"
-                          >
-                            0.01 ETH
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAmountSelect("0.1")}
-                            className="text-xs"
-                          >
-                            0.1 ETH
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleMaxAmount}
-                            className="text-xs"
-                          >
-                            Max
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.25).toString() : "0")}
-                            className="text-xs"
-                          >
-                            25%
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.5).toString() : "0")}
-                            className="text-xs"
-                          >
-                            50%
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.75).toString() : "0")}
-                            className="text-xs"
-                          >
-                            75%
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSellAmount(tokenBalance ? formatUnits(BigInt(tokenBalance), 18) : "0")}
-                            className="text-xs"
-                          >
-                            Max
-                          </Button>
-                        </>
-                      )}
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium text-muted-foreground">Quick Buy Amounts</div>
+                      <div className="grid grid-cols-4 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAmountSelect("0.001")}
+                          className="text-xs"
+                        >
+                          0.001 ETH
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAmountSelect("0.01")}
+                          className="text-xs"
+                        >
+                          0.01 ETH
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAmountSelect("0.1")}
+                          className="text-xs"
+                        >
+                          0.1 ETH
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleMaxAmount}
+                          className="text-xs"
+                        >
+                          Max
+                        </Button>
+                      </div>
+                      
+                      <div className="text-xs font-medium text-muted-foreground">Quick Sell Amounts</div>
+                      <div className="grid grid-cols-4 gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.25).toString() : "0")}
+                          className="text-xs"
+                        >
+                          25%
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.5).toString() : "0")}
+                          className="text-xs"
+                        >
+                          50%
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSellAmount(tokenBalance ? (parseFloat(formatUnits(BigInt(tokenBalance), 18)) * 0.75).toString() : "0")}
+                          className="text-xs"
+                        >
+                          75%
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSellAmount(tokenBalance ? formatUnits(BigInt(tokenBalance), 18) : "0")}
+                          className="text-xs"
+                        >
+                          Max
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Advanced Settings */}
@@ -1046,8 +1083,12 @@ export default function ContentCoinDetail() {
                         <div className="text-xs font-medium">Trade Summary</div>
                         <div className="space-y-1 text-xs">
                           <div className="flex justify-between">
-                            <span>You {tradeMode}:</span>
+                            <span>Buy Amount:</span>
                             <span>{buyAmount} ETH</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Sell Amount:</span>
+                            <span>{sellAmount} {tokenData?.coinSymbol}</span>
                           </div>
                           {estimatedTokens && (
                             <div className="flex justify-between">
@@ -1071,32 +1112,6 @@ export default function ContentCoinDetail() {
                       </div>
                     )}
 
-                    {/* Trade Button */}
-                    <Button
-                      className={`w-full ${tradeMode === "buy" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
-                      onClick={tradeMode === "buy" ? handleBuy : handleSell}
-                      disabled={
-                        buyMutation.isPending ||
-                        sellMutation.isPending ||
-                        !address ||
-                        (tradeMode === "buy" && (!buyAmount || parseFloat(buyAmount) <= 0)) ||
-                        (tradeMode === "sell" && (!sellAmount || parseFloat(sellAmount) <= 0))
-                      }
-                      size="lg"
-                    >
-                      {buyMutation.isPending || sellMutation.isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processing...
-                        </>
-                      ) : !address ? (
-                        "Connect Wallet"
-                      ) : (tradeMode === "buy" && !buyAmount) || (tradeMode === "sell" && !sellAmount) ? (
-                        "Enter Amount"
-                      ) : (
-                        `${tradeMode === "buy" ? "Buy" : "Sell"} ${tokenData?.coinSymbol || "Tokens"}`
-                      )}
-                    </Button>
                   </div>
                 </TabsContent>
 
