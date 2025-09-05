@@ -130,8 +130,6 @@ export default function ContentCoinDetail() {
   const [slippage, setSlippage] = useState("2"); // 2% default slippage
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [estimatedTokens, setEstimatedTokens] = useState("");
-  const [bondingCurveEnabled, setBondingCurveEnabled] = useState(false);
-  const [bondingCurveInfo, setBondingCurveInfo] = useState<any>(null);
 
   // Removed auction state - using instant trading now
 
@@ -198,19 +196,6 @@ export default function ContentCoinDetail() {
         `/api/creator-coins/${tokenAddress}/holders`,
       );
       if (!response.ok) throw new Error("Failed to fetch holders");
-      return response.json();
-    },
-    enabled: !!tokenAddress,
-  });
-
-  // Fetch bonding curve information
-  const { data: bondingCurveData, isLoading: bondingCurveLoading } = useQuery({
-    queryKey: [`/api/creator-coins/${tokenAddress}/bonding-curve-info`],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/creator-coins/${tokenAddress}/bonding-curve-info`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch bonding curve info");
       return response.json();
     },
     enabled: !!tokenAddress,
@@ -311,7 +296,7 @@ export default function ContentCoinDetail() {
     calculateEstimatedTokens(newAmount);
   };
 
-  // Calculate estimated tokens based on bonding curve or fallback price
+  // Calculate estimated tokens based on current bonding curve price
   const calculateEstimatedTokens = async (ethAmount: string) => {
     if (!ethAmount) {
       setEstimatedTokens("");
@@ -319,23 +304,7 @@ export default function ContentCoinDetail() {
     }
 
     try {
-      // If bonding curve is available, use it for accurate quotes
-      if (bondingCurveData?.enabled && tokenData?.id) {
-        const response = await fetch(`/api/creator-coins/${tokenData.id}/bonding-curve-buy-quote`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ethAmount })
-        });
-        
-        if (response.ok) {
-          const quote = await response.json();
-          const tokensOut = parseFloat(formatUnits(BigInt(quote.tokensOut), 18));
-          setEstimatedTokens(tokensOut.toLocaleString());
-          return;
-        }
-      }
-      
-      // Fallback to simple price calculation
+      // Use real-time bonding curve price calculation
       if (!priceData?.price) {
         setEstimatedTokens("");
         return;
@@ -429,52 +398,27 @@ export default function ContentCoinDetail() {
     }
 
     try {
-      let response;
-      
-      // Use bonding curve trading if available (better pricing)
-      if (bondingCurveData?.enabled && bondingCurveData?.curveAddress) {
-        toast({
-          title: "Using Bonding Curve Trading",
-          description: "Better pricing through automated market making",
-        });
-        
-        // Direct bonding curve interaction would go here
-        // For now, fall back to existing API
-        response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            buyerAddress: address,
-            ethAmount: buyAmount,
-            slippageTolerance: slippage,
-            useBondingCurve: true,
-          }),
-        });
-      } else {
-        // Calculate minimum tokens with slippage protection
-        const estimatedTokensNum =
-          parseFloat(estimatedTokens.replace(/,/g, "")) || 0;
-        const minTokensOut = (
-          estimatedTokensNum *
-          (1 - parseFloat(slippage) / 100)
-        ).toString();
+      // Calculate minimum tokens with slippage protection
+      const estimatedTokensNum =
+        parseFloat(estimatedTokens.replace(/,/g, "")) || 0;
+      const minTokensOut = (
+        estimatedTokensNum *
+        (1 - parseFloat(slippage) / 100)
+      ).toString();
 
-        // Use existing PumpFun trading system
-        response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            buyerAddress: address,
-            ethAmount: buyAmount,
-            minTokensOut,
-            slippageTolerance: slippage,
-          }),
-        });
-      }
+      // Use PumpFun bonding curve for all trading (much lower gas costs)
+      const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          buyerAddress: address,
+          ethAmount: buyAmount,
+          minTokensOut,
+          slippageTolerance: slippage,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -676,18 +620,10 @@ export default function ContentCoinDetail() {
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <p className="text-muted-foreground">
-                  {tokenData?.coinName || tokenData?.name || "Loading..."} (
-                  {tokenData?.coinSymbol || tokenData?.symbol || "..."})
-                </p>
-                {bondingCurveData?.enabled && (
-                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                    <Activity className="h-3 w-3 mr-1" />
-                    Bonding Curve
-                  </Badge>
-                )}
-              </div>
+              <p className="text-muted-foreground">
+                {tokenData?.coinName || tokenData?.name || "Loading..."} (
+                {tokenData?.coinSymbol || tokenData?.symbol || "..."})
+              </p>
             </div>
 
             {/* Chart/Image Toggle */}
@@ -774,42 +710,6 @@ export default function ContentCoinDetail() {
                       : "0"}
                   </span>
                 </div>
-                
-                {/* Bonding Curve Stats */}
-                {bondingCurveData?.enabled && bondingCurveData?.info && (
-                  <>
-                    <div className="border-t border-border pt-3 mt-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Activity className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm font-semibold text-blue-400">Bonding Curve</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        Supply in Curve
-                      </span>
-                      <span className="text-sm font-semibold">
-                        {parseFloat(bondingCurveData.info.supply).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        ETH Reserve
-                      </span>
-                      <span className="text-sm font-semibold">
-                        {parseFloat(bondingCurveData.info.reserve).toFixed(6)} ETH
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        Curve Price
-                      </span>
-                      <span className="text-sm font-semibold text-green-400">
-                        ${parseFloat(bondingCurveData.info.currentPrice).toFixed(8)}
-                      </span>
-                    </div>
-                  </>
-                )}
               </div>
             </div>
 
