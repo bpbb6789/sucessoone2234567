@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { db } from "./db";
 import { creatorCoins } from "../shared/schema";
 import { eq } from "drizzle-orm";
-import { createPublicClient, createWalletClient, http, PublicClient, WalletClient, Account, Address } from "viem";
+import { createPublicClient, createWalletClient, http, PublicClient, WalletClient, Account, Address, getAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 
@@ -33,7 +33,7 @@ const CHAIN_ID = 84532;
 
 // Contract addresses (to be set after deployment)
 // Updated with deployed factory address on Base Sepolia
-const BONDING_CURVE_FACTORY_ADDRESS = (process.env.BONDING_CURVE_FACTORY_ADDRESS || "0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201") as Address;
+const BONDING_CURVE_FACTORY_ADDRESS = getAddress(process.env.BONDING_CURVE_FACTORY_ADDRESS || "0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201");
 const PLATFORM_ADMIN_ADDRESS = process.env.PLATFORM_ADMIN_ADDRESS || "0x64170da71cfA3Cf1169D5b4403693CaEDb1E157c";
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || process.env.PRIVATE_KEY || "";
 
@@ -107,8 +107,12 @@ class BondingCurveService {
       console.log(`🚀 Deploying bonding curve for token ${tokenAddress} by creator ${creatorAddress}`);
 
       // Check if curve already exists
+      console.log(`🔍 Checking if curve exists with factory: ${BONDING_CURVE_FACTORY_ADDRESS}`);
+      console.log(`   Creator: ${creatorAddress}`);
+      console.log(`   Token: ${tokenAddress}`);
+      
       const existingCurve = await this.publicClient.readContract({
-        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
+        address: BONDING_CURVE_FACTORY_ADDRESS,
         abi: [
           {
             inputs: [{ name: "creator", type: "address" }, { name: "token", type: "address" }],
@@ -117,9 +121,9 @@ class BondingCurveService {
             stateMutability: "view",
             type: "function"
           }
-        ],
+        ] as const,
         functionName: 'getCurve',
-        args: [creatorAddress as `0x${string}`, tokenAddress as `0x${string}`]
+        args: [creatorAddress as Address, tokenAddress as Address]
       });
 
       if (existingCurve !== "0x0000000000000000000000000000000000000000") {

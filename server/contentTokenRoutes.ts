@@ -2,6 +2,7 @@ import { Express } from 'express';
 import multer from 'multer';
 import { bondingCurveService } from './bondingCurve';
 import { PinataSDK } from 'pinata';
+import { getAddress } from 'viem';
 
 // Initialize Pinata client
 const pinata = new PinataSDK({
@@ -172,14 +173,18 @@ export function setupContentTokenRoutes(app: Express) {
         throw new Error('Bonding curve service not configured. Missing required environment variables.');
       }
 
-      // Use a known valid Ethereum address for testing (in production, you would deploy an actual ERC20 token first)
-      const tempTokenAddress = '0x1234567890123456789012345678901234567890';
+      // Use a properly checksummed valid address for testing (in production, you would deploy an actual ERC20 token first)
+      const tempTokenAddress = getAddress('0x1234567890123456789012345678901234567890');
+      const checksummedCreatorAddress = getAddress(creatorAddress || '0x0000000000000000000000000000000000000000');
       
-      console.log(`Using test token address: ${tempTokenAddress}`);
+      console.log(`🚀 REAL CONTRACT DEPLOYMENT STARTING:`);
+      console.log(`   Token address: ${tempTokenAddress}`);
+      console.log(`   Creator address: ${checksummedCreatorAddress}`);
+      console.log(`   Factory contract: ${process.env.BONDING_CURVE_FACTORY_ADDRESS}`);
       
       const deployResult = await bondingCurveService.deployBondingCurve(
         tempTokenAddress,
-        creatorAddress || 'anonymous',
+        checksummedCreatorAddress,
         `content-coin-${Date.now()}`
       );
 
