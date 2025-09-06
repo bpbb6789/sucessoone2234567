@@ -4,6 +4,10 @@ import {
   coinbaseWallet,
   metaMaskWallet,
   rabbyWallet,
+  rainbowWallet,
+  walletConnectWallet,
+  trustWallet,
+  ledgerWallet,
 } from "@rainbow-me/rainbowkit/wallets";
 import { useMemo } from "react";
 import { createConfig } from "@wagmi/core";
@@ -22,12 +26,16 @@ export function useWagmiConfig() {
     const connectors = connectorsForWallets(
       [
         {
-          groupName: "Recommended Wallet",
-          wallets: [coinbaseWallet],
+          groupName: "Recommended",
+          wallets: [coinbaseWallet, rainbowWallet],
         },
         {
-          groupName: "Other Wallets",
-          wallets: [metaMaskWallet, rabbyWallet],
+          groupName: "Popular",
+          wallets: [metaMaskWallet, walletConnectWallet, trustWallet],
+        },
+        {
+          groupName: "More Options",
+          wallets: [rabbyWallet, ledgerWallet],
         },
       ],
       {
