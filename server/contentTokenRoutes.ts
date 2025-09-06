@@ -354,11 +354,24 @@ export function setupContentTokenRoutes(app: Express) {
       const { address } = req.params;
       const { amount, buyer } = req.body;
 
-      // Mock trading functionality
+      if (!amount || parseFloat(amount) <= 0) {
+        return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      // Calculate tokens that would be received for the ETH amount
+      const tokensReceived = await bondingCurveService.calculateBuyTokens(address, amount);
+      
+      if (!tokensReceived) {
+        throw new Error('Failed to calculate buy amount - curve may not exist');
+      }
+
+      // In a real implementation, you would execute the actual buy transaction here
+      // For now, return the calculation without executing the transaction
       res.json({
         success: true,
-        tokensReceived: (parseFloat(amount) / Math.random()).toString(),
-        transactionHash: `0x${Math.random().toString(16).substring(2)}`
+        tokensReceived: tokensReceived.toString(),
+        transactionHash: 'Transaction execution not implemented yet',
+        message: 'This is a calculation only - actual trading not yet implemented'
       });
     } catch (error) {
       console.error('Buy tokens error:', error);
@@ -374,11 +387,24 @@ export function setupContentTokenRoutes(app: Express) {
       const { address } = req.params;
       const { amount, seller } = req.body;
 
-      // Mock trading functionality  
+      if (!amount || parseFloat(amount) <= 0) {
+        return res.status(400).json({ error: 'Invalid amount' });
+      }
+
+      // Calculate ETH that would be received for the token amount
+      const ethReceived = await bondingCurveService.calculateSellTokens(address, amount);
+      
+      if (!ethReceived) {
+        throw new Error('Failed to calculate sell amount - curve may not exist');
+      }
+
+      // In a real implementation, you would execute the actual sell transaction here
+      // For now, return the calculation without executing the transaction
       res.json({
         success: true,
-        ethReceived: (parseFloat(amount) * Math.random()).toString(),
-        transactionHash: `0x${Math.random().toString(16).substring(2)}`
+        ethReceived: ethReceived.toString(),
+        transactionHash: 'Transaction execution not implemented yet',
+        message: 'This is a calculation only - actual trading not yet implemented'
       });
     } catch (error) {
       console.error('Sell tokens error:', error);
