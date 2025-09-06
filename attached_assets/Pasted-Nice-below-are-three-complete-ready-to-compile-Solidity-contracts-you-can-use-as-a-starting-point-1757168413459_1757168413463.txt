@@ -1,0 +1,392 @@
+Nice — below are three complete, ready-to-compile Solidity contracts you can use as a starting point. They implement:
+
+* `ContentCoin.sol` — an ERC20 token template (mintable by factory at deploy).
+* `BondingCurveExchange.sol` — the bonding-curve market (square / quadratic math like Zora), no burn model (vault holds token supply), fixed 0.08% fee split (0.05% creator, 0.03% admin). Includes reentrancy guard, events, and basic safety checks.
+* `BondingCurveFactory.sol` — deploys a `ContentCoin` and a `BondingCurveExchange` for it, sends the initial token supply to the exchange vault, and emits events.
+
+These assume you're deploying on an EVM (Base Sepolia/mainnet). Drop them into Hardhat/Foundry/Replit and compile.
+
+> Notes:
+>
+> * You should **audit** and test thoroughly. Quadratic math (`s^2`) can overflow if `totalSupply` is extremely large. For typical content tokens (<= 1e9 units at 18 decimals) this is fine; if you expect astronomical supply, replace math with fixed-point libs (ABDKMath or PRBMath) and/or bounds checks.
+> * These examples keep logic readable. Add additional safety, caps, access controls, and pausing as needed.
+
+---
+
+# ContentCoin.sol
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+/// @notice Simple ERC20 used as Content Coin. Minted once at construction (by the factory).
+contract ContentCoin is ERC20, Ownable {
+    uint8 private _decimals;
+
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        uint256 initialSupply, // expressed in token units (including decimals)
+        uint8 decimals_,
+        address owner_
+    ) ERC20(name_, symbol_) {
+        _decimals = decimals_;
+        _mint(address(this), initialSupply); // mint to this contract for the factory to transfer to the curve
+        _transferOwnership(owner_);
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
+    }
+
+    /// @notice Allow owner (factory) to transfer token held by this contract
+    function withdrawTo(address to, uint256 amount) external onlyOwner {
+        _transfer(address(this), to, amount);
+    }
+}
+```
+
+---
+
+# BondingCurveExchange.sol
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+/// @notice Bonding curve exchange for a single ContentCoin token.
+/// - Non-burn model: tokens are stored in the exchange vault and transferred to/from users.
+/// - Square/quadratic curve: cost = k * ((S + n)^2 - S^2)
+contract BondingCurveExchange is ReentrancyGuard, Ownable {
+    IERC20 public immutable token;
+    address public creator;
+    address public admin;
+
+    // reserves tracked in ETH wei
+    uint256 public reserveBalance;
+    // tracked supply used for curve math - equals amount sold (i.e. circulating from vault)
+    uint256 public totalSupply; // this represents tokens sold via this exchange (in token base units)
+
+    // Fees: basis points (BPS). TOTAL = 8 => 0.08%
+    uint16 public constant TOTAL_FEE_BPS = 8;
+    uint16 public constant CREATOR_FEE_BPS = 5; // 0.05%
+    uint16 public constant ADMIN_FEE_BPS   = 3; // 0.03%
+    uint16 public constant BPS_DENOMINATOR = 10000;
+
+    // curve constant k (scale). Tune this to set initial price.
+    // price (wei) = k * supply^2 derivative behavior
+    uint256 public immutable k;
+
+    event Bought(address indexed buyer, uint256 tokensOut, uint256 ethPaid, uint256 creatorFee, uint256 adminFee);
+    event Sold(address indexed seller, uint256 tokensIn, uint256 ethPayout, uint256 creatorFee, uint256 adminFee);
+    event ReserveWithdrawn(address indexed to, uint256 amount);
+    event AdminChanged(address indexed oldAdmin, address indexed newAdmin);
+    event CreatorChanged(address indexed oldCreator, address indexed newCreator);
+
+    constructor(
+        address tokenAddress,
+        address _creator,
+        address _admin,
+        uint256 _k,
+        address owner_
+    ) {
+        require(tokenAddress != address(0), "token addr 0");
+        require(_creator != address(0), "creator addr 0");
+        require(_admin != address(0), "admin addr 0");
+        require(_k > 0, "k>0");
+
+        token = IERC20(tokenAddress);
+        creator = _creator;
+        admin = _admin;
+        k = _k;
+        _transferOwnership(owner_);
+    }
+
+    // --------------------------
+    // Public view helpers
+    // --------------------------
+
+    /// @notice Quadratic cost to mint `amountOut` tokens given current supply S:
+    /// cost = k * ( (S + n)^2 - S^2 ) = k * (2*S*n + n^2)
+    function buyCost(uint256 amountOut) public view returns (uint256) {
+        if (amountOut == 0) return 0;
+        uint256 s = totalSupply;
+        // cost = k * ( (s + n)^2 - s^2 ) = k*(2*s*n + n*n)
+        // compute (2*s*n + n*n) first as uint256
+        uint256 term1 = 2 * s * amountOut;
+        uint256 term2 = amountOut * amountOut;
+        uint256 sum = term1 + term2;
+        return k * sum;
+    }
+
+    /// @notice Payout (in ETH wei) returned for burning/selling `amountIn` tokens:
+    /// payout = k * ( S^2 - (S - n)^2 ) = k * (2*S*n - n^2)
+    function sellReward(uint256 amountIn) public view returns (uint256) {
+        require(amountIn <= totalSupply, "sell > supply");
+        if (amountIn == 0) return 0;
+        uint256 s = totalSupply;
+        uint256 term1 = 2 * s * amountIn;
+        uint256 term2 = amountIn * amountIn;
+        uint256 sum = term1 - term2;
+        return k * sum;
+    }
+
+    // Marginal price approximation for 1 token (useful for UI)
+    function currentPricePerToken() public view returns (uint256) {
+        return buyCost(1);
+    }
+
+    // --------------------------
+    // Trade: buy (ETH -> tokens)
+    // --------------------------
+    /// @notice Buy `amountOut` tokens by sending ETH.
+    /// - Caller sends ETH >= buyCost(amountOut)
+    /// - Contract transfers tokens from vault to buyer
+    function buy(uint256 amountOut) external payable nonReentrant {
+        require(amountOut > 0, "amountOut 0");
+
+        uint256 cost = buyCost(amountOut);
+        require(msg.value >= cost, "insufficient ETH");
+
+        // calculate fees (on cost)
+        uint256 totalFee = (cost * TOTAL_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 creatorFee = (cost * CREATOR_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 adminFee   = (cost * ADMIN_FEE_BPS) / BPS_DENOMINATOR;
+
+        // update bookkeeping
+        totalSupply += amountOut;
+        reserveBalance += (cost - totalFee);
+
+        // transfer fees immediately
+        if (creatorFee > 0) {
+            (bool sentC,) = payable(creator).call{value: creatorFee}("");
+            require(sentC, "creator fee send failed");
+        }
+        if (adminFee > 0) {
+            (bool sentA,) = payable(admin).call{value: adminFee}("");
+            require(sentA, "admin fee send failed");
+        }
+
+        // transfer tokens from this exchange's vault to buyer
+        require(token.transfer(msg.sender, amountOut), "token transfer failed");
+
+        // refund any excess ETH
+        if (msg.value > cost) {
+            (bool refund,) = payable(msg.sender).call{value: msg.value - cost}("");
+            require(refund, "refund failed");
+        }
+
+        emit Bought(msg.sender, amountOut, cost, creatorFee, adminFee);
+    }
+
+    // --------------------------
+    // Trade: sell (tokens -> ETH)
+    // --------------------------
+    /// @notice Sell `amountIn` tokens and receive ETH payout.
+    /// - Caller must approve token transfer to this contract prior to calling.
+    function sell(uint256 amountIn) external nonReentrant {
+        require(amountIn > 0, "amountIn 0");
+        require(amountIn <= totalSupply, "sell too big");
+
+        uint256 payout = sellReward(amountIn);
+        require(reserveBalance >= payout, "insufficient reserve");
+
+        // compute fees on payout
+        uint256 totalFee = (payout * TOTAL_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 creatorFee = (payout * CREATOR_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 adminFee   = (payout * ADMIN_FEE_BPS) / BPS_DENOMINATOR;
+
+        // pull tokens into vault
+        require(token.transferFrom(msg.sender, address(this), amountIn), "transferFrom failed");
+
+        // update bookkeeping
+        totalSupply -= amountIn;
+        reserveBalance -= payout;
+
+        // send fees
+        if (creatorFee > 0) {
+            (bool sentC,) = payable(creator).call{value: creatorFee}("");
+            require(sentC, "creator fee send failed");
+        }
+        if (adminFee > 0) {
+            (bool sentA,) = payable(admin).call{value: adminFee}("");
+            require(sentA, "admin fee send failed");
+        }
+
+        // pay seller payout minus totalFee
+        uint256 netPayout = payout - totalFee;
+        (bool paid,) = payable(msg.sender).call{value: netPayout}("");
+        require(paid, "pay seller failed");
+
+        emit Sold(msg.sender, amountIn, payout, creatorFee, adminFee);
+    }
+
+    // --------------------------
+    // Admin utilities
+    // --------------------------
+    /// @notice Withdraw excess ETH (reserve leftover not required by curve) — owner only.
+    function withdrawReserve(address to, uint256 amount) external onlyOwner {
+        require(to != address(0), "to 0");
+        require(amount <= address(this).balance, "not enough ETH");
+        (bool sent,) = payable(to).call{value: amount}("");
+        require(sent, "withdraw failed");
+        emit ReserveWithdrawn(to, amount);
+    }
+
+    function setAdmin(address newAdmin) external onlyOwner {
+        require(newAdmin != address(0), "admin 0");
+        emit AdminChanged(admin, newAdmin);
+        admin = newAdmin;
+    }
+
+    function setCreator(address newCreator) external onlyOwner {
+        require(newCreator != address(0), "creator 0");
+        emit CreatorChanged(creator, newCreator);
+        creator = newCreator;
+    }
+
+    // Allow contract to receive ETH (e.g. refunds)
+    receive() external payable {
+        reserveBalance += msg.value;
+    }
+}
+```
+
+---
+
+# BondingCurveFactory.sol
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "./ContentCoin.sol";
+import "./BondingCurveExchange.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+/// @notice Factory that deploys a ContentCoin and its BondingCurveExchange.
+/// The factory mints initial supply into the ContentCoin contract (constructor),
+/// then transfers token supply to the exchange vault.
+contract BondingCurveFactory is Ownable {
+    // configuration params for new exchanges
+    address public admin;       // platform treasury
+    uint256 public immutable defaultK; // default curve constant k
+
+    event ContentCoinAndCurveCreated(address indexed creator, address indexed token, address curve, uint256 initialSupply);
+
+    mapping(address => mapping(address => address)) public curves; // creator -> token -> curve
+
+    constructor(address _admin, uint256 _defaultK) {
+        require(_admin != address(0), "admin 0");
+        admin = _admin;
+        defaultK = _defaultK;
+    }
+
+    /// @notice Deploy a ContentCoin and its BondingCurveExchange.
+    /// @param name name of token
+    /// @param symbol symbol
+    /// @param totalSupply total supply (including decimals)
+    /// @param decimals token decimals (usually 18)
+    /// @return tokenAddr deployed token address
+    /// @return curveAddr deployed curve address
+    function createContentCoinWithCurve(
+        string calldata name,
+        string calldata symbol,
+        uint256 totalSupply,
+        uint8 decimals
+    ) external returns (address tokenAddr, address curveAddr) {
+        require(totalSupply > 0, "supply 0");
+
+        // 1) Deploy token; owner is this factory (so we can transfer tokens)
+        ContentCoin token = new ContentCoin(name, symbol, totalSupply, decimals, address(this));
+        tokenAddr = address(token);
+
+        // 2) Deploy exchange
+        BondingCurveExchange curve = new BondingCurveExchange(
+            tokenAddr,
+            msg.sender,         // creator
+            admin,              // admin treasury
+            defaultK,
+            msg.sender          // owner of exchange is creator so they can change creator/admin if needed
+        );
+        curveAddr = address(curve);
+
+        // 3) Transfer full supply from token contract to the curve vault
+        // token was minted to token contract itself; factory is owner and can call withdrawTo
+        token.withdrawTo(curveAddr, totalSupply);
+
+        // 4) Save mapping
+        curves[msg.sender][tokenAddr] = curveAddr;
+
+        emit ContentCoinAndCurveCreated(msg.sender, tokenAddr, curveAddr, totalSupply);
+        return (tokenAddr, curveAddr);
+    }
+
+    /// @notice Deploy only curve for existing token (useful if tokens are minted separately)
+    function deployCurveForExistingToken(address tokenAddr) external returns (address curveAddr) {
+        require(tokenAddr != address(0), "token 0");
+        require(curves[msg.sender][tokenAddr] == address(0), "curve exists");
+
+        BondingCurveExchange curve = new BondingCurveExchange(
+            tokenAddr,
+            msg.sender,
+            admin,
+            defaultK,
+            msg.sender
+        );
+        curveAddr = address(curve);
+
+        // Transfer tokens must be done by token owner externally to curve
+        curves[msg.sender][tokenAddr] = curveAddr;
+        emit ContentCoinAndCurveCreated(msg.sender, tokenAddr, curveAddr, 0);
+    }
+
+    function updateAdmin(address newAdmin) external onlyOwner {
+        require(newAdmin != address(0), "admin 0");
+        admin = newAdmin;
+    }
+
+    /// Helper: read curve for creator+token
+    function getCurve(address creator, address token) external view returns (address) {
+        return curves[creator][token];
+    }
+}
+```
+
+---
+
+# Quick deployment & usage notes
+
+1. **Compile** all contracts (Hardhat/Foundry).
+2. **Deploy** `BondingCurveFactory` with parameters:
+
+   * `admin` = platform treasury address (where admin fees are sent).
+   * `defaultK` = tuning constant (try `1e12` or `1e15` and test cheap buys on testnet). Smaller `k` → cheaper initial prices.
+3. To create coin + market: call `createContentCoinWithCurve(name, symbol, totalSupply, decimals)` from the creator wallet. This returns `(token, curve)`.
+4. Frontend:
+
+   * Show `buyCost(amount)` by calling `buyCost` on the curve (amount in token base units). Convert units per token decimals.
+   * For ETH → tokens conversion, perform binary search on `buyCost` (or expose helper view if you add one).
+   * Call `buy(amountOut)` as a `payable` transaction with `value = buyCost(amountOut)`.
+   * Call `sell(amountIn)` after approving tokens.
+5. Accounting:
+
+   * Creator/Admin fees are sent instantly on every trade.
+   * `reserveBalance` tracks ETH kept to pay sellers. `receive()` adds to reserve when factory or external transfers ETH.
+
+---
+
+If you want, I can:
+
+* a) Add helper view functions that invert ETH→tokens to make the frontend cheap/fast (so you avoid client-side binary search).
+* b) Add slippage safety (minReceived / maxCost) and add an event indexer script for activity feed.
+* c) Provide a sample Hardhat `deploy` script and a basic React + viem hook for quotes and buy/sell flows.
+
+Which of those next?
