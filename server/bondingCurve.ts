@@ -129,19 +129,71 @@ class BondingCurveService {
       console.log(`   Total Supply: ${totalSupply}`);
       console.log(`   Creator: ${creatorAddress}`);
 
-      // Use a simple approach - deploy via factory instead of raw bytecode
-      console.log(`🔄 Using factory pattern instead of raw ERC20 deployment`);
+      // Deploy real ContentCoin contract using viem deployContract
+      console.log(`🔄 Deploying real ContentCoin contract on-chain`);
       
-      // Create a simple token implementation through the bonding curve factory
-      // This avoids the bytecode issues by using existing deployed contracts
-      const tempTokenAddress = `0x${Buffer.from(`${name}_${symbol}_${Date.now()}_${creatorAddress}`, 'utf8').toString('hex').padStart(40, '0').slice(0, 40)}`;
+      // ContentCoin ABI for deployment
+      const contentCoinABI = [
+        {
+          "inputs": [
+            {"internalType": "string", "name": "name_", "type": "string"},
+            {"internalType": "string", "name": "symbol_", "type": "string"},
+            {"internalType": "uint256", "name": "initialSupply", "type": "uint256"},
+            {"internalType": "uint8", "name": "decimals_", "type": "uint8"},
+            {"internalType": "address", "name": "owner_", "type": "address"}
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        }
+      ];
+
+      // Basic ERC20 bytecode (simplified OpenZeppelin ERC20)
+      const contentCoinBytecode = "0x608060405234801561001057600080fd5b506040516108b03803806108b08339818101604052810190610032919061028a565b84848160039080519060200190610048929190610133565b50806004908051906020019061005f929190610133565b50505082600560006101000a81548160ff021916908360ff1602179055506100873082610090565b50505050506103ab565b600073ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff161415610100576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016100f790610325565b60405180910390fd5b8060026000828254610112919061036b565b92505081905550806000808473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254610167919061036b565b925050819055508173ffffffffffffffffffffffffffffffffffffffff16600073ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040516101cc919061034a565b60405180910390a35050565b8280546101e4906103c1565b90600052602060002090601f016020900481019282610206576000855561024d565b82601f1061021f57805160ff191683800117855561024d565b8280016001018555821561024d579182015b8281111561024c578251825591602001919060010190610231565b5b50905061025a919061025e565b5090565b5b8082111561027757600081600090555060010161025f565b5090565b600081519050610284816103f3565b92915050565b600080600080600060a086880312156102a6576102a5610402565b5b60006102b488828901610275565b95505060206102c588828901610275565b94505060406102d688828901610275565b93505060606102e788828901610275565b92505060806102f888828901610275565b9150509295509295909350565b600061031082610365565b915061031b83610365565b925082821015610337576103366103d3565b50919050565b6103468161039f565b82525050565b6000602082019050610361600083018461033d565b92915050565b6000819050919050565b600061037c82610365565b915061038783610365565b9250827fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff038211156103bc576103bb6103d3565b50919050565b600060028204905060018216806103d957607f821691505b602082108114156103ed576103ec610404565b5b50919050565b6103fc81610365565b811461040757600080fd5b50565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b6104f78061041a6000396000f3fe";
+
+      // Calculate total supply with 18 decimals
+      const decimals = 18;
+      const totalSupplyWei = BigInt(totalSupply) * (BigInt(10) ** BigInt(decimals));
+
+      console.log(`📊 Deployment parameters:`);
+      console.log(`   - Name: "${name}"`);
+      console.log(`   - Symbol: "${symbol}"`);
+      console.log(`   - Total Supply: ${totalSupplyWei.toString()} wei (${totalSupply} tokens)`);
+      console.log(`   - Decimals: ${decimals}`);
+      console.log(`   - Owner: ${creatorAddress}`);
+
+      if (!this.account) {
+        throw new Error('No account configured for deployment');
+      }
+
+      // Deploy the contract
+      const hash = await this.walletClient!.deployContract({
+        abi: contentCoinABI,
+        bytecode: contentCoinBytecode as `0x${string}`,
+        args: [name, symbol, totalSupplyWei, decimals, creatorAddress as `0x${string}`],
+        account: this.account!,
+        chain: baseSepolia,
+        gas: BigInt(2000000), // 2M gas limit
+      });
+
+      console.log(`📝 Contract deployment transaction: ${hash}`);
+
+      // Wait for transaction receipt
+      const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
       
-      console.log(`✅ Generated deterministic token address: ${tempTokenAddress}`);
+      if (!receipt.contractAddress) {
+        throw new Error('Contract deployment failed - no contract address in receipt');
+      }
+
+      console.log(`✅ ContentCoin deployed successfully!`);
+      console.log(`   - Contract Address: ${receipt.contractAddress}`);
+      console.log(`   - Transaction Hash: ${hash}`);
+      console.log(`   - Block Number: ${receipt.blockNumber}`);
+      console.log(`   - Gas Used: ${receipt.gasUsed}`);
 
       return {
         success: true,
-        tokenAddress: tempTokenAddress,
-        transactionHash: `0x${Buffer.from(`deploy_${tempTokenAddress}_${Date.now()}`, 'utf8').toString('hex').padStart(64, '0').slice(0, 64)}`
+        tokenAddress: receipt.contractAddress,
+        transactionHash: hash
       };
 
     } catch (error) {
