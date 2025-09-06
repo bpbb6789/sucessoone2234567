@@ -1,186 +1,94 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "./ContentCoin.sol";
 import "./BondingCurveExchange.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/**
- * @title BondingCurveFactory
- * @dev Factory contract to deploy BondingCurveExchange contracts for Content Coins
- * @notice Creates automated trading markets for Zora-created tokens
- */
+/// @notice Factory that deploys a ContentCoin and its BondingCurveExchange.
+/// The factory mints initial supply into the ContentCoin contract (constructor),
+/// then transfers token supply to the exchange vault.
 contract BondingCurveFactory is Ownable {
-    address public platformAdmin;
-    
-    // creator → token → curve
-    mapping(address => mapping(address => address)) public curves;
-    
-    // Array to track all deployed curves
-    address[] public allCurves;
-    
-    // Events
-    event CurveDeployed(
-        address indexed creator,
-        address indexed token, 
-        address indexed curve,
-        uint256 curveIndex
-    );
-    
-    event PlatformAdminUpdated(
-        address indexed oldAdmin,
-        address indexed newAdmin
-    );
-    
-    constructor(address _platformAdmin) Ownable(msg.sender) {
-        require(_platformAdmin != address(0), "Invalid platform admin address");
-        platformAdmin = _platformAdmin;
-        
-        emit PlatformAdminUpdated(address(0), _platformAdmin);
+    // configuration params for new exchanges
+    address public admin;       // platform treasury
+    uint256 public immutable defaultK; // default curve constant k
+
+    event ContentCoinAndCurveCreated(address indexed creator, address indexed token, address curve, uint256 initialSupply);
+
+    mapping(address => mapping(address => address)) public curves; // creator -> token -> curve
+
+    constructor(address _admin, uint256 _defaultK) {
+        require(_admin != address(0), "admin 0");
+        admin = _admin;
+        defaultK = _defaultK;
     }
-    
-    /**
-     * @dev Deploy a new bonding curve for a content coin
-     * @param token Address of the ERC20 token (Content Coin)
-     * @param creator Address of the content creator
-     * @return curveAddress Address of the deployed BondingCurveExchange
-     */
-    function deployCurve(address token, address creator) external returns (address curveAddress) {
-        require(token != address(0), "Invalid token address");
-        require(creator != address(0), "Invalid creator address");
-        require(curves[creator][token] == address(0), "Curve already exists for this creator/token pair");
-        
-        // Deploy new BondingCurveExchange
+
+    /// @notice Deploy a ContentCoin and its BondingCurveExchange.
+    /// @param name name of token
+    /// @param symbol symbol
+    /// @param totalSupply total supply (including decimals)
+    /// @param decimals token decimals (usually 18)
+    /// @return tokenAddr deployed token address
+    /// @return curveAddr deployed curve address
+    function createContentCoinWithCurve(
+        string calldata name,
+        string calldata symbol,
+        uint256 totalSupply,
+        uint8 decimals
+    ) external returns (address tokenAddr, address curveAddr) {
+        require(totalSupply > 0, "supply 0");
+
+        // 1) Deploy token; owner is this factory (so we can transfer tokens)
+        ContentCoin token = new ContentCoin(name, symbol, totalSupply, decimals, address(this));
+        tokenAddr = address(token);
+
+        // 2) Deploy exchange
         BondingCurveExchange curve = new BondingCurveExchange(
-            token,
-            creator,
-            platformAdmin
+            tokenAddr,
+            msg.sender,         // creator
+            admin,              // admin treasury
+            defaultK,
+            msg.sender          // owner of exchange is creator so they can change creator/admin if needed
         );
-        
-        curveAddress = address(curve);
-        
-        // Store the mapping
-        curves[creator][token] = curveAddress;
-        
-        // Add to all curves array
-        allCurves.push(curveAddress);
-        
-        emit CurveDeployed(creator, token, curveAddress, allCurves.length - 1);
+        curveAddr = address(curve);
+
+        // 3) Transfer full supply from token contract to the curve vault
+        // token was minted to token contract itself; factory is owner and can call withdrawTo
+        token.withdrawTo(curveAddr, totalSupply);
+
+        // 4) Save mapping
+        curves[msg.sender][tokenAddr] = curveAddr;
+
+        emit ContentCoinAndCurveCreated(msg.sender, tokenAddr, curveAddr, totalSupply);
+        return (tokenAddr, curveAddr);
     }
-    
-    /**
-     * @dev Get curve address for a specific creator/token pair
-     * @param creator Creator address
-     * @param token Token address
-     * @return curveAddress Address of bonding curve, or zero address if not exists
-     */
-    function getCurve(address creator, address token) external view returns (address curveAddress) {
+
+    /// @notice Deploy only curve for existing token (useful if tokens are minted separately)
+    function deployCurveForExistingToken(address tokenAddr) external returns (address curveAddr) {
+        require(tokenAddr != address(0), "token 0");
+        require(curves[msg.sender][tokenAddr] == address(0), "curve exists");
+
+        BondingCurveExchange curve = new BondingCurveExchange(
+            tokenAddr,
+            msg.sender,
+            admin,
+            defaultK,
+            msg.sender
+        );
+        curveAddr = address(curve);
+
+        // Transfer tokens must be done by token owner externally to curve
+        curves[msg.sender][tokenAddr] = curveAddr;
+        emit ContentCoinAndCurveCreated(msg.sender, tokenAddr, curveAddr, 0);
+    }
+
+    function updateAdmin(address newAdmin) external onlyOwner {
+        require(newAdmin != address(0), "admin 0");
+        admin = newAdmin;
+    }
+
+    /// Helper: read curve for creator+token
+    function getCurve(address creator, address token) external view returns (address) {
         return curves[creator][token];
-    }
-    
-    /**
-     * @dev Check if a curve exists for creator/token pair
-     * @param creator Creator address
-     * @param token Token address
-     * @return exists True if curve exists
-     */
-    function curveExists(address creator, address token) external view returns (bool exists) {
-        return curves[creator][token] != address(0);
-    }
-    
-    /**
-     * @dev Get total number of deployed curves
-     * @return count Number of curves deployed
-     */
-    function getCurveCount() external view returns (uint256 count) {
-        return allCurves.length;
-    }
-    
-    /**
-     * @dev Get curve address by index
-     * @param index Index in the allCurves array
-     * @return curveAddress Address of the curve
-     */
-    function getCurveByIndex(uint256 index) external view returns (address curveAddress) {
-        require(index < allCurves.length, "Index out of bounds");
-        return allCurves[index];
-    }
-    
-    /**
-     * @dev Get info for multiple curves
-     * @param startIndex Starting index
-     * @param count Number of curves to fetch
-     * @return curveAddresses Array of curve addresses
-     * @return tokenAddresses Array of token addresses
-     * @return creatorAddresses Array of creator addresses
-     */
-    function getCurvesBatch(
-        uint256 startIndex, 
-        uint256 count
-    ) external view returns (
-        address[] memory curveAddresses,
-        address[] memory tokenAddresses,
-        address[] memory creatorAddresses
-    ) {
-        require(startIndex < allCurves.length, "Start index out of bounds");
-        
-        uint256 endIndex = startIndex + count;
-        if (endIndex > allCurves.length) {
-            endIndex = allCurves.length;
-        }
-        
-        uint256 actualCount = endIndex - startIndex;
-        curveAddresses = new address[](actualCount);
-        tokenAddresses = new address[](actualCount);
-        creatorAddresses = new address[](actualCount);
-        
-        for (uint256 i = 0; i < actualCount; i++) {
-            address curveAddress = allCurves[startIndex + i];
-            BondingCurveExchange curve = BondingCurveExchange(curveAddress);
-            
-            curveAddresses[i] = curveAddress;
-            
-            // Get token and creator info from the curve
-            (address tokenAddr, address creatorAddr, , , ) = curve.getInfo();
-            tokenAddresses[i] = tokenAddr;
-            creatorAddresses[i] = creatorAddr;
-        }
-    }
-    
-    /**
-     * @dev Update platform admin address (only current admin)
-     * @param newAdmin New platform admin address
-     */
-    function updatePlatformAdmin(address newAdmin) external {
-        require(msg.sender == platformAdmin, "Only platform admin can update");
-        require(newAdmin != address(0), "Invalid new admin address");
-        
-        address oldAdmin = platformAdmin;
-        platformAdmin = newAdmin;
-        
-        emit PlatformAdminUpdated(oldAdmin, newAdmin);
-    }
-    
-    /**
-     * @dev Emergency function to get curve info (view only)
-     * @param curveAddress Address of the bonding curve
-     * @return tokenAddress Token being traded
-     * @return creatorAddress Creator receiving fees
-     * @return supply Current token supply in curve
-     * @return reserve Current ETH reserve
-     * @return currentPrice Current token price
-     */
-    function getCurveInfo(address curveAddress) external view returns (
-        address tokenAddress,
-        address creatorAddress,
-        uint256 supply,
-        uint256 reserve,
-        uint256 currentPrice
-    ) {
-        require(curveAddress != address(0), "Invalid curve address");
-        
-        BondingCurveExchange curve = BondingCurveExchange(curveAddress);
-        
-        (tokenAddress, creatorAddress, , supply, reserve) = curve.getInfo();
-        currentPrice = curve.getCurrentPrice();
     }
 }

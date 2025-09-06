@@ -2,273 +2,202 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/**
- * @title BondingCurveExchange
- * @dev Automated Market Maker using square-root bonding curve for Content Coins
- * @notice This contract provides instant liquidity for Zora-created Content Coins
- */
+/// @notice Bonding curve exchange for a single ContentCoin token.
+/// - Non-burn model: tokens are stored in the exchange vault and transferred to/from users.
+/// - Square/quadratic curve: cost = k * ((S + n)^2 - S^2)
 contract BondingCurveExchange is ReentrancyGuard, Ownable {
     IERC20 public immutable token;
-    address public immutable creator;
-    address public immutable platformAdmin;
-    
-    // Bonding curve parameters
-    uint256 public constant CURVE_COEFFICIENT = 1e12; // Adjust for curve steepness
-    uint256 public constant CREATOR_FEE_BPS = 50;     // 0.5% (50 basis points)
-    uint256 public constant PLATFORM_FEE_BPS = 30;    // 0.3% (30 basis points)
-    uint256 public constant MAX_SUPPLY = 1000000000e18; // 1 billion tokens
-    
-    // State variables
-    uint256 public totalSupplyInCurve;
-    uint256 public ethReserve;
-    
-    // Events
-    event TokensBought(
-        address indexed buyer,
-        uint256 ethSpent,
-        uint256 tokensReceived,
-        uint256 creatorFee,
-        uint256 platformFee
-    );
-    
-    event TokensSold(
-        address indexed seller,
-        uint256 tokensSold,
-        uint256 ethReceived,
-        uint256 creatorFee,
-        uint256 platformFee
-    );
-    
+    address public creator;
+    address public admin;
+
+    // reserves tracked in ETH wei
+    uint256 public reserveBalance;
+    // tracked supply used for curve math - equals amount sold (i.e. circulating from vault)
+    uint256 public totalSupply; // this represents tokens sold via this exchange (in token base units)
+
+    // Fees: basis points (BPS). TOTAL = 8 => 0.08%
+    uint16 public constant TOTAL_FEE_BPS = 8;
+    uint16 public constant CREATOR_FEE_BPS = 5; // 0.05%
+    uint16 public constant ADMIN_FEE_BPS   = 3; // 0.03%
+    uint16 public constant BPS_DENOMINATOR = 10000;
+
+    // curve constant k (scale). Tune this to set initial price.
+    // price (wei) = k * supply^2 derivative behavior
+    uint256 public immutable k;
+
+    event Bought(address indexed buyer, uint256 tokensOut, uint256 ethPaid, uint256 creatorFee, uint256 adminFee);
+    event Sold(address indexed seller, uint256 tokensIn, uint256 ethPayout, uint256 creatorFee, uint256 adminFee);
+    event ReserveWithdrawn(address indexed to, uint256 amount);
+    event AdminChanged(address indexed oldAdmin, address indexed newAdmin);
+    event CreatorChanged(address indexed oldCreator, address indexed newCreator);
+
     constructor(
-        address _token,
-        address _creator,
-        address _platformAdmin
-    ) Ownable(msg.sender) {
-        require(_token != address(0), "Invalid token address");
-        require(_creator != address(0), "Invalid creator address");
-        require(_platformAdmin != address(0), "Invalid platform admin address");
-        
-        token = IERC20(_token);
-        creator = _creator;
-        platformAdmin = _platformAdmin;
-        
-        // Transfer ownership to platform admin
-        _transferOwnership(_platformAdmin);
-    }
-    
-    /**
-     * @dev Calculate tokens received for ETH using square-root bonding curve
-     * @param ethAmount Amount of ETH to spend
-     * @return tokensOut Amount of tokens to receive
-     */
-    function calculateBuyTokens(uint256 ethAmount) public view returns (uint256 tokensOut) {
-        if (ethAmount == 0) return 0;
-        
-        uint256 ethAfterFees = ethAmount - calculateTotalFees(ethAmount);
-        uint256 newReserve = ethReserve + ethAfterFees;
-        
-        // Square-root bonding curve: tokens = sqrt(newReserve) - sqrt(oldReserve)
-        uint256 newSupply = sqrt(newReserve * CURVE_COEFFICIENT);
-        
-        if (newSupply > totalSupplyInCurve) {
-            tokensOut = newSupply - totalSupplyInCurve;
-            
-            // Ensure we don't exceed max supply
-            if (totalSupplyInCurve + tokensOut > MAX_SUPPLY) {
-                tokensOut = MAX_SUPPLY - totalSupplyInCurve;
-            }
-        }
-    }
-    
-    /**
-     * @dev Calculate ETH received for tokens using square-root bonding curve
-     * @param tokenAmount Amount of tokens to sell
-     * @return ethOut Amount of ETH to receive
-     */
-    function calculateSellTokens(uint256 tokenAmount) public view returns (uint256 ethOut) {
-        if (tokenAmount == 0 || tokenAmount > totalSupplyInCurve) return 0;
-        
-        uint256 newSupply = totalSupplyInCurve - tokenAmount;
-        uint256 newReserve = (newSupply * newSupply) / CURVE_COEFFICIENT;
-        
-        if (newReserve < ethReserve) {
-            uint256 ethBeforeFees = ethReserve - newReserve;
-            ethOut = ethBeforeFees - calculateTotalFees(ethBeforeFees);
-        }
-    }
-    
-    /**
-     * @dev Calculate total fees (creator + platform) for a given amount
-     * @param amount Base amount to calculate fees on
-     * @return totalFees Combined creator and platform fees
-     */
-    function calculateTotalFees(uint256 amount) public pure returns (uint256 totalFees) {
-        uint256 creatorFee = (amount * CREATOR_FEE_BPS) / 10000;
-        uint256 platformFee = (amount * PLATFORM_FEE_BPS) / 10000;
-        totalFees = creatorFee + platformFee;
-    }
-    
-    /**
-     * @dev Buy tokens with ETH using bonding curve
-     * @param minTokensOut Minimum tokens expected (slippage protection)
-     */
-    function buy(uint256 minTokensOut) external payable nonReentrant {
-        require(msg.value > 0, "ETH amount must be greater than 0");
-        
-        uint256 tokensOut = calculateBuyTokens(msg.value);
-        require(tokensOut >= minTokensOut, "Slippage protection: insufficient tokens out");
-        require(totalSupplyInCurve + tokensOut <= MAX_SUPPLY, "Exceeds max supply");
-        
-        // Calculate fees
-        uint256 creatorFee = (msg.value * CREATOR_FEE_BPS) / 10000;
-        uint256 platformFee = (msg.value * PLATFORM_FEE_BPS) / 10000;
-        uint256 ethForReserve = msg.value - creatorFee - platformFee;
-        
-        // Update state
-        totalSupplyInCurve += tokensOut;
-        ethReserve += ethForReserve;
-        
-        // Transfer tokens to buyer
-        require(token.transfer(msg.sender, tokensOut), "Token transfer failed");
-        
-        // Send fees
-        if (creatorFee > 0) {
-            (bool creatorSuccess, ) = creator.call{value: creatorFee}("");
-            require(creatorSuccess, "Creator fee transfer failed");
-        }
-        
-        if (platformFee > 0) {
-            (bool platformSuccess, ) = platformAdmin.call{value: platformFee}("");
-            require(platformSuccess, "Platform fee transfer failed");
-        }
-        
-        emit TokensBought(msg.sender, msg.value, tokensOut, creatorFee, platformFee);
-    }
-    
-    /**
-     * @dev Sell tokens for ETH using bonding curve
-     * @param tokenAmount Amount of tokens to sell
-     * @param minEthOut Minimum ETH expected (slippage protection)
-     */
-    function sell(uint256 tokenAmount, uint256 minEthOut) external nonReentrant {
-        require(tokenAmount > 0, "Token amount must be greater than 0");
-        require(tokenAmount <= totalSupplyInCurve, "Cannot sell more than supply in curve");
-        
-        uint256 ethOut = calculateSellTokens(tokenAmount);
-        require(ethOut >= minEthOut, "Slippage protection: insufficient ETH out");
-        require(ethOut <= ethReserve, "Insufficient ETH reserve");
-        
-        // Calculate fees on the ETH being withdrawn
-        uint256 totalEthBeforeFees = ethReserve - ((totalSupplyInCurve - tokenAmount) * (totalSupplyInCurve - tokenAmount)) / CURVE_COEFFICIENT;
-        uint256 creatorFee = (totalEthBeforeFees * CREATOR_FEE_BPS) / 10000;
-        uint256 platformFee = (totalEthBeforeFees * PLATFORM_FEE_BPS) / 10000;
-        
-        // Update state
-        totalSupplyInCurve -= tokenAmount;
-        ethReserve -= totalEthBeforeFees;
-        
-        // Transfer tokens from seller
-        require(token.transferFrom(msg.sender, address(this), tokenAmount), "Token transfer failed");
-        
-        // Send ETH to seller
-        (bool sellerSuccess, ) = msg.sender.call{value: ethOut}("");
-        require(sellerSuccess, "ETH transfer to seller failed");
-        
-        // Send fees
-        if (creatorFee > 0) {
-            (bool creatorSuccess, ) = creator.call{value: creatorFee}("");
-            require(creatorSuccess, "Creator fee transfer failed");
-        }
-        
-        if (platformFee > 0) {
-            (bool platformSuccess, ) = platformAdmin.call{value: platformFee}("");
-            require(platformSuccess, "Platform fee transfer failed");
-        }
-        
-        emit TokensSold(msg.sender, tokenAmount, ethOut, creatorFee, platformFee);
-    }
-    
-    /**
-     * @dev Get current price per token in ETH (18 decimals)
-     * @return price Current price per token
-     */
-    function getCurrentPrice() external view returns (uint256 price) {
-        if (totalSupplyInCurve == 0) {
-            // Initial price based on curve coefficient
-            price = (2 * sqrt(CURVE_COEFFICIENT)) / 1e18;
-        } else {
-            // Marginal price: derivative of square root curve
-            price = sqrt(ethReserve / totalSupplyInCurve) * 2;
-        }
-    }
-    
-    /**
-     * @dev Get market cap in ETH
-     * @return marketCap Total market cap
-     */
-    function getMarketCap() external view returns (uint256 marketCap) {
-        if (totalSupplyInCurve == 0) return 0;
-        marketCap = (totalSupplyInCurve * this.getCurrentPrice()) / 1e18;
-    }
-    
-    /**
-     * @dev Emergency function to seed initial liquidity (only owner)
-     * @param tokenAmount Amount of tokens to add to curve
-     */
-    function seedLiquidity(uint256 tokenAmount) external payable onlyOwner {
-        require(totalSupplyInCurve == 0, "Can only seed when curve is empty");
-        require(tokenAmount > 0 && msg.value > 0, "Both token and ETH amounts must be positive");
-        
-        totalSupplyInCurve = tokenAmount;
-        ethReserve = msg.value;
-        
-        // Transfer tokens to this contract
-        require(token.transferFrom(msg.sender, address(this), tokenAmount), "Token transfer failed");
-    }
-    
-    /**
-     * @dev Square root function using Babylonian method
-     * @param x Number to find square root of
-     * @return result Square root result
-     */
-    function sqrt(uint256 x) internal pure returns (uint256 result) {
-        if (x == 0) return 0;
-        
-        // Initial guess
-        result = x;
-        uint256 k = (x + 1) / 2;
-        
-        // Babylonian method
-        while (k < result) {
-            result = k;
-            k = (x / k + k) / 2;
-        }
-    }
-    
-    /**
-     * @dev View function to get contract info
-     * @return tokenAddress The token being traded
-     * @return creatorAddress The creator receiving fees
-     * @return platformAddress The platform admin address
-     * @return supply Current supply in curve
-     * @return reserve Current ETH reserve
-     */
-    function getInfo() external view returns (
         address tokenAddress,
-        address creatorAddress,
-        address platformAddress,
-        uint256 supply,
-        uint256 reserve
+        address _creator,
+        address _admin,
+        uint256 _k,
+        address owner_
     ) {
-        return (
-            address(token),
-            creator,
-            platformAdmin,
-            totalSupplyInCurve,
-            ethReserve
-        );
+        require(tokenAddress != address(0), "token addr 0");
+        require(_creator != address(0), "creator addr 0");
+        require(_admin != address(0), "admin addr 0");
+        require(_k > 0, "k>0");
+
+        token = IERC20(tokenAddress);
+        creator = _creator;
+        admin = _admin;
+        k = _k;
+        _transferOwnership(owner_);
+    }
+
+    // --------------------------
+    // Public view helpers
+    // --------------------------
+
+    /// @notice Quadratic cost to mint `amountOut` tokens given current supply S:
+    /// cost = k * ( (S + n)^2 - S^2 ) = k * (2*S*n + n^2)
+    function buyCost(uint256 amountOut) public view returns (uint256) {
+        if (amountOut == 0) return 0;
+        uint256 s = totalSupply;
+        // cost = k * ( (s + n)^2 - s^2 ) = k*(2*s*n + n*n)
+        // compute (2*s*n + n*n) first as uint256
+        uint256 term1 = 2 * s * amountOut;
+        uint256 term2 = amountOut * amountOut;
+        uint256 sum = term1 + term2;
+        return k * sum;
+    }
+
+    /// @notice Payout (in ETH wei) returned for burning/selling `amountIn` tokens:
+    /// payout = k * ( S^2 - (S - n)^2 ) = k * (2*S*n - n^2)
+    function sellReward(uint256 amountIn) public view returns (uint256) {
+        require(amountIn <= totalSupply, "sell > supply");
+        if (amountIn == 0) return 0;
+        uint256 s = totalSupply;
+        uint256 term1 = 2 * s * amountIn;
+        uint256 term2 = amountIn * amountIn;
+        uint256 sum = term1 - term2;
+        return k * sum;
+    }
+
+    // Marginal price approximation for 1 token (useful for UI)
+    function currentPricePerToken() public view returns (uint256) {
+        return buyCost(1);
+    }
+
+    // --------------------------
+    // Trade: buy (ETH -> tokens)
+    // --------------------------
+    /// @notice Buy `amountOut` tokens by sending ETH.
+    /// - Caller sends ETH >= buyCost(amountOut)
+    /// - Contract transfers tokens from vault to buyer
+    function buy(uint256 amountOut) external payable nonReentrant {
+        require(amountOut > 0, "amountOut 0");
+
+        uint256 cost = buyCost(amountOut);
+        require(msg.value >= cost, "insufficient ETH");
+
+        // calculate fees (on cost)
+        uint256 totalFee = (cost * TOTAL_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 creatorFee = (cost * CREATOR_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 adminFee   = (cost * ADMIN_FEE_BPS) / BPS_DENOMINATOR;
+
+        // update bookkeeping
+        totalSupply += amountOut;
+        reserveBalance += (cost - totalFee);
+
+        // transfer fees immediately
+        if (creatorFee > 0) {
+            (bool sentC,) = payable(creator).call{value: creatorFee}("");
+            require(sentC, "creator fee send failed");
+        }
+        if (adminFee > 0) {
+            (bool sentA,) = payable(admin).call{value: adminFee}("");
+            require(sentA, "admin fee send failed");
+        }
+
+        // transfer tokens from this exchange's vault to buyer
+        require(token.transfer(msg.sender, amountOut), "token transfer failed");
+
+        // refund any excess ETH
+        if (msg.value > cost) {
+            (bool refund,) = payable(msg.sender).call{value: msg.value - cost}("");
+            require(refund, "refund failed");
+        }
+
+        emit Bought(msg.sender, amountOut, cost, creatorFee, adminFee);
+    }
+
+    // --------------------------
+    // Trade: sell (tokens -> ETH)
+    // --------------------------
+    /// @notice Sell `amountIn` tokens and receive ETH payout.
+    /// - Caller must approve token transfer to this contract prior to calling.
+    function sell(uint256 amountIn) external nonReentrant {
+        require(amountIn > 0, "amountIn 0");
+        require(amountIn <= totalSupply, "sell too big");
+
+        uint256 payout = sellReward(amountIn);
+        require(reserveBalance >= payout, "insufficient reserve");
+
+        // compute fees on payout
+        uint256 totalFee = (payout * TOTAL_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 creatorFee = (payout * CREATOR_FEE_BPS) / BPS_DENOMINATOR;
+        uint256 adminFee   = (payout * ADMIN_FEE_BPS) / BPS_DENOMINATOR;
+
+        // pull tokens into vault
+        require(token.transferFrom(msg.sender, address(this), amountIn), "transferFrom failed");
+
+        // update bookkeeping
+        totalSupply -= amountIn;
+        reserveBalance -= payout;
+
+        // send fees
+        if (creatorFee > 0) {
+            (bool sentC,) = payable(creator).call{value: creatorFee}("");
+            require(sentC, "creator fee send failed");
+        }
+        if (adminFee > 0) {
+            (bool sentA,) = payable(admin).call{value: adminFee}("");
+            require(sentA, "admin fee send failed");
+        }
+
+        // pay seller payout minus totalFee
+        uint256 netPayout = payout - totalFee;
+        (bool paid,) = payable(msg.sender).call{value: netPayout}("");
+        require(paid, "pay seller failed");
+
+        emit Sold(msg.sender, amountIn, payout, creatorFee, adminFee);
+    }
+
+    // --------------------------
+    // Admin utilities
+    // --------------------------
+    /// @notice Withdraw excess ETH (reserve leftover not required by curve) — owner only.
+    function withdrawReserve(address to, uint256 amount) external onlyOwner {
+        require(to != address(0), "to 0");
+        require(amount <= address(this).balance, "not enough ETH");
+        (bool sent,) = payable(to).call{value: amount}("");
+        require(sent, "withdraw failed");
+        emit ReserveWithdrawn(to, amount);
+    }
+
+    function setAdmin(address newAdmin) external onlyOwner {
+        require(newAdmin != address(0), "admin 0");
+        emit AdminChanged(admin, newAdmin);
+        admin = newAdmin;
+    }
+
+    function setCreator(address newCreator) external onlyOwner {
+        require(newCreator != address(0), "creator 0");
+        emit CreatorChanged(creator, newCreator);
+        creator = newCreator;
+    }
+
+    // Allow contract to receive ETH (e.g. refunds)
+    receive() external payable {
+        reserveBalance += msg.value;
     }
 }
