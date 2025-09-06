@@ -98,7 +98,7 @@ export default function ContentNew() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [, setLocation] = useLocation();
-  
+
   const [formData, setFormData] = useState<FormData>({
     contentType: '',
     tokenName: '',
@@ -128,7 +128,7 @@ export default function ContentNew() {
     setSelectedFile(file);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
-    
+
     // Auto-populate token name from filename
     const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
     setFormData(prev => ({
@@ -150,7 +150,7 @@ export default function ContentNew() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -184,7 +184,7 @@ export default function ContentNew() {
     }
 
     setIsProcessing(true);
-    
+
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('file', selectedFile);
@@ -206,12 +206,12 @@ export default function ContentNew() {
       }
 
       const result = await response.json();
-      
+
       toast({
         title: "Content Uploaded",
         description: "Your content has been uploaded to IPFS successfully!"
       });
-      
+
       setStep('configure');
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -236,7 +236,7 @@ export default function ContentNew() {
     }
 
     setIsProcessing(true);
-    
+
     try {
       const response = await fetch('/api/content-imports/import-url', {
         method: 'POST',
@@ -258,12 +258,12 @@ export default function ContentNew() {
       }
 
       const result = await response.json();
-      
+
       toast({
         title: "Content Imported",
         description: "Content has been imported successfully!"
       });
-      
+
       setStep('configure');
     } catch (error: any) {
       console.error('Import error:', error);
@@ -278,6 +278,17 @@ export default function ContentNew() {
   };
 
   const handleDeployToken = async () => {
+    console.log('Deploy token called, file state:', selectedFile);
+
+    if (!selectedFile) {
+      toast({
+        title: "No file selected",
+        description: "Please select a file before deploying your token.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formData.tokenName || !formData.tokenSymbol) {
       toast({
         title: "Missing Information",
@@ -288,7 +299,7 @@ export default function ContentNew() {
     }
 
     setIsProcessing(true);
-    
+
     try {
       const response = await fetch('/api/creator-coins/upload', {
         method: 'POST',
@@ -314,12 +325,12 @@ export default function ContentNew() {
       }
 
       const result = await response.json();
-      
+
       toast({
         title: "Content Token Created!",
         description: `Your ${formData.tokenName} token has been created successfully!`
       });
-      
+
       setStep('success');
     } catch (error: any) {
       console.error('Deploy error:', error);
@@ -590,7 +601,7 @@ export default function ContentNew() {
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div className="p-4 bg-muted/50 rounded-lg">
                         <h4 className="font-medium mb-2">Supported Sources</h4>
                         <ul className="text-sm text-muted-foreground space-y-1">
@@ -629,7 +640,7 @@ export default function ContentNew() {
                       data-testid="token-name-input"
                     />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="token-symbol">Token Symbol</Label>
                     <Input

@@ -1592,7 +1592,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             const content = await storage.createContentImport(contentData);
             console.log(`💾 Content saved to database: ${content.id}`);
-            
+
             res.json({
               success: true,
               content,
@@ -2727,7 +2727,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         // Use bonding curve system for real price data
         const bondingCurveInfo = await bondingCurveService.getBondingCurveInfo(coinData.id);
-        
+
         // Handle null bonding curve info gracefully
         let priceData;
         if (bondingCurveInfo && bondingCurveInfo.info) {
@@ -2766,7 +2766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           marketCap: priceData.marketCap,
           volume24h: priceData.volume24h,
           holders: priceData.holders,
-          bondingCurveProgress: priceData.bondingProgress
+          bondingCurveProgress: priceData.bondingCurveProgress
         });
       } catch (priceError) {
         console.log(`❌ No trading data available for ${coinData.coinAddress}:`, priceError);
@@ -3259,7 +3259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // First check if bonding curve is available
       if (coinData.hasBondingCurve && coinData.bondingCurveExchangeAddress) {
         console.log(`✅ Using bonding curve trading system for ${coinAddress}`);
-        
+
         // Calculate tokens from bonding curve
         const tokensOut = await bondingCurveService.calculateBuyTokens(
           coinData.bondingCurveExchangeAddress,
@@ -3574,21 +3574,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ====================
 
   // Get user notifications
-  app.get('/api/notifications/:userAddress', async (req, res) => {
+  app.get("/api/notifications/:address", async (req, res) => {
     try {
-      const { userAddress } = req.params;
+      const { address } = req.params;
       const { limit = 50, unreadOnly = false } = req.query;
 
       const notifications = await storage.getNotifications(
-        userAddress,
-        parseInt(limit as string),
+        address, 
+        parseInt(limit as string), 
         unreadOnly === 'true'
       );
 
       res.json(notifications);
     } catch (error) {
+      const dbError = handleDatabaseError(error, 'getNotifications');
+      if (dbError.error) {
+        // Return empty array for notifications when DB is down
+        console.warn('Database unavailable, returning empty notifications');
+        res.json([]);
+        return;
+      }
       console.error('Error fetching notifications:', error);
-      res.status(500).json({ error: 'Failed to fetch notifications' });
+      res.status(500).json({ message: 'Failed to fetch notifications' });
     }
   });
 
@@ -3628,12 +3635,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get unread notification count
-  app.get('/api/notifications/:userAddress/unread-count', async (req, res) => {
+  app.get("/api/notifications/:address/unread-count", async (req, res) => {
     try {
-      const count = await storage.getUnreadNotificationCount(req.params.userAddress);
+      const { address } = req.params;
+      const count = await storage.getUnreadNotificationCount(address);
       res.json({ count });
     } catch (error) {
-      res.status(500).json({ error: 'Failed to get unread count' });
+      const dbError = handleDatabaseError(error, 'getUnreadNotificationCount');
+      if (dbError.error) {
+        // Return 0 count when DB is down
+        console.warn('Database unavailable, returning 0 unread count');
+        res.json({ count: 0 });
+        return;
+      }
+      console.error('Error fetching unread count:', error);
+      res.status(500).json({ message: 'Failed to fetch unread count' });
     }
   });
 
@@ -3730,8 +3746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ====================
-  // CHANNEL ANALYTICS API
+  // ==================== CHANNEL ANALYTICS API
   // ====================
 
   // Get channel analytics
@@ -3781,8 +3796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ====================
-  // CHANNEL COMMENTS API
+  // ==================== CHANNEL COMMENTS API
   // ====================
 
   // Get channel comments
@@ -4496,7 +4510,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  
+
 
 
   const httpServer = createServer(app);
