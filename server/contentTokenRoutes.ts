@@ -175,41 +175,30 @@ export function setupContentTokenRoutes(app: Express) {
 
       const checksummedCreatorAddress = getAddress(creatorAddress);
       
-      console.log(`🚀 DEPLOYING REAL ERC20 TOKEN + BONDING CURVE`);
+      console.log(`🚀 DEPLOYING REAL CONTENT COIN + BONDING CURVE`);
       console.log(`   Creator: ${checksummedCreatorAddress}`);
       console.log(`   Coin: ${coinName} (${coinSymbol})`);
       console.log(`   Supply: ${totalSupply}`);
       
-      // Step 1: Deploy real ERC20 token first
-      const tokenDeployResult = await bondingCurveService.deployERC20Token(
+      // Deploy both token and bonding curve together using factory
+      const deployResult = await bondingCurveService.deployContentCoinWithCurve(
         coinName,
         coinSymbol, 
         totalSupply,
-        checksummedCreatorAddress
-      );
-      
-      if (!tokenDeployResult.success) {
-        throw new Error(tokenDeployResult.error || 'Failed to deploy ERC20 token');
-      }
-      
-      console.log(`✅ ERC20 Token deployed: ${tokenDeployResult.tokenAddress}`);
-      
-      // Step 2: Deploy bonding curve for the real token
-      const deployResult = await bondingCurveService.deployBondingCurve(
-        tokenDeployResult.tokenAddress!,
+        18, // decimals
         checksummedCreatorAddress,
         `content-coin-${Date.now()}`
       );
 
       if (!deployResult.success) {
-        throw new Error(deployResult.error || 'Failed to deploy bonding curve');
+        throw new Error(deployResult.error || 'Failed to deploy content coin with bonding curve');
       }
 
       console.log('Bonding curve deployed:', deployResult);
 
       // Create content token entry
       const tokenData: ContentTokenData = {
-        tokenAddress: deployResult.curveAddress!,
+        tokenAddress: deployResult.tokenAddress!,
         name: coinName,
         symbol: coinSymbol,
         description,
@@ -227,11 +216,12 @@ export function setupContentTokenRoutes(app: Express) {
       };
 
       // Store in memory (replace with database later)
-      contentTokens.set(deployResult.curveAddress!, tokenData);
+      contentTokens.set(deployResult.tokenAddress!, tokenData);
 
       res.json({
         success: true,
-        tokenAddress: deployResult.curveAddress,
+        tokenAddress: deployResult.tokenAddress,
+        curveAddress: deployResult.curveAddress,
         transactionHash: deployResult.transactionHash,
         tokenData
       });
