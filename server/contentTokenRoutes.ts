@@ -79,7 +79,7 @@ export function setupContentTokenRoutes(app: Express) {
         type: req.file.mimetype,
       });
       
-      const uploadResult = await pinata.upload.file(file, {
+      const uploadResult = await pinata.upload.public.file(file, {
         metadata: {
           name: req.file.originalname,
           keyvalues: {
