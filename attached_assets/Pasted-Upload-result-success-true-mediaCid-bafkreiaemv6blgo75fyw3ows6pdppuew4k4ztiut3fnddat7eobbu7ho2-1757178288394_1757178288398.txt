@@ -1,0 +1,47 @@
+Upload result: {success: true, mediaCid: 'bafkreiaemv6blgo75fyw3ows6pdppuew4k4ztiut3fnddat7eobbu7ho2y', thumbnailCid: 'bafkreiaemv6blgo75fyw3ows6pdppuew4k4ztiut3fnddat7eobbu7ho2y', contentType: 'image', fileSize: 29259, …}
+ContentNew.tsx:325  POST https://4963497d-686c-4251-9641-72edd881d397-00-7fowuzlubhwn.janeway.replit.dev/api/deploy-content-coin 500 (Internal Server Error)
+handleDeployToken @ ContentNew.tsx:325
+await in handleDeployToken
+callCallback2 @ chunk-J4NESBNT.js?v=e3a99a14:3674
+invokeGuardedCallbackDev @ chunk-J4NESBNT.js?v=e3a99a14:3699
+invokeGuardedCallback @ chunk-J4NESBNT.js?v=e3a99a14:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-J4NESBNT.js?v=e3a99a14:3736
+executeDispatch @ chunk-J4NESBNT.js?v=e3a99a14:7014
+processDispatchQueueItemsInOrder @ chunk-J4NESBNT.js?v=e3a99a14:7034
+processDispatchQueue @ chunk-J4NESBNT.js?v=e3a99a14:7043
+dispatchEventsForPlugins @ chunk-J4NESBNT.js?v=e3a99a14:7051
+(anonymous) @ chunk-J4NESBNT.js?v=e3a99a14:7174
+batchedUpdates$1 @ chunk-J4NESBNT.js?v=e3a99a14:18913
+batchedUpdates @ chunk-J4NESBNT.js?v=e3a99a14:3579
+dispatchEventForPluginEventSystem @ chunk-J4NESBNT.js?v=e3a99a14:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-J4NESBNT.js?v=e3a99a14:5478
+dispatchEvent @ chunk-J4NESBNT.js?v=e3a99a14:5472
+dispatchDiscreteEvent @ chunk-J4NESBNT.js?v=e3a99a14:5449Understand this error
+ContentNew.tsx:358 Deploy error: Error: The contract function "deployCurve" reverted.
+
+Contract Call:
+  address:   0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201
+  function:  deployCurve(address token, address creator)
+  args:                 (0x3363303135343363353361666561333266305f59, 0xb843A2D0D4B9E628500d2E0f6f0382e063C14a95)
+  sender:    0xd8fF798eE19Ea20fb82D15723d0F5EcCc24e4142
+
+Docs: https://viem.sh/docs/contract/writeContract
+Version: viem@2.35.1
+    at handleDeployToken (ContentNew.tsx:345:15)
+handleDeployToken @ ContentNew.tsx:358
+await in handleDeployToken
+callCallback2 @ chunk-J4NESBNT.js?v=e3a99a14:3674
+invokeGuardedCallbackDev @ chunk-J4NESBNT.js?v=e3a99a14:3699
+invokeGuardedCallback @ chunk-J4NESBNT.js?v=e3a99a14:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-J4NESBNT.js?v=e3a99a14:3736
+executeDispatch @ chunk-J4NESBNT.js?v=e3a99a14:7014
+processDispatchQueueItemsInOrder @ chunk-J4NESBNT.js?v=e3a99a14:7034
+processDispatchQueue @ chunk-J4NESBNT.js?v=e3a99a14:7043
+dispatchEventsForPlugins @ chunk-J4NESBNT.js?v=e3a99a14:7051
+(anonymous) @ chunk-J4NESBNT.js?v=e3a99a14:7174
+batchedUpdates$1 @ chunk-J4NESBNT.js?v=e3a99a14:18913
+batchedUpdates @ chunk-J4NESBNT.js?v=e3a99a14:3579
+dispatchEventForPluginEventSystem @ chunk-J4NESBNT.js?v=e3a99a14:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-J4NESBNT.js?v=e3a99a14:5478
+dispatchEvent @ chunk-J4NESBNT.js?v=e3a99a14:5472
+dispatchDiscreteEvent @ chunk-J4NESBNT.js?v=e3a99a14:5449Understand this error
