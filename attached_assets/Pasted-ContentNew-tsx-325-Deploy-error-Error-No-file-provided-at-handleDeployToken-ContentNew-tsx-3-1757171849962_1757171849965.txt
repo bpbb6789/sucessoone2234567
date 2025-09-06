@@ -1,0 +1,42 @@
+ContentNew.tsx:325 Deploy error: Error: No file provided
+    at handleDeployToken (ContentNew.tsx:313:15)
+handleDeployToken	@	ContentNew.tsx:325
+await in handleDeployToken		
+callCallback2	@	chunk-J4NESBNT.js?v=e3a99a14:3674
+invokeGuardedCallbackDev	@	chunk-J4NESBNT.js?v=e3a99a14:3699
+invokeGuardedCallback	@	chunk-J4NESBNT.js?v=e3a99a14:3733
+invokeGuardedCallbackAndCatchFirstError	@	chunk-J4NESBNT.js?v=e3a99a14:3736
+executeDispatch	@	chunk-J4NESBNT.js?v=e3a99a14:7014
+processDispatchQueueItemsInOrder	@	chunk-J4NESBNT.js?v=e3a99a14:7034
+processDispatchQueue	@	chunk-J4NESBNT.js?v=e3a99a14:7043
+dispatchEventsForPlugins	@	chunk-J4NESBNT.js?v=e3a99a14:7051
+(anonymous)	@	chunk-J4NESBNT.js?v=e3a99a14:7174
+batchedUpdates$1	@	chunk-J4NESBNT.js?v=e3a99a14:18913
+batchedUpdates	@	chunk-J4NESBNT.js?v=e3a99a14:3579
+dispatchEventForPluginEventSystem	@	chunk-J4NESBNT.js?v=e3a99a14:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay	@	chunk-J4NESBNT.js?v=e3a99a14:5478
+dispatchEvent	@	chunk-J4NESBNT.js?v=e3a99a14:5472
+dispatchDiscreteEvent	@	chunk-J4NESBNT.js?v=e3a99a14:5449
+
+useNotifications.ts:49 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count 500 (Internal Server Error)
+useNotifications.ts:33 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…tions/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false 500 (Internal Server Error)
+useNotifications.ts:49 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count 500 (Internal Server Error)
+useNotifications.ts:33 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…tions/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false 500 (Internal Server Error)
+useNotifications.ts:49 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count 500 (Internal Server Error)
+useNotifications.ts:33 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…tions/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false 500 (Internal Server Error)
+useNotifications.ts:49 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count 500 (Internal Server Error)
+useNotifications.ts:33 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…tions/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false 500 (Internal Server Error)
+useNotifications.ts:49 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count 500 (Internal Server Error)
+useNotifications.ts:33 
+ GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.d…tions/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false 500 (Internal Server Error)
+﻿
+
