@@ -301,7 +301,28 @@ export default function ContentNew() {
     setIsProcessing(true);
 
     try {
-      const response = await fetch('/api/creator-coins/upload', {
+      // First upload the file to get IPFS CID
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', selectedFile);
+      uploadFormData.append('contentType', selectedType);
+      uploadFormData.append('title', formData.tokenName);
+      uploadFormData.append('description', formData.description || '');
+
+      const uploadResponse = await fetch('/api/upload-content', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json().catch(() => ({ message: 'Upload failed' }));
+        throw new Error(errorData.message || 'Failed to upload content');
+      }
+
+      const uploadResult = await uploadResponse.json();
+      console.log('Upload result:', uploadResult);
+
+      // Then deploy the token with the IPFS data
+      const deployResponse = await fetch('/api/deploy-content-coin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -309,26 +330,27 @@ export default function ContentNew() {
           title: formData.tokenName,
           description: formData.description,
           contentType: selectedType,
+          mediaCid: uploadResult.mediaCid,
+          thumbnailCid: uploadResult.thumbnailCid,
           coinName: formData.tokenName,
           coinSymbol: formData.tokenSymbol,
-          currency: 'ETH',
-          startingMarketCap: formData.marketCap,
-          twitter: formData.socialLinks.twitter,
-          discord: formData.socialLinks.discord,
-          website: formData.socialLinks.website
+          totalSupply: formData.tokenSupply,
+          marketCapSetting: formData.marketCap,
+          socialLinks: formData.socialLinks
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Deployment failed' }));
+      if (!deployResponse.ok) {
+        const errorData = await deployResponse.json().catch(() => ({ message: 'Deployment failed' }));
         throw new Error(errorData.message || 'Deployment failed');
       }
 
-      const result = await response.json();
+      const deployResult = await deployResponse.json();
+      console.log('Deploy result:', deployResult);
 
       toast({
         title: "Content Token Created!",
-        description: `Your ${formData.tokenName} token has been created successfully!`
+        description: `Your ${formData.tokenName} token has been deployed successfully!`
       });
 
       setStep('success');

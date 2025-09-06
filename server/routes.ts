@@ -4479,6 +4479,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register advanced trading routes
   registerAdvancedTradingRoutes(app);
 
+  // Register content token routes
+  const { setupContentTokenRoutes } = await import('./contentTokenRoutes');
+  setupContentTokenRoutes(app);
+
   // Network health check
   app.get('/api/network/health', async (req, res) => {
     try {
