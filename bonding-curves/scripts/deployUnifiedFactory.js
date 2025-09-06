@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+import hre from "hardhat";
 
 async function main() {
   console.log("🚀 Deploying Unified Content Coin Factory to Base Sepolia...");

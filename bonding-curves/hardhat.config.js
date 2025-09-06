@@ -14,7 +14,7 @@ export default {
   networks: {
     baseSepolia: {
       url: "https://sepolia.base.org",
-      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 84532,
     },
   },
