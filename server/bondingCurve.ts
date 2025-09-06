@@ -144,24 +144,6 @@ class BondingCurveService {
         transactionHash: `0x${Buffer.from(`deploy_${tempTokenAddress}_${Date.now()}`, 'utf8').toString('hex').padStart(64, '0').slice(0, 64)}`
       };
 
-      console.log(`⚡ ERC20 deployment transaction sent: ${deployTxHash}`);
-
-      // Wait for transaction confirmation
-      const receipt = await this.publicClient.waitForTransactionReceipt({
-        hash: deployTxHash
-      });
-
-      console.log(`✅ ERC20 deployed successfully!`);
-      console.log(`   Transaction: ${deployTxHash}`);
-      console.log(`   Token Address: ${receipt.contractAddress}`);
-      console.log(`   Block: ${receipt.blockNumber}`);
-
-      return {
-        success: true,
-        tokenAddress: receipt.contractAddress!,
-        transactionHash: deployTxHash
-      };
-
     } catch (error) {
       console.error('ERC20 deployment failed:', error);
       return {
@@ -227,7 +209,8 @@ class BondingCurveService {
         ] as const,
         functionName: 'createContentCoinWithCurve',
         args: [name, symbol, totalSupplyWei, decimals],
-        chain: baseSepolia
+        chain: baseSepolia,
+        account: this.account!
       });
 
       console.log(`⚡ Deployment transaction sent: ${deployTxHash}`);
@@ -283,7 +266,7 @@ class BondingCurveService {
       await db
         .update(creatorCoins)
         .set({
-          contractAddress: tokenAddress,
+          coinAddress: tokenAddress,
           bondingCurveFactoryAddress: BONDING_CURVE_FACTORY_ADDRESS,
           bondingCurveExchangeAddress: curveAddress,
           bondingCurveDeploymentTxHash: deployTxHash,
@@ -345,7 +328,8 @@ class BondingCurveService {
         ] as const,
         functionName: 'deployCurve',
         args: [tokenAddress as Address, creatorAddress as Address],
-        chain: baseSepolia
+        chain: baseSepolia,
+        account: this.account!
       });
 
       console.log(`⚡ Deployment transaction sent: ${deployTxHash}`);
@@ -413,17 +397,48 @@ class BondingCurveService {
    */
   async getBondingCurveInfo(curveAddress: string): Promise<BondingCurveInfo | null> {
     try {
-      const curveContract = new ethers.Contract(
-        curveAddress,
-        BONDING_CURVE_EXCHANGE_ABI,
-        this.provider
-      );
+      // Use viem for contract calls instead of ethers
+      const currentPrice = await this.publicClient.readContract({
+        address: curveAddress as `0x${string}`,
+        abi: [{
+          inputs: [],
+          name: "getCurrentPrice",
+          outputs: [{ name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'getCurrentPrice'
+      }) as bigint;
 
-      const [tokenAddress, creatorAddress, platformAddress, supply, reserve] =
-        await curveContract.getInfo();
+      const [tokenAddress, creatorAddress, platformAddress, supply, reserve] = await this.publicClient.readContract({
+        address: curveAddress as `0x${string}`,
+        abi: [{
+          inputs: [],
+          name: "getInfo", 
+          outputs: [
+            { name: "", type: "address" },
+            { name: "", type: "address" },
+            { name: "", type: "address" },
+            { name: "", type: "uint256" },
+            { name: "", type: "uint256" }
+          ],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'getInfo'
+      }) as [string, string, string, bigint, bigint];
 
-      const currentPrice = await curveContract.getCurrentPrice();
-      const marketCap = await curveContract.getMarketCap();
+      const marketCap = await this.publicClient.readContract({
+        address: curveAddress as `0x${string}`,
+        abi: [{
+          inputs: [],
+          name: "getMarketCap",
+          outputs: [{ name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'getMarketCap'
+      }) as bigint;
 
       return {
         tokenAddress,
@@ -446,14 +461,18 @@ class BondingCurveService {
    */
   async calculateBuyTokens(curveAddress: string, ethAmount: string): Promise<bigint | null> {
     try {
-      const curveContract = new ethers.Contract(
-        curveAddress,
-        BONDING_CURVE_EXCHANGE_ABI,
-        this.provider
-      );
-
-      const ethAmountWei = ethers.utils.parseEther(ethAmount);
-      return await curveContract.calculateBuyTokens(ethAmountWei);
+      return await this.publicClient.readContract({
+        address: curveAddress as `0x${string}`,
+        abi: [{
+          inputs: [{ name: "ethAmount", type: "uint256" }],
+          name: "calculateBuyTokens",
+          outputs: [{ name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'calculateBuyTokens',
+        args: [BigInt(parseFloat(ethAmount) * 1e18)] // Convert to Wei
+      }) as bigint;
 
     } catch (error) {
       console.error("Error calculating buy tokens:", error);
@@ -466,14 +485,18 @@ class BondingCurveService {
    */
   async calculateSellTokens(curveAddress: string, tokenAmount: string): Promise<bigint | null> {
     try {
-      const curveContract = new ethers.Contract(
-        curveAddress,
-        BONDING_CURVE_EXCHANGE_ABI,
-        this.provider
-      );
-
-      const tokenAmountWei = ethers.utils.parseUnits(tokenAmount, 18);
-      return await curveContract.calculateSellTokens(tokenAmountWei);
+      return await this.publicClient.readContract({
+        address: curveAddress as `0x${string}`,
+        abi: [{
+          inputs: [{ name: "tokenAmount", type: "uint256" }],
+          name: "calculateSellTokens",
+          outputs: [{ name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'calculateSellTokens',
+        args: [BigInt(parseFloat(tokenAmount) * 1e18)] // Convert to Wei
+      }) as bigint;
 
     } catch (error) {
       console.error("Error calculating sell tokens:", error);
@@ -486,8 +509,18 @@ class BondingCurveService {
    */
   async curveExists(tokenAddress: string, creatorAddress: string): Promise<boolean> {
     try {
-      if (!this.factoryContract) return false;
-      return await this.factoryContract.curveExists(creatorAddress, tokenAddress);
+      return await this.publicClient.readContract({
+        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
+        abi: [{
+          inputs: [{ name: "creator", type: "address" }, { name: "token", type: "address" }],
+          name: "curveExists",
+          outputs: [{ name: "", type: "bool" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'curveExists',
+        args: [creatorAddress as `0x${string}`, tokenAddress as `0x${string}`]
+      }) as boolean;
     } catch (error) {
       console.error("Error checking if curve exists:", error);
       return false;
@@ -499,8 +532,18 @@ class BondingCurveService {
    */
   async getCurveAddress(tokenAddress: string, creatorAddress: string): Promise<string | null> {
     try {
-      if (!this.factoryContract) return null;
-      const curveAddress = await this.factoryContract.getCurve(creatorAddress, tokenAddress);
+      const curveAddress = await this.publicClient.readContract({
+        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
+        abi: [{
+          inputs: [{ name: "creator", type: "address" }, { name: "token", type: "address" }],
+          name: "getCurve",
+          outputs: [{ name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'getCurve',
+        args: [creatorAddress as `0x${string}`, tokenAddress as `0x${string}`]
+      }) as string;
       return curveAddress === "0x0000000000000000000000000000000000000000" ? null : curveAddress;
     } catch (error) {
       console.error("Error getting curve address:", error);
@@ -560,21 +603,21 @@ export async function getBondingCurveInfo(creatorCoinId: string): Promise<{
     console.log(`📋 Found creator coin:`, {
       name: coin.coinName,
       symbol: coin.coinSymbol,
-      contractAddress: coin.contractAddress,
+      coinAddress: coin.coinAddress,
       bondingCurveExchangeAddress: coin.bondingCurveExchangeAddress,
       hasBondingCurve: coin.hasBondingCurve
     });
 
     // Check if bonding curve is enabled and has an exchange address
-    let bondingCurveAddress = coin.bondingCurveExchangeAddress || coin.bondingCurveAddress;
+    let bondingCurveAddress = coin.bondingCurveExchangeAddress;
 
     if (!bondingCurveAddress || !coin.hasBondingCurve) {
       // Auto-deploy bonding curve for creator coins without one
       console.log(`🚀 Auto-deploying bonding curve for ${coin.coinName}`);
 
-      if (coin.contractAddress && coin.creatorAddress) {
+      if (coin.coinAddress && coin.creatorAddress) {
         const deployResult = await bondingCurveService.deployBondingCurve(
-          coin.contractAddress,
+          coin.coinAddress,
           coin.creatorAddress,
           coin.id
         );
