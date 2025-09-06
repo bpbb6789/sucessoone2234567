@@ -157,15 +157,20 @@ export function setupContentTokenRoutes(app: Express) {
       };
       const kValue = kValueMap[marketCapSetting as keyof typeof kValueMap] || kValueMap.medium;
 
-      // For now, create a mock token address
-      // In production, you would deploy the actual bonding curve contract
-      const tokenAddress = `0x${Date.now().toString(16).padStart(40, '0')}`;
+      // Deploy real bonding curve contract
+      if (!bondingCurveService.isConfigured()) {
+        throw new Error('Bonding curve service not configured. Missing required environment variables.');
+      }
+
+      // First, we need a token address. In a real implementation, you would deploy an ERC20 token first
+      // For now, we'll use a placeholder that would be replaced with actual token deployment
+      const tempTokenAddress = `0x${Math.random().toString(16).substring(2).padStart(40, '0')}`;
       
-      const deployResult = {
-        success: true,
-        contractAddress: tokenAddress,
-        transactionHash: `0x${Math.random().toString(16).substring(2)}`
-      };
+      const deployResult = await bondingCurveService.deployBondingCurve(
+        tempTokenAddress,
+        creatorAddress || 'anonymous',
+        `content-coin-${Date.now()}`
+      );
 
       if (!deployResult.success) {
         throw new Error(deployResult.error || 'Failed to deploy bonding curve');
@@ -175,7 +180,7 @@ export function setupContentTokenRoutes(app: Express) {
 
       // Create content token entry
       const tokenData: ContentTokenData = {
-        tokenAddress: deployResult.contractAddress!,
+        tokenAddress: deployResult.curveAddress!,
         name: coinName,
         symbol: coinSymbol,
         description,
@@ -193,11 +198,11 @@ export function setupContentTokenRoutes(app: Express) {
       };
 
       // Store in memory (replace with database later)
-      contentTokens.set(deployResult.contractAddress!, tokenData);
+      contentTokens.set(deployResult.curveAddress!, tokenData);
 
       res.json({
         success: true,
-        tokenAddress: deployResult.contractAddress,
+        tokenAddress: deployResult.curveAddress,
         transactionHash: deployResult.transactionHash,
         tokenData
       });
