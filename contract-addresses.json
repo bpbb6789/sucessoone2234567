@@ -1,0 +1,11 @@
+{
+  "factoryAddress": "0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201",
+  "adminAddress": "0xd8fF798eE19Ea20fb82D15723d0F5EcCc24e4142",
+  "defaultK": "1000000000000",
+  "network": "Base Sepolia",
+  "chainId": 84532,
+  "deployedAt": "2025-01-06T19:49:00.000Z",
+  "status": "ready_for_frontend",
+  "blockExplorer": "https://sepolia.basescan.org/address/0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201",
+  "description": "Unified BondingCurveFactory for content tokenization with media support"
+}

@@ -33,7 +33,7 @@ const CHAIN_ID = 84532;
 
 // Contract addresses (to be set after deployment)
 // Updated with deployed factory address on Base Sepolia
-const BONDING_CURVE_FACTORY_ADDRESS = process.env.BONDING_CURVE_FACTORY_ADDRESS || "0x787b9de286a18da63805e9df943286bba2ca0c3d" as Address;
+const BONDING_CURVE_FACTORY_ADDRESS = process.env.BONDING_CURVE_FACTORY_ADDRESS || "0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201" as Address;
 const PLATFORM_ADMIN_ADDRESS = process.env.PLATFORM_ADMIN_ADDRESS || "0x64170da71cfA3Cf1169D5b4403693CaEDb1E157c";
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || process.env.PRIVATE_KEY || "";
 
