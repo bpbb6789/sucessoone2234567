@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useAccount } from 'wagmi';
+import { useAccount } from '@/hooks/useWallet';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -120,10 +120,10 @@ export default function ContentNew() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('contentType', selectedType);
-      return await apiRequest('/api/upload-content', {
+      return await fetch('/api/upload-content', {
         method: 'POST',
         body: formData
-      });
+      }).then(res => res.json());
     },
     onSuccess: (data) => {
       toast({
@@ -144,13 +144,14 @@ export default function ContentNew() {
   // Import content from URL
   const importContentMutation = useMutation({
     mutationFn: async (url: string) => {
-      return await apiRequest('/api/import-content-url', {
+      return await fetch('/api/import-content-url', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           url,
           contentType: selectedType 
         })
-      });
+      }).then(res => res.json());
     },
     onSuccess: (data) => {
       toast({
@@ -164,14 +165,15 @@ export default function ContentNew() {
   // Deploy content coin
   const deployContentCoinMutation = useMutation({
     mutationFn: async (tokenData: FormData) => {
-      return await apiRequest('/api/deploy-content-coin', {
+      return await fetch('/api/deploy-content-coin', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...tokenData,
           contentType: selectedType,
           creator: address
         })
-      });
+      }).then(res => res.json());
     },
     onSuccess: (data) => {
       toast({

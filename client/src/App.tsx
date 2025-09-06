@@ -60,6 +60,8 @@ import Leaderboard from './pages/Leaderboard';
 import Admin from "./pages/Admin";
 
 import Feed from "./pages/Feed";
+import ContentNew from "@/pages/ContentNew";
+import ExploreContent from "@/pages/ExploreContent";
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -133,6 +135,8 @@ function AppContent() {
                 <Route path="/creators" component={Creators} /> {/* New route for Creators page */}
                 <Route path="/channels" component={Channels} />
                 <Route path="/leaderboard" component={Leaderboard} />
+                <Route path="/contentnew" component={ContentNew} />
+                <Route path="/explorecontent" component={ExploreContent} />
                 <Route component={NotFound} />
               </Switch>
             </Layout>

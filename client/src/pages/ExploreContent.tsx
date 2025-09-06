@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Search, Filter, TrendingUp, Clock, DollarSign, Users, Play, Image as ImageIcon, Music, FileText, Sparkles, ExternalLink, ShoppingCart, Eye, Heart, MessageCircle, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,12 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import { useAccount } from 'wagmi';
+import { useAccount } from '@/hooks/useWallet';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useLocation } from 'wouter';
 import { ContentPreview } from '@/components/ContentPreview';
 import { apiRequest } from '@/lib/queryClient';
-import { formatEther, formatUnits } from 'viem';
+import { formatEther } from 'viem';
 
 const contentTypeFilters = [
   { id: 'all', name: 'All Content', icon: Sparkles, color: 'text-gray-500' },
@@ -77,7 +77,7 @@ export default function ExploreContent() {
       if (sortBy) params.append('sort', sortBy);
       if (searchQuery) params.append('search', searchQuery);
       
-      return await apiRequest(`/api/content-tokens?${params.toString()}`);
+      return await fetch(`/api/content-tokens?${params.toString()}`).then(res => res.json());
     },
     refetchInterval: 10000, // Refresh every 10 seconds for live prices
   });
@@ -86,7 +86,7 @@ export default function ExploreContent() {
   const { data: trendingTokens = [] } = useQuery({
     queryKey: ['trending-content-tokens'],
     queryFn: async () => {
-      return await apiRequest('/api/content-tokens?sort=trending&limit=6');
+      return await fetch('/api/content-tokens?sort=trending&limit=6').then(res => res.json());
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });

@@ -17,6 +17,8 @@ import {
   FileImage,
   Trophy,
   Shield,
+  Sparkles,
+  Search,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -188,9 +190,10 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
 
 const mainNavItems = [
   { icon: FileImage, label: "Discover", href: "/" },
+  { icon: Search, label: "Explore Content", href: "/explorecontent" },
+  { icon: Sparkles, label: "Create Token", href: "/contentnew" },
   { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
   { icon: Radio, label: "Create Channel", href: "/create-channel" },
-  { icon: Coins, label: "Submit Content", href: "/create-content-coin" },
   { icon: Trophy, label: "Creators", href: "/creators" },
   { icon: Radio, label: "Channels", href: "/channels" },
 ];
