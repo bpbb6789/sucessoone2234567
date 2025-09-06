@@ -1,0 +1,36 @@
+contentnew:1 Uncaught (in promise) TypeError: Internal error when calculating storage usage.Understand this error
+index.es-HOYKQQKP.js?v=e3a99a14:4073 Uncaught (in promise) UnknownError: Internal error.Understand this error
+chunk-ANJCMEYS.js?v=e3a99a14:5 Uncaught (in promise) UnknownError: Internal error.Understand this error
+4VM496:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM496:1
+cca-lite.coinbase.com/metrics:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+chunk-MFRYG5DN.js?v=e3a99a14:3281 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+2VM496:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM496:1
+cca-lite.coinbase.com/metrics:1  Failed to load resource: the server responded with a status of 401 ()Understand this error
+20VM496:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM496:1
+dist-UABBXZ6X.js?v=e3a99a14:38306 WebSocket connection to 'wss://www.walletlink.org/rpc' failed: WebSocket is closed before the connection is established.
+disconnect @ dist-UABBXZ6X.js?v=e3a99a14:38306Understand this warning
+3VM496:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM496:1
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
