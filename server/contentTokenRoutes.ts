@@ -173,17 +173,30 @@ export function setupContentTokenRoutes(app: Express) {
         throw new Error('Bonding curve service not configured. Missing required environment variables.');
       }
 
-      // Use a properly checksummed valid address for testing (in production, you would deploy an actual ERC20 token first)
-      const tempTokenAddress = getAddress('0x1234567890123456789012345678901234567890');
-      const checksummedCreatorAddress = getAddress(creatorAddress || '0x0000000000000000000000000000000000000000');
+      const checksummedCreatorAddress = getAddress(creatorAddress);
       
-      console.log(`🚀 REAL CONTRACT DEPLOYMENT STARTING:`);
-      console.log(`   Token address: ${tempTokenAddress}`);
-      console.log(`   Creator address: ${checksummedCreatorAddress}`);
-      console.log(`   Factory contract: ${process.env.BONDING_CURVE_FACTORY_ADDRESS}`);
+      console.log(`🚀 DEPLOYING REAL ERC20 TOKEN + BONDING CURVE`);
+      console.log(`   Creator: ${checksummedCreatorAddress}`);
+      console.log(`   Coin: ${coinName} (${coinSymbol})`);
+      console.log(`   Supply: ${totalSupply}`);
       
+      // Step 1: Deploy real ERC20 token first
+      const tokenDeployResult = await bondingCurveService.deployERC20Token(
+        coinName,
+        coinSymbol, 
+        totalSupply,
+        checksummedCreatorAddress
+      );
+      
+      if (!tokenDeployResult.success) {
+        throw new Error(tokenDeployResult.error || 'Failed to deploy ERC20 token');
+      }
+      
+      console.log(`✅ ERC20 Token deployed: ${tokenDeployResult.tokenAddress}`);
+      
+      // Step 2: Deploy bonding curve for the real token
       const deployResult = await bondingCurveService.deployBondingCurve(
-        tempTokenAddress,
+        tokenDeployResult.tokenAddress!,
         checksummedCreatorAddress,
         `content-coin-${Date.now()}`
       );
