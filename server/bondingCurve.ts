@@ -402,43 +402,77 @@ class BondingCurveService {
         address: curveAddress as `0x${string}`,
         abi: [{
           inputs: [],
-          name: "getCurrentPrice",
+          name: "currentPricePerToken",
           outputs: [{ name: "", type: "uint256" }],
           stateMutability: "view",
           type: "function"
         }],
-        functionName: 'getCurrentPrice'
+        functionName: 'currentPricePerToken'
       }) as bigint;
 
-      const [tokenAddress, creatorAddress, platformAddress, supply, reserve] = await this.publicClient.readContract({
+      // Get individual contract properties since getInfo doesn't exist
+      const tokenAddress = await this.publicClient.readContract({
         address: curveAddress as `0x${string}`,
         abi: [{
           inputs: [],
-          name: "getInfo", 
-          outputs: [
-            { name: "", type: "address" },
-            { name: "", type: "address" },
-            { name: "", type: "address" },
-            { name: "", type: "uint256" },
-            { name: "", type: "uint256" }
-          ],
+          name: "token",
+          outputs: [{ name: "", type: "address" }],
           stateMutability: "view",
           type: "function"
         }],
-        functionName: 'getInfo'
-      }) as [string, string, string, bigint, bigint];
+        functionName: 'token'
+      }) as string;
 
-      const marketCap = await this.publicClient.readContract({
+      const creatorAddress = await this.publicClient.readContract({
         address: curveAddress as `0x${string}`,
         abi: [{
           inputs: [],
-          name: "getMarketCap",
+          name: "creator",
+          outputs: [{ name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'creator'
+      }) as string;
+
+      const platformAddress = await this.publicClient.readContract({
+        address: curveAddress as `0x${string}`,
+        abi: [{
+          inputs: [],
+          name: "admin",
+          outputs: [{ name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'admin'
+      }) as string;
+
+      const supply = await this.publicClient.readContract({
+        address: curveAddress as `0x${string}`,
+        abi: [{
+          inputs: [],
+          name: "totalSupply",
           outputs: [{ name: "", type: "uint256" }],
           stateMutability: "view",
           type: "function"
         }],
-        functionName: 'getMarketCap'
+        functionName: 'totalSupply'
       }) as bigint;
+
+      const reserve = await this.publicClient.readContract({
+        address: curveAddress as `0x${string}`,
+        abi: [{
+          inputs: [],
+          name: "reserveBalance",
+          outputs: [{ name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'reserveBalance'
+      }) as bigint;
+
+      // Calculate market cap as currentPrice * totalSupply
+      const marketCap = currentPrice * supply;
 
       return {
         tokenAddress,
@@ -461,18 +495,24 @@ class BondingCurveService {
    */
   async calculateBuyTokens(curveAddress: string, ethAmount: string): Promise<bigint | null> {
     try {
-      return await this.publicClient.readContract({
+      // Use buyCost to calculate how much ETH is needed for a certain number of tokens
+      // Since we want tokens for a given ETH amount, we need to estimate
+      // For simplicity, let's approximate by dividing ETH by current price
+      const ethWei = BigInt(parseFloat(ethAmount) * 1e18);
+      const currentPricePerToken = await this.publicClient.readContract({
         address: curveAddress as `0x${string}`,
         abi: [{
-          inputs: [{ name: "ethAmount", type: "uint256" }],
-          name: "calculateBuyTokens",
+          inputs: [],
+          name: "currentPricePerToken",
           outputs: [{ name: "", type: "uint256" }],
           stateMutability: "view",
           type: "function"
         }],
-        functionName: 'calculateBuyTokens',
-        args: [BigInt(parseFloat(ethAmount) * 1e18)] // Convert to Wei
+        functionName: 'currentPricePerToken'
       }) as bigint;
+      
+      // Rough approximation: tokens = ETH / pricePerToken
+      return currentPricePerToken > 0n ? ethWei / currentPricePerToken : 0n;
 
     } catch (error) {
       console.error("Error calculating buy tokens:", error);
@@ -485,16 +525,17 @@ class BondingCurveService {
    */
   async calculateSellTokens(curveAddress: string, tokenAmount: string): Promise<bigint | null> {
     try {
+      // Use sellReward to calculate ETH received for selling tokens
       return await this.publicClient.readContract({
         address: curveAddress as `0x${string}`,
         abi: [{
-          inputs: [{ name: "tokenAmount", type: "uint256" }],
-          name: "calculateSellTokens",
+          inputs: [{ name: "amountIn", type: "uint256" }],
+          name: "sellReward",
           outputs: [{ name: "", type: "uint256" }],
           stateMutability: "view",
           type: "function"
         }],
-        functionName: 'calculateSellTokens',
+        functionName: 'sellReward',
         args: [BigInt(parseFloat(tokenAmount) * 1e18)] // Convert to Wei
       }) as bigint;
 
