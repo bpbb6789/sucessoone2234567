@@ -75,13 +75,19 @@ export function setupContentTokenRoutes(app: Express) {
       });
 
       // Upload to IPFS via Pinata
-      const uploadResult = await pinata.upload.buffer(req.file.buffer, {
-        name: req.file.originalname,
+      const file = new File([req.file.buffer], req.file.originalname, {
+        type: req.file.mimetype,
+      });
+      
+      const uploadResult = await pinata.upload.file(file, {
         metadata: {
-          contentType: contentType,
-          title: title || req.file.originalname,
-          description: description || '',
-          uploadedAt: new Date().toISOString()
+          name: req.file.originalname,
+          keyvalues: {
+            contentType: contentType,
+            title: title || req.file.originalname,
+            description: description || '',
+            uploadedAt: new Date().toISOString()
+          }
         }
       });
 
@@ -91,12 +97,12 @@ export function setupContentTokenRoutes(app: Express) {
       let thumbnailCid = undefined;
       if (req.file.mimetype.startsWith('image/') && req.file.size < 10 * 1024 * 1024) {
         // For images under 10MB, use the same CID as thumbnail
-        thumbnailCid = uploadResult.IpfsHash;
+        thumbnailCid = uploadResult.cid;
       }
 
       res.json({
         success: true,
-        mediaCid: uploadResult.IpfsHash,
+        mediaCid: uploadResult.cid,
         thumbnailCid,
         contentType,
         fileSize: req.file.size,
