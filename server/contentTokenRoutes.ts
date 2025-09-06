@@ -56,6 +56,16 @@ interface ContentTokenData {
 // In-memory storage for content tokens (replace with database later)
 const contentTokens: Map<string, ContentTokenData> = new Map();
 
+// Helper function to generate a valid Ethereum address
+function generateValidAddress(): string {
+  const chars = '0123456789abcdef';
+  let result = '0x';
+  for (let i = 0; i < 40; i++) {
+    result += chars[Math.floor(Math.random() * 16)];
+  }
+  return result;
+}
+
 export function setupContentTokenRoutes(app: Express) {
   
   // Upload content to IPFS
@@ -162,9 +172,10 @@ export function setupContentTokenRoutes(app: Express) {
         throw new Error('Bonding curve service not configured. Missing required environment variables.');
       }
 
-      // First, we need a token address. In a real implementation, you would deploy an ERC20 token first
-      // For now, we'll use a placeholder that would be replaced with actual token deployment
-      const tempTokenAddress = `0x${Math.random().toString(16).substring(2).padStart(40, '0')}`;
+      // Use a known valid Ethereum address for testing (in production, you would deploy an actual ERC20 token first)
+      const tempTokenAddress = '0x1234567890123456789012345678901234567890';
+      
+      console.log(`Using test token address: ${tempTokenAddress}`);
       
       const deployResult = await bondingCurveService.deployBondingCurve(
         tempTokenAddress,

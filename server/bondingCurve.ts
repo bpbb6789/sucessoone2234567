@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { db } from "./db";
 import { creatorCoins } from "../shared/schema";
 import { eq } from "drizzle-orm";
-import { createPublicClient, createWalletClient, http, PublicClient, WalletClient, Account } from "viem";
+import { createPublicClient, createWalletClient, http, PublicClient, WalletClient, Account, Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 
@@ -33,7 +33,7 @@ const CHAIN_ID = 84532;
 
 // Contract addresses (to be set after deployment)
 // Updated with deployed factory address on Base Sepolia
-const BONDING_CURVE_FACTORY_ADDRESS = process.env.BONDING_CURVE_FACTORY_ADDRESS || "0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201" as Address;
+const BONDING_CURVE_FACTORY_ADDRESS = (process.env.BONDING_CURVE_FACTORY_ADDRESS || "0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201") as Address;
 const PLATFORM_ADMIN_ADDRESS = process.env.PLATFORM_ADMIN_ADDRESS || "0x64170da71cfA3Cf1169D5b4403693CaEDb1E157c";
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || process.env.PRIVATE_KEY || "";
 
@@ -55,23 +55,24 @@ interface DeployBondingCurveResult {
 }
 
 class BondingCurveService {
-  private provider: ethers.providers.JsonRpcProvider;
-  private wallet?: ethers.Wallet;
-  private factoryContract?: ethers.Contract;
+  private publicClient: PublicClient;
+  private walletClient?: WalletClient;
+  private account?: Account;
 
   constructor() {
-    this.provider = new ethers.providers.JsonRpcProvider(PROVIDER_URL);
+    // Use viem for better Base Sepolia support
+    this.publicClient = createPublicClient({
+      chain: baseSepolia,
+      transport: http(PROVIDER_URL)
+    });
 
     if (DEPLOYER_PRIVATE_KEY) {
-      this.wallet = new ethers.Wallet(DEPLOYER_PRIVATE_KEY, this.provider);
-    }
-
-    if (BONDING_CURVE_FACTORY_ADDRESS && this.wallet) {
-      this.factoryContract = new ethers.Contract(
-        BONDING_CURVE_FACTORY_ADDRESS,
-        BONDING_CURVE_FACTORY_ABI,
-        this.wallet
-      );
+      this.account = privateKeyToAccount(`0x${DEPLOYER_PRIVATE_KEY.replace(/^0x/, '')}`);
+      this.walletClient = createWalletClient({
+        chain: baseSepolia,
+        transport: http(PROVIDER_URL),
+        account: this.account
+      });
     }
   }
 
@@ -83,7 +84,7 @@ class BondingCurveService {
       BONDING_CURVE_FACTORY_ADDRESS &&
       PLATFORM_ADMIN_ADDRESS &&
       DEPLOYER_PRIVATE_KEY &&
-      this.factoryContract
+      this.walletClient
     );
   }
 
@@ -106,7 +107,21 @@ class BondingCurveService {
       console.log(`🚀 Deploying bonding curve for token ${tokenAddress} by creator ${creatorAddress}`);
 
       // Check if curve already exists
-      const existingCurve = await this.factoryContract!.getCurve(creatorAddress, tokenAddress);
+      const existingCurve = await this.publicClient.readContract({
+        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
+        abi: [
+          {
+            inputs: [{ name: "creator", type: "address" }, { name: "token", type: "address" }],
+            name: "getCurve",
+            outputs: [{ name: "", type: "address" }],
+            stateMutability: "view",
+            type: "function"
+          }
+        ],
+        functionName: 'getCurve',
+        args: [creatorAddress as `0x${string}`, tokenAddress as `0x${string}`]
+      });
+
       if (existingCurve !== "0x0000000000000000000000000000000000000000") {
         console.log(`⚠️ Bonding curve already exists at ${existingCurve}`);
         return {
@@ -115,30 +130,50 @@ class BondingCurveService {
         };
       }
 
-      // Deploy bonding curve
-      const deployTx = await this.factoryContract!.deployCurve(tokenAddress, creatorAddress);
-      console.log(`⚡ Deployment transaction sent: ${deployTx.hash}`);
+      // Deploy bonding curve using viem
+      const deployTxHash = await this.walletClient!.writeContract({
+        address: BONDING_CURVE_FACTORY_ADDRESS,
+        abi: [
+          {
+            inputs: [{ name: "token", type: "address" }, { name: "creator", type: "address" }],
+            name: "deployCurve",
+            outputs: [{ name: "", type: "address" }],
+            stateMutability: "nonpayable",
+            type: "function"
+          }
+        ] as const,
+        functionName: 'deployCurve',
+        args: [tokenAddress as Address, creatorAddress as Address],
+        chain: baseSepolia
+      });
+
+      console.log(`⚡ Deployment transaction sent: ${deployTxHash}`);
 
       // Wait for transaction confirmation
-      const receipt = await deployTx.wait();
+      const receipt = await this.publicClient.waitForTransactionReceipt({
+        hash: deployTxHash
+      });
+      
       console.log(`✅ Transaction confirmed in block ${receipt.blockNumber}`);
 
-      // Extract curve address from events
-      let curveAddress = "";
-      for (const log of receipt.logs) {
-        try {
-          const parsedLog = this.factoryContract!.interface.parseLog(log);
-          if (parsedLog && parsedLog.name === "CurveDeployed") {
-            curveAddress = parsedLog.args.curve;
-            break;
+      // Get the curve address after deployment
+      const curveAddress = await this.publicClient.readContract({
+        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
+        abi: [
+          {
+            inputs: [{ name: "creator", type: "address" }, { name: "token", type: "address" }],
+            name: "getCurve",
+            outputs: [{ name: "", type: "address" }],
+            stateMutability: "view",
+            type: "function"
           }
-        } catch (e) {
-          // Skip logs that don't match our interface
-        }
-      }
+        ],
+        functionName: 'getCurve',
+        args: [creatorAddress as `0x${string}`, tokenAddress as `0x${string}`]
+      });
 
-      if (!curveAddress) {
-        throw new Error("Could not find CurveDeployed event in transaction logs");
+      if (!curveAddress || curveAddress === "0x0000000000000000000000000000000000000000") {
+        throw new Error("Could not retrieve deployed curve address");
       }
 
       console.log(`🎯 Bonding curve deployed at ${curveAddress}`);
@@ -148,8 +183,8 @@ class BondingCurveService {
         .update(creatorCoins)
         .set({
           bondingCurveFactoryAddress: BONDING_CURVE_FACTORY_ADDRESS,
-          bondingCurveExchangeAddress: curveAddress,
-          bondingCurveDeploymentTxHash: deployTx.hash,
+          bondingCurveExchangeAddress: curveAddress as string,
+          bondingCurveDeploymentTxHash: deployTxHash,
           hasBondingCurve: true,
           updatedAt: new Date()
         })
@@ -159,8 +194,8 @@ class BondingCurveService {
 
       return {
         success: true,
-        curveAddress,
-        transactionHash: deployTx.hash
+        curveAddress: curveAddress as string,
+        transactionHash: deployTxHash
       };
 
     } catch (error) {
