@@ -1,0 +1,112 @@
+useNotifications.ts:33  GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.dev/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false 500 (Internal Server Error)
+queryFn @ useNotifications.ts:33
+fetchFn @ chunk-A67CSFD6.js?v=e3a99a14:879
+run @ chunk-A67CSFD6.js?v=e3a99a14:507
+start @ chunk-A67CSFD6.js?v=e3a99a14:550
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:918
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:2314
+setInterval
+updateRefetchInterval_fn @ chunk-A67CSFD6.js?v=e3a99a14:2312
+updateTimers_fn @ chunk-A67CSFD6.js?v=e3a99a14:2319
+onQueryUpdate @ chunk-A67CSFD6.js?v=e3a99a14:2275
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1040
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1039
+batch @ chunk-A67CSFD6.js?v=e3a99a14:598
+dispatch_fn @ chunk-A67CSFD6.js?v=e3a99a14:1038
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:951
+await in fetch
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+setOptions @ chunk-A67CSFD6.js?v=e3a99a14:2033
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:3157
+commitHookEffectListMount @ chunk-J4NESBNT.js?v=e3a99a14:16915
+commitPassiveMountOnFiber @ chunk-J4NESBNT.js?v=e3a99a14:18156
+commitPassiveMountEffects_complete @ chunk-J4NESBNT.js?v=e3a99a14:18129
+commitPassiveMountEffects_begin @ chunk-J4NESBNT.js?v=e3a99a14:18119
+commitPassiveMountEffects @ chunk-J4NESBNT.js?v=e3a99a14:18109
+flushPassiveEffectsImpl @ chunk-J4NESBNT.js?v=e3a99a14:19490
+flushPassiveEffects @ chunk-J4NESBNT.js?v=e3a99a14:19447
+commitRootImpl @ chunk-J4NESBNT.js?v=e3a99a14:19416
+commitRoot @ chunk-J4NESBNT.js?v=e3a99a14:19277
+performSyncWorkOnRoot @ chunk-J4NESBNT.js?v=e3a99a14:18895
+flushSyncCallbacks @ chunk-J4NESBNT.js?v=e3a99a14:9119
+(anonymous) @ chunk-J4NESBNT.js?v=e3a99a14:18627Understand this error
+useNotifications.ts:49  GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.dev/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count 500 (Internal Server Error)
+queryFn @ useNotifications.ts:49
+fetchFn @ chunk-A67CSFD6.js?v=e3a99a14:879
+run @ chunk-A67CSFD6.js?v=e3a99a14:507
+start @ chunk-A67CSFD6.js?v=e3a99a14:550
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:918
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:2314
+setInterval
+updateRefetchInterval_fn @ chunk-A67CSFD6.js?v=e3a99a14:2312
+updateTimers_fn @ chunk-A67CSFD6.js?v=e3a99a14:2319
+onQueryUpdate @ chunk-A67CSFD6.js?v=e3a99a14:2275
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1040
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1039
+batch @ chunk-A67CSFD6.js?v=e3a99a14:598
+dispatch_fn @ chunk-A67CSFD6.js?v=e3a99a14:1038
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:951
+await in fetch
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+setOptions @ chunk-A67CSFD6.js?v=e3a99a14:2033
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:3157
+commitHookEffectListMount @ chunk-J4NESBNT.js?v=e3a99a14:16915
+commitPassiveMountOnFiber @ chunk-J4NESBNT.js?v=e3a99a14:18156
+commitPassiveMountEffects_complete @ chunk-J4NESBNT.js?v=e3a99a14:18129
+commitPassiveMountEffects_begin @ chunk-J4NESBNT.js?v=e3a99a14:18119
+commitPassiveMountEffects @ chunk-J4NESBNT.js?v=e3a99a14:18109
+flushPassiveEffectsImpl @ chunk-J4NESBNT.js?v=e3a99a14:19490
+flushPassiveEffects @ chunk-J4NESBNT.js?v=e3a99a14:19447
+commitRootImpl @ chunk-J4NESBNT.js?v=e3a99a14:19416
+commitRoot @ chunk-J4NESBNT.js?v=e3a99a14:19277
+performSyncWorkOnRoot @ chunk-J4NESBNT.js?v=e3a99a14:18895
+flushSyncCallbacks @ chunk-J4NESBNT.js?v=e3a99a14:9119
+(anonymous) @ chunk-J4NESBNT.js?v=e3a99a14:18627Understand this error
+useNotifications.ts:33  GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.dev/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351?limit=50&unreadOnly=false 500 (Internal Server Error)
+queryFn @ useNotifications.ts:33
+fetchFn @ chunk-A67CSFD6.js?v=e3a99a14:879
+run @ chunk-A67CSFD6.js?v=e3a99a14:507
+start @ chunk-A67CSFD6.js?v=e3a99a14:550
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:918
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:2314
+setInterval
+updateRefetchInterval_fn @ chunk-A67CSFD6.js?v=e3a99a14:2312
+updateTimers_fn @ chunk-A67CSFD6.js?v=e3a99a14:2319
+onQueryUpdate @ chunk-A67CSFD6.js?v=e3a99a14:2275
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1040
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1039
+batch @ chunk-A67CSFD6.js?v=e3a99a14:598
+dispatch_fn @ chunk-A67CSFD6.js?v=e3a99a14:1038
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:951
+await in fetch
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:2314
+setInterval
+updateRefetchInterval_fn @ chunk-A67CSFD6.js?v=e3a99a14:2312
+updateTimers_fn @ chunk-A67CSFD6.js?v=e3a99a14:2319
+onQueryUpdate @ chunk-A67CSFD6.js?v=e3a99a14:2275
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1040
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1039
+batch @ chunk-A67CSFD6.js?v=e3a99a14:598
+dispatch_fn @ chunk-A67CSFD6.js?v=e3a99a14:1038
+fetch @ chunk-A67CSFD6.js?v=e3a99a14:951
+await in fetch
+executeFetch_fn @ chunk-A67CSFD6.js?v=e3a99a14:2280
+setOptions @ chunk-A67CSFD6.js?v=e3a99a14:2033
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:3157
+commitHookEffectListMount @ chunk-J4NESBNT.js?v=e3a99a14:16915
+commitPassiveMountOnFiber @ chunk-J4NESBNT.js?v=e3a99a14:18156
+commitPassiveMountEffects_complete @ chunk-J4NESBNT.js?v=e3a99a14:18129
+commitPassiveMountEffects_begin @ chunk-J4NESBNT.js?v=e3a99a14:18119
+commitPassiveMountEffects @ chunk-J4NESBNT.js?v=e3a99a14:18109
+flushPassiveEffectsImpl @ chunk-J4NESBNT.js?v=e3a99a14:19490
+flushPassiveEffects @ chunk-J4NESBNT.js?v=e3a99a14:19447
+commitRootImpl @ chunk-J4NESBNT.js?v=e3a99a14:19416
+commitRoot @ chunk-J4NESBNT.js?v=e3a99a14:19277
+performSyncWorkOnRoot @ chunk-J4NESBNT.js?v=e3a99a14:18895
+flushSyncCallbacks @ chunk-J4NESBNT.js?v=e3a99a14:9119
+(anonymous) @ chunk-J4NESBNT.js?v=e3a99a14:18627Understand this error
+useNotifications.ts:49  GET https://7f089acc-d076-440f-8d59-722fa3c95d90-00-slcctc2533ul.riker.replit.dev/api/notifications/0xd64bB045BC46e7a036ce1f26791F9B65256F7351/unread-count 500 (Internal Server Error)
