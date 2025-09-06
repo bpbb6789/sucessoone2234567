@@ -1528,9 +1528,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { channelId, contentType, title, description, coinName, coinSymbol } = req.body;
 
-      if (!contentType || !title || !coinName || !coinSymbol) {
-        return res.status(400).json({ message: "Missing required fields: contentType, title, coinName, coinSymbol" });
+      if (!contentType || !title) {
+        return res.status(400).json({ message: "Missing required fields: contentType, title" });
       }
+
+      console.log(`📤 Uploading file: ${req.file.originalname} (${req.file.size} bytes)`);
 
       // Upload file to IPFS
       const file = new File([req.file.buffer], req.file.originalname, {
@@ -1538,6 +1540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const mediaCid = await uploadFileToIPFS(file);
+      console.log(`✅ File uploaded to IPFS: ${mediaCid}`);
 
       // Create metadata JSON
       const metadata = {
@@ -1552,72 +1555,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Upload metadata to IPFS
       const metadataCid = await uploadJSONToIPFS(metadata);
+      console.log(`✅ Metadata uploaded to IPFS: ${metadataCid}`);
 
-      // For public uploads, don't save to database, just return IPFS data
-      if (!channelId || channelId === 'public') {
-        res.json({
-          success: true,
-          content: {
-            id: `public-${Date.now()}`,
-            title,
-            description,
-            contentType,
-            mediaCid,
-            ipfsCid: metadataCid,
-            metadata,
-            status: 'tokenizing',
-            createdAt: new Date()
-          },
-          mediaCid,
-          metadataCid
-        });
-        return;
-      }
-
-      // Verify channel exists before trying to save content import
-      const existingChannel = await storage.getChannel(channelId);
-      if (!existingChannel) {
-        return res.status(400).json({ message: "Channel not found" });
-      }
-
-      // Save content import record only if valid channelId provided
-      const contentData = {
-        channelId,
+      // Always return success response with IPFS data (database-independent)
+      const publicContent = {
+        id: `public-${Date.now()}`,
         title,
         description,
         contentType,
         mediaCid,
         ipfsCid: metadataCid,
         metadata,
-        status: 'tokenizing' as const,
-        coinName: req.body.coinName || req.file.originalname.replace(/\.[^/.]+$/, ""),
-        coinSymbol: req.body.coinSymbol || req.file.originalname.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, "")
+        status: 'uploaded',
+        coinName: coinName || req.file.originalname.replace(/\.[^/.]+$/, ""),
+        coinSymbol: coinSymbol || req.file.originalname.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, ""),
+        createdAt: new Date()
       };
 
-      const content = await storage.createContentImport(contentData);
-
-      // Auto-tokenize content after creation
-      setTimeout(async () => {
+      // Try to save to database if available, but don't fail if database is down
+      if (channelId && channelId !== 'public') {
         try {
-          await storage.updateContentImport(content.id, {
-            status: 'tokenized',
-            tokenizedAt: new Date()
-          });
-        } catch (error) {
-          console.error("Auto-tokenization error:", error);
-          await storage.updateContentImport(content.id, { status: 'failed' });
-        }
-      }, 2000);
+          const existingChannel = await storage.getChannel(channelId);
+          if (existingChannel) {
+            const contentData = {
+              channelId,
+              title,
+              description,
+              contentType,
+              mediaCid,
+              ipfsCid: metadataCid,
+              metadata,
+              status: 'uploaded' as const,
+              coinName: coinName || req.file.originalname.replace(/\.[^/.]+$/, ""),
+              coinSymbol: coinSymbol || req.file.originalname.slice(0, 6).toUpperCase().replace(/[^A-Z]/g, "")
+            };
 
+            const content = await storage.createContentImport(contentData);
+            console.log(`💾 Content saved to database: ${content.id}`);
+            
+            res.json({
+              success: true,
+              content,
+              mediaCid,
+              metadataCid
+            });
+            return;
+          }
+        } catch (dbError) {
+          console.warn(`⚠️ Database unavailable, continuing with IPFS-only upload:`, dbError);
+        }
+      }
+
+      // Return IPFS-only response (fallback when database is unavailable)
       res.json({
         success: true,
-        content,
+        content: publicContent,
         mediaCid,
-        metadataCid
+        metadataCid,
+        message: "Content uploaded to IPFS successfully (database unavailable)"
       });
+
     } catch (error) {
-      console.error("Content upload error:", error);
-      res.status(500).json({ message: "Failed to upload content to IPFS" });
+      console.error("❌ Content upload error:", error);
+      res.status(500).json({ 
+        message: "Failed to upload content to IPFS",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

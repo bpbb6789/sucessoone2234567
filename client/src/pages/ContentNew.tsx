@@ -13,8 +13,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocation } from 'wouter';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+// Removed unused React Query dependencies
 
 const contentTypes = [
   { 
@@ -112,85 +111,9 @@ export default function ContentNew() {
 
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
-  const queryClient = useQueryClient();
+  // Removed queryClient dependency
 
-  // Upload content to IPFS
-  const uploadContentMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('contentType', selectedType);
-      return await fetch('/api/upload-content', {
-        method: 'POST',
-        body: formData
-      }).then(res => res.json());
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Content Uploaded",
-        description: "Your content has been uploaded to IPFS successfully!"
-      });
-      setStep('configure');
-    },
-    onError: (error) => {
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload content. Please try again.",
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Import content from URL
-  const importContentMutation = useMutation({
-    mutationFn: async (url: string) => {
-      return await fetch('/api/import-content-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          url,
-          contentType: selectedType 
-        })
-      }).then(res => res.json());
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Content Imported",
-        description: "Content has been imported from URL successfully!"
-      });
-      setStep('configure');
-    }
-  });
-
-  // Deploy content coin
-  const deployContentCoinMutation = useMutation({
-    mutationFn: async (tokenData: FormData) => {
-      return await fetch('/api/deploy-content-coin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...tokenData,
-          contentType: selectedType,
-          creator: address
-        })
-      }).then(res => res.json());
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Content Token Created!",
-        description: `Your ${formData.tokenName} token has been deployed successfully!`
-      });
-      setStep('success');
-      queryClient.invalidateQueries({ queryKey: ['content-tokens'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Deployment Failed",
-        description: "Failed to deploy content token. Please try again.",
-        variant: "destructive"
-      });
-    }
-  });
+  // Removed mutation dependencies to fix upload issues
 
   const handleFileSelect = (file: File) => {
     if (file.size > getMaxFileSize(selectedType)) {
@@ -250,21 +173,111 @@ export default function ContentNew() {
     return typeConfig?.maxSize || '50MB';
   };
 
-  const handleUploadContent = () => {
-    if (selectedFile) {
-      setIsProcessing(true);
-      uploadContentMutation.mutate(selectedFile);
+  const handleUploadContent = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "No File Selected",
+        description: "Please select a file to upload.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', selectedFile);
+      formDataToSend.append('channelId', 'public'); // Use public for now
+      formDataToSend.append('contentType', selectedType);
+      formDataToSend.append('title', selectedFile.name.split('.')[0]);
+      formDataToSend.append('description', '');
+      formDataToSend.append('coinName', formData.tokenName || selectedFile.name.split('.')[0]);
+      formDataToSend.append('coinSymbol', formData.tokenSymbol || selectedFile.name.slice(0, 6).toUpperCase());
+
+      const response = await fetch('/api/content-imports/upload', {
+        method: 'POST',
+        body: formDataToSend
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Upload failed' }));
+        throw new Error(errorData.message || 'Upload failed');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Content Uploaded",
+        description: "Your content has been uploaded to IPFS successfully!"
+      });
+      
+      setStep('configure');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload content. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleImportUrl = () => {
-    if (importUrl) {
-      setIsProcessing(true);
-      importContentMutation.mutate(importUrl);
+  const handleImportUrl = async () => {
+    if (!importUrl) {
+      toast({
+        title: "No URL Provided",
+        description: "Please enter a URL to import.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      const response = await fetch('/api/content-imports/import-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: importUrl,
+          channelId: 'public',
+          contentType: selectedType,
+          title: formData.tokenName || 'Imported Content',
+          description: formData.description || '',
+          coinName: formData.tokenName || 'Imported Content',
+          coinSymbol: formData.tokenSymbol || 'IMP'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Import failed' }));
+        throw new Error(errorData.message || 'Import failed');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Content Imported",
+        description: "Content has been imported successfully!"
+      });
+      
+      setStep('configure');
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import Failed",
+        description: error.message || "Failed to import content. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleDeployToken = () => {
+  const handleDeployToken = async () => {
     if (!formData.tokenName || !formData.tokenSymbol) {
       toast({
         title: "Missing Information",
@@ -275,7 +288,49 @@ export default function ContentNew() {
     }
 
     setIsProcessing(true);
-    deployContentCoinMutation.mutate(formData);
+    
+    try {
+      const response = await fetch('/api/creator-coins/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorAddress: address || 'public',
+          title: formData.tokenName,
+          description: formData.description,
+          contentType: selectedType,
+          coinName: formData.tokenName,
+          coinSymbol: formData.tokenSymbol,
+          currency: 'ETH',
+          startingMarketCap: formData.marketCap,
+          twitter: formData.socialLinks.twitter,
+          discord: formData.socialLinks.discord,
+          website: formData.socialLinks.website
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Deployment failed' }));
+        throw new Error(errorData.message || 'Deployment failed');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Content Token Created!",
+        description: `Your ${formData.tokenName} token has been created successfully!`
+      });
+      
+      setStep('success');
+    } catch (error: any) {
+      console.error('Deploy error:', error);
+      toast({
+        title: "Deployment Failed",
+        description: error.message || "Failed to deploy content token. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (!isConnected) {
