@@ -184,8 +184,8 @@ class BondingCurveService {
       console.log(`   Name: ${name} (${symbol})`);
       console.log(`   Supply: ${totalSupply}`);
 
-      // Convert total supply to Wei (assuming 18 decimals)
-      const totalSupplyWei = BigInt(totalSupply) * BigInt(10 ** decimals);
+      // Convert total supply to Wei (fix BigInt math issue)
+      const totalSupplyWei = BigInt(totalSupply) * (BigInt(10) ** BigInt(decimals));
 
       // Deploy both token and curve using factory
       const deployTxHash = await this.walletClient!.writeContract({
@@ -589,6 +589,133 @@ class BondingCurveService {
     } catch (error) {
       console.error("Error getting curve address:", error);
       return null;
+    }
+  }
+
+  /**
+   * Diagnose the deployed factory contract configuration
+   */
+  async diagnoseFactoryContract() {
+    try {
+      console.log(`🔍 DIAGNOSING FACTORY CONTRACT AT ${BONDING_CURVE_FACTORY_ADDRESS}`);
+      
+      // Check if contract exists by getting bytecode
+      const bytecode = await this.publicClient.getCode({
+        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`
+      });
+      
+      if (!bytecode || bytecode === '0x') {
+        return {
+          error: 'No contract deployed at factory address',
+          factoryExists: false
+        };
+      }
+      
+      console.log(`✅ Contract exists, bytecode length: ${bytecode.length}`);
+      
+      // Read the factory configuration
+      const admin = await this.publicClient.readContract({
+        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
+        abi: [{
+          inputs: [],
+          name: "admin",
+          outputs: [{ name: "", type: "address" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'admin'
+      }) as string;
+      
+      const defaultK = await this.publicClient.readContract({
+        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
+        abi: [{
+          inputs: [],
+          name: "defaultK",
+          outputs: [{ name: "", type: "uint256" }],
+          stateMutability: "view",
+          type: "function"
+        }],
+        functionName: 'defaultK'
+      }) as bigint;
+      
+      console.log(`📋 Factory Configuration:`);
+      console.log(`   Admin: ${admin}`);
+      console.log(`   DefaultK: ${defaultK.toString()}`);
+      console.log(`   Admin is zero: ${admin === '0x0000000000000000000000000000000000000000'}`);
+      console.log(`   DefaultK is zero: ${defaultK === 0n}`);
+      
+      return {
+        factoryExists: true,
+        admin,
+        defaultK: defaultK.toString(),
+        adminIsZero: admin === '0x0000000000000000000000000000000000000000',
+        defaultKIsZero: defaultK === 0n,
+        diagnosis: {
+          possibleIssues: [
+            ...(admin === '0x0000000000000000000000000000000000000000' ? ['Admin is zero address'] : []),
+            ...(defaultK === 0n ? ['DefaultK is zero'] : [])
+          ]
+        }
+      };
+      
+    } catch (error) {
+      console.error('Factory diagnosis error:', error);
+      return {
+        error: error instanceof Error ? error.message : 'Unknown diagnosis error',
+        factoryExists: false
+      };
+    }
+  }
+
+  /**
+   * Simulate the createContentCoinWithCurve call to get the exact revert reason
+   */
+  async simulateContentCoinWithCurve(
+    name: string,
+    symbol: string,
+    totalSupply: string,
+    decimals: number,
+    creatorAddress: string
+  ) {
+    try {
+      console.log(`🧪 SIMULATING createContentCoinWithCurve`);
+      
+      const totalSupplyWei = BigInt(totalSupply) * (BigInt(10) ** BigInt(decimals));
+      
+      const result = await this.publicClient.simulateContract({
+        address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
+        abi: [{
+          inputs: [
+            { name: "name", type: "string" },
+            { name: "symbol", type: "string" },
+            { name: "totalSupply", type: "uint256" },
+            { name: "decimals", type: "uint8" }
+          ],
+          name: "createContentCoinWithCurve",
+          outputs: [
+            { name: "tokenAddr", type: "address" },
+            { name: "curveAddr", type: "address" }
+          ],
+          stateMutability: "nonpayable",
+          type: "function"
+        }],
+        functionName: 'createContentCoinWithCurve',
+        args: [name, symbol, totalSupplyWei, decimals],
+        account: this.account!
+      });
+      
+      console.log(`✅ Simulation successful:`, result.result);
+      return {
+        success: true,
+        result: result.result
+      };
+      
+    } catch (error) {
+      console.error('Simulation failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown simulation error'
+      };
     }
   }
 

@@ -168,27 +168,78 @@ export function setupContentTokenRoutes(app: Express) {
       };
       const kValue = kValueMap[marketCapSetting as keyof typeof kValueMap] || kValueMap.medium;
 
-      // TEMPORARY WORKAROUND: The deployed factory contract is reverting
-      // Generate deterministic addresses as a temporary solution until the contract issue is resolved
-      console.log(`🚀 DEPLOYING CONTENT COIN (TEMPORARY MOCK MODE)`);
+      // STEP 1: First, try to deploy just the token using the existing token factory  
+      // This separates token deployment from bonding curve deployment
+      // Skip the problematic combined deployment entirely
+      console.log(`🚀 DEPLOYING CONTENT COIN (SEPARATED APPROACH)`);
       console.log(`   Creator: ${creatorAddress}`);
       console.log(`   Coin: ${coinName} (${coinSymbol})`);
       console.log(`   Supply: ${totalSupply}`);
-      console.log(`   Note: Using mock deployment due to contract revert issue`);
+      console.log(`   Strategy: Deploy token first, then create curve separately`);
       
-      // Generate deterministic but fake addresses for now
-      const tokenAddress = `0x${Buffer.from(`${coinName}_${coinSymbol}_${Date.now()}_token`, 'utf8').toString('hex').padStart(40, '0').slice(0, 40)}`;
-      const curveAddress = `0x${Buffer.from(`${coinName}_${coinSymbol}_${Date.now()}_curve`, 'utf8').toString('hex').padStart(40, '0').slice(0, 40)}`;
-      const transactionHash = `0x${Buffer.from(`mock_deploy_${tokenAddress}_${Date.now()}`, 'utf8').toString('hex').padStart(64, '0').slice(0, 64)}`;
+      // First, diagnose the factory to understand what's wrong
+      const diagnosis = await bondingCurveService.diagnoseFactoryContract();
+      console.log(`🔍 Factory diagnosis:`, diagnosis);
+      
+      // Simulate the call to get the exact error
+      const simulation = await bondingCurveService.simulateContentCoinWithCurve(
+        coinName,
+        coinSymbol,
+        totalSupply,
+        18,
+        creatorAddress
+      );
+      console.log(`🧪 Simulation result:`, simulation);
+      
+      // For now, use the existing separate deployment approach
+      // Deploy token first using basic ERC20 deployment
+      const tokenDeployResult = await bondingCurveService.deployERC20Token(
+        coinName,
+        coinSymbol,
+        totalSupply,
+        creatorAddress
+      );
+      
+      if (!tokenDeployResult.success) {
+        throw new Error(tokenDeployResult.error || 'Failed to deploy ERC20 token');
+      }
+      
+      console.log(`✅ Token deployed:`, tokenDeployResult);
+      
+      // STEP 2: Deploy bonding curve for the token (if needed)
+      let curveAddress = null;
+      let curveDeployTx = null;
+      
+      if (tokenDeployResult.tokenAddress) {
+        console.log(`🚀 Deploying bonding curve for token: ${tokenDeployResult.tokenAddress}`);
+        
+        const curveDeployResult = await bondingCurveService.deployBondingCurve(
+          tokenDeployResult.tokenAddress,
+          creatorAddress,
+          `coin-${Date.now()}`
+        );
+        
+        if (curveDeployResult.success) {
+          curveAddress = curveDeployResult.curveAddress;
+          curveDeployTx = curveDeployResult.transactionHash;
+          console.log(`✅ Bonding curve deployed:`, curveDeployResult);
+        } else {
+          console.log(`⚠️ Bonding curve deployment failed, continuing without curve:`, curveDeployResult.error);
+        }
+      }
 
       const deployResult = {
         success: true,
-        tokenAddress,
-        curveAddress,
-        transactionHash
+        tokenAddress: tokenDeployResult.tokenAddress,
+        curveAddress: curveAddress,
+        transactionHash: tokenDeployResult.transactionHash,
+        curveTransactionHash: curveDeployTx,
+        separatedDeployment: true,
+        diagnosis,
+        simulation
       };
 
-      console.log('Mock deployment successful:', deployResult);
+      console.log('Separated deployment completed:', deployResult);
 
       // Create content token entry
       const tokenData: ContentTokenData = {

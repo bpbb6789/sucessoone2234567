@@ -1,0 +1,75 @@
+Perfect, thanks for pasting the full error stack 🙏
+
+Here’s what’s happening with your **`createContentCoinWithCurve` revert**:
+
+---
+
+## 🔎 Why it’s failing
+
+1. **The error is not from `viem`** → the call actually reaches the contract.
+   If the function didn’t exist, you’d see `"function not found"`, but you’re seeing a **revert**, so the function exists.
+
+2. **Likely failure points inside the factory** (`BondingCurveFactory.sol`):
+
+   * `require(totalSupply > 0)` ✅ (you’re passing `1e24`, so that’s fine).
+   * When deploying `ContentCoin` and `BondingCurveExchange`, if **one of those constructors fails**, the whole transaction reverts.
+   * If your `ContentCoin` constructor expects something different (e.g. `initialSupply` minted to `msg.sender` instead of curve contract), deployment fails.
+   * If `BondingCurveExchange` requires a valid token address but gets an invalid one (because ContentCoin didn’t deploy properly), it reverts.
+
+3. **Gas issues**: deploying two contracts (`ContentCoin` + `BondingCurveExchange`) in one call costs **a lot of gas**. If your `gasLimit` is too low, it silently reverts.
+
+4. **Wrongly wired dependencies**:
+
+   * If `BondingCurveFactory` wasn’t deployed with correct bytecode for `ContentCoin` / `BondingCurveExchange` (e.g. hardcoded addresses missing), it will fail every time.
+
+---
+
+## ✅ Steps to debug
+
+Here’s how to pinpoint it:
+
+1. **Check the `BondingCurveFactory.sol` implementation**. Look at the `createContentCoinWithCurve` function:
+
+   ```solidity
+   function createContentCoinWithCurve(
+       string memory name,
+       string memory symbol,
+       uint256 totalSupply,
+       uint8 decimals
+   ) public returns (address contentCoin, address curve) {
+       require(totalSupply > 0, "supply 0");
+
+       ContentCoin newCoin = new ContentCoin(name, symbol, totalSupply, decimals, msg.sender);
+       BondingCurveExchange newCurve = new BondingCurveExchange(address(newCoin), msg.sender);
+       ...
+   }
+   ```
+
+   * Does `ContentCoin` accept `(string,string,uint256,uint8,address)`?
+     If not → constructor mismatch.
+
+2. **Open `ContentCoin.sol`**: confirm what constructor looks like.
+   If it only accepts `(string,string)` and uses OpenZeppelin ERC20, then passing 5 params causes revert.
+
+3. **Check `BondingCurveExchange.sol` constructor**:
+   If it requires **reserve token address** or some initial ETH, but factory only passes `(address newCoin, msg.sender)`, deployment will revert.
+
+---
+
+## 🛠 Fix Options
+
+* If constructor mismatch → align them:
+
+  * **ContentCoin** should accept `(name, symbol, initialSupply, decimals, owner)` and mint supply to owner.
+  * Or simplify: just `(name, symbol)` and mint supply inside exchange.
+* If gas is the problem → bump `gasLimit` when calling `createContentCoinWithCurve`.
+* If missing dependencies → redeploy `BondingCurveFactory` with the correct linked contracts.
+
+---
+
+## ⚡ Next Step for You
+
+👉 Can you paste the **constructor of `ContentCoin.sol` and `BondingCurveExchange.sol`**?
+That will let me confirm exactly why the factory call is reverting.
+
+Would you like me to **rewrite all 3 contracts (Factory + ContentCoin + BondingCurveExchange)** into a clean version that definitely deploys without constructor mismatches?
