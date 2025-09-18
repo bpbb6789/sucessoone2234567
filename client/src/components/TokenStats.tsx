@@ -18,8 +18,6 @@ interface TokenStatsProps {
     volume24h: string;
     holders: number;
     change24h?: number;
-    isOnBondingCurve?: boolean;
-    progress?: number;
   };
 }
 
@@ -71,10 +69,9 @@ export default function TokenStats({ tokenData }: TokenStatsProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Market Cap</p>
-              <p className="text-xl font-bold">${formatNumber(tokenData.marketCap)}</p>
-              {tokenData.isOnBondingCurve && (
-                <p className="text-xs text-blue-500">Bonding Curve</p>
-              )}
+              <p className="text-xl font-bold">
+                {tokenData.marketCap === '0' || tokenData.marketCap === '0.00' ? 'No data' : `$${formatNumber(tokenData.marketCap)}`}
+              </p>
             </div>
             <BarChart3 className="h-8 w-8 text-blue-500" />
           </div>

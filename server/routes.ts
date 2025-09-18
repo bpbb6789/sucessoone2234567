@@ -2436,7 +2436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(eq(creatorCoins.id, coinId));
 
-      
+
 
       // Trigger multiple notifications for successful creator coin creation
       await triggerNotification('creator_coin_created', {
@@ -2489,68 +2489,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get creator coin trading info
-  app.get("/api/creator-coins/:id/bonding-curve-info", async (req, res) => {
-    try {
-      const identifier = req.params.id;
-      let coin;
-
-      // Check if the identifier is a contract address (starts with 0x) or database ID
-      if (identifier.startsWith('0x')) {
-        // Look up by contract address
-        coin = await db.select().from(creatorCoins).where(eq(creatorCoins.coinAddress, identifier)).limit(1);
-      } else {
-        // Look up by database ID
-        coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, identifier)).limit(1);
-      }
-
-      if (!coin.length) {
-        return res.status(404).json({ message: "Creator coin not found" });
-      }
-
-      const coinData = coin[0];
-
-      // Check if we have a valid deployed token address
-      if (!coinData.coinAddress || !coinData.coinAddress.startsWith('0x')) {
-        return res.json({
-          enabled: false,
-          message: "Token not yet deployed or invalid address",
-          coinAddress: coinData.coinAddress,
-          status: coinData.status
-        });
-      }
-
-      // Use Zora Trading system for all trading
-      if (zoraTradingService.isZoraTradingAvailable()) {
-        return res.json({
-          enabled: true,
-          tradingSystem: "zora",
-          coinAddress: coinData.coinAddress,
-          info: {
-            currentPrice: "market-driven",
-            supply: "dynamic",
-            reserve: "ecosystem-liquidity",
-            marketCap: "real-time"
-          },
-          features: ["eth-trading", "token-swaps", "gasless-approvals", "slippage-protection"]
-        });
-      }
-
-      // For testnet, return disabled with suggestion
-      return res.json({
-        enabled: false,
-        message: "Trading only available on Base Mainnet",
-        suggestion: "Deploy to Base Mainnet for Zora Trading access"
-      });
-
-    } catch (error) {
-      console.error("Trading info error:", error);
-      res.status(500).json({ message: "Failed to fetch trading info" });
-    }
+  app.get("/api/creator-coins/:coinId/bonding-curve-info", async (req, res) => {
+    res.json({
+      enabled: false,
+      message: "Bonding curve system has been replaced with Zora Trading SDK",
+      recommendation: "Use /api/zora-trading endpoints for trading functionality"
+    });
   });
 
-  
 
-  
+
+
 
   // Get creator coin holders with real blockchain data
   app.get('/api/creator-coins/:coinId/holders', async (req, res) => {
@@ -3776,7 +3725,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!zoraTradingService.isZoraTradingAvailable()) {
         return res.status(503).json({
-          error: "Zora Trading only available on Base Mainnet"
+          error: "Zora Trading only available on Base Mainnet",
+          suggestion: "Deploy your tokens to Base Mainnet for trading access"
         });
       }
 
@@ -3808,7 +3758,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!zoraTradingService.isZoraTradingAvailable()) {
         return res.status(503).json({
-          error: "Zora Trading only available on Base Mainnet"
+          error: "Zora Trading only available on Base Mainnet",
+          suggestion: "Deploy your tokens to Base Mainnet for trading access"
         });
       }
 

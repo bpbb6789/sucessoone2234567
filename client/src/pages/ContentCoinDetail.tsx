@@ -233,21 +233,7 @@ export default function ContentCoinDetail() {
     enabled: !!tokenAddress,
   });
 
-  // Fetch bonding curve information - removed as bonding curve is no longer used
-  // const { data: bondingCurveData, isLoading: bondingCurveLoading } = useQuery({
-  //   queryKey: [`/api/creator-coins/${tokenAddress}/bonding-curve-info`],
-  //   queryFn: async () => {
-  //     const response = await fetch(
-  //       `/api/creator-coins/${tokenAddress}/bonding-curve-info`,
-  //     );
-  //     if (!response.ok) throw new Error("Failed to fetch bonding curve info");
-  //     const data = await response.json();
-  //     console.log('🔍 Bonding curve data received:', data);
-  //     return data;
-  //   },
-  //   enabled: !!tokenAddress,
-  //   refetchInterval: 5000, // Refresh every 5 seconds for live data
-  // });
+  // Bonding curve system has been completely removed
 
   // Process holders data with proper typing
   const processedHolders = useMemo(() => {

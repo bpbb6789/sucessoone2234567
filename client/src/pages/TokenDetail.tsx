@@ -46,9 +46,6 @@ interface TokenData {
   holders: number;
   change24h?: number;
   createdAt: Date;
-  isOnBondingCurve?: boolean;
-  progress?: number;
-  bondingCurveAddress?: string;
 }
 
 export default function TokenDetail() {
@@ -71,7 +68,6 @@ export default function TokenDetail() {
     
     if (!token) return null;
     
-    // Debug log to see what data we're receiving
     console.log('Token data from GraphQL:', token);
     
     return {
@@ -79,17 +75,14 @@ export default function TokenDetail() {
       address: token.memeTokenAddress,
       name: token.name || token.symbol || 'Unknown Token',
       symbol: token.symbol || 'UNKNOWN',
-      description: token.bio || token.description || 'Created via pump.fun mechanics',
-      creator: token.createdBy || 'No Creator Found', // This should be the real creator address
-      price: '0.00187076', // Use real price data when available
-      marketCap: '1870', // Use real market cap data  
-      volume24h: '0.00', // Use real volume data when available
-      holders: 0, // Use real holder count when available
+      description: token.bio || token.description || 'Content tokenized on the platform',
+      creator: token.createdBy || 'No Creator Found',
+      price: '0',
+      marketCap: '0',
+      volume24h: '0',
+      holders: 0,
       change24h: 0,
-      createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now()),
-      isOnBondingCurve: true, // Most tokens on pump.fun are on bonding curve
-      progress: 56, // Use real bonding curve progress when available
-      bondingCurveAddress: token.bondingCurve
+      createdAt: new Date(token.createdAt || token.blockTimestamp || Date.now())
     } as TokenData;
   }, [salesData, tokenAddress]);
 
@@ -115,11 +108,7 @@ export default function TokenDetail() {
     }
   });
 
-  // Get bonding curve data from Zora API
-  const { data: bondingCurveData } = useQuery({
-    queryKey: ['/api/zora/bonding-curve', tokenAddress],
-    enabled: !!tokenAddress
-  });
+  // Bonding curve system has been removed - now using Zora Trading SDK
 
   const copyAddress = () => {
     if (tokenAddress) {
@@ -194,11 +183,6 @@ export default function TokenDetail() {
                 <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 dark:from-purple-900 dark:to-pink-900 dark:text-purple-200">
                   🚀 Creator Coin
                 </Badge>
-                {tokenData.isOnBondingCurve && (
-                  <Badge variant="outline" className="border-green-500 text-green-600">
-                    Bonding Curve
-                  </Badge>
-                )}
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                 <span className="font-mono">{tokenData.symbol}</span>
@@ -226,41 +210,7 @@ export default function TokenDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Chart & Info */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Bonding Curve Progress */}
-            {tokenData.isOnBondingCurve && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-purple-500" />
-                    Bonding Curve Progress
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-sm">
-                      <span>Progress to Graduation</span>
-                      <span className="font-bold">{tokenData.progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
-                      <div 
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 h-4 rounded-full transition-all duration-300 flex items-center justify-end pr-2"
-                        style={{ width: `${Math.min(tokenData.progress || 0, 100)}%` }}
-                      >
-                        {tokenData.progress && tokenData.progress > 20 && (
-                          <span className="text-white text-xs font-bold">
-                            {tokenData.progress}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      When the market cap reaches $69K, all the liquidity from the bonding curve will be deposited into Uniswap and burned. 
-                      Progression increases as the price goes up.
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            
 
             {/* TradingView Chart */}
             <Card>

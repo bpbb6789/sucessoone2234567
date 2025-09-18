@@ -21,29 +21,19 @@ export async function getTokenHolders(tokenAddress: string): Promise<{
   try {
     console.log(`🔍 Fetching token holders for: ${tokenAddress}`);
 
-    // For now, return mock data since we need a proper indexing service
-    // In production, this would query a service like The Graph or Alchemy
-    const mockHolders = [
-      {
-        address: '0x1234567890123456789012345678901234567890',
-        balance: '1000000',
-        percentage: 45.5
-      },
-      {
-        address: '0x2345678901234567890123456789012345678901',
-        balance: '750000',
-        percentage: 34.1
-      },
-      {
-        address: '0x3456789012345678901234567890123456789012',
-        balance: '450000',
-        percentage: 20.4
-      }
-    ];
+    if (!isValidEthereumAddress(tokenAddress)) {
+      console.log(`❌ Invalid Ethereum address: ${tokenAddress}`);
+      return {
+        holders: [],
+        totalHolders: 0
+      };
+    }
 
+    // TODO: Implement real token holder fetching using The Graph or Alchemy
+    // For now, return empty data until proper indexing is implemented
     return {
-      holders: mockHolders,
-      totalHolders: mockHolders.length
+      holders: [],
+      totalHolders: 0
     };
 
   } catch (error) {
@@ -62,12 +52,18 @@ export async function getCoinPrice(tokenAddress: string): Promise<string> {
   try {
     console.log(`💰 Fetching price for token: ${tokenAddress}`);
 
-    // Mock price data - in production this would query DEX pools
-    return '0.00001';
+    if (!isValidEthereumAddress(tokenAddress)) {
+      console.log(`❌ Invalid Ethereum address: ${tokenAddress}`);
+      return '0';
+    }
+
+    // TODO: Implement real price fetching from DEX pools or price oracles
+    // For now, return 0 until proper price data is implemented
+    return '0';
 
   } catch (error) {
     console.error('Error fetching coin price:', error);
-    return '0.00001';
+    return '0';
   }
 }
 
