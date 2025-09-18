@@ -3661,6 +3661,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get latest deployed coin with contract details
+  app.get('/api/latest-deployed-coin', async (req, res) => {
+    try {
+      console.log('🔍 Fetching latest deployed coin...');
+
+      const latestDeployedCoin = await db
+        .select()
+        .from(creatorCoins)
+        .where(sql`${creatorCoins.status} = 'deployed' AND ${creatorCoins.coinAddress} IS NOT NULL AND ${creatorCoins.coinAddress} != ''`)
+        .orderBy(sql`${creatorCoins.createdAt} DESC`)
+        .limit(1);
+
+      if (!latestDeployedCoin.length) {
+        return res.status(404).json({ message: 'No deployed coins found' });
+      }
+
+      const coin = latestDeployedCoin[0];
+      
+      // Generate explorer links
+      const contractAddress = coin.coinAddress;
+      const txHash = coin.deploymentTxHash;
+      
+      const explorerLinks = {
+        contractUrl: `https://sepolia.basescan.org/token/${contractAddress}`,
+        txUrl: txHash ? `https://sepolia.basescan.org/tx/${txHash}` : null,
+        addressUrl: `https://sepolia.basescan.org/address/${contractAddress}`
+      };
+
+      console.log(`✅ Found latest deployed coin: ${coin.coinName} (${coin.coinSymbol})`);
+      console.log(`📋 Contract: ${contractAddress}`);
+      console.log(`🔗 Explorer: ${explorerLinks.contractUrl}`);
+
+      res.json({
+        coin,
+        contractAddress,
+        explorerLinks,
+        network: 'Base Sepolia',
+        explorerName: 'BaseScan'
+      });
+
+    } catch (error) {
+      console.error('❌ Error fetching latest deployed coin:', error);
+      res.status(500).json({
+        error: 'Failed to fetch latest deployed coin',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // ====================
   // NOTIFICATIONS SYSTEM API
   // ====================

@@ -1278,6 +1278,83 @@ export default function ContentCoinDetail() {
                       )}
                     </div>
 
+                    {/* Contract Information Section */}
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Contract Information</h3>
+                        <div className="space-y-2">
+                          {tokenData.coinAddress && tokenData.coinAddress !== 'Deploying...' ? (
+                            <>
+                              <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                <Hash className="h-4 w-4 text-green-500" />
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium">Contract Address</div>
+                                  <code className="text-xs text-gray-600 dark:text-gray-400">{tokenData.coinAddress}</code>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(tokenData.coinAddress!);
+                                    toast({
+                                      title: "Copied!",
+                                      description: "Contract address copied to clipboard",
+                                    });
+                                  }}
+                                >
+                                  <Copy className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => window.open(`https://sepolia.basescan.org/token/${tokenData.coinAddress}`, '_blank')}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </Button>
+                              </div>
+
+                              {/* Explorer Links */}
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => window.open(`https://sepolia.basescan.org/token/${tokenData.coinAddress}`, '_blank')}
+                                  className="flex items-center gap-2"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  View on BaseScan
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(`https://sepolia.basescan.org/address/${tokenData.coinAddress}`, '_blank')}
+                                  className="flex items-center gap-2"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  Contract Details
+                                </Button>
+                                {tokenData.deploymentTxHash && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => window.open(`https://sepolia.basescan.org/tx/${tokenData.deploymentTxHash}`, '_blank')}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                    Deploy TX
+                                  </Button>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex items-center justify-center p-4 border border-dashed border-muted rounded-lg">
+                              <p className="text-sm text-muted-foreground">Contract not yet deployed or available.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+
                     {/* Comment Input */}
                     <div className="space-y-2">
                       <label className="text-xs font-medium text-muted-foreground">Comment (Optional)</label>

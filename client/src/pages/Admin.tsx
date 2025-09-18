@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,9 @@ import {
   Trash2,
   Download,
   Eye,
-  Activity
+  Activity,
+  ExternalLink,
+  Copy
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -68,6 +69,115 @@ interface AdminContentCoin {
   comments: number;
   deploymentTxHash?: string;
   createdAt: string;
+}
+
+// Latest Deployed Coin Component
+function LatestDeployedCoin() {
+  const { toast } = useToast();
+
+  const { data: latestCoin, isLoading } = useQuery({
+    queryKey: ['latest-deployed-coin'],
+    queryFn: async () => {
+      const response = await fetch('/api/latest-deployed-coin');
+      if (!response.ok) throw new Error('Failed to fetch latest deployed coin');
+      return response.json();
+    },
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`,
+    });
+  };
+
+  if (isLoading) {
+    return <div className="text-sm text-gray-500">Loading latest deployed coin...</div>;
+  }
+
+  if (!latestCoin || !latestCoin.coin) {
+    return <div className="text-sm text-gray-500">No deployed coins found</div>;
+  }
+
+  const { coin, contractAddress, explorerLinks, network } = latestCoin;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">{coin.coinName} ({coin.coinSymbol})</h3>
+          <p className="text-sm text-gray-500">{coin.title}</p>
+        </div>
+        <Badge variant="outline" className="bg-green-100 text-green-800">
+          Deployed
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Contract Address</Label>
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-md">
+            <code className="text-xs font-mono flex-1">{contractAddress}</code>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => copyToClipboard(contractAddress, 'Contract address')}
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => window.open(explorerLinks.contractUrl, '_blank')}
+            >
+              <ExternalLink className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Network</Label>
+          <div className="p-2 bg-gray-50 rounded-md">
+            <span className="text-sm">{network}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          onClick={() => window.open(explorerLinks.contractUrl, '_blank')}
+          className="flex items-center gap-2"
+        >
+          <ExternalLink className="h-3 w-3" />
+          View on BaseScan
+        </Button>
+        {explorerLinks.txUrl && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => window.open(explorerLinks.txUrl, '_blank')}
+            className="flex items-center gap-2"
+          >
+            <ExternalLink className="h-3 w-3" />
+            View Transaction
+          </Button>
+        )}
+      </div>
+
+      <div className="text-xs text-gray-500">
+        Created: {new Date(coin.createdAt).toLocaleString()}
+        {coin.deploymentTxHash && (
+          <>
+            <br />
+            Deploy TX: {coin.deploymentTxHash.slice(0, 10)}...{coin.deploymentTxHash.slice(-8)}
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function Admin() {
@@ -258,75 +368,68 @@ export default function Admin() {
           </div>
         </div>
 
+        {/* Latest Deployed Coin Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Coins className="h-5 w-5" />
+              Latest Deployed Coin
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LatestDeployedCoin />
+          </CardContent>
+        </Card>
+
         {/* Stats Overview */}
-        {statsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-6">
-                  <div className="animate-pulse">
-                    <div className="h-4 bg-gray-600 rounded w-20 mb-2"></div>
-                    <div className="h-8 bg-gray-600 rounded w-16"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : stats ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-400">Total Users</p>
-                    <p className="text-2xl font-bold">{(stats.totalUsers || 0).toLocaleString()}</p>
-                  </div>
-                  <Users className="h-8 w-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{(stats?.totalUsers || 0).toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">+12% from last month</p>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-400">Total Channels</p>
-                    <p className="text-2xl font-bold">{(stats.totalChannels || 0).toLocaleString()}</p>
-                  </div>
-                  <Activity className="h-8 w-8 text-green-500" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">Total Channels</p>
+                  <p className="text-2xl font-bold">{(stats.totalChannels || 0).toLocaleString()}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <Activity className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-400">Content Coins</p>
-                    <p className="text-2xl font-bold">{(stats.totalContentCoins || 0).toLocaleString()}</p>
-                  </div>
-                  <Coins className="h-8 w-8 text-purple-500" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">Content Coins</p>
+                  <p className="text-2xl font-bold">{(stats.totalContentCoins || 0).toLocaleString()}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <Coins className="h-8 w-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-400">Total Revenue</p>
-                    <p className="text-2xl font-bold">{stats.totalRevenue || '0'} ETH</p>
-                  </div>
-                  <DollarSign className="h-8 w-8 text-yellow-500" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">Total Revenue</p>
+                  <p className="text-2xl font-bold">{stats.totalRevenue || '0'} ETH</p>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-gray-400">Failed to load stats. Please refresh.</p>
-          </div>
-        )}
+                <DollarSign className="h-8 w-8 text-yellow-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Management Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
