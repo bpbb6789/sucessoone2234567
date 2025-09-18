@@ -243,45 +243,18 @@ export default function ContentCoinDetail() {
     }));
   }, [holdersData]);
 
-  // Calculate trading statistics
-  const tradingStats = useMemo(() => {
-    let currentPrice = null;
-    let marketCap = null;
-    let volume24h = null;
-    let creatorEarnings = null;
-    let platformEarnings = null;
-    let supply = null;
-    let reserve = null;
-
+  // Calculate current price for display
+  const currentPrice = useMemo(() => {
     // Use price data if available
     if (priceData?.price && parseFloat(priceData.price) > 0) {
-      currentPrice = parseFloat(priceData.price).toFixed(8);
-      if (priceData.marketCap && parseFloat(priceData.marketCap) > 0) {
-        marketCap = parseFloat(priceData.marketCap).toFixed(2);
-      }
-      if (priceData.volume24h && parseFloat(priceData.volume24h) > 0) {
-        volume24h = parseFloat(priceData.volume24h).toFixed(6);
-      }
+      return parseFloat(priceData.price).toFixed(8);
     }
     // Use token data if no price data
     else if (tokenData?.currentPrice && parseFloat(tokenData.currentPrice) > 0) {
-      currentPrice = parseFloat(tokenData.currentPrice).toFixed(8);
-      if (tokenData.marketCap && parseFloat(tokenData.marketCap) > 0) {
-        marketCap = parseFloat(tokenData.marketCap).toFixed(2);
-      }
+      return parseFloat(tokenData.currentPrice).toFixed(8);
     }
-
-    return {
-      currentPrice,
-      marketCap,
-      volume24h,
-      creatorEarnings,
-      platformEarnings,
-      holders: processedHolders.length || 0,
-      supply,
-      reserve
-    };
-  }, [processedHolders, priceData, tokenData]);
+    return null;
+  }, [priceData, tokenData]);
 
 
   // Get real token balance from blockchain using publicClient
@@ -672,7 +645,7 @@ export default function ContentCoinDetail() {
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">
-                  {tradingStats.currentPrice ? `$${tradingStats.currentPrice}` : 'No price data'}
+                  {currentPrice ? `$${currentPrice}` : 'No price data'}
                 </h1>
                 {priceData?.priceChange24h !== undefined && (
                   <Badge
@@ -839,67 +812,6 @@ export default function ContentCoinDetail() {
         {/* Right Side - Trading Panel */}
         <Card className="w-96">
           <CardContent className="p-0">
-            {/* Market Stats - Always Visible */}
-            <div className="p-4 border-b border-border">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Market Cap
-                  </span>
-                  <span className="text-sm font-semibold text-green-400">
-                    {tradingStats.marketCap ? `$${tradingStats.marketCap}` : 'No data'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    24H Volume
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {tradingStats.volume24h ? `$${tradingStats.volume24h}` : 'No data'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Creator Earnings
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {tradingStats.creatorEarnings ? `$${tradingStats.creatorEarnings}` : 'No data'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Platform Earnings
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {tradingStats.platformEarnings ? `$${tradingStats.platformEarnings}` : 'No data'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Holders
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {tradingStats.holders}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    Total Supply
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {tradingStats.supply ? `${parseFloat(tradingStats.supply).toLocaleString()} tokens` : 'No data'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">
-                    ETH Reserve
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {tradingStats.reserve ? `${tradingStats.reserve} ETH` : 'No data'}
-                  </span>
-                </div>
-              </div>
-            </div>
 
             {/* Tabs Container */}
             <Tabs defaultValue="trading" className="flex flex-col">
