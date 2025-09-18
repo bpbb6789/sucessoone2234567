@@ -14,34 +14,13 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { formatUnits, parseUnits } from 'viem';
 import { useWallet } from '@/hooks/useWallet';
 
-// Bonding curve factory configuration
-const pumpFunConfig = {
-  address: '0x787b9de286a18da63805e9df943286bba2ca0c3d' as `0x${string}`,
-  abi: [
-    {
-      name: 'buy',
-      type: 'function',
-      stateMutability: 'payable',
-      inputs: [
-        { name: 'token', type: 'address' },
-        { name: 'minTokensOut', type: 'uint256' },
-        { name: 'deadline', type: 'uint256' }
-      ],
-      outputs: [{ name: 'tokensOut', type: 'uint256' }]
-    },
-    {
-      name: 'sell',
-      type: 'function',
-      stateMutability: 'nonpayable',
-      inputs: [
-        { name: 'token', type: 'address' },
-        { name: 'tokenAmount', type: 'uint256' },
-        { name: 'minEthOut', type: 'uint256' }
-      ],
-      outputs: [{ name: 'ethOut', type: 'uint256' }]
-    }
-  ]
-} as const;
+// Zora Trading configuration via API endpoints
+const ZORA_TRADING_API = {
+  buy: '/api/zora-trading/buy',
+  sell: '/api/zora-trading/sell',
+  quote: '/api/zora-trading/quote',
+  status: '/api/zora-trading/status'
+};
 
 interface TokenTradingProps {
   tokenAddress: Address;
@@ -116,27 +95,36 @@ export function TokenTrading({
     setIsLoading(true);
 
     try {
-      // Call the smart contract to buy tokens
-      const hash = await writeContract({
-        ...pumpFunConfig,
-        functionName: 'buy',
-        args: [tokenAddress as `0x${string}`, parseUnits(buyAmount, 18), BigInt(0)], // amount in wei, minTokensOut = 0 for now
-        value: parseEther(buyAmount), // Send ETH with the transaction
+      // Call Zora Trading API
+      const response = await fetch(ZORA_TRADING_API.buy, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tokenAddress,
+          ethAmount: parseEther(buyAmount).toString(),
+          slippage: 0.05,
+          senderAddress: account
+        })
       });
 
-      setCurrentTxHash(hash);
+      const result = await response.json();
 
-      toast({
-        title: "Buy transaction submitted",
-        description: `Buying ${buyAmount} ETH worth of ${tokenSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
-      });
-
-      setBuyAmount('');
+      if (result.success) {
+        toast({
+          title: "Buy order prepared",
+          description: `Use your wallet to complete the transaction for ${buyAmount} ETH worth of ${tokenSymbol}`,
+        });
+        setBuyAmount('');
+      } else {
+        throw new Error(result.error || 'Buy preparation failed');
+      }
     } catch (error: any) {
       console.error('Buy failed:', error);
       toast({
         title: "Buy failed",
-        description: error.shortMessage || "Failed to place buy order",
+        description: error.message || "Failed to prepare buy order",
         variant: "destructive"
       });
     } finally {
@@ -165,26 +153,36 @@ export function TokenTrading({
     setIsLoading(true);
 
     try {
-      // Call the smart contract to sell tokens
-      const hash = await writeContract({
-        ...pumpFunConfig,
-        functionName: 'sell',
-        args: [tokenAddress as `0x${string}`, parseUnits(sellAmount, 18), BigInt(0)], // amount in wei, minEthOut = 0 for now
+      // Call Zora Trading API
+      const response = await fetch(ZORA_TRADING_API.sell, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tokenAddress,
+          tokenAmount: parseUnits(sellAmount, 18).toString(),
+          slippage: 0.15,
+          senderAddress: account
+        })
       });
 
-      setCurrentTxHash(hash);
+      const result = await response.json();
 
-      toast({
-        title: "Sell transaction submitted",
-        description: `Selling ${sellAmount} ${tokenSymbol}... Transaction: ${hash?.slice(0, 10)}...`,
-      });
-
-      setSellAmount('');
+      if (result.success) {
+        toast({
+          title: "Sell order prepared",
+          description: `Use your wallet to complete selling ${sellAmount} ${tokenSymbol}`,
+        });
+        setSellAmount('');
+      } else {
+        throw new Error(result.error || 'Sell preparation failed');
+      }
     } catch (error: any) {
       console.error('Sell failed:', error);
       toast({
         title: "Sell failed",
-        description: error.shortMessage || "Failed to place sell order",
+        description: error.message || "Failed to prepare sell order",
         variant: "destructive"
       });
     } finally {
@@ -350,15 +348,15 @@ export function TokenTrading({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Badge variant="secondary" className="text-sm">Bonding Curve</Badge>
+              <Badge variant="secondary" className="text-sm">Zora Trading SDK</Badge>
               <p className="text-sm text-muted-foreground">
-                Prices increase automatically as more tokens are bought, following a mathematical bonding curve
+                Advanced trading with automatic routing and gasless approvals using Zora's infrastructure
               </p>
             </div>
             <div className="space-y-2">
-              <Badge variant="secondary" className="text-sm">Instant Trading</Badge>
+              <Badge variant="secondary" className="text-sm">Multi-Token Support</Badge>
               <p className="text-sm text-muted-foreground">
-                Buy and sell instantly without waiting for order matches
+                Trade with ETH, USDC, ZORA and other tokens with built-in slippage protection
               </p>
             </div>
           </div>

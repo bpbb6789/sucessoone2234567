@@ -2921,8 +2921,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           creatorAddress: creatorCoins.creatorAddress,
           creatorCoinsCount: sql`COUNT(*)`.as('creator_coins_count'),
-          totalLikes: sql`SUM(COALESCE(${creatorCoins.likes}, 0))`.as('total_likes'),
-          totalComments: sql`SUM(COALESCE(${creatorCoins.comments}, 0))`.as('total_comments'),
+          totalLikes: sql`SUM(COALESCE(likes, 0))`.as('total_likes'),
+          totalComments: sql`SUM(COALESCE(comments, 0))`.as('total_comments'),
           firstCreated: sql`MIN(${creatorCoins.createdAt})`.as('first_created'),
           latestCreated: sql`MAX(${creatorCoins.createdAt})`.as('latest_created')
         })

@@ -402,21 +402,7 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Progress Bar for Bonding Curve */}
-                        {token.isOnBondingCurve && (
-                          <div className="mb-3">
-                            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                              <span>Bonding Curve Progress</span>
-                              <span>{token.progress}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                              <div
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${Math.min(token.progress || 0, 100)}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        )}
+                        
 
                         {/* Stats Row */}
                         <div className="flex items-center justify-between text-xs">

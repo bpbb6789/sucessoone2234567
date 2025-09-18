@@ -148,7 +148,7 @@ export default function ContentCoinDetail() {
   const params = useParams();
   const tokenAddress = params.address;
   const address = useAccount()?.address; // Use real wallet address
-  // Removed wagmi hooks for auction integration
+  // Removed auction state - using Zora SDK
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState("");
   const [sellAmount, setSellAmount] = useState("");
@@ -160,8 +160,8 @@ export default function ContentCoinDetail() {
   const [slippage, setSlippage] = useState("2"); // 2% default slippage
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [estimatedTokens, setEstimatedTokens] = useState("");
-  const [bondingCurveEnabled, setBondingCurveEnabled] = useState(false);
-  const [bondingCurveInfo, setBondingCurveInfo] = useState<any>(null);
+  const [bondingCurveEnabled, setBondingCurveEnabled] = useState(false); // Keep for potential future use, but not actively used for bonding curve logic
+  const [bondingCurveInfo, setBondingCurveInfo] = useState<any>(null); // Keep for potential future use
 
   // Removed auction state - using instant trading now
 
@@ -233,21 +233,21 @@ export default function ContentCoinDetail() {
     enabled: !!tokenAddress,
   });
 
-  // Fetch bonding curve information
-  const { data: bondingCurveData, isLoading: bondingCurveLoading } = useQuery({
-    queryKey: [`/api/creator-coins/${tokenAddress}/bonding-curve-info`],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/creator-coins/${tokenAddress}/bonding-curve-info`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch bonding curve info");
-      const data = await response.json();
-      console.log('🔍 Bonding curve data received:', data);
-      return data;
-    },
-    enabled: !!tokenAddress,
-    refetchInterval: 5000, // Refresh every 5 seconds for live data
-  });
+  // Fetch bonding curve information - removed as bonding curve is no longer used
+  // const { data: bondingCurveData, isLoading: bondingCurveLoading } = useQuery({
+  //   queryKey: [`/api/creator-coins/${tokenAddress}/bonding-curve-info`],
+  //   queryFn: async () => {
+  //     const response = await fetch(
+  //       `/api/creator-coins/${tokenAddress}/bonding-curve-info`,
+  //     );
+  //     if (!response.ok) throw new Error("Failed to fetch bonding curve info");
+  //     const data = await response.json();
+  //     console.log('🔍 Bonding curve data received:', data);
+  //     return data;
+  //   },
+  //   enabled: !!tokenAddress,
+  //   refetchInterval: 5000, // Refresh every 5 seconds for live data
+  // });
 
   // Process holders data with proper typing
   const processedHolders = useMemo(() => {
@@ -258,9 +258,8 @@ export default function ContentCoinDetail() {
     }));
   }, [holdersData]);
 
-  // Calculate trading statistics using only real data
+  // Calculate trading statistics
   const tradingStats = useMemo(() => {
-    // Only use actual data - no fallbacks or mocks
     let currentPrice = null;
     let marketCap = null;
     let volume24h = null;
@@ -287,30 +286,6 @@ export default function ContentCoinDetail() {
       }
     }
 
-    // Use bonding curve data if available and has real values
-    if (bondingCurveData?.enabled && bondingCurveData?.info) {
-      const info = bondingCurveData.info;
-
-      if (info.currentPrice && parseFloat(info.currentPrice) > 0) {
-        currentPrice = parseFloat(info.currentPrice).toFixed(8);
-      }
-      if (info.supply && parseFloat(info.supply) > 0) {
-        supply = parseFloat(info.supply).toFixed(0);
-        // Only calculate market cap if we have both price and supply
-        if (currentPrice && parseFloat(currentPrice) > 0) {
-          marketCap = (parseFloat(currentPrice) * parseFloat(supply)).toFixed(2);
-        }
-      }
-      if (info.reserve && parseFloat(info.reserve) > 0) {
-        reserve = parseFloat(info.reserve).toFixed(6);
-        // Only calculate estimates if we have actual reserve data
-        volume24h = (parseFloat(info.reserve) * 0.15).toFixed(6);
-        const tradingVolume = parseFloat(info.reserve) * 2.5;
-        creatorEarnings = (tradingVolume * 0.005).toFixed(6);
-        platformEarnings = (tradingVolume * 0.003).toFixed(6);
-      }
-    }
-
     return {
       currentPrice,
       marketCap,
@@ -321,7 +296,8 @@ export default function ContentCoinDetail() {
       supply,
       reserve
     };
-  }, [bondingCurveData, processedHolders, priceData, tokenData]);
+  }, [processedHolders, priceData, tokenData]);
+
 
   // Get real token balance from blockchain using publicClient
   const [tokenBalance, setTokenBalance] = useState<bigint>(0n);
@@ -354,7 +330,7 @@ export default function ContentCoinDetail() {
     } else {
       setEstimatedTokens("");
     }
-  }, [buyAmount, bondingCurveData, priceData, tokenData]);
+  }, [buyAmount]);
 
   // Chart data for trading view - now uses real price data
   const chartData = useMemo(() => {
@@ -418,79 +394,29 @@ export default function ContentCoinDetail() {
     calculateEstimatedTokens(newAmount);
   };
 
-  // Calculate estimated tokens based on bonding curve or fallback price
+  // Calculate estimated tokens based on price data
   const calculateEstimatedTokens = async (ethAmount: string) => {
     if (!ethAmount || parseFloat(ethAmount) <= 0) {
       setEstimatedTokens("");
       return;
     }
 
-    try {
-      // If bonding curve is available, use it for accurate quotes
-      if (bondingCurveData?.enabled && tokenData?.id) {
-        const response = await fetch(`/api/creator-coins/${tokenData.id}/bonding-curve-buy-quote`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ethAmount })
-        });
+    // Use price data if available
+    let priceToUse = priceData?.price || tokenData?.currentPrice || tokenData?.price || "0";
 
-        if (response.ok) {
-          const quote = await response.json();
-          console.log('🎯 Bonding curve quote received:', quote);
-          const tokensOut = parseFloat(formatUnits(BigInt(quote.tokensOut), 18));
-          console.log('🎯 Tokens calculated:', tokensOut);
-          setEstimatedTokens(tokensOut.toLocaleString());
-          return;
-        } else {
-          console.error('❌ Quote API failed:', response.status, await response.text());
-        }
-      }
+    if (priceToUse && parseFloat(priceToUse) > 0) {
+      const price = parseFloat(priceToUse);
+      const estimated = parseFloat(ethAmount) / price;
 
-      // Use bonding curve current price if available and greater than 0
-      let priceToUse = null;
-
-      if (bondingCurveData?.enabled && bondingCurveData?.info?.currentPrice && parseFloat(bondingCurveData.info.currentPrice) > 0) {
-        priceToUse = bondingCurveData.info.currentPrice;
-      } else if (priceData?.price && parseFloat(priceData.price) > 0) {
-        priceToUse = priceData.price;
-      } else if (tokenData?.currentPrice && parseFloat(tokenData.currentPrice) > 0) {
-        priceToUse = tokenData.currentPrice;
-      }
-
-      if (priceToUse) {
-        const price = parseFloat(priceToUse);
-        const estimated = parseFloat(ethAmount) / price;
-
-        // Ensure the result is reasonable (not infinity or NaN)
-        if (isFinite(estimated) && !isNaN(estimated) && estimated > 0) {
-          setEstimatedTokens(estimated.toLocaleString());
-          return;
-        }
-      }
-
-      // For new tokens with no price data, show a reasonable estimate based on bonding curve
-      // Use a more realistic bonding curve estimate (1 ETH = ~31,496 tokens based on curve formula)
-      const defaultTokensPerEth = 31496; // Based on actual bonding curve math
-      const estimated = parseFloat(ethAmount) * defaultTokensPerEth;
-
-      if (estimated > 0) {
-        setEstimatedTokens(estimated.toLocaleString(undefined, { maximumFractionDigits: 0 }));
-      } else {
-        setEstimatedTokens("0");
-      }
-
-    } catch (error) {
-      console.error("Failed to calculate estimated tokens:", error);
-      // Show default estimate even on error
-      const defaultTokensPerEth = 31496;
-      const estimated = parseFloat(ethAmount) * defaultTokensPerEth;
-
-      if (estimated > 0) {
-        setEstimatedTokens(estimated.toLocaleString(undefined, { maximumFractionDigits: 0 }));
-      } else {
-        setEstimatedTokens("0");
+      // Ensure the result is reasonable (not infinity or NaN)
+      if (isFinite(estimated) && !isNaN(estimated) && estimated > 0) {
+        setEstimatedTokens(estimated.toLocaleString());
+        return;
       }
     }
+
+    // Fallback for new tokens with no price data
+    setEstimatedTokens("N/A");
   };
 
   const handleMaxAmount = async () => {
@@ -551,8 +477,6 @@ export default function ContentCoinDetail() {
       return;
     }
 
-    // Instant trading via Zora bonding curve - no auction
-
     // Check user's ETH balance
     try {
       const balance = await publicClient.getBalance({
@@ -574,19 +498,6 @@ export default function ContentCoinDetail() {
     }
 
     try {
-      // Check if bonding curve is available first
-      const bondingResponse = await fetch(`/api/creator-coins/${tokenAddress}/bonding-curve-info`);
-      const bondingData = await bondingResponse.json();
-
-      if (!bondingData.enabled) {
-        toast({
-          title: "Trading Not Available",
-          description: "Bonding curve is being deployed. Please wait a moment.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const response = await fetch(`/api/creator-coins/${tokenData.id}/buy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -608,10 +519,6 @@ export default function ContentCoinDetail() {
         description: `Will receive approximately ${result.trade?.tokensReceived || '0'} tokens`,
       });
 
-      // Refresh data
-      // queryClient.invalidateQueries({
-      //   queryKey: [`/api/creator-coins/${tokenAddress}`]
-      // });
       window.location.reload(); // Reload to ensure all data is fresh
 
     } catch (error) {
@@ -690,7 +597,7 @@ export default function ContentCoinDetail() {
     }
 
     try {
-      // Use PumpFun bonding curve for selling (much lower gas costs)
+      // Use Zora SDK for selling
       const response = await fetch(`/api/creator-coins/${tokenData.id}/sell`, {
         method: "POST",
         headers: {
@@ -790,12 +697,6 @@ export default function ContentCoinDetail() {
                     {priceData.priceChange24h.toFixed(2)}%
                   </Badge>
                 )}
-                {bondingCurveData?.enabled && (
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                    <Activity className="h-3 w-3 mr-1" />
-                    Live Trading
-                  </Badge>
-                )}
               </div>
               <div className="flex items-center gap-2 justify-between">
                 <div className="flex items-center gap-2">
@@ -803,12 +704,6 @@ export default function ContentCoinDetail() {
                     {tokenData?.coinName || tokenData?.name || "Loading..."} (
                     {tokenData?.coinSymbol || tokenData?.symbol || "..."})
                   </p>
-                  {bondingCurveData?.enabled && (
-                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                      <Activity className="h-3 w-3 mr-1" />
-                      Bonding Curve Active
-                    </Badge>
-                  )}
                 </div>
 
                 {/* Contract Scanner Links Dropdown */}
@@ -1069,7 +964,7 @@ export default function ContentCoinDetail() {
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                         <span className="text-sm font-semibold text-green-400">
-                          {bondingCurveData?.enabled ? "Bonding Curve Active" : "Trading Available"}
+                          Trading Available
                         </span>
                       </div>
                     </div>
@@ -1104,7 +999,7 @@ export default function ContentCoinDetail() {
                           <div className="bg-card rounded-lg p-4">
                             <h3 className="text-lg font-semibold mb-4 flex items-center">
                               <TrendingUp className="mr-2 h-5 w-5 text-green-500" />
-                              Buy - Bonding Curve
+                              Buy
                             </h3>
                             <div className="space-y-3">
                               <div>
@@ -1205,7 +1100,7 @@ export default function ContentCoinDetail() {
                           <div className="bg-card rounded-lg p-4">
                             <h3 className="text-lg font-semibold mb-4 flex items-center">
                               <TrendingDown className="mr-2 h-5 w-5 text-red-500" />
-                              Sell - Bonding Curve
+                              Sell
                             </h3>
                             <div className="space-y-3">
                               <div>
@@ -1230,9 +1125,7 @@ export default function ContentCoinDetail() {
                                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                                   <div className="text-sm text-red-400">
                                     You'll receive: <span className="font-semibold">
-                                      ≈ {bondingCurveData?.enabled && tradingStats.currentPrice !== "0" && tradingStats.currentPrice
-                                        ? (parseFloat(sellAmount) * parseFloat(tradingStats.currentPrice)).toFixed(6)
-                                        : (parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
+                                      ≈ {(parseFloat(sellAmount) * parseFloat(priceData?.price || "0")).toFixed(6)} ETH
                                     </span>
                                   </div>
                                 </div>
@@ -1348,34 +1241,26 @@ export default function ContentCoinDetail() {
                             />
                           </div>
 
-                          {(bondingCurveData?.enabled || priceData) && (
+                          {priceData && (
                             <div className="space-y-1 text-xs text-muted-foreground">
                               <div className="flex justify-between">
                                 <span>Current Price:</span>
-                                <span>${bondingCurveData?.enabled && tradingStats.currentPrice !== "0" && tradingStats.currentPrice
-                                  ? tradingStats.currentPrice
-                                  : priceData?.price || "0"}</span>
+                                <span>${priceData?.price || "0.00001"}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span>Min. Price (with slippage):</span>
                                 <span>
                                   $
                                   {(
-                                    parseFloat(bondingCurveData?.enabled && tradingStats.currentPrice !== "0" && tradingStats.currentPrice
-                                      ? tradingStats.currentPrice
-                                      : priceData?.price || "0") *
+                                    parseFloat(priceData?.price || "0.00001") *
                                     (1 - parseFloat(slippage) / 100)
                                   ).toFixed(8)}
                                 </span>
                               </div>
-                              {bondingCurveData?.enabled && (
-                                <div className="flex justify-between">
-                                  <span>Curve Address:</span>
-                                  <span className="font-mono text-[10px]">
-                                    {bondingCurveData.curveAddress?.slice(0, 6)}...{bondingCurveData.curveAddress?.slice(-4)}
-                                  </span>
-                                </div>
-                              )}
+                              <div className="flex justify-between">
+                                <span>Trading System:</span>
+                                <span className="text-xs">Zora SDK</span>
+                              </div>
                             </div>
                           )}
                         </div>

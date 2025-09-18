@@ -64,7 +64,7 @@ export default function TokenStats({ tokenData }: TokenStatsProps) {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Market Cap */}
       <Card className="border-blue-200 dark:border-blue-800">
         <CardContent className="p-4">
@@ -80,7 +80,7 @@ export default function TokenStats({ tokenData }: TokenStatsProps) {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* 24h Volume */}
       <Card className="border-orange-200 dark:border-orange-800">
         <CardContent className="p-4">
@@ -94,7 +94,7 @@ export default function TokenStats({ tokenData }: TokenStatsProps) {
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Holders */}
       <Card className="border-purple-200 dark:border-purple-800">
         <CardContent className="p-4">
@@ -109,40 +109,6 @@ export default function TokenStats({ tokenData }: TokenStatsProps) {
         </CardContent>
       </Card>
 
-      {/* Bonding Curve Progress - Full Width if applicable */}
-      {tokenData.isOnBondingCurve && tokenData.progress !== undefined && (
-        <Card className="col-span-2 md:col-span-4 border-gradient border-purple-200 dark:border-purple-800">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-purple-500" />
-                <h3 className="text-lg font-semibold">Bonding Curve Progress</h3>
-              </div>
-              <span className="text-lg font-bold text-purple-500">{tokenData.progress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-3">
-              <div 
-                className="bg-gradient-to-r from-purple-600 to-pink-600 h-4 rounded-full transition-all duration-300 flex items-center justify-end pr-3"
-                style={{ width: `${Math.min(tokenData.progress, 100)}%` }}
-              >
-                {tokenData.progress > 15 && (
-                  <span className="text-white text-xs font-bold">
-                    {tokenData.progress}%
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Current progress to graduation</span>
-              <span className="font-medium">Target: $69K market cap</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              When the market cap reaches $69K, all liquidity from the bonding curve will be deposited into Uniswap and burned. 
-              This creates permanent liquidity and enables decentralized trading.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

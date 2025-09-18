@@ -248,8 +248,8 @@ export default function CreatorCoins() {
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-3 w-3 text-orange-500" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Bonding Curve</p>
-                  <p className="text-sm font-bold">{bondingCurveTokens}</p>
+                  <p className="text-xs text-muted-foreground">Trading System</p>
+                  <p className="text-sm font-bold">Zora SDK</p>
                 </div>
               </div>
             </CardContent>
