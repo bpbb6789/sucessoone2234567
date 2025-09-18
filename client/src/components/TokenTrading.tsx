@@ -14,6 +14,20 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { formatUnits, parseUnits } from 'viem';
 import { useWallet } from '@/hooks/useWallet';
 
+// Zora Trading Status Hook
+const useZoraTradingStatus = () => {
+  const [status, setStatus] = useState<any>(null);
+  
+  useEffect(() => {
+    fetch('/api/zora-trading/status')
+      .then(res => res.json())
+      .then(setStatus)
+      .catch(console.error);
+  }, []);
+  
+  return status;
+};
+
 // Zora Trading configuration via API endpoints
 const ZORA_TRADING_API = {
   buy: '/api/zora-trading/buy',
@@ -44,6 +58,7 @@ export function TokenTrading({
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState('');
   const [sellAmount, setSellAmount] = useState('');
+  const tradingStatus = useZoraTradingStatus();
   const [isLoading, setIsLoading] = useState(false);
 
   // Smart contract interaction hooks
@@ -241,10 +256,24 @@ export function TokenTrading({
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Trade {tokenSymbol}
+            {tradingStatus && !tradingStatus.available && (
+              <Badge variant="secondary" className="text-xs">Testnet Mode</Badge>
+            )}
           </CardTitle>
           <CardDescription>
-            Buy and sell {tokenName} tokens using the bonding curve pricing
+            {tradingStatus?.available 
+              ? "Buy and sell tokens using Zora's advanced trading infrastructure"
+              : "Trading with Zora SDK requires Base Mainnet deployment"
+            }
           </CardDescription>
+          {tradingStatus && !tradingStatus.available && (
+            <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
+              <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                ⚠️ Advanced trading features are only available on Base Mainnet. 
+                Current network: {tradingStatus.network}
+              </p>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="buy" className="w-full">
