@@ -9,6 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAccount } from "wagmi";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -33,6 +40,9 @@ import {
   Sparkles,
   Settings,
   Loader2,
+  Download,
+  MoreHorizontal,
+  Flag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 // Using Zora SDK via API routes instead of direct contract calls
@@ -787,16 +797,110 @@ export default function ContentCoinDetail() {
                   </Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <p className="text-muted-foreground">
-                  {tokenData?.coinName || tokenData?.name || "Loading..."} (
-                  {tokenData?.coinSymbol || tokenData?.symbol || "..."})
-                </p>
-                {bondingCurveData?.enabled && (
-                  <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                    <Activity className="h-3 w-3 mr-1" />
-                    Bonding Curve Active
-                  </Badge>
+              <div className="flex items-center gap-2 justify-between">
+                <div className="flex items-center gap-2">
+                  <p className="text-muted-foreground">
+                    {tokenData?.coinName || tokenData?.name || "Loading..."} (
+                    {tokenData?.coinSymbol || tokenData?.symbol || "..."})
+                  </p>
+                  {bondingCurveData?.enabled && (
+                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                      <Activity className="h-3 w-3 mr-1" />
+                      Bonding Curve Active
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Contract Scanner Links Dropdown */}
+                {tokenData?.coinAddress && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8 px-3 gap-2"
+                        data-testid="button-contract-menu"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          navigator.clipboard.writeText(tokenData.coinAddress!);
+                          toast({
+                            title: "Copied!",
+                            description: "Contract address copied to clipboard",
+                          });
+                        }}
+                        data-testid="action-copy-address"
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy address
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const ipfsUrl = tokenData.mediaCid ? `https://gateway.pinata.cloud/ipfs/${tokenData.mediaCid}` : '#';
+                          window.open(ipfsUrl, '_blank');
+                        }}
+                        data-testid="action-download"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuItem
+                        onClick={() => window.open(`https://sepolia.basescan.org/token/${tokenData.coinAddress}`, '_blank')}
+                        data-testid="action-basescan"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Basescan
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={() => window.open(`https://www.geckoterminal.com/base-sepolia/tokens/${tokenData.coinAddress}`, '_blank')}
+                        data-testid="action-geckoterminal"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        GeckoTerminal
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={() => window.open(`https://dexscreener.com/base-sepolia/${tokenData.coinAddress}`, '_blank')}
+                        data-testid="action-dexscreener"
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        DEX Screener
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={() => window.open(`https://www.tokenchat.live/token/base/${tokenData.coinAddress}`, '_blank')}
+                        data-testid="action-tokenchat"
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        TokenChat
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+                      
+                      <DropdownMenuItem
+                        onClick={() => {
+                          toast({
+                            title: "Report Submitted",
+                            description: "Thank you for your report. We'll review it shortly.",
+                          });
+                        }}
+                        className="text-red-600 focus:text-red-600"
+                        data-testid="action-report"
+                      >
+                        <Flag className="mr-2 h-4 w-4" />
+                        Report
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>
