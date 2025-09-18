@@ -25,6 +25,7 @@ import {
   Copy
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface AdminStats {
   totalUsers: number;
