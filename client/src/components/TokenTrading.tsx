@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { formatEther, parseEther, type Address } from 'viem';
-import { useAccount, useReadContract, useWalletClient, usePublicClient } from 'wagmi';
+import { useAccount, useReadContract, useWalletClient, usePublicClient, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
 import { tradeCoin } from '@zoralabs/coins-sdk';
 import { base } from 'viem/chains';
@@ -86,6 +86,25 @@ export function TokenTrading({
     args: isConnected && account ? [account] : undefined,
     query: {
       enabled: isConnected && !!account,
+    },
+  });
+
+  // Get user's ETH balance
+  const { data: ethBalance } = useReadContract({
+    address: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+    abi: [
+      {
+        name: 'balanceOf',
+        type: 'function',
+        stateMutability: 'view',
+        inputs: [{ name: 'account', type: 'address' }],
+        outputs: [{ name: '', type: 'uint256' }],
+      },
+    ],
+    functionName: 'balanceOf',
+    args: isConnected && account ? [account] : undefined,
+    query: {
+      enabled: false, // Disable this for now, will use wallet balance
     },
   });
 
@@ -303,10 +322,20 @@ export function TokenTrading({
 
             <TabsContent value="buy" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="buy-amount">Amount (ETH)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="buy-amount">Amount (ETH)</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-gray-400 hover:text-white h-auto p-1"
+                    onClick={() => setBuyAmount("0.1")} // Set a reasonable default since we can't easily get ETH balance
+                  >
+                    Max Balance: Loading...
+                  </Button>
+                </div>
                 <Input
                   id="buy-amount"
-                  placeholder="0.1"
+                  placeholder="0.001"
                   value={buyAmount}
                   onChange={(e) => setBuyAmount(e.target.value)}
                   data-testid="input-buy-amount"
@@ -343,10 +372,24 @@ export function TokenTrading({
 
             <TabsContent value="sell" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="sell-amount">Amount ({tokenSymbol})</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="sell-amount">Amount ({tokenSymbol})</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-gray-400 hover:text-white h-auto p-1"
+                    onClick={() => {
+                      if (userBalance) {
+                        setSellAmount(formatUnits(userBalance, 18));
+                      }
+                    }}
+                  >
+                    Balance: {userBalance ? formatUnits(userBalance, 18) : "0"} {tokenSymbol}
+                  </Button>
+                </div>
                 <Input
                   id="sell-amount"
-                  placeholder="100"
+                  placeholder="0"
                   value={sellAmount}
                   onChange={(e) => setSellAmount(e.target.value)}
                   data-testid="input-sell-amount"

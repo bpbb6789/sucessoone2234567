@@ -152,7 +152,7 @@ export default function ContentCoinDetail() {
     "1H" | "1D" | "1W" | "1M" | "All"
   >("1D");
   const [viewMode, setViewMode] = useState<"chart" | "image">("chart");
-  
+
 
   // Removed auction state - using instant trading now
 
@@ -221,7 +221,7 @@ export default function ContentCoinDetail() {
     enabled: !!tokenAddress,
   });
 
-  
+
 
   // Process holders data with proper typing
   const processedHolders = useMemo(() => {
@@ -586,7 +586,7 @@ export default function ContentCoinDetail() {
                         Sell
                       </Button>
                     </div>
-                    
+
                     {/* Amount Input */}
                     <div className="relative">
                       <Input
@@ -600,7 +600,7 @@ export default function ContentCoinDetail() {
                         <ChevronDown className="h-4 w-4" />
                       </div>
                     </div>
-                    
+
                     {/* Quick Amount Buttons */}
                     <div className="flex gap-2">
                       <Button 
@@ -636,13 +636,13 @@ export default function ContentCoinDetail() {
                         Max
                       </Button>
                     </div>
-                    
+
                     {/* Balance Info */}
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>Balance:</span>
                       <span data-testid="text-balance">0 ETH</span>
                     </div>
-                    
+
                     {/* Comment Input */}
                     <Textarea
                       placeholder="Add a comment..."
@@ -650,7 +650,7 @@ export default function ContentCoinDetail() {
                       rows={2}
                       data-testid="input-comment"
                     />
-                    
+
                     {/* Insufficient Balance Message */}
                     <div className="text-center text-sm text-red-500">
                       Insufficient balance
