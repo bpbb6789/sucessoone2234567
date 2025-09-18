@@ -45,12 +45,15 @@ export function useWagmiConfig() {
     );
 
     const wagmiConfig = createConfig({
-      chains: [baseSepolia],
+      chains: [base, baseSepolia],
       // turn off injected provider discovery
       multiInjectedProviderDiscovery: false,
       connectors,
       ssr: true,
       transports: {
+        [base.id]: http(
+          "https://base-mainnet.g.alchemy.com/v2/o3VW3WRXrsXXMRX3l7jZxLUqhWyZzXBy"
+        ),
         [baseSepolia.id]: http(
           "https://base-sepolia.g.alchemy.com/v2/2FYynUYOLgJk49PwM0_dphTkZuaw5yUe"
         ),

@@ -21,20 +21,21 @@ export class ZoraTradingService {
 
   constructor() {
     // Check if we're on Base Mainnet (chain ID 8453)
-    this.isMainnet = process.env.NODE_ENV === 'production' && process.env.CHAIN_ID === '8453';
+    this.isMainnet = process.env.CHAIN_ID === '8453' || process.env.NODE_ENV === 'production';
     
-    // Initialize clients only for mainnet
-    if (this.isMainnet && process.env.BASE_RPC_URL && process.env.DEPLOYER_PRIVATE_KEY) {
+    // Initialize clients for mainnet
+    if (this.isMainnet && (process.env.BASE_RPC_URL || process.env.BASE_MAINNET_RPC_URL) && process.env.DEPLOYER_PRIVATE_KEY) {
+      const rpcUrl = process.env.BASE_RPC_URL || process.env.BASE_MAINNET_RPC_URL;
       this.publicClient = createPublicClient({
         chain: base,
-        transport: http(process.env.BASE_RPC_URL),
+        transport: http(rpcUrl),
       });
 
       this.account = privateKeyToAccount(process.env.DEPLOYER_PRIVATE_KEY as `0x${string}`);
       this.walletClient = createWalletClient({
         account: this.account,
         chain: base,
-        transport: http(process.env.BASE_RPC_URL),
+        transport: http(rpcUrl),
       });
     }
   }

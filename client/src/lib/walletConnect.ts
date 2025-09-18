@@ -9,7 +9,7 @@ export const queryClient = new QueryClient();
 export const config = getDefaultConfig({
   appName: 'UniPump',
   projectId: import.meta.env.VITE_WC_PROJECT_ID || "8b2d0dd39c1cced02ecce163a96a8cb5",
-  chains: [baseSepolia], // Focus on Base Sepolia for testing
+  chains: [base, baseSepolia], // Support both Base Mainnet and Sepolia
   ssr: false,
 });
 
@@ -32,6 +32,12 @@ export const SUPPORTED_CHAINS = {
     name: 'Ethereum Mainnet',
     rpcUrl: 'https://mainnet.infura.io/v3/',
     blockExplorer: 'https://etherscan.io'
+  },
+  BASE_MAINNET: {
+    chainId: 8453,
+    name: 'Base Mainnet',
+    rpcUrl: 'https://base-mainnet.g.alchemy.com/v2/o3VW3WRXrsXXMRX3l7jZxLUqhWyZzXBy',
+    blockExplorer: 'https://basescan.org'
   },
   BASE_SEPOLIA: {
     chainId: 84532,
