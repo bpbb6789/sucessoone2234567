@@ -2666,10 +2666,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const coinData = coin[0];
 
+      // Check if we have a valid deployed token address
+      if (!coinData.coinAddress || !coinData.coinAddress.startsWith('0x')) {
+        return res.json({
+          enabled: false,
+          message: "Token not yet deployed or invalid address",
+          coinAddress: coinData.coinAddress,
+          status: coinData.status
+        });
+      }
+
+      // If Zora Trading is available, use that instead of bonding curves
+      if (zoraTradingService.isZoraTradingAvailable()) {
+        return res.json({
+          enabled: true,
+          tradingSystem: "zora",
+          coinAddress: coinData.coinAddress,
+          info: {
+            currentPrice: "market-driven",
+            supply: "dynamic",
+            reserve: "ecosystem-liquidity",
+            marketCap: "real-time"
+          },
+          features: ["eth-trading", "token-swaps", "gasless-approvals", "slippage-protection"]
+        });
+      }
+
+      // Fallback to bonding curve if deployed
       if (!coinData.hasBondingCurve || !coinData.bondingCurveExchangeAddress) {
         return res.json({
           enabled: false,
-          message: "Bonding curve not deployed for this coin"
+          message: "Bonding curve not deployed for this coin",
+          suggestion: "Deploy to Base Mainnet for Zora Trading access"
         });
       }
 
@@ -4716,3 +4744,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+<line_number>3100</line_number>
+
+  // Zora Trading API Endpoints
+  app.post("/api/zora-trading/buy", async (req, res) => {
+    try {
+      const { tokenAddress, ethAmount, slippage = 0.05, senderAddress } = req.body;
+
+      if (!zoraTradingService.isZoraTradingAvailable()) {
+        return res.status(503).json({
+          error: "Zora Trading only available on Base Mainnet",
+          suggestion: "Deploy your tokens to Base Mainnet for trading access"
+        });
+      }
+
+      const receipt = await zoraTradingService.buyTokenWithETH(
+        tokenAddress,
+        BigInt(ethAmount),
+        slippage,
+        senderAddress
+      );
+
+      res.json({
+        success: true,
+        transactionHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString()
+      });
+    } catch (error) {
+      console.error('Zora buy trade error:', error);
+      res.status(500).json({
+        error: 'Failed to execute buy trade',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post("/api/zora-trading/sell", async (req, res) => {
+    try {
+      const { tokenAddress, tokenAmount, slippage = 0.15, senderAddress } = req.body;
+
+      if (!zoraTradingService.isZoraTradingAvailable()) {
+        return res.status(503).json({
+          error: "Zora Trading only available on Base Mainnet"
+        });
+      }
+
+      const receipt = await zoraTradingService.sellTokenForETH(
+        tokenAddress,
+        BigInt(tokenAmount),
+        slippage,
+        senderAddress
+      );
+
+      res.json({
+        success: true,
+        transactionHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString()
+      });
+    } catch (error) {
+      console.error('Zora sell trade error:', error);
+      res.status(500).json({
+        error: 'Failed to execute sell trade',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post("/api/zora-trading/swap", async (req, res) => {
+    try {
+      const { fromToken, toToken, amountIn, slippage = 0.05, senderAddress } = req.body;
+
+      if (!zoraTradingService.isZoraTradingAvailable()) {
+        return res.status(503).json({
+          error: "Zora Trading only available on Base Mainnet"
+        });
+      }
+
+      const receipt = await zoraTradingService.swapTokens(
+        fromToken,
+        toToken,
+        BigInt(amountIn),
+        slippage,
+        senderAddress
+      );
+
+      res.json({
+        success: true,
+        transactionHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        gasUsed: receipt.gasUsed.toString()
+      });
+    } catch (error) {
+      console.error('Zora swap trade error:', error);
+      res.status(500).json({
+        error: 'Failed to execute token swap',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post("/api/zora-trading/quote", async (req, res) => {
+    try {
+      const tradeParameters = req.body;
+
+      const quote = await zoraTradingService.getTradeQuote(tradeParameters);
+
+      res.json({
+        success: true,
+        quote,
+        estimatedGas: quote.call ? 'calculated' : 'unavailable',
+        routing: 'zora-automatic'
+      });
+    } catch (error) {
+      console.error('Zora quote error:', error);
+      res.status(500).json({
+        error: 'Failed to get trade quote',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get("/api/zora-trading/status", async (req, res) => {
+    res.json({
+      available: zoraTradingService.isZoraTradingAvailable(),
+      network: process.env.NODE_ENV === 'production' ? 'base-mainnet' : 'base-sepolia',
+      features: {
+        gaslessApprovals: true,
+        crossTokenTrading: true,
+        slippageProtection: true,
+        automaticRouting: true
+      },
+      supportedTokens: ['ETH', 'USDC', 'ZORA', 'Creator Coins', 'Content Coins'],
+      note: zoraTradingService.isZoraTradingAvailable() 
+        ? "Zora Trading fully available" 
+        : "Deploy to Base Mainnet for Zora Trading access"
+    });
+  });

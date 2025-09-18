@@ -34,8 +34,8 @@ const CHAIN_ID = 84532;
 // Contract addresses (to be set after deployment)
 // Updated with deployed factory address on Base Sepolia
 const FACTORY_ADDRESS_ENV = process.env.BONDING_CURVE_FACTORY_ADDRESS || "0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201";
-const BONDING_CURVE_FACTORY_ADDRESS = FACTORY_ADDRESS_ENV && FACTORY_ADDRESS_ENV !== "0x..." && FACTORY_ADDRESS_ENV.length === 42 
-  ? getAddress(FACTORY_ADDRESS_ENV) 
+const BONDING_CURVE_FACTORY_ADDRESS = FACTORY_ADDRESS_ENV && FACTORY_ADDRESS_ENV !== "0x..." && FACTORY_ADDRESS_ENV.length === 42
+  ? getAddress(FACTORY_ADDRESS_ENV)
   : getAddress("0x41b3a6Dd39D41467D6D47E51e77c16dEF2F63201");
 const PLATFORM_ADMIN_ADDRESS = process.env.PLATFORM_ADMIN_ADDRESS || "0x64170da71cfA3Cf1169D5b4403693CaEDb1E157c";
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || process.env.PRIVATE_KEY || "";
@@ -95,6 +95,13 @@ class BondingCurveService {
   }
 
   /**
+   * Validate if address is a valid Ethereum address
+   */
+  private isValidEthereumAddress(address: string): boolean {
+    return /^0x[a-fA-F0-9]{40}$/.test(address);
+  }
+
+  /**
    * Check if bonding curve deployment is properly configured
    */
   isConfigured(): boolean {
@@ -131,7 +138,7 @@ class BondingCurveService {
 
       // Deploy real ContentCoin contract using viem deployContract
       console.log(`🔄 Deploying real ContentCoin contract on-chain`);
-      
+
       // ContentCoin ABI for deployment
       const contentCoinABI = [
         {
@@ -148,7 +155,7 @@ class BondingCurveService {
       ];
 
       // Basic ERC20 bytecode (simplified OpenZeppelin ERC20)
-      const contentCoinBytecode = "0x608060405234801561001057600080fd5b506040516108b03803806108b08339818101604052810190610032919061028a565b84848160039080519060200190610048929190610133565b50806004908051906020019061005f929190610133565b50505082600560006101000a81548160ff021916908360ff1602179055506100873082610090565b50505050506103ab565b600073ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff161415610100576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016100f790610325565b60405180910390fd5b8060026000828254610112919061036b565b92505081905550806000808473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254610167919061036b565b925050819055508173ffffffffffffffffffffffffffffffffffffffff16600073ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040516101cc919061034a565b60405180910390a35050565b8280546101e4906103c1565b90600052602060002090601f016020900481019282610206576000855561024d565b82601f1061021f57805160ff191683800117855561024d565b8280016001018555821561024d579182015b8281111561024c578251825591602001919060010190610231565b5b50905061025a919061025e565b5090565b5b8082111561027757600081600090555060010161025f565b5090565b600081519050610284816103f3565b92915050565b600080600080600060a086880312156102a6576102a5610402565b5b60006102b488828901610275565b95505060206102c588828901610275565b94505060406102d688828901610275565b93505060606102e788828901610275565b92505060806102f888828901610275565b9150509295509295909350565b600061031082610365565b915061031b83610365565b925082821015610337576103366103d3565b50919050565b6103468161039f565b82525050565b6000602082019050610361600083018461033d565b92915050565b6000819050919050565b600061037c82610365565b915061038783610365565b9250827fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff038211156103bc576103bb6103d3565b50919050565b600060028204905060018216806103d957607f821691505b602082108114156103ed576103ec610404565b5b50919050565b6103fc81610365565b811461040757600080fd5b50565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b6104f78061041a6000396000f3fe";
+      const contentCoinBytecode = "0x608060405234801561001057600080fd5b506040516108b03803806108b08339818101604052810190610032919061028a565b84848160039080519060200190610048929190610133565b50806004908051906020019061005f929190610133565b50505082600560006101000a81548160ff021916908360ff1602179055506100873082610090565b50505050506103ab565b600073ffffffffffffffffffffffffffffffffffffffff168273ffffffffffffffffffffffffffffffffffffffff161415610100576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004016100f790610325565b60405180910390fd5b8060026000828254610112919061036b565b92505081905550806000808473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254610167919061036b565b925050819055508173ffffffffffffffffffffffffffffffffffffffff16600073ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef836040516101cc919061034a565b60405180910390a35050565b8280546101e4906103c1565b90600052602060002090601f016020900481019282610206576000855561024d565b82601f1061021f57805160ff191683800117855561024d565b8280016001018555821561024d579182015b8281111561024c578251825591602001919060010190610231565b5b50905061025a919061025e565b5090565b5b8082111561027757600081600090555060010161025f565b5090565b600081519050610284816103f3565b92915050565b600080600080600060a086880312156102a6576102a5610402565b5b60006102b488828901610275565b95505060206102c588828901610275565b94505060406102d688828901610275565b93505060606102e788828901610275565b92505060806102f888828901610275565b9150509295509295909350565b600061031082610365565b915061031b83610365565b925082821015610337576103366103d3565b50919050565b6103468161039f565b82525050565b6000602082019050610361600083018461033d565b92915050565b6000819050919050565b600061037c82610365565b915061038783610365565b9250828210156103bc576103bb6103d3565b50919050565b600060028204905060018216806103d957607f821691505b602082108114156103ed576103ec610404565b5b50919050565b6103fc81610365565b811461040757600080fd5b50565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052602260045260246000fd5b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b6104f78061041a6000396000f3fe";
 
       // Calculate total supply with 18 decimals
       const decimals = 18;
@@ -179,7 +186,7 @@ class BondingCurveService {
 
       // Wait for transaction receipt
       const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
-      
+
       if (!receipt.contractAddress) {
         throw new Error('Contract deployment failed - no contract address in receipt');
       }
@@ -271,7 +278,7 @@ class BondingCurveService {
       const receipt = await this.publicClient.waitForTransactionReceipt({
         hash: deployTxHash
       });
-      
+
       console.log(`✅ Transaction confirmed in block ${receipt.blockNumber}`);
 
       // Parse logs to get deployed addresses
@@ -306,7 +313,7 @@ class BondingCurveService {
       // For now, we'll need to iterate through recent events or use a different approach
       // Let's use a simple approach - the addresses should be in the transaction receipt
       console.log(`📋 Transaction receipt:`, receipt);
-      
+
       // Temporary: return success with placeholder addresses until we properly parse the logs
       tokenAddress = receipt.contractAddress || `temp_token_${Date.now()}`;
       curveAddress = `temp_curve_${Date.now()}`;
@@ -390,7 +397,7 @@ class BondingCurveService {
       const receipt = await this.publicClient.waitForTransactionReceipt({
         hash: deployTxHash
       });
-      
+
       console.log(`✅ Transaction confirmed in block ${receipt.blockNumber}`);
 
       // Get the curve address after deployment using correct mapping
@@ -445,13 +452,19 @@ class BondingCurveService {
   }
 
   /**
-   * Get bonding curve information
+   * Get bonding curve information with address validation
    */
-  async getBondingCurveInfo(curveAddress: string): Promise<BondingCurveInfo | null> {
+  async getBondingCurveInfo(addressOrId: string): Promise<BondingCurveInfo | null> {
     try {
+      // If not a valid Ethereum address, it's likely a database ID
+      if (!this.isValidEthereumAddress(addressOrId)) {
+        console.warn(`⚠️ Invalid Ethereum address provided: ${addressOrId}. This appears to be a database ID.`);
+        return null;
+      }
+
       // Use viem for contract calls instead of ethers
       const currentPrice = await this.publicClient.readContract({
-        address: curveAddress as `0x${string}`,
+        address: addressOrId as `0x${string}`,
         abi: [{
           inputs: [],
           name: "currentPricePerToken",
@@ -464,7 +477,7 @@ class BondingCurveService {
 
       // Get individual contract properties since getInfo doesn't exist
       const tokenAddress = await this.publicClient.readContract({
-        address: curveAddress as `0x${string}`,
+        address: addressOrId as `0x${string}`,
         abi: [{
           inputs: [],
           name: "token",
@@ -476,7 +489,7 @@ class BondingCurveService {
       }) as string;
 
       const creatorAddress = await this.publicClient.readContract({
-        address: curveAddress as `0x${string}`,
+        address: addressOrId as `0x${string}`,
         abi: [{
           inputs: [],
           name: "creator",
@@ -488,7 +501,7 @@ class BondingCurveService {
       }) as string;
 
       const platformAddress = await this.publicClient.readContract({
-        address: curveAddress as `0x${string}`,
+        address: addressOrId as `0x${string}`,
         abi: [{
           inputs: [],
           name: "admin",
@@ -500,7 +513,7 @@ class BondingCurveService {
       }) as string;
 
       const supply = await this.publicClient.readContract({
-        address: curveAddress as `0x${string}`,
+        address: addressOrId as `0x${string}`,
         abi: [{
           inputs: [],
           name: "totalSupply",
@@ -512,7 +525,7 @@ class BondingCurveService {
       }) as bigint;
 
       const reserve = await this.publicClient.readContract({
-        address: curveAddress as `0x${string}`,
+        address: addressOrId as `0x${string}`,
         abi: [{
           inputs: [],
           name: "reserveBalance",
@@ -562,7 +575,7 @@ class BondingCurveService {
         }],
         functionName: 'currentPricePerToken'
       }) as bigint;
-      
+
       // Rough approximation: tokens = ETH / pricePerToken
       return currentPricePerToken > 0n ? ethWei / currentPricePerToken : 0n;
 
@@ -650,21 +663,21 @@ class BondingCurveService {
   async diagnoseFactoryContract() {
     try {
       console.log(`🔍 DIAGNOSING FACTORY CONTRACT AT ${BONDING_CURVE_FACTORY_ADDRESS}`);
-      
+
       // Check if contract exists by getting bytecode
       const bytecode = await this.publicClient.getCode({
         address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`
       });
-      
+
       if (!bytecode || bytecode === '0x') {
         return {
           error: 'No contract deployed at factory address',
           factoryExists: false
         };
       }
-      
+
       console.log(`✅ Contract exists, bytecode length: ${bytecode.length}`);
-      
+
       // Read the factory configuration
       const admin = await this.publicClient.readContract({
         address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
@@ -677,7 +690,7 @@ class BondingCurveService {
         }],
         functionName: 'admin'
       }) as string;
-      
+
       const defaultK = await this.publicClient.readContract({
         address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
         abi: [{
@@ -689,13 +702,13 @@ class BondingCurveService {
         }],
         functionName: 'defaultK'
       }) as bigint;
-      
+
       console.log(`📋 Factory Configuration:`);
       console.log(`   Admin: ${admin}`);
       console.log(`   DefaultK: ${defaultK.toString()}`);
       console.log(`   Admin is zero: ${admin === '0x0000000000000000000000000000000000000000'}`);
       console.log(`   DefaultK is zero: ${defaultK === 0n}`);
-      
+
       return {
         factoryExists: true,
         admin,
@@ -709,7 +722,7 @@ class BondingCurveService {
           ]
         }
       };
-      
+
     } catch (error) {
       console.error('Factory diagnosis error:', error);
       return {
@@ -731,9 +744,9 @@ class BondingCurveService {
   ) {
     try {
       console.log(`🧪 SIMULATING createContentCoinWithCurve`);
-      
+
       const totalSupplyWei = BigInt(totalSupply) * (BigInt(10) ** BigInt(decimals));
-      
+
       const result = await this.publicClient.simulateContract({
         address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
         abi: [{
@@ -755,13 +768,13 @@ class BondingCurveService {
         args: [name, symbol, totalSupplyWei, decimals],
         account: this.account!
       });
-      
+
       console.log(`✅ Simulation successful:`, result.result);
       return {
         success: true,
         result: result.result
       };
-      
+
     } catch (error) {
       console.error('Simulation failed:', error);
       return {
