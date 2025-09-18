@@ -12,7 +12,7 @@ import {
 import { useMemo } from "react";
 import { createConfig } from "@wagmi/core";
 import { http } from "viem";
-import { baseSepolia } from "wagmi/chains";
+import { base, baseSepolia } from "wagmi/chains";
 
 export function useWagmiConfig() {
   const projectId = import.meta.env.VITE_WC_PROJECT_ID ?? "8b2d0dd39c1cced02ecce163a96a8cb5";
