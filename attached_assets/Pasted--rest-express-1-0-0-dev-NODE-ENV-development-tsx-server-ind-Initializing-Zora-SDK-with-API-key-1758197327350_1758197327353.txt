@@ -1,0 +1,48 @@
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/ind🔑 Initializing Zora SDK with API key...
+✅ Zora SDK initialized successfully
+(node:1000) Warning: Accessing non-existent property 'v4' of module exports inside circular dependency
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1000) Warning: Accessing non-existent property 'v4' of module exports inside circular dependency
+[dotenv@17.2.1] injecting env (7) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+✅ Database connected successfully
+✅ Telegram bot initialized successfully
+📋 Channel ID configured: -1002768387838
+📅 Telegram leaderboard scheduler started
+🔧 Checking database schema...
+🚀 Initializing database schema...
+✅ Database schema initialized successfully!
+✅ Database ready for use
+✅ Content token routes setup complete
+12:07:41 PM [express] serving on port 5000
+Database error in getAllCreatorCoins: NeonDbError: column "metadata" does not exist
+    at execute (file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1556:55)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonHttpPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-http/session.ts:68:18)
+    at async <anonymous> (/home/runner/workspace/server/routes.ts:2154:21) {
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '561',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3716',
+  routine: 'errorMissingColumn',
+  sourceError: undefined
+}
+12:07:58 PM [express] GET /api/creator-coins 500 in 138ms :: {"error":true,"message":"Database tempor…
+Returning 0 channels with coin addresses: []
+12:07:58 PM [express] GET /api/web3-channels 200 in 153ms :: []
+📋 Fetching creators from content coins...
+Returning 0 channels with coin addresses: []
+12:08:04 PM [express] GET /api/web3-channels 200 in 72ms :: []
+✅ Found 0 unique creators
+12:08:04 PM [express] GET /api/creators 200 in 83ms :: []
