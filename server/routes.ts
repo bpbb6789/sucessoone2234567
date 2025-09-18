@@ -40,6 +40,17 @@ const prisma = new PrismaClient();
 function handleDatabaseError(error: any, operation: string) {
   console.error(`Database error in ${operation}:`, error);
 
+  // Check if it's a disabled endpoint error
+  if (error?.message?.includes('The endpoint has been disabled')) {
+    console.error('❌ Database endpoint disabled - needs to be re-enabled via Neon Console or new database created');
+    return {
+      error: true,
+      message: "Database has been disabled due to inactivity. Please create a new database in the Database tab.",
+      operation,
+      needsDbRecreation: true
+    };
+  }
+
   // Check if it's an authentication error
   if (error?.message?.includes('password authentication failed')) {
     console.error('❌ Database authentication failed - check DATABASE_URL password in Secrets');
