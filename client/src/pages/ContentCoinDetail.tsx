@@ -148,7 +148,7 @@ export default function ContentCoinDetail() {
   const params = useParams();
   const tokenAddress = params.address;
   const address = useAccount()?.address; // Use real wallet address
-  // Removed unused wagmi hooks for auction integration
+  // Removed wagmi hooks for auction integration
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState("");
   const [sellAmount, setSellAmount] = useState("");
@@ -815,9 +815,9 @@ export default function ContentCoinDetail() {
                 {tokenData?.coinAddress && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="h-8 px-3 gap-2"
                         data-testid="button-contract-menu"
                       >
@@ -838,7 +838,7 @@ export default function ContentCoinDetail() {
                         <Copy className="mr-2 h-4 w-4" />
                         Copy address
                       </DropdownMenuItem>
-                      
+
                       <DropdownMenuItem
                         onClick={() => {
                           const ipfsUrl = tokenData.mediaCid ? `https://gateway.pinata.cloud/ipfs/${tokenData.mediaCid}` : '#';
@@ -851,7 +851,7 @@ export default function ContentCoinDetail() {
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
-                      
+
                       <DropdownMenuItem
                         onClick={() => window.open(`https://sepolia.basescan.org/token/${tokenData.coinAddress}`, '_blank')}
                         data-testid="action-basescan"
@@ -859,7 +859,7 @@ export default function ContentCoinDetail() {
                         <ExternalLink className="mr-2 h-4 w-4" />
                         Basescan
                       </DropdownMenuItem>
-                      
+
                       <DropdownMenuItem
                         onClick={() => window.open(`https://www.geckoterminal.com/base-sepolia/tokens/${tokenData.coinAddress}`, '_blank')}
                         data-testid="action-geckoterminal"
@@ -867,7 +867,7 @@ export default function ContentCoinDetail() {
                         <ExternalLink className="mr-2 h-4 w-4" />
                         GeckoTerminal
                       </DropdownMenuItem>
-                      
+
                       <DropdownMenuItem
                         onClick={() => window.open(`https://dexscreener.com/base-sepolia/${tokenData.coinAddress}`, '_blank')}
                         data-testid="action-dexscreener"
@@ -875,7 +875,7 @@ export default function ContentCoinDetail() {
                         <ExternalLink className="mr-2 h-4 w-4" />
                         DEX Screener
                       </DropdownMenuItem>
-                      
+
                       <DropdownMenuItem
                         onClick={() => window.open(`https://www.tokenchat.live/token/base/${tokenData.coinAddress}`, '_blank')}
                         data-testid="action-tokenchat"
@@ -885,7 +885,7 @@ export default function ContentCoinDetail() {
                       </DropdownMenuItem>
 
                       <DropdownMenuSeparator />
-                      
+
                       <DropdownMenuItem
                         onClick={() => {
                           toast({

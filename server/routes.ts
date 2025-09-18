@@ -32,6 +32,9 @@ import { v4 as uuidv4 } from 'uuid'; // Import uuid for trade IDs
 import { registerAdvancedTradingRoutes } from './routes/advancedTrading';
 import { ethers } from 'ethers';
 import { initializeDatabase } from './initializeDatabase';
+import { zoraTradingService } from './services/zoraTradingService';
+import { getCoinPrice } from './zora';
+import { getTokenHolders } from './blockchain';
 
 
 const prisma = new PrismaClient();
@@ -652,13 +655,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (validatedData.videoId) {
         const video = await storage.getVideo(validatedData.videoId);
         if (video && video.channelId !== validatedData.channelId) {
-          await triggerNotification('comment', {
+          await triggerNotification('comment_posted', {
+            recipientAddress: video.channelId,
+            commenterAddress: validatedData.channelId,
+            commenterName: validatedData.channelId,
             contentOwnerAddress: video.channelId,
             contentTitle: video.title,
             contentId: video.id,
             contentType: 'video',
-            commenterAddress: validatedData.channelId,
-            commenterName: validatedData.channelId,
             commentText: validatedData.content
           });
         }
@@ -684,6 +688,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const comment = await storage.getComment(req.params.id);
       if (comment && comment.channelId !== channelId) {
         await triggerNotification('comment_liked', {
+          recipientAddress: comment.channelId,
           commentOwnerAddress: comment.channelId,
           commentId: comment.id,
           likerAddress: channelId,
@@ -2361,7 +2366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If coin is already deployed but bonding curve deployment failed, allow bonding curve retry
       if (coinData.status === 'deployed' && coinData.coinAddress && !coinData.hasBondingCurve) {
         console.log(`🔄 Coin already deployed but bonding curve missing, retrying bonding curve deployment...`);
-        
+
         // Skip to bonding curve deployment
         try {
           const bondingCurveResult = await bondingCurveService.deployBondingCurve(
@@ -2372,7 +2377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           if (bondingCurveResult.success) {
             console.log(`✅ Bonding curve deployed successfully at: ${bondingCurveResult.curveAddress}`);
-            
+
             await db.update(creatorCoins)
               .set({
                 hasBondingCurve: true,
@@ -2597,65 +2602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bonding Curve API Routes
-  // Deploy bonding curve for a creator coin
-  app.post("/api/creator-coins/:id/deploy-bonding-curve", async (req, res) => {
-    try {
-      const creatorCoinId = req.params.id;
-
-      console.log(`🚀 Deploying bonding curve for coin: ${creatorCoinId}`);
-
-      // Get creator coin data
-      const coin = await db
-        .select()
-        .from(creatorCoins)
-        .where(eq(creatorCoins.id, creatorCoinId))
-        .limit(1);
-
-      if (!coin.length) {
-        return res.status(404).json({ error: "Creator coin not found" });
-      }
-
-      const coinData = coin[0];
-
-      if (!coinData.contractAddress) {
-        return res.status(400).json({ error: "Token contract not deployed yet" });
-      }
-
-      if (coinData.hasBondingCurve) {
-        return res.status(400).json({
-          error: "Bonding curve already deployed",
-          curveAddress: coinData.bondingCurveExchangeAddress
-        });
-      }
-
-      // Deploy bonding curve
-      const result = await bondingCurveService.deployBondingCurve(
-        coinData.contractAddress,
-        coinData.creatorAddress,
-        coinData.id
-      );
-
-      if (result.success) {
-        res.json({
-          success: true,
-          curveAddress: result.curveAddress,
-          transactionHash: result.transactionHash,
-          message: "Bonding curve deployed successfully"
-        });
-      } else {
-        res.status(500).json({
-          success: false,
-          error: result.error
-        });
-      }
-
-    } catch (error) {
-      console.error("Deploy bonding curve error:", error);
-      res.status(500).json({ error: "Failed to deploy bonding curve" });
-    }
-  });
-
+  // Get creator coin bonding curve info
   app.get("/api/creator-coins/:id/bonding-curve-info", async (req, res) => {
     try {
       const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
@@ -2676,7 +2623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // If Zora Trading is available, use that instead of bonding curves
+      // Use Zora Trading system for all trading
       if (zoraTradingService.isZoraTradingAvailable()) {
         return res.json({
           enabled: true,
@@ -2692,38 +2639,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Fallback to bonding curve if deployed
-      if (!coinData.hasBondingCurve || !coinData.bondingCurveExchangeAddress) {
-        return res.json({
-          enabled: false,
-          message: "Bonding curve not deployed for this coin",
-          suggestion: "Deploy to Base Mainnet for Zora Trading access"
-        });
-      }
-
-      const curveInfo = await bondingCurveService.getBondingCurveInfo(coinData.bondingCurveExchangeAddress);
-
-      if (!curveInfo) {
-        return res.status(500).json({ message: "Failed to fetch bonding curve information" });
-      }
-
-      res.json({
-        enabled: true,
-        curveAddress: coinData.bondingCurveExchangeAddress,
-        factoryAddress: coinData.bondingCurveFactoryAddress,
-        info: {
-          tokenAddress: curveInfo.tokenAddress,
-          creatorAddress: curveInfo.creatorAddress,
-          supply: curveInfo.supply.toString(),
-          reserve: curveInfo.reserve.toString(),
-          currentPrice: curveInfo.currentPrice.toString(),
-          marketCap: curveInfo.marketCap.toString()
-        }
+      // For testnet, return disabled with suggestion
+      return res.json({
+        enabled: false,
+        message: "Trading only available on Base Mainnet",
+        suggestion: "Deploy to Base Mainnet for Zora Trading access"
       });
 
     } catch (error) {
-      console.error("Bonding curve info error:", error);
-      res.status(500).json({ message: "Failed to fetch bonding curve info" });
+      console.error("Trading info error:", error);
+      res.status(500).json({ message: "Failed to fetch trading info" });
     }
   });
 
@@ -2747,622 +2672,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!coin.length) {
         return res.status(404).json({ error: "Creator coin not found" });
-      }
-
-      const coinData = coin[0];
-
-      // If bonding curve is available, use it
-      if (coinData.hasBondingCurve && coinData.bondingCurveExchangeAddress) {
-        try {
-          const tokensOut = await bondingCurveService.calculateBuyTokens(
-            coinData.bondingCurveExchangeAddress,
-            ethAmount
-          );
-
-          if (tokensOut) {
-            console.log(`✅ Bonding curve quote: ${tokensOut} tokens for ${ethAmount} ETH`);
-            return res.json({
-              tokensOut: tokensOut.toString(),
-              ethAmount,
-              source: "bonding_curve"
-            });
-          }
-        } catch (error) {
-          console.error("Bonding curve quote failed:", error);
-        }
-      }
-
-      // Fallback to price-based calculation
-      const currentPrice = coinData.currentPrice || "0.00001";
-      const estimatedTokens = parseFloat(ethAmount) / parseFloat(currentPrice);
-      const tokensOutWei = ethers.utils.parseUnits(estimatedTokens.toString(), 18);
-
-      console.log(`📊 Price-based quote: ${estimatedTokens} tokens for ${ethAmount} ETH`);
-
-      res.json({
-        tokensOut: tokensOutWei.toString(),
-        ethAmount,
-        source: "price_estimate",
-        currentPrice
-      });
-
-    } catch (error) {
-      console.error("Buy quote error:", error);
-      res.status(500).json({ error: "Failed to get buy quote" });
-    }
-  });
-
-  app.post("/api/creator-coins/:id/bonding-curve-sell-quote", async (req, res) => {
-    try {
-      const { tokenAmount } = req.body;
-
-      if (!tokenAmount || isNaN(parseFloat(tokenAmount))) {
-        return res.status(400).json({ message: "Valid tokenAmount required" });
-      }
-
-      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
-
-      if (!coin.length) {
-        return res.status(404).json({ message: "Creator coin not found" });
-      }
-
-      const coinData = coin[0];
-
-      if (!coinData.hasBondingCurve || !coinData.bondingCurveExchangeAddress) {
-        return res.status(400).json({ message: "Bonding curve not available for this coin" });
-      }
-
-      const ethOut = await bondingCurveService.calculateSellTokens(coinData.bondingCurveExchangeAddress, tokenAmount);
-
-      if (ethOut === null) {
-        return res.status(500).json({ message: "Failed to calculate sell quote" });
-      }
-
-      res.json({
-        tokenAmount,
-        ethOut: ethOut.toString(),
-        curveAddress: coinData.bondingCurveExchangeAddress
-      });
-
-    } catch (error) {
-      console.error("Bonding curve sell quote error:", error);
-      res.status(500).json({ message: "Failed to calculate sell quote" });
-    }
-  });
-
-  app.get("/api/creator-coins/:id/price", async (req, res) => {
-    try {
-      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
-
-      if (!coin.length) {
-        return res.status(404).json({ message: "Creator coin not found" });
-      }
-
-      const coinData = coin[0];
-
-      if (!coinData.coinAddress || coinData.coinAddress === 'Deploying...' || coinData.coinAddress.length < 10) {
-        return res.status(400).json({ message: "Coin not yet deployed" });
-      }
-
-      try {
-        // Use bonding curve system for real price data
-        const bondingCurveInfo = await bondingCurveService.getBondingCurveInfo(coinData.id);
-
-        // Handle null bonding curve info gracefully
-        let priceData;
-        if (bondingCurveInfo && bondingCurveInfo.info) {
-          priceData = {
-            price: bondingCurveInfo.info.currentPrice || '0.00001',
-            marketCap: bondingCurveInfo.info.marketCap || '10000',
-            volume24h: '0',
-            holders: 0,
-            bondingProgress: parseInt(bondingCurveInfo.info.supply || '0') / 1000000
-          };
-        } else {
-          // Fallback to default values when bonding curve info is not available
-          priceData = {
-            price: coinData.currentPrice || '0.00001',
-            marketCap: coinData.marketCap || '10000',
-            volume24h: coinData.volume24h || '0',
-            holders: coinData.holders || 0,
-            bondingCurveProgress: parseFloat(coinData.bondingCurveProgress || '0')
-          };
-        }
-
-        // Update coin with latest data
-        await db.update(creatorCoins)
-          .set({
-            currentPrice: priceData.price,
-            marketCap: priceData.marketCap,
-            volume24h: priceData.volume24h,
-            holders: priceData.holders,
-            bondingCurveProgress: priceData.bondingCurveProgress.toString(),
-            updatedAt: new Date()
-          })
-          .where(eq(creatorCoins.id, req.params.id));
-
-        res.json({
-          price: priceData.price,
-          marketCap: priceData.marketCap,
-          volume24h: priceData.volume24h,
-          holders: priceData.holders,
-          bondingCurveProgress: priceData.bondingCurveProgress
-        });
-      } catch (priceError) {
-        console.log(`❌ No trading data available for ${coinData.coinAddress}:`, priceError);
-
-        // Return fallback price data instead of 404
-        const fallbackPriceData = {
-          price: coinData.currentPrice || '0.00001',
-          marketCap: coinData.marketCap || '10000',
-          volume24h: coinData.volume24h || '0',
-          holders: coinData.holders || 0,
-          bondingCurveProgress: parseFloat(coinData.bondingCurveProgress || '0')
-        };
-
-        res.json(fallbackPriceData);
-      }
-    } catch (error) {
-      res.status(500).json(handleDatabaseError(error, "getCreatorCoinPrice"));
-    }
-  });
-
-  // Get Zora-based coin price data by coin address
-  app.get("/api/creator-coins/zora-price/:coinAddress", async (req, res) => {
-    try {
-      const { coinAddress } = req.params;
-
-      if (!coinAddress) {
-        return res.status(400).json({ message: "Coin address required" });
-      }
-
-      // Check if this coin exists in our Zora channels
-      const channels = await storage.getAllWeb3Channels();
-      const zoraChannel = channels.find(channel =>
-        channel.coinAddress?.toLowerCase() === coinAddress.toLowerCase() &&
-        (channel.zoraPlatform === 'zora' || channel.zoraFactoryAddress)
-      );
-
-      if (!zoraChannel) {
-        return res.status(404).json({ message: "Not a Zora channel" });
-      }
-
-      // For Zora coins, use the Zora SDK price functions with real blockchain data
-      const priceData = await getCoinPrice(coinAddress);
-
-      // Update the web3 channel with real holders data
-      try {
-        await db.update(web3Channels)
-          .set({
-            holders: priceData.holders,
-            currentPrice: priceData.price,
-            marketCap: priceData.marketCap,
-            volume24h: priceData.volume24h,
-            updatedAt: new Date()
-          })
-          .where(eq(web3Channels.coinAddress, coinAddress));
-
-        console.log(`✅ Updated web3 channel ${coinAddress} with ${priceData.holders} holders`);
-      } catch (dbError) {
-        console.warn('⚠️ Failed to update web3 channel with price data:', dbError);
-      }
-
-      // Format market cap properly
-      const zoraMarketCap = parseFloat(priceData.marketCap) || 0;
-
-      res.json({
-        price: priceData.price,
-        marketCap: zoraMarketCap.toFixed(2),
-        volume24h: priceData.volume24h,
-        holders: priceData.holders, // Real blockchain data
-        platform: 'zora',
-        isZoraChannel: true
-      });
-    } catch (error) {
-      console.error('Error fetching Zora price data:', error);
-      res.status(500).json({
-        message: "Failed to fetch Zora price data",
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.post("/api/creator-coins/:id/like", async (req, res) => {
-    try {
-      const { userAddress } = req.body;
-      const coinId = req.params.id;
-
-      if (!userAddress) {
-        return res.status(400).json({ message: "User address required" });
-      }
-
-      // Store like in database
-      await db.insert(creatorCoinLikes).values({
-        coinId,
-        userAddress,
-        createdAt: new Date()
-      }).onConflictDoNothing();
-
-      // Trigger notification for coin like
-      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
-      if (coin.length > 0) {
-        await triggerNotification('creator_coin_liked', {
-          coinOwnerAddress: coin[0].creatorAddress,
-          coinName: coin[0].coinName,
-          coinId: coin[0].id,
-          likerAddress: userAddress,
-          likerName: userAddress
-        });
-      }
-
-      console.log(`User ${userAddress} liked coin ${coinId}`);
-      res.json({ success: true, message: "Content liked successfully" });
-    } catch (error) {
-      console.error('Error liking creator coin:', error);
-      res.status(500).json({ message: "Failed to like content" });
-    }
-  });
-
-  // ====================
-  // ADMIN SYSTEM API ENDPOINTS
-  // ====================
-
-  // Get admin dashboard stats
-  app.get('/api/admin/stats', async (req, res) => {
-    try {
-      console.log('🔍 Fetching admin stats...');
-
-      // In production, add proper admin authentication middleware
-
-      // Get total users (unique creator addresses)
-      const totalUsers = await db.select({ count: sql`COUNT(DISTINCT ${creatorCoins.creatorAddress})` })
-        .from(creatorCoins);
-
-      // Get total channels
-      const totalChannels = await storage.getAllWeb3Channels();
-
-      // Get total content coins
-      const totalContentCoins = await db.select().from(creatorCoins);
-
-      // Mock revenue data (implement with actual blockchain data)
-      const stats = {
-        totalUsers: parseInt(totalUsers[0]?.count as string) || 0,
-        totalChannels: totalChannels.length || 0,
-        totalContentCoins: totalContentCoins.length || 0,
-        totalRevenue: "15.7", // ETH - from trading fees
-        totalFees: "3.2", // ETH - platform fees
-        monthlyActiveUsers: 142,
-        pendingWithdrawals: "0.8"
-      };
-
-      console.log('✅ Admin stats fetched successfully:', stats);
-      res.json(stats);
-    } catch (error) {
-      console.error('❌ Error fetching admin stats:', error);
-      res.status(500).json({ error: 'Failed to fetch admin stats', details: error instanceof Error ? error.message : 'Unknown error' });
-    }
-  });
-
-  // Get all users for admin management
-  app.get('/api/admin/users', async (req, res) => {
-    try {
-      console.log('🔍 Fetching admin users...');
-
-      // Get unique creators with their stats
-      const users = await db
-        .select({
-          creatorAddress: creatorCoins.creatorAddress,
-          coinsCreated: sql`COUNT(*)`.as('coins_created'),
-          totalLikes: sql`SUM(COALESCE(${creatorCoins.likes}, 0))`.as('total_likes'),
-          joinedAt: sql`MIN(${creatorCoins.createdAt})`.as('joined_at')
-        })
-        .from(creatorCoins)
-        .where(sql`${creatorCoins.creatorAddress} IS NOT NULL AND ${creatorCoins.creatorAddress} != ''`)
-        .groupBy(creatorCoins.creatorAddress);
-
-      console.log(`Found ${users.length} unique users from creator coins`);
-
-      // Get channel count per user
-      const channels = await storage.getAllWeb3Channels();
-      const channelsByOwner = channels.reduce((acc: any, channel: any) => {
-        if (channel.owner) {
-          acc[channel.owner] = (acc[channel.owner] || 0) + 1;
-        }
-        return acc;
-      }, {});
-
-      const adminUsers = users.map((user: any) => ({
-        id: user.creatorAddress,
-        address: user.creatorAddress,
-        channelsCreated: channelsByOwner[user.creatorAddress] || 0,
-        coinsCreated: parseInt(user.coinsCreated as string) || 0,
-        totalVolume: '0.00', // Real trading volume calculation needed
-        status: 'active' as const,
-        joinedAt: user.joinedAt
-      }));
-
-      console.log('✅ Admin users fetched successfully:', adminUsers.length);
-      res.json(adminUsers);
-    } catch (error) {
-      console.error('❌ Error fetching admin users:', error);
-      res.status(500).json({ error: 'Failed to fetch users', details: error instanceof Error ? error.message : 'Unknown error' });
-    }
-  });
-
-  // Get all channels for admin management
-  app.get('/api/admin/channels', async (req, res) => {
-    try {
-      const channels = await storage.getAllWeb3Channels();
-
-      const adminChannels = channels.map((channel: any) => ({
-        id: channel.id,
-        name: channel.name,
-        ticker: channel.ticker,
-        owner: channel.owner,
-        coinAddress: channel.coinAddress,
-        status: channel.status || 'active',
-        holders: channel.holders || 0,
-        marketCap: channel.marketCap || '0',
-        createdAt: channel.createdAt
-      }));
-
-      res.json(adminChannels);
-    } catch (error) {
-      console.error('Error fetching admin channels:', error);
-      res.status(500).json({ error: 'Failed to fetch channels' });
-    }
-  });
-
-  // Get all content coins for admin management
-  app.get('/api/admin/content-coins', async (req, res) => {
-    try {
-      const coins = await db.select().from(creatorCoins).orderBy(desc(creatorCoins.createdAt));
-
-      const adminCoins = coins.map((coin: any) => ({
-        id: coin.id,
-        title: coin.title,
-        coinName: coin.coinName,
-        coinSymbol: coin.coinSymbol,
-        creatorAddress: coin.creatorAddress,
-        status: coin.status,
-        likes: coin.likes || 0,
-        comments: coin.comments || 0,
-        deploymentTxHash: coin.deploymentTxHash,
-        createdAt: coin.createdAt
-      }));
-
-      res.json(adminCoins);
-    } catch (error) {
-      console.error('Error fetching admin content coins:', error);
-      res.status(500).json({ error: 'Failed to fetch content coins' });
-    }
-  });
-
-  // Admin create channel
-  app.post('/api/admin/channels', async (req, res) => {
-    try {
-      const { name, ticker, ownerAddress, category = 'General' } = req.body;
-
-      if (!name || !ticker || !ownerAddress) {
-        return res.status(400).json({ error: 'Missing required fields' });
-      }
-
-      // Create slug
-      const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-
-      // Real coin address should come from actual contract deployment
-      const tempCoinAddress = `0x${'0'.repeat(40)}`; // Placeholder until real deployment
-
-      const channelData = {
-        owner: ownerAddress,
-        createdBy: ownerAddress,
-        name: name,
-        slug: slug,
-        ticker: ticker,
-        coinAddress: tempCoinAddress,
-        chainId: 8453,
-        category: category,
-        description: `Admin created channel: ${name}`,
-        zoraPlatform: 'admin',
-        currency: 'ETH',
-        txHash: `0x${'0'.repeat(64)}` // Real transaction hash needed
-      };
-
-      const channel = await storage.createWeb3Channel(channelData);
-      res.status(201).json({ success: true, channel });
-    } catch (error) {
-      console.error('Error creating admin channel:', error);
-      res.status(500).json({ error: 'Failed to create channel' });
-    }
-  });
-
-  // Admin delete channel
-  app.delete('/api/admin/channels/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      // Delete from web3_channels table
-      await db.delete(web3Channels).where(eq(web3Channels.id, id));
-
-      res.json({ success: true, message: 'Channel deleted successfully' });
-    } catch (error) {
-      console.error('Error deleting channel:', error);
-      res.status(500).json({ error: 'Failed to delete channel' });
-    }
-  });
-
-  // Admin delete content coin
-  app.delete('/api/admin/content-coins/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      // Delete from creator_coins table
-      await db.delete(creatorCoins).where(eq(creatorCoins.id, id));
-
-      res.json({ success: true, message: 'Content coin deleted successfully' });
-    } catch (error) {
-      console.error('Error deleting content coin:', error);
-      res.status(500).json({ error: 'Failed to delete content coin' });
-    }
-  });
-
-  // Admin withdraw fees
-  app.post('/api/admin/withdraw-fees', async (req, res) => {
-    try {
-      const { amount } = req.body;
-
-      if (!amount || parseFloat(amount) <= 0) {
-        return res.status(400).json({ error: 'Invalid withdrawal amount' });
-      }
-
-      // In production, implement actual fee withdrawal logic
-      // This would involve:
-      // 1. Check contract balance
-      // 2. Call withdraw function on contracts
-      // 3. Transfer fees to admin wallet
-
-      console.log(`Admin withdrawing ${amount} ETH in fees`);
-
-      // Mock successful withdrawal
-      res.json({
-        success: true,
-        message: `Successfully withdrew ${amount} ETH`,
-        txHash: `0x${'0'.repeat(64)}` // Real transaction hash needed
-      });
-    } catch (error) {
-      console.error('Error withdrawing fees:', error);
-      res.status(500).json({ error: 'Failed to withdraw fees' });
-    }
-  });
-
-  // Admin update user status
-  app.patch('/api/admin/users/:address/status', async (req, res) => {
-    try {
-      const { address } = req.params;
-      const { status } = req.body; // 'active', 'suspended', 'banned'
-
-      if (!['active', 'suspended', 'banned'].includes(status)) {
-        return res.status(400).json({ error: 'Invalid status' });
-      }
-
-      // In production, implement user status management
-      // This could involve updating a users table or blacklist
-
-      console.log(`Admin updated user ${address} status to ${status}`);
-
-      res.json({ success: true, message: `User status updated to ${status}` });
-    } catch (error) {
-      console.error('Error updating user status:', error);
-      res.status(500).json({ error: 'Failed to update user status' });
-    }
-  });
-
-  // Admin platform settings
-  app.get('/api/admin/settings', async (req, res) => {
-    try {
-      // In production, store these in database
-      const settings = {
-        channelCreationFee: '0.05',
-        tradingFeePercentage: '2.5',
-        maxFileSize: 10, // MB
-        allowedFileTypes: ['image', 'video', 'audio', 'gif'],
-        platformStatus: 'active'
-      };
-
-      res.json(settings);
-    } catch (error) {
-      console.error('Error fetching admin settings:', error);
-      res.status(500).json({ error: 'Failed to fetch settings' });
-    }
-  });
-
-  app.post('/api/admin/settings', async (req, res) => {
-    try {
-      const settings = req.body;
-
-      // In production, save to database
-      console.log('Admin updated platform settings:', settings);
-
-      res.json({ success: true, message: 'Settings updated successfully' });
-    } catch (error) {
-      console.error('Error updating admin settings:', error);
-      res.status(500).json({ error: 'Failed to update settings' });
-    }
-  });
-
-  app.delete("/api/creator-coins/:id/like", async (req, res) => {
-    try {
-      const { userAddress } = req.body;
-      const coinId = req.params.id;
-
-      if (!userAddress) {
-        return res.status(400).json({ message: "User address required" });
-      }
-
-      // Remove like
-      await db.delete(creatorCoinLikes)
-        .where(eq(creatorCoinLikes.coinId, coinId));
-
-      // Update like count
-      await db.update(creatorCoins)
-        .set({
-          likes: sql`${creatorCoins.likes} - 1`,
-          updatedAt: new Date()
-        })
-        .where(eq(creatorCoins.id, coinId));
-
-      res.json({ message: "Unliked successfully" });
-    } catch (error) {
-      res.status(500).json(handleDatabaseError(error, "unlikeCreatorCoin"));
-    }
-  });
-
-  // Get creator coin comments
-  app.get('/api/creator-coins/:coinId/comments', async (req, res) => {
-    try {
-      const { coinId } = req.params;
-      const comments = await db.select()
-        .from(creatorCoinComments)
-        .where(eq(creatorCoinComments.coinId, coinId))
-        .orderBy(desc(creatorCoinComments.createdAt));
-      res.json(comments);
-    } catch (error) {
-      console.error('Error fetching creator coin comments:', error);
-      res.status(500).json({ error: 'Failed to fetch comments' });
-    }
-  });
-
-  // Get creator coin trades/activity
-  app.get('/api/creator-coins/:coinId/trades', async (req, res) => {
-    try {
-      const { coinId } = req.params;
-      const trades = await db.select()
-        .from(creatorCoinTrades)
-        .where(eq(creatorCoinTrades.coinId, coinId))
-        .orderBy(desc(creatorCoinTrades.createdAt));
-      res.json(trades);
-    } catch (error) {
-      console.error('Error fetching creator coin trades:', error);
-      res.status(500).json({ error: 'Failed to fetch trades' });
-    }
-  });
-
-  // Buy creator coin tokens
-  app.post('/api/creator-coins/:coinId/buy', async (req, res) => {
-    try {
-      const { coinId } = req.params;
-      const { buyerAddress, ethAmount, minTokensOut } = req.body;
-
-      if (!buyerAddress || !ethAmount) {
-        return res.status(400).json({ error: "Buyer address and ETH amount required" });
-      }
-
-      console.log(`💰 Processing buy order for creator coin ${coinId}: ${ethAmount} ETH from ${buyerAddress}`);
-
-      // Get creator coin details
-      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
-      if (!coin.length) {
-        return res.status(404).json({ error: 'Creator coin not found' });
       }
 
       const coinData = coin[0];
@@ -3706,11 +3015,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const coin = latestDeployedCoin[0];
-      
+
       // Generate explorer links
       const contractAddress = coin.coinAddress;
       const txHash = coin.deploymentTxHash;
-      
+
       const explorerLinks = {
         contractUrl: `https://sepolia.basescan.org/token/${contractAddress}`,
         txUrl: txHash ? `https://sepolia.basescan.org/tx/${txHash}` : null,
@@ -4255,10 +3564,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             entityType: 'content_coin',
             entityId: data.coinId,
             actorAddress: data.creatorAddress,
-            metadata: { 
-              coinAddress: data.coinAddress, 
+            metadata: {
+              coinAddress: data.coinAddress,
               txHash: data.txHash,
-              deploymentStatus: data.deploymentStatus 
+              deploymentStatus: data.deploymentStatus
             },
             actionUrl: `/content-coin/${data.coinId}`
           });
@@ -4741,11 +4050,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
-  const httpServer = createServer(app);
-  return httpServer;
-}
-<line_number>3100</line_number>
-
   // Zora Trading API Endpoints
   app.post("/api/zora-trading/buy", async (req, res) => {
     try {
@@ -4877,8 +4181,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         automaticRouting: true
       },
       supportedTokens: ['ETH', 'USDC', 'ZORA', 'Creator Coins', 'Content Coins'],
-      note: zoraTradingService.isZoraTradingAvailable() 
-        ? "Zora Trading fully available" 
+      note: zoraTradingService.isZoraTradingAvailable()
+        ? "Zora Trading fully available"
         : "Deploy to Base Mainnet for Zora Trading access"
     });
   });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
