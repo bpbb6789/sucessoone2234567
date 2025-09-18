@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,11 +77,12 @@ export function TokenTrading({
       return;
     }
 
-    // Check if we're on Base Mainnet
-    if (walletClient.chain?.id !== 8453) {
+    // Check if we're on a supported network (Base Mainnet or Base Sepolia)
+    const supportedChainIds = [8453, 84532]; // Base Mainnet, Base Sepolia
+    if (!supportedChainIds.includes(walletClient.chain?.id || 0)) {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Base Mainnet to use Zora Trading",
+        description: "Please switch to Base Mainnet or Base Sepolia to use Zora Trading",
         variant: "destructive"
       });
       return;
@@ -165,11 +165,12 @@ export function TokenTrading({
       return;
     }
 
-    // Check if we're on Base Mainnet
-    if (walletClient.chain?.id !== 8453) {
+    // Check if we're on a supported network (Base Mainnet or Base Sepolia)
+    const supportedChainIds = [8453, 84532]; // Base Mainnet, Base Sepolia
+    if (!supportedChainIds.includes(walletClient.chain?.id || 0)) {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Base Mainnet to use Zora Trading",
+        description: "Please switch to Base Mainnet or Base Sepolia to use Zora Trading",
         variant: "destructive"
       });
       return;
