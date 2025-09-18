@@ -2338,14 +2338,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creator: coinData.creatorAddress
       });
 
-      // Allow redeployment of failed coins
-      if (coinData.status !== 'pending' && coinData.status !== 'failed') {
-        console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending or failed`);
+      // Allow redeployment of failed coins or if bonding curve deployment failed
+      if (coinData.status !== 'pending' && coinData.status !== 'failed' && coinData.status !== 'deployed') {
+        console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending, failed, or deployed`);
         return res.status(400).json({
-          message: `Coin cannot be deployed (current status: ${coinData.status}). Only pending or failed coins can be deployed.`,
+          message: `Coin cannot be deployed (current status: ${coinData.status}). Only pending, failed, or deployed coins can be deployed.`,
           currentStatus: coinData.status,
-          allowedStatuses: ['pending', 'failed']
+          allowedStatuses: ['pending', 'failed', 'deployed']
         });
+      }
+
+      // If coin is already deployed but bonding curve deployment failed, allow bonding curve retry
+      if (coinData.status === 'deployed' && coinData.coinAddress && !coinData.hasBondingCurve) {
+        console.log(`🔄 Coin already deployed but bonding curve missing, retrying bonding curve deployment...`);
+        
+        // Skip to bonding curve deployment
+        try {
+          const bondingCurveResult = await bondingCurveService.deployBondingCurve(
+            coinData.coinAddress,
+            coinData.creatorAddress,
+            coinId
+          );
+
+          if (bondingCurveResult.success) {
+            console.log(`✅ Bonding curve deployed successfully at: ${bondingCurveResult.curveAddress}`);
+            
+            await db.update(creatorCoins)
+              .set({
+                hasBondingCurve: true,
+                bondingCurveExchangeAddress: bondingCurveResult.curveAddress,
+                bondingCurveDeploymentTxHash: bondingCurveResult.transactionHash,
+                updatedAt: new Date()
+              })
+              .where(eq(creatorCoins.id, coinId));
+
+            return res.json({
+              success: true,
+              coin: {
+                id: coinId,
+                coinAddress: coinData.coinAddress,
+                curveAddress: bondingCurveResult.curveAddress,
+                status: 'deployed',
+                message: 'Bonding curve deployed successfully for existing coin.'
+              }
+            });
+          } else {
+            console.error(`❌ Bonding curve deployment failed: ${bondingCurveResult.error}`);
+            return res.status(500).json({
+              message: "Failed to deploy bonding curve for existing coin",
+              error: bondingCurveResult.error
+            });
+          }
+        } catch (error) {
+          console.error("❌ Bonding curve deployment error:", error);
+          return res.status(500).json({
+            message: "Failed to deploy bonding curve for existing coin",
+            error: error instanceof Error ? error.message : "Unknown error"
+          });
+        }
       }
 
       // Check if metadata URI exists before starting deployment

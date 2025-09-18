@@ -366,20 +366,20 @@ class BondingCurveService {
       console.log(`   Creator: ${creatorAddress}`);
       console.log(`   Token: ${tokenAddress}`);
 
-      // Deploy bonding curve using viem
+      // Deploy bonding curve using viem with correct factory ABI
       const deployTxHash = await this.walletClient!.writeContract({
         address: BONDING_CURVE_FACTORY_ADDRESS,
         abi: [
           {
-            inputs: [{ name: "token", type: "address" }, { name: "creator", type: "address" }],
-            name: "deployCurve",
-            outputs: [{ name: "", type: "address" }],
+            inputs: [{ name: "tokenAddr", type: "address" }],
+            name: "deployCurveForExistingToken",
+            outputs: [{ name: "curveAddr", type: "address" }],
             stateMutability: "nonpayable",
             type: "function"
           }
         ] as const,
-        functionName: 'deployCurve',
-        args: [tokenAddress as Address, creatorAddress as Address],
+        functionName: 'deployCurveForExistingToken',
+        args: [tokenAddress as Address],
         chain: baseSepolia,
         account: this.account!
       });
@@ -393,19 +393,19 @@ class BondingCurveService {
       
       console.log(`✅ Transaction confirmed in block ${receipt.blockNumber}`);
 
-      // Get the curve address after deployment
+      // Get the curve address after deployment using correct mapping
       const curveAddress = await this.publicClient.readContract({
         address: BONDING_CURVE_FACTORY_ADDRESS as `0x${string}`,
         abi: [
           {
             inputs: [{ name: "creator", type: "address" }, { name: "token", type: "address" }],
-            name: "getCurve",
+            name: "curves",
             outputs: [{ name: "", type: "address" }],
             stateMutability: "view",
             type: "function"
           }
         ],
-        functionName: 'getCurve',
+        functionName: 'curves',
         args: [creatorAddress as `0x${string}`, tokenAddress as `0x${string}`]
       });
 
