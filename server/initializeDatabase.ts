@@ -17,6 +17,7 @@ export async function initializeDatabase() {
         media_cid TEXT NOT NULL,
         thumbnail_cid TEXT,
         metadata_uri TEXT,
+        metadata JSONB,
         coin_name TEXT NOT NULL,
         coin_symbol TEXT NOT NULL,
         coin_address TEXT,
@@ -151,6 +152,24 @@ export async function initializeDatabase() {
         likes INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    // Add missing columns if they don't exist
+    await db.execute(sql`
+      ALTER TABLE creator_coins ADD COLUMN IF NOT EXISTS metadata JSONB
+    `);
+
+    // Create indexes for better performance
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_creator_coins_creator_address ON creator_coins(creator_address)
+    `);
+    
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_creator_coins_status ON creator_coins(status)
+    `);
+
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications(recipient_address)
     `);
 
     console.log('✅ Database schema initialized successfully!');

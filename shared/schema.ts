@@ -410,6 +410,7 @@ export const creatorCoins = pgTable("creator_coins", {
   mediaCid: text("media_cid").notNull(), // IPFS CID of the main content
   thumbnailCid: text("thumbnail_cid"), // Thumbnail CID for videos/large files
   metadataUri: text("metadata_uri"), // Zora metadata URI
+  metadata: text("metadata"), // Additional metadata as JSON string
   
   // Coin Information
   coinName: text("coin_name").notNull(),

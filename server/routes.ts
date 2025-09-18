@@ -1638,7 +1638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("❌ Content upload error:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to upload content to IPFS",
         error: error instanceof Error ? error.message : "Unknown error"
       });
@@ -2766,7 +2766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             marketCap: coinData.marketCap || '10000',
             volume24h: coinData.volume24h || '0',
             holders: coinData.holders || 0,
-            bondingProgress: parseFloat(coinData.bondingCurveProgress || '0')
+            bondingCurveProgress: parseFloat(coinData.bondingCurveProgress || '0')
           };
         }
 
@@ -2777,7 +2777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             marketCap: priceData.marketCap,
             volume24h: priceData.volume24h,
             holders: priceData.holders,
-            bondingCurveProgress: priceData.bondingProgress.toString(),
+            bondingCurveProgress: priceData.bondingCurveProgress.toString(),
             updatedAt: new Date()
           })
           .where(eq(creatorCoins.id, req.params.id));
@@ -3306,8 +3306,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             error: 'Bonding curve buy system integration pending'
           };
         } catch (pumpFunError) {
-          return res.status(400).json({ 
-            error: 'Trading not available - bonding curve deployment in progress' 
+          return res.status(400).json({
+            error: 'Trading not available - bonding curve deployment in progress'
           });
         }
       }
@@ -3601,8 +3601,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { limit = 50, unreadOnly = false } = req.query;
 
       const notifications = await storage.getNotifications(
-        address, 
-        parseInt(limit as string), 
+        address,
+        parseInt(limit as string),
         unreadOnly === 'true'
       );
 
@@ -4237,11 +4237,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           volumeTraded: sql<string>`COALESCE(trades.volume, '0')`.as('volumeTraded'),
           // Unique tokens traded
           uniqueTokensTraded: sql<number>`COALESCE(trades.unique_tokens, 0)`.as('uniqueTokensTraded'),
+          // Total likes from creator coins
+          totalLikes: sql<number>`COALESCE(content.total_likes, 0)`.as('totalLikes'),
         })
         .from(walletProfiles)
         .leftJoin(
           sql`(
-            SELECT creator_address, COUNT(*) as count
+            SELECT creator_address, COUNT(*) as count, SUM(COALESCE(likes, 0)) as total_likes
             FROM creator_coins
             WHERE status = 'deployed'
             GROUP BY creator_address
@@ -4250,21 +4252,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
         .leftJoin(
           sql`(
-            SELECT creator_address, COUNT(*) as count
+            SELECT owner as creator_address, COUNT(*) as count
             FROM web3_channels
-            GROUP BY creator_address
+            WHERE owner IS NOT NULL
+            GROUP BY owner
           ) as channels`,
           sql`${walletProfiles.address} = channels.creator_address`
         )
         .leftJoin(
           sql`(
             SELECT
-              trader_address,
+              user_address as trader_address,
               COUNT(*) as count,
-              SUM(CAST(amount AS DECIMAL)) as volume,
+              SUM(CAST(COALESCE(amount, '0') AS DECIMAL)) as volume,
               COUNT(DISTINCT coin_id) as unique_tokens
             FROM creator_coin_trades
-            GROUP BY trader_address
+            WHERE user_address IS NOT NULL
+            GROUP BY user_address
           ) as trades`,
           sql`${walletProfiles.address} = trades.trader_address`
         )
@@ -4308,7 +4312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalSubscribers,
 
           // Earnings metrics - use real transaction data only
-          totalEarnings: '0.000 ETH', // Calculate from actual trading fees
+          totalEarnings: '0.00 ETH', // Calculate from actual trading fees
           creatorRewards: '0.000 ETH', // Calculate from actual content monetization
           tradingProfit: '0.000 ETH', // Calculate from actual trading profits
 
