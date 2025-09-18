@@ -1,0 +1,64 @@
+🚀 Starting content upload...
+CreateContentCoin.tsx:207 Uploading content with data: Object
+CreateContentCoin.tsx:231 ✅ Upload successful: Object
+CreateContentCoin.tsx:261 🚀 Starting coin deployment... ObjectcoinId: "a69bb41d-ca1f-46f7-bc44-cd62934e8679"coinName: "1677538328 property 1 base white"[[Prototype]]: Object
+CreateContentCoin.tsx:261 🚀 Starting coin deployment... {coinId: 'a69bb41d-ca1f-46f7-bc44-cd62934e8679', coinName: '1677538328 property 1 base white'}
+queryClient.ts:28  POST https://cb05f6e3-c0ec-40cb-bff4-127db5792493-00-33f2vz8hzmbxu.worf.replit.dev/api/creator-coins/a69bb41d-ca1f-46f7-bc44-cd62934e8679/deploy 400 (Bad Request)
+apiRequest @ queryClient.ts:28
+mutationFn @ useCreatorCoins.tsx:95
+fn @ chunk-A67CSFD6.js?v=e3a99a14:1234
+run @ chunk-A67CSFD6.js?v=e3a99a14:507
+start @ chunk-A67CSFD6.js?v=e3a99a14:550
+execute @ chunk-A67CSFD6.js?v=e3a99a14:1270
+await in execute
+mutate @ chunk-A67CSFD6.js?v=e3a99a14:2692
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:3415
+handleDeploy @ CreateContentCoin.tsx:281
+callCallback2 @ chunk-J4NESBNT.js?v=e3a99a14:3674
+invokeGuardedCallbackDev @ chunk-J4NESBNT.js?v=e3a99a14:3699
+invokeGuardedCallback @ chunk-J4NESBNT.js?v=e3a99a14:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-J4NESBNT.js?v=e3a99a14:3736
+executeDispatch @ chunk-J4NESBNT.js?v=e3a99a14:7014
+processDispatchQueueItemsInOrder @ chunk-J4NESBNT.js?v=e3a99a14:7034
+processDispatchQueue @ chunk-J4NESBNT.js?v=e3a99a14:7043
+dispatchEventsForPlugins @ chunk-J4NESBNT.js?v=e3a99a14:7051
+(anonymous) @ chunk-J4NESBNT.js?v=e3a99a14:7174
+batchedUpdates$1 @ chunk-J4NESBNT.js?v=e3a99a14:18913
+batchedUpdates @ chunk-J4NESBNT.js?v=e3a99a14:3579
+dispatchEventForPluginEventSystem @ chunk-J4NESBNT.js?v=e3a99a14:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-J4NESBNT.js?v=e3a99a14:5478
+dispatchEvent @ chunk-J4NESBNT.js?v=e3a99a14:5472
+dispatchDiscreteEvent @ chunk-J4NESBNT.js?v=e3a99a14:5449Understand this error
+CreateContentCoin.tsx:300 ❌ Deployment failed: Error: 400: {"message":"Coin cannot be deployed (current status: deployed). Only pending or failed coins can be deployed.","currentStatus":"deployed","allowedStatuses":["pending","failed"]}
+    at throwIfResNotOk (queryClient.ts:6:11)
+    at async apiRequest (queryClient.ts:35:3)
+    at async Object.mutationFn (useCreatorCoins.tsx:95:24)
+onError @ CreateContentCoin.tsx:300
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:2716
+batch @ chunk-A67CSFD6.js?v=e3a99a14:598
+notify_fn3 @ chunk-A67CSFD6.js?v=e3a99a14:2707
+onMutationUpdate @ chunk-A67CSFD6.js?v=e3a99a14:2674
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1385
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:1384
+batch @ chunk-A67CSFD6.js?v=e3a99a14:598
+dispatch_fn2 @ chunk-A67CSFD6.js?v=e3a99a14:1383
+execute @ chunk-A67CSFD6.js?v=e3a99a14:1322
+await in execute
+mutate @ chunk-A67CSFD6.js?v=e3a99a14:2692
+(anonymous) @ chunk-A67CSFD6.js?v=e3a99a14:3415
+handleDeploy @ CreateContentCoin.tsx:281
+callCallback2 @ chunk-J4NESBNT.js?v=e3a99a14:3674
+invokeGuardedCallbackDev @ chunk-J4NESBNT.js?v=e3a99a14:3699
+invokeGuardedCallback @ chunk-J4NESBNT.js?v=e3a99a14:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-J4NESBNT.js?v=e3a99a14:3736
+executeDispatch @ chunk-J4NESBNT.js?v=e3a99a14:7014
+processDispatchQueueItemsInOrder @ chunk-J4NESBNT.js?v=e3a99a14:7034
+processDispatchQueue @ chunk-J4NESBNT.js?v=e3a99a14:7043
+dispatchEventsForPlugins @ chunk-J4NESBNT.js?v=e3a99a14:7051
+(anonymous) @ chunk-J4NESBNT.js?v=e3a99a14:7174
+batchedUpdates$1 @ chunk-J4NESBNT.js?v=e3a99a14:18913
+batchedUpdates @ chunk-J4NESBNT.js?v=e3a99a14:3579
+dispatchEventForPluginEventSystem @ chunk-J4NESBNT.js?v=e3a99a14:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-J4NESBNT.js?v=e3a99a14:5478
+dispatchEvent @ chunk-J4NESBNT.js?v=e3a99a14:5472
+dispatchDiscreteEvent @ chunk-J4NESBNT.js?v=e3a99a14:5449Understand this error
