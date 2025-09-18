@@ -527,9 +527,16 @@ export default function ContentCoinDetail() {
           <CardContent className="p-0">
 
             {/* Tabs Container */}
-            <Tabs defaultValue="comments" className="flex flex-col">
+            <Tabs defaultValue="trade" className="flex flex-col">
               <div className="border-b border-border px-4 py-3">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger
+                    value="trade"
+                    className="flex items-center gap-1 text-xs"
+                  >
+                    <TrendingUp className="h-3 w-3" />
+                    Trade
+                  </TabsTrigger>
                   <TabsTrigger
                     value="comments"
                     className="flex items-center gap-1 text-xs"
@@ -559,6 +566,97 @@ export default function ContentCoinDetail() {
 
               {/* Tab Content */}
               <div className="max-h-[500px] overflow-y-auto">
+
+                {/* Trade Tab Content */}
+                <TabsContent value="trade" className="p-4 space-y-4">
+                  {/* Buy Section */}
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Button 
+                        className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                        data-testid="button-buy"
+                      >
+                        Buy
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        data-testid="button-sell"
+                      >
+                        Sell
+                      </Button>
+                    </div>
+                    
+                    {/* Amount Input */}
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        placeholder="0.0"
+                        className="pr-16 text-lg font-medium"
+                        data-testid="input-amount"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <span className="text-sm font-medium">ETH</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </div>
+                    </div>
+                    
+                    {/* Quick Amount Buttons */}
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs"
+                        data-testid="button-quick-0.001"
+                      >
+                        0.001 ETH
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs"
+                        data-testid="button-quick-0.01"
+                      >
+                        0.01 ETH
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs"
+                        data-testid="button-quick-0.1"
+                      >
+                        0.1 ETH
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs"
+                        data-testid="button-quick-max"
+                      >
+                        Max
+                      </Button>
+                    </div>
+                    
+                    {/* Balance Info */}
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Balance:</span>
+                      <span data-testid="text-balance">0 ETH</span>
+                    </div>
+                    
+                    {/* Comment Input */}
+                    <Textarea
+                      placeholder="Add a comment..."
+                      className="resize-none"
+                      rows={2}
+                      data-testid="input-comment"
+                    />
+                    
+                    {/* Insufficient Balance Message */}
+                    <div className="text-center text-sm text-red-500">
+                      Insufficient balance
+                    </div>
+                  </div>
+                </TabsContent>
 
                 {/* Comments Tab Content */}
                 <TabsContent value="comments" className="p-4 space-y-0">
