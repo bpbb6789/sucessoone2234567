@@ -58,18 +58,18 @@ export default function TokenDetail() {
 
   // Get token data from GraphQL
   const { data: salesData, loading: salesLoading } = useGetAllSales();
-  
+
   const tokenData = React.useMemo(() => {
     if (!salesData || !Array.isArray(salesData) || !tokenAddress) return null;
-    
+
     const token = salesData.find((t: any) => 
       t.memeTokenAddress?.toLowerCase() === tokenAddress.toLowerCase()
     );
-    
+
     if (!token) return null;
-    
+
     console.log('Token data from GraphQL:', token);
-    
+
     return {
       id: token.memeTokenAddress,
       address: token.memeTokenAddress,
@@ -123,7 +123,7 @@ export default function TokenDetail() {
   const formatTimeAgo = (date: Date): string => {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
       return `${diffInMinutes}m ago`;
@@ -210,7 +210,7 @@ export default function TokenDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Chart & Info */}
           <div className="lg:col-span-2 space-y-6">
-            
+
 
             {/* TradingView Chart */}
             <Card>
@@ -316,7 +316,7 @@ export default function TokenDetail() {
                           ETH
                         </div>
                       </div>
-                      
+
                       {/* Quick Amount Buttons */}
                       <div className="flex gap-2">
                         {['0.001', '0.01', '0.1'].map((amount) => (
@@ -330,10 +330,10 @@ export default function TokenDetail() {
                         ))}
                       </div>
                     </div>
-                    
+
                     <TransactionComponent
-                      contractAddress={PUMP_FUN_ADDRESS}
-                      contractAbi={PUMP_FUN_ABI}
+                      contractAddress={"0x0000000000000000000000000000000000000000"}
+                      contractAbi={[]}
                       functionName="buy"
                       args={[tokenAddress as Address, parseUnits(buyAmount, 18), BigInt(0)]}
                       value={buyAmount ? parseUnits(buyAmount, 18) : BigInt(0)}
@@ -349,7 +349,7 @@ export default function TokenDetail() {
                         }
                       }}
                     />
-                    
+
                     {buyAmount && parseFloat(buyAmount) > 0 && (
                       <div className="text-xs text-muted-foreground space-y-1">
                         <div className="flex justify-between">
@@ -384,7 +384,7 @@ export default function TokenDetail() {
                           {tokenData.symbol}
                         </div>
                       </div>
-                      
+
                       {/* Quick Amount Buttons */}
                       <div className="flex gap-2">
                         {['25%', '50%', '100%'].map((percentage) => (
@@ -404,10 +404,10 @@ export default function TokenDetail() {
                         ))}
                       </div>
                     </div>
-                    
+
                     <TransactionComponent
-                      contractAddress={PUMP_FUN_ADDRESS}
-                      contractAbi={PUMP_FUN_ABI}
+                      contractAddress={"0x0000000000000000000000000000000000000000"}
+                      contractAbi={[]}
                       functionName="sell"
                       args={[tokenAddress as Address, sellAmount ? parseUnits(sellAmount, 18) : BigInt(0), BigInt(0)]}
                       cta={`Sell ${tokenData.symbol}`}
@@ -422,7 +422,7 @@ export default function TokenDetail() {
                         }
                       }}
                     />
-                    
+
                     {sellAmount && parseFloat(sellAmount) > 0 && (
                       <div className="text-xs text-muted-foreground space-y-1">
                         <div className="flex justify-between">

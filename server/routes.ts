@@ -2488,14 +2488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get creator coin trading info
-  app.get("/api/creator-coins/:coinId/bonding-curve-info", async (req, res) => {
-    res.json({
-      enabled: false,
-      message: "Bonding curve system has been replaced with Zora Trading SDK",
-      recommendation: "Use /api/zora-trading endpoints for trading functionality"
-    });
-  });
+  
 
 
 

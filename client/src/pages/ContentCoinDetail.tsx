@@ -160,8 +160,7 @@ export default function ContentCoinDetail() {
   const [slippage, setSlippage] = useState("2"); // 2% default slippage
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [estimatedTokens, setEstimatedTokens] = useState("");
-  const [bondingCurveEnabled, setBondingCurveEnabled] = useState(false); // Keep for potential future use, but not actively used for bonding curve logic
-  const [bondingCurveInfo, setBondingCurveInfo] = useState<any>(null); // Keep for potential future use
+  
 
   // Removed auction state - using instant trading now
 
@@ -233,7 +232,7 @@ export default function ContentCoinDetail() {
     enabled: !!tokenAddress,
   });
 
-  // Bonding curve system has been completely removed
+  
 
   // Process holders data with proper typing
   const processedHolders = useMemo(() => {
