@@ -2605,7 +2605,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get creator coin bonding curve info
   app.get("/api/creator-coins/:id/bonding-curve-info", async (req, res) => {
     try {
-      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, req.params.id)).limit(1);
+      const identifier = req.params.id;
+      let coin;
+
+      // Check if the identifier is a contract address (starts with 0x) or database ID
+      if (identifier.startsWith('0x')) {
+        // Look up by contract address
+        coin = await db.select().from(creatorCoins).where(eq(creatorCoins.coinAddress, identifier)).limit(1);
+      } else {
+        // Look up by database ID
+        coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, identifier)).limit(1);
+      }
 
       if (!coin.length) {
         return res.status(404).json({ message: "Creator coin not found" });

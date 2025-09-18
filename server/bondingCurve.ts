@@ -458,7 +458,13 @@ class BondingCurveService {
     try {
       // If not a valid Ethereum address, it's likely a database ID
       if (!this.isValidEthereumAddress(addressOrId)) {
-        console.warn(`⚠️ Invalid Ethereum address provided: ${addressOrId}. This appears to be a database ID.`);
+        console.warn(`⚠️ Invalid Ethereum address provided: ${addressOrId}. This appears to be a database ID - returning null.`);
+        return null;
+      }
+
+      // Additional safety check - ensure address is not a UUID
+      if (addressOrId.includes('-') || addressOrId.length !== 42) {
+        console.warn(`⚠️ Address appears to be a UUID or invalid format: ${addressOrId}`);
         return null;
       }
 
