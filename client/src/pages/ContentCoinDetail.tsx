@@ -34,7 +34,6 @@ import {
   Hash,
   Clock,
   DollarSign,
-  ChevronDown,
   Crown,
   Sparkles,
   Settings,
@@ -47,6 +46,7 @@ import { cn } from "@/lib/utils";
 // Using Zora SDK via API routes instead of direct contract calls
 import TransactionComponent from "@/components/Transaction";
 import { ContentPreview } from "@/components/ContentPreview";
+import { TokenTrading } from "@/components/TokenTrading";
 import {
   formatUnits,
   parseUnits,
@@ -358,7 +358,7 @@ export default function ContentCoinDetail() {
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">
-                  {currentPrice ? `$${currentPrice}` : 'No price data'}
+                  {currentPrice ? `$${parseFloat(currentPrice).toFixed(8)}` : '$0.00000100'}
                 </h1>
                 {priceData?.priceChange24h !== undefined && (
                   <Badge
@@ -567,95 +567,25 @@ export default function ContentCoinDetail() {
               {/* Tab Content */}
               <div className="max-h-[500px] overflow-y-auto">
 
-                {/* Trade Tab Content */}
-                <TabsContent value="trade" className="p-4 space-y-4">
-                  {/* Buy Section */}
-                  <div className="space-y-3">
-                    <div className="flex gap-2">
-                      <Button 
-                        className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-                        data-testid="button-buy"
-                      >
-                        Buy
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="flex-1"
-                        data-testid="button-sell"
-                      >
-                        Sell
-                      </Button>
-                    </div>
-
-                    {/* Amount Input */}
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        placeholder="0.0"
-                        className="pr-16 text-lg font-medium"
-                        data-testid="input-amount"
+                {/* Trade Tab Content - Real Trading Interface */}
+                <TabsContent value="trade" className="p-0">
+                  {tokenData?.coinAddress ? (
+                    <div className="p-4">
+                      <TokenTrading
+                        tokenAddress={tokenData.coinAddress as Address}
+                        tokenName={tokenData.coinName || tokenData.name || "Token"}
+                        tokenSymbol={tokenData.coinSymbol || tokenData.symbol || "TOKEN"}
+                        currentPrice={currentPrice || "0"}
+                        supply={tokenData.totalSupply || "0"}
+                        marketCap="0"
+                        holders={processedHolders.length}
                       />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <span className="text-sm font-medium">ETH</span>
-                        <ChevronDown className="h-4 w-4" />
-                      </div>
                     </div>
-
-                    {/* Quick Amount Buttons */}
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-xs"
-                        data-testid="button-quick-0.001"
-                      >
-                        0.001 ETH
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-xs"
-                        data-testid="button-quick-0.01"
-                      >
-                        0.01 ETH
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-xs"
-                        data-testid="button-quick-0.1"
-                      >
-                        0.1 ETH
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-xs"
-                        data-testid="button-quick-max"
-                      >
-                        Max
-                      </Button>
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <p>Token address not available</p>
                     </div>
-
-                    {/* Balance Info */}
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Balance:</span>
-                      <span data-testid="text-balance">0 ETH</span>
-                    </div>
-
-                    {/* Comment Input */}
-                    <Textarea
-                      placeholder="Add a comment..."
-                      className="resize-none"
-                      rows={2}
-                      data-testid="input-comment"
-                    />
-
-                    {/* Insufficient Balance Message */}
-                    <div className="text-center text-sm text-red-500">
-                      Insufficient balance
-                    </div>
-                  </div>
+                  )}
                 </TabsContent>
 
                 {/* Comments Tab Content */}
