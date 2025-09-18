@@ -31,6 +31,7 @@ import { v4 as uuidv4 } from 'uuid'; // Import uuid for trade IDs
 // import * as admin from './admin'; // Import admin module
 import { registerAdvancedTradingRoutes } from './routes/advancedTrading';
 import { ethers } from 'ethers';
+import { initializeDatabase } from './initializeDatabase';
 
 
 const prisma = new PrismaClient();
@@ -81,6 +82,15 @@ function handleDatabaseError(error: any, operation: string) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize database schema
+  console.log('🔧 Checking database schema...');
+  const dbInitialized = await initializeDatabase();
+  if (dbInitialized) {
+    console.log('✅ Database ready for use');
+  } else {
+    console.warn('⚠️ Database initialization had issues, but server will continue');
+  }
+
   // Configure multer for file uploads
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -4493,6 +4503,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register content token routes
   const { setupContentTokenRoutes } = await import('./contentTokenRoutes');
   setupContentTokenRoutes(app);
+
+  // Database health check
+  app.get('/api/database/health', async (req, res) => {
+    try {
+      // Test database connection with a simple query
+      const result = await db.execute(sql`SELECT 1 as health`);
+      res.json({
+        database: 'connected',
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(503).json({
+        database: 'disconnected',
+        status: 'unhealthy',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
 
   // Network health check
   app.get('/api/network/health', async (req, res) => {
