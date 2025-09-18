@@ -17,7 +17,7 @@ export async function initializeDatabase() {
         media_cid TEXT NOT NULL,
         thumbnail_cid TEXT,
         metadata_uri TEXT,
-        metadata JSONB,
+        metadata TEXT,
         coin_name TEXT NOT NULL,
         coin_symbol TEXT NOT NULL,
         coin_address TEXT,
@@ -45,6 +45,7 @@ export async function initializeDatabase() {
         website TEXT,
         original_url TEXT,
         platform TEXT,
+        tags TEXT[],
         likes INTEGER DEFAULT 0,
         comments INTEGER DEFAULT 0,
         shares INTEGER DEFAULT 0,
@@ -156,7 +157,11 @@ export async function initializeDatabase() {
 
     // Add missing columns if they don't exist
     await db.execute(sql`
-      ALTER TABLE creator_coins ADD COLUMN IF NOT EXISTS metadata JSONB
+      ALTER TABLE creator_coins ADD COLUMN IF NOT EXISTS metadata TEXT
+    `);
+    
+    await db.execute(sql`
+      ALTER TABLE creator_coins ADD COLUMN IF NOT EXISTS tags TEXT[]
     `);
 
     // Create indexes for better performance
