@@ -2296,6 +2296,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         coinId: newCoin.id
       });
 
+      // Also trigger upload success notification
+      await triggerNotification('content_uploaded', {
+        creatorAddress: newCoin.creatorAddress,
+        title: newCoin.title,
+        coinName: newCoin.coinName,
+        coinSymbol: newCoin.coinSymbol,
+        contentType: newCoin.contentType,
+        coinId: newCoin.id
+      });
+
       console.log('✅ Upload completed successfully:', newCoin);
 
       res.status(201).json({
@@ -2537,11 +2547,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      // Trigger notification for successful creator coin creation
+      // Trigger multiple notifications for successful creator coin creation
       await triggerNotification('creator_coin_created', {
         creatorAddress: coinData.creatorAddress,
         coinName: coinData.coinName,
         coinId: coinData.id
+      });
+
+      // Also trigger a deployment confirmation notification
+      await triggerNotification('creator_coin_deployed', {
+        creatorAddress: coinData.creatorAddress,
+        coinName: coinData.coinName,
+        coinSymbol: coinData.coinSymbol,
+        coinId: coinData.id,
+        coinAddress: deploymentResult.coinAddress,
+        txHash: deploymentResult.txHash,
+        deploymentStatus: 'success'
       });
 
       console.log(`✅ Creator coin deployment completed for ${coinId}`);
@@ -4140,6 +4161,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             recipientAddress: data.creatorAddress,
             title: 'Content Coin Created',
             message: `Your content coin "${data.coinName}" has been created successfully`,
+            type: 'content_coin',
+            entityType: 'content_coin',
+            entityId: data.coinId,
+            actorAddress: data.creatorAddress,
+            actionUrl: `/content-coin/${data.coinId}`
+          });
+          break;
+
+        case 'creator_coin_deployed':
+          await storage.createNotification({
+            recipientAddress: data.creatorAddress,
+            title: 'Content Coin Deployed! 🚀',
+            message: `Your content coin "${data.coinName}" (${data.coinSymbol}) has been successfully deployed to the blockchain! Contract: ${data.coinAddress?.slice(0, 6)}...${data.coinAddress?.slice(-4)}`,
+            type: 'content_coin',
+            entityType: 'content_coin',
+            entityId: data.coinId,
+            actorAddress: data.creatorAddress,
+            metadata: { 
+              coinAddress: data.coinAddress, 
+              txHash: data.txHash,
+              deploymentStatus: data.deploymentStatus 
+            },
+            actionUrl: `/content-coin/${data.coinId}`
+          });
+          break;
+
+        case 'content_uploaded':
+          await storage.createNotification({
+            recipientAddress: data.creatorAddress,
+            title: 'Content Uploaded Successfully! ✅',
+            message: `Your ${data.contentType} "${data.title}" has been uploaded and is ready for deployment as "${data.coinName}" (${data.coinSymbol})`,
             type: 'content_coin',
             entityType: 'content_coin',
             entityId: data.coinId,

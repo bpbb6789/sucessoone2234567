@@ -31,11 +31,17 @@ export function useNotifications(userAddress?: string, unreadOnly: boolean = fal
       });
       
       const response = await fetch(`/api/notifications/${userAddress}?${params}`);
-      if (!response.ok) throw new Error('Failed to fetch notifications');
-      return response.json() as Notification[];
+      if (!response.ok) {
+        console.error('Notification fetch failed:', response.status, response.statusText);
+        return []; // Return empty array instead of throwing
+      }
+      const data = await response.json();
+      console.log('Fetched notifications:', data.length);
+      return data as Notification[];
     },
     enabled: !!userAddress,
-    refetchInterval: 5000, // Poll every 5 seconds for new notifications
+    refetchInterval: 3000, // Poll every 3 seconds for new notifications
+    staleTime: 0, // Always consider data stale to refetch
   });
 }
 

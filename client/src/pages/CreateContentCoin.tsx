@@ -17,6 +17,7 @@ import { useUrlImport } from '@/hooks/useContentImports';
 import { useQuery } from '@tanstack/react-query';
 import CreateChannel from '@/components/CreateChannel';
 import { useTriggerNotification } from "@/hooks/useNotifications";
+import { useMutation } from '@tanstack/react-query'; // Import useMutation
 
 const contentTypes = [
   { id: 'image', name: 'Image', icon: FileImage, description: 'JPG, PNG, GIF, SVG images', accept: 'image/*' },
@@ -66,7 +67,7 @@ export default function CreateContentCoin() {
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
   const uploadMutation = useCreatorCoinUpload();
-  const deployMutation = useDeployCreatorCoin();
+  // const deployMutation = useDeployCreatorCoin(); // This is replaced by the useMutation hook below
   const urlImportMutation = useUrlImport();
   const triggerNotification = useTriggerNotification();
 
@@ -256,6 +257,59 @@ export default function CreateContentCoin() {
       });
     }
   };
+
+  // Define the deployMutation using useMutation
+  const deployMutation = useMutation({
+    mutationFn: async () => {
+      if (!uploadedCoin) throw new Error('No coin to deploy');
+
+      const response = await fetch(`/api/creator-coins/${uploadedCoin.id}/deploy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Deploy error:', errorText);
+        throw new Error(errorText || 'Deployment failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('✅ Deployment successful:', data);
+      // Show success toast
+      if (window.showToast) {
+        window.showToast({
+          title: "Deployment Successful! 🚀",
+          description: `Your content coin "${uploadedCoin?.coinName}" has been deployed to the blockchain!`,
+          type: "success"
+        });
+      }
+
+      // Update the coin with deployment info
+      setUploadedCoin(prev => prev ? {
+        ...prev,
+        status: 'deployed',
+        coinAddress: data.coin?.coinAddress || 'Deployed',
+        deploymentTxHash: data.coin?.txHash
+      } : null);
+    },
+    onError: (error) => {
+      console.error('❌ Deployment failed:', error);
+      // Show error toast
+      if (window.showToast) {
+        window.showToast({
+          title: "Deployment Failed ❌",
+          description: error.message || "Failed to deploy your content coin. Please try again.",
+          type: "error"
+        });
+      }
+    },
+  });
+
 
   const handleDeploy = async () => {
     console.log('🚀 Starting coin deployment...', { coinId: uploadedCoin?.id, coinName: uploadedCoin?.coinName });
