@@ -9,7 +9,6 @@ import {
   validateContentForTokenization,
   generateThumbnail
 } from './zora';
-import { bondingCurveService } from "./bondingCurve";
 import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema,
   insertMusicAlbumSchema, insertCommentSchema, insertSubscriptionSchema,
@@ -2353,64 +2352,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creator: coinData.creatorAddress
       });
 
-      // Allow redeployment of failed coins or if bonding curve deployment failed
-      if (coinData.status !== 'pending' && coinData.status !== 'failed' && coinData.status !== 'deployed') {
-        console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending, failed, or deployed`);
+      // Allow redeployment of failed coins
+      if (coinData.status !== 'pending' && coinData.status !== 'failed') {
+        console.error(`❌ Invalid coin status: ${coinData.status}, expected: pending or failed`);
         return res.status(400).json({
-          message: `Coin cannot be deployed (current status: ${coinData.status}). Only pending, failed, or deployed coins can be deployed.`,
+          message: `Coin cannot be deployed (current status: ${coinData.status}). Only pending or failed coins can be deployed.`,
           currentStatus: coinData.status,
-          allowedStatuses: ['pending', 'failed', 'deployed']
+          allowedStatuses: ['pending', 'failed']
         });
-      }
-
-      // If coin is already deployed but bonding curve deployment failed, allow bonding curve retry
-      if (coinData.status === 'deployed' && coinData.coinAddress && !coinData.hasBondingCurve) {
-        console.log(`🔄 Coin already deployed but bonding curve missing, retrying bonding curve deployment...`);
-
-        // Skip to bonding curve deployment
-        try {
-          const bondingCurveResult = await bondingCurveService.deployBondingCurve(
-            coinData.coinAddress,
-            coinData.creatorAddress,
-            coinId
-          );
-
-          if (bondingCurveResult.success) {
-            console.log(`✅ Bonding curve deployed successfully at: ${bondingCurveResult.curveAddress}`);
-
-            await db.update(creatorCoins)
-              .set({
-                hasBondingCurve: true,
-                bondingCurveExchangeAddress: bondingCurveResult.curveAddress,
-                bondingCurveDeploymentTxHash: bondingCurveResult.transactionHash,
-                updatedAt: new Date()
-              })
-              .where(eq(creatorCoins.id, coinId));
-
-            return res.json({
-              success: true,
-              coin: {
-                id: coinId,
-                coinAddress: coinData.coinAddress,
-                curveAddress: bondingCurveResult.curveAddress,
-                status: 'deployed',
-                message: 'Bonding curve deployed successfully for existing coin.'
-              }
-            });
-          } else {
-            console.error(`❌ Bonding curve deployment failed: ${bondingCurveResult.error}`);
-            return res.status(500).json({
-              message: "Failed to deploy bonding curve for existing coin",
-              error: bondingCurveResult.error
-            });
-          }
-        } catch (error) {
-          console.error("❌ Bonding curve deployment error:", error);
-          return res.status(500).json({
-            message: "Failed to deploy bonding curve for existing coin",
-            error: error instanceof Error ? error.message : "Unknown error"
-          });
-        }
       }
 
       // Check if metadata URI exists before starting deployment
@@ -2487,70 +2436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(eq(creatorCoins.id, coinId));
 
-      // Start pool creation and bonding curve deployment asynchronously (non-blocking)
-      console.log(`🏊 Starting async pool and bonding curve setup...`);
-      setImmediate(async () => {
-        try {
-          // Create Uniswap V4 pool and add initial liquidity
-          console.log(`🏊 Creating Uniswap V4 pool and adding initial liquidity...`);
-          // Pool creation removed - using bonding curve system
-          const poolResult = { success: false, error: 'Pool creation deprecated' };
-
-          if (poolResult.success) {
-            console.log(`✅ Pool created successfully: ${poolResult.poolId}`);
-
-            // Add initial liquidity
-            const liquidityResult = await addInitialLiquidity({
-              coinAddress: deploymentResult.coinAddress,
-              creatorAddress: coinData.creatorAddress,
-              ethAmount: '0.1',
-              tokenAmount: '100000'
-            });
-
-            if (liquidityResult.success) {
-              console.log(`✅ Initial liquidity added successfully`);
-            } else {
-              console.warn(`⚠️ Initial liquidity addition failed: ${liquidityResult.error}`);
-            }
-          } else {
-            console.warn(`⚠️ Pool creation failed: ${poolResult.error}`);
-          }
-        } catch (poolError) {
-          console.warn(`⚠️ Pool setup failed (coin still deployed):`, poolError);
-        }
-
-        // Deploy bonding curve for automated market making
-        try {
-          console.log(`🔄 Deploying bonding curve for automated market making...`);
-          if (bondingCurveService.isConfigured()) {
-            const bondingCurveResult = await bondingCurveService.deployBondingCurve(
-              deploymentResult.coinAddress,
-              coinData.creatorAddress,
-              coinId
-            );
-
-            if (bondingCurveResult.success) {
-              console.log(`✅ Bonding curve deployed successfully at: ${bondingCurveResult.curveAddress}`);
-
-              // Update coin with bonding curve info
-              await db.update(creatorCoins)
-                .set({
-                  hasBondingCurve: true,
-                  bondingCurveExchangeAddress: bondingCurveResult.curveAddress,
-                  bondingCurveFactoryAddress: bondingCurveResult.factoryAddress,
-                  updatedAt: new Date()
-                })
-                .where(eq(creatorCoins.id, coinId));
-            } else {
-              console.warn(`⚠️ Bonding curve deployment failed: ${bondingCurveResult.error}`);
-            }
-          } else {
-            console.log(`ℹ️ Bonding curve service not configured - skipping bonding curve deployment`);
-          }
-        } catch (bondingCurveError) {
-          console.warn(`⚠️ Bonding curve deployment failed (coin still deployed):`, bondingCurveError);
-        }
-      });
+      
 
       // Trigger multiple notifications for successful creator coin creation
       await triggerNotification('creator_coin_created', {
@@ -2580,7 +2466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           txHash: deploymentResult.txHash,
           factoryAddress: deploymentResult.factoryAddress,
           status: 'deployed',
-          message: 'Creator coin deployed successfully. Pool and bonding curve setup is running in background.'
+          message: 'Creator coin deployed successfully to Zora network.'
         }
       });
     } catch (error) {
@@ -2602,7 +2488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get creator coin bonding curve info
+  // Get creator coin trading info
   app.get("/api/creator-coins/:id/bonding-curve-info", async (req, res) => {
     try {
       const identifier = req.params.id;
@@ -2662,219 +2548,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/creator-coins/:id/bonding-curve-buy-quote", async (req, res) => {
-    try {
-      const { ethAmount } = req.body;
-      const creatorCoinId = req.params.id;
+  
 
-      if (!ethAmount || isNaN(parseFloat(ethAmount))) {
-        return res.status(400).json({ error: "Valid ethAmount required" });
-      }
-
-      console.log(`🎯 Getting buy quote for ${ethAmount} ETH on coin ${creatorCoinId}`);
-
-      // Get creator coin data
-      const coin = await db
-        .select()
-        .from(creatorCoins)
-        .where(eq(creatorCoins.id, creatorCoinId))
-        .limit(1);
-
-      if (!coin.length) {
-        return res.status(404).json({ error: "Creator coin not found" });
-      }
-
-      const coinData = coin[0];
-      const coinAddress = coinData.coinAddress;
-
-      if (!coinAddress || coinAddress === 'Deploying...' || coinAddress.length < 10) {
-        return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
-      }
-
-      console.log(`🔍 Checking trading system for token: ${coinAddress}`);
-
-      let buyResult;
-
-      // First check if bonding curve is available
-      if (coinData.hasBondingCurve && coinData.bondingCurveExchangeAddress) {
-        console.log(`✅ Using bonding curve trading system for ${coinAddress}`);
-
-        // Calculate tokens from bonding curve
-        const tokensOut = await bondingCurveService.calculateBuyTokens(
-          coinData.bondingCurveExchangeAddress,
-          ethAmount
-        );
-
-        if (tokensOut) {
-          buyResult = {
-            success: true,
-            tokensReceived: tokensOut.toString(),
-            message: 'Buy order prepared - use bonding curve trading'
-          };
-        } else {
-          return res.status(400).json({ error: 'Failed to calculate bonding curve quote' });
-        }
-      } else {
-        // Use bonding curve system for buying
-        try {
-          console.log(`✅ Using bonding curve system for ${coinAddress}`);
-          // Implementation pending - bonding curve buy functionality
-          buyResult = {
-            success: false,
-            error: 'Bonding curve buy system integration pending'
-          };
-        } catch (pumpFunError) {
-          return res.status(400).json({
-            error: 'Trading not available - bonding curve deployment in progress'
-          });
-        }
-      }
-
-      if (!buyResult.success) {
-        return res.status(400).json({ error: buyResult.error });
-      }
-
-      // Record the trade only after real transaction confirmation
-      const tradeId = uuidv4();
-      const estimatedTokens = buyResult.tokensReceived ? parseFloat(buyResult.tokensReceived) : 0;
-
-      await db.insert(creatorCoinTrades).values({
-        id: tradeId,
-        coinId: coinData.id,
-        userAddress: buyerAddress, // Fix: use userAddress instead of traderAddress
-        tradeType: 'buy', // Fix: use tradeType instead of type
-        amount: estimatedTokens.toString(), // Fix: use amount instead of tokenAmount
-        price: parseFloat(ethAmount).toString(), // Fix: use price for ETH amount
-        createdAt: new Date(), // Fix: use createdAt instead of timestamp
-        transactionHash: buyResult.txHash || 'pending' // Fix: use transactionHash instead of txHash
-      });
-
-      // Trigger notification for creator coin trade
-      await triggerNotification('creator_coin_trade', {
-        coinOwnerAddress: coinData.creatorAddress,
-        coinId: coinData.id,
-        tradeType: 'bought',
-        amount: estimatedTokens.toString(),
-        price: ethAmount,
-        traderAddress: buyerAddress,
-        traderName: buyerAddress
-      });
-
-      console.log(`✅ Buy order completed for ${coinId}: ${ethAmount} ETH`);
-
-      res.json({
-        success: true,
-        trade: {
-          id: tradeId,
-          txHash: buyResult.txHash,
-          tokensReceived: estimatedTokens.toString(),
-          transactionRequest: buyResult.transactionRequest ? {
-            ...buyResult.transactionRequest,
-            value: buyResult.transactionRequest.value?.toString(),
-            gasLimit: buyResult.transactionRequest.gasLimit?.toString()
-          } : undefined
-        }
-      });
-
-    } catch (error) {
-      console.error('❌ Buy order failed:', error);
-      res.status(500).json(handleDatabaseError(error, "buyCoin"));
-    }
-  });
-
-  // Sell creator coin tokens
-  app.post('/api/creator-coins/:coinId/sell', async (req, res) => {
-    try {
-      const { coinId } = req.params;
-      const { userAddress, tokenAmount, minEthOut } = req.body;
-
-      if (!userAddress || !tokenAmount) {
-        return res.status(400).json({ error: 'Missing required fields: userAddress, tokenAmount' });
-      }
-
-      console.log(`💰 Processing sell order for creator coin ${coinId}`);
-
-      // Get creator coin details
-      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
-      if (!coin.length) {
-        return res.status(404).json({ error: 'Creator coin not found' });
-      }
-
-      const coinData = coin[0];
-      const coinAddress = coinData.coinAddress;
-
-      if (!coinAddress || coinAddress === 'Deploying...' || coinAddress.length < 10) {
-        return res.status(400).json({ error: 'Creator coin not yet deployed or invalid address' });
-      }
-
-      // Detect trading system and route sell accordingly
-      console.log(`🔍 Detecting trading system for sell of token: ${coinAddress}`);
-
-      // Use bonding curve system for selling
-      let sellResult;
-
-      try {
-        console.log(`✅ Using bonding curve system for ${coinAddress}`);
-        // Implementation pending - bonding curve sell functionality
-        sellResult = {
-          success: false,
-          error: 'Bonding curve sell system integration pending'
-        };
-      } catch (sellError) {
-        console.error('Sell error:', sellError);
-        sellResult = {
-          success: false,
-          error: 'Bonding curve sell system not yet implemented'
-        };
-      }
-
-      if (!sellResult.success) {
-        return res.status(400).json({ error: sellResult.error });
-      }
-
-      // Record the trade in database
-      await db.insert(creatorCoinTrades).values({
-        coinId,
-        userAddress,
-        tradeType: 'sell',
-        amount: tokenAmount,
-        price: coinData.currentPrice || '0.001',
-        transactionHash: sellResult.txHash
-      });
-
-      // Trigger notification for creator coin trade
-      await triggerNotification('creator_coin_trade', {
-        coinOwnerAddress: coinData.creatorAddress,
-        coinId: coinData.id,
-        tradeType: 'sold',
-        amount: tokenAmount,
-        price: sellResult.ethReceived || '0.001',
-        traderAddress: userAddress,
-        traderName: userAddress
-      });
-
-      // Update coin statistics (simplified)
-      await db.update(creatorCoins)
-        .set({
-          volume24h: sql`CAST(COALESCE(${creatorCoins.volume24h}, '0') AS DECIMAL) + CAST(${sellResult.ethReceived} AS DECIMAL)`,
-          updatedAt: new Date()
-        })
-        .where(eq(creatorCoins.id, coinId));
-
-      console.log(`✅ Sell order completed for ${coinId}: ${tokenAmount} tokens`);
-
-      res.json({
-        success: true,
-        txHash: sellResult.txHash,
-        ethReceived: sellResult.ethReceived,
-        message: `Successfully sold ${tokenAmount} tokens for ${sellResult.ethReceived} ETH`
-      });
-
-    } catch (error) {
-      console.error('❌ Sell order failed:', error);
-      res.status(500).json(handleDatabaseError(error, "sellCoin"));
-    }
-  });
+  
 
   // Get creator coin holders with real blockchain data
   app.get('/api/creator-coins/:coinId/holders', async (req, res) => {
