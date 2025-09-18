@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,34 +8,11 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
-import { formatEther, parseEther, type Address } from 'viem';
-import { useAccount, useReadContract, useWalletClient, usePublicClient, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { formatUnits, parseUnits } from 'viem';
+import { TrendingUp, TrendingDown, DollarSign, Users, Loader2 } from 'lucide-react';
+import { formatEther, parseEther, type Address, formatUnits, parseUnits } from 'viem';
+import { useAccount, useBalance, useWalletClient, usePublicClient } from 'wagmi';
 import { tradeCoin } from '@zoralabs/coins-sdk';
 import { base } from 'viem/chains';
-
-// Zora Trading Status Hook
-const useZoraTradingStatus = () => {
-  const [status, setStatus] = useState<any>(null);
-  
-  useEffect(() => {
-    fetch('/api/zora-trading/status')
-      .then(res => res.json())
-      .then(setStatus)
-      .catch(console.error);
-  }, []);
-  
-  return status;
-};
-
-// Zora Trading configuration via API endpoints
-const ZORA_TRADING_API = {
-  buy: '/api/zora-trading/buy',
-  sell: '/api/zora-trading/sell',
-  quote: '/api/zora-trading/quote',
-  status: '/api/zora-trading/status'
-};
 
 interface TokenTradingProps {
   tokenAddress: Address;
@@ -58,58 +36,28 @@ export function TokenTrading({
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState('');
   const [sellAmount, setSellAmount] = useState('');
-  const tradingStatus = useZoraTradingStatus();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isTrading, setIsTrading] = useState(false);
 
-  // Smart contract interaction hooks
-  const { writeContract, isPending: isWritePending, error: writeError } = useWriteContract();
-  const [currentTxHash, setCurrentTxHash] = useState<`0x${string}` | undefined>();
+  const { isConnected, address: account } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
-  const { isLoading: isTxLoading, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
-    hash: currentTxHash,
+  // Get user's ETH balance
+  const { data: ethBalance, refetch: refetchEthBalance } = useBalance({
+    address: account,
   });
 
   // Get user's token balance
-  const { isConnected, address: account } = useAccount();
-  const { data: userBalance } = useReadContract({
-    address: tokenAddress as `0x${string}`,
-    abi: [
-      {
-        name: 'balanceOf',
-        type: 'function',
-        stateMutability: 'view',
-        inputs: [{ name: 'account', type: 'address' }],
-        outputs: [{ name: '', type: 'uint256' }],
-      },
-    ],
-    functionName: 'balanceOf',
-    args: isConnected && account ? [account] : undefined,
-    query: {
-      enabled: isConnected && !!account,
-    },
+  const { data: tokenBalance, refetch: refetchTokenBalance } = useBalance({
+    address: account,
+    token: tokenAddress,
   });
 
-  // Get user's ETH balance
-  const { data: ethBalance } = useReadContract({
-    address: '0x0000000000000000000000000000000000000000' as `0x${string}`,
-    abi: [
-      {
-        name: 'balanceOf',
-        type: 'function',
-        stateMutability: 'view',
-        inputs: [{ name: 'account', type: 'address' }],
-        outputs: [{ name: '', type: 'uint256' }],
-      },
-    ],
-    functionName: 'balanceOf',
-    args: isConnected && account ? [account] : undefined,
-    query: {
-      enabled: false, // Disable this for now, will use wallet balance
-    },
-  });
-
-  const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient();
+  // Refetch balances after trades
+  const refetchBalances = () => {
+    refetchEthBalance();
+    refetchTokenBalance();
+  };
 
   const handleBuy = async () => {
     if (!isConnected || !account || !walletClient || !publicClient) {
@@ -120,6 +68,7 @@ export function TokenTrading({
       });
       return;
     }
+
     if (!buyAmount || parseFloat(buyAmount) <= 0) {
       toast({
         title: "Invalid amount",
@@ -139,7 +88,18 @@ export function TokenTrading({
       return;
     }
 
-    setIsLoading(true);
+    // Check if user has enough ETH
+    const buyAmountWei = parseEther(buyAmount);
+    if (ethBalance && buyAmountWei > ethBalance.value) {
+      toast({
+        title: "Insufficient balance",
+        description: "You don't have enough ETH for this trade",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsTrading(true);
 
     try {
       const tradeParameters = {
@@ -148,10 +108,15 @@ export function TokenTrading({
           type: "erc20" as const,
           address: tokenAddress,
         },
-        amountIn: parseEther(buyAmount),
-        slippage: 0.05,
+        amountIn: buyAmountWei,
+        slippage: 0.05, // 5% slippage
         sender: account,
       };
+
+      toast({
+        title: "Preparing trade...",
+        description: "Please confirm the transaction in your wallet",
+      });
 
       const receipt = await tradeCoin({
         tradeParameters,
@@ -162,18 +127,22 @@ export function TokenTrading({
 
       toast({
         title: "Purchase Successful! 🎉",
-        description: `Successfully bought ${tokenSymbol} tokens`,
+        description: `Successfully bought ${tokenSymbol} tokens for ${buyAmount} ETH`,
       });
+
+      // Clear input and refresh balances
       setBuyAmount('');
+      setTimeout(refetchBalances, 2000);
+
     } catch (error: any) {
       console.error('Buy failed:', error);
       toast({
         title: "Buy failed",
-        description: error.message || "Transaction failed",
+        description: error.shortMessage || error.message || "Transaction failed",
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsTrading(false);
     }
   };
 
@@ -186,6 +155,7 @@ export function TokenTrading({
       });
       return;
     }
+
     if (!sellAmount || parseFloat(sellAmount) <= 0) {
       toast({
         title: "Invalid amount",
@@ -205,7 +175,18 @@ export function TokenTrading({
       return;
     }
 
-    setIsLoading(true);
+    // Check if user has enough tokens
+    const sellAmountWei = parseUnits(sellAmount, tokenBalance?.decimals || 18);
+    if (tokenBalance && sellAmountWei > tokenBalance.value) {
+      toast({
+        title: "Insufficient balance",
+        description: `You don't have enough ${tokenSymbol} tokens`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsTrading(true);
 
     try {
       const tradeParameters = {
@@ -214,10 +195,15 @@ export function TokenTrading({
           address: tokenAddress
         },
         buy: { type: "eth" as const },
-        amountIn: parseUnits(sellAmount, 18),
-        slippage: 0.15,
+        amountIn: sellAmountWei,
+        slippage: 0.15, // 15% slippage for sells
         sender: account,
       };
+
+      toast({
+        title: "Preparing trade...",
+        description: "Please confirm the transaction in your wallet",
+      });
 
       const receipt = await tradeCoin({
         tradeParameters,
@@ -230,16 +216,36 @@ export function TokenTrading({
         title: "Sale Successful! 🎉",
         description: `Successfully sold ${sellAmount} ${tokenSymbol}`,
       });
+
+      // Clear input and refresh balances
       setSellAmount('');
+      setTimeout(refetchBalances, 2000);
+
     } catch (error: any) {
       console.error('Sell failed:', error);
       toast({
         title: "Sell failed",
-        description: error.message || "Transaction failed",
+        description: error.shortMessage || error.message || "Transaction failed",
         variant: "destructive"
       });
     } finally {
-      setIsLoading(false);
+      setIsTrading(false);
+    }
+  };
+
+  const setMaxEth = () => {
+    if (ethBalance) {
+      // Reserve some ETH for gas fees
+      const maxAmount = ethBalance.value - parseEther('0.001');
+      if (maxAmount > 0) {
+        setBuyAmount(formatEther(maxAmount));
+      }
+    }
+  };
+
+  const setMaxTokens = () => {
+    if (tokenBalance) {
+      setSellAmount(formatUnits(tokenBalance.value, tokenBalance.decimals));
     }
   };
 
@@ -262,7 +268,7 @@ export function TokenTrading({
             <TrendingUp className="h-6 w-6 text-blue-600" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">Market Cap</p>
-              <p className="text-lg font-bold">$0</p>
+              <p className="text-lg font-bold">${marketCap}</p>
             </div>
           </CardContent>
         </Card>
@@ -272,7 +278,7 @@ export function TokenTrading({
             <Users className="h-6 w-6 text-purple-600" />
             <div>
               <p className="text-sm font-medium text-muted-foreground">Holders</p>
-              <p className="text-lg font-bold">0</p>
+              <p className="text-lg font-bold">{holders}</p>
             </div>
           </CardContent>
         </Card>
@@ -294,9 +300,7 @@ export function TokenTrading({
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Trade {tokenSymbol}
-            {tradingStatus && !tradingStatus.available && (
-              <Badge variant="secondary" className="text-xs">Testnet Mode</Badge>
-            )}
+            <Badge variant="outline" className="text-xs">Zora SDK</Badge>
           </CardTitle>
           <CardDescription>
             Buy and sell tokens using Zora's advanced trading infrastructure on Base Mainnet
@@ -328,9 +332,10 @@ export function TokenTrading({
                     variant="ghost"
                     size="sm"
                     className="text-xs text-gray-400 hover:text-white h-auto p-1"
-                    onClick={() => setBuyAmount("0.1")} // Set a reasonable default since we can't easily get ETH balance
+                    onClick={setMaxEth}
+                    disabled={!ethBalance}
                   >
-                    Max Balance: Loading...
+                    Balance: {ethBalance ? parseFloat(formatEther(ethBalance.value)).toFixed(4) : "0"} ETH
                   </Button>
                 </div>
                 <Input
@@ -338,28 +343,30 @@ export function TokenTrading({
                   placeholder="0.001"
                   value={buyAmount}
                   onChange={(e) => setBuyAmount(e.target.value)}
-                  data-testid="input-buy-amount"
+                  disabled={isTrading}
                 />
               </div>
 
-              {buyAmount && (
+              {buyAmount && parseFloat(buyAmount) > 0 && (
                 <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
                   <p className="text-sm text-green-700 dark:text-green-400">
-                    You'll receive approximately {(parseFloat(buyAmount) / parseFloat(currentPrice)).toFixed(2)} {tokenSymbol}
+                    Trading {buyAmount} ETH for {tokenSymbol} tokens
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                    Slippage: 5% • Network fees apply
                   </p>
                 </div>
               )}
 
               <Button
                 onClick={handleBuy}
-                disabled={(isLoading || isWritePending || isTxLoading) || !buyAmount || !isConnected}
+                disabled={isTrading || !buyAmount || !isConnected || walletClient?.chain?.id !== 8453}
                 className="w-full bg-green-600 hover:bg-green-700"
-                data-testid="button-buy-token"
               >
-                {(isLoading || isWritePending || isTxLoading) ? (
+                {isTrading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {isWritePending ? 'Preparing...' : isTxLoading ? 'Confirming...' : 'Processing...'}
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Trading...
                   </>
                 ) : (
                   <>
@@ -378,13 +385,10 @@ export function TokenTrading({
                     variant="ghost"
                     size="sm"
                     className="text-xs text-gray-400 hover:text-white h-auto p-1"
-                    onClick={() => {
-                      if (userBalance) {
-                        setSellAmount(formatUnits(userBalance, 18));
-                      }
-                    }}
+                    onClick={setMaxTokens}
+                    disabled={!tokenBalance}
                   >
-                    Balance: {userBalance ? formatUnits(userBalance, 18) : "0"} {tokenSymbol}
+                    Balance: {tokenBalance ? parseFloat(formatUnits(tokenBalance.value, tokenBalance.decimals)).toFixed(4) : "0"} {tokenSymbol}
                   </Button>
                 </div>
                 <Input
@@ -392,28 +396,30 @@ export function TokenTrading({
                   placeholder="0"
                   value={sellAmount}
                   onChange={(e) => setSellAmount(e.target.value)}
-                  data-testid="input-sell-amount"
+                  disabled={isTrading}
                 />
               </div>
 
-              {sellAmount && (
+              {sellAmount && parseFloat(sellAmount) > 0 && (
                 <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg">
                   <p className="text-sm text-red-700 dark:text-red-400">
-                    You'll receive approximately {(parseFloat(sellAmount) * parseFloat(currentPrice)).toFixed(4)} ETH
+                    Trading {sellAmount} {tokenSymbol} for ETH
+                  </p>
+                  <p className="text-xs text-red-600 dark:text-red-500 mt-1">
+                    Slippage: 15% • Network fees apply
                   </p>
                 </div>
               )}
 
               <Button
                 onClick={handleSell}
-                disabled={(isLoading || isWritePending || isTxLoading) || !sellAmount || !isConnected || (userBalance !== undefined && BigInt(sellAmount) > userBalance)}
+                disabled={isTrading || !sellAmount || !isConnected || walletClient?.chain?.id !== 8453 || !tokenBalance || parseUnits(sellAmount || "0", tokenBalance?.decimals || 18) > (tokenBalance?.value || 0n)}
                 className="w-full bg-red-600 hover:bg-red-700"
-                data-testid="button-sell-token"
               >
-                {(isLoading || isWritePending || isTxLoading) ? (
+                {isTrading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {isWritePending ? 'Preparing...' : isTxLoading ? 'Confirming...' : 'Processing...'}
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Trading...
                   </>
                 ) : (
                   <>
@@ -430,20 +436,32 @@ export function TokenTrading({
       {/* Trading Info */}
       <Card>
         <CardHeader>
-          <CardTitle>How Trading Works</CardTitle>
+          <CardTitle>Real Trading with Zora SDK</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Badge variant="secondary" className="text-sm">Zora Trading SDK</Badge>
+              <Badge variant="secondary" className="text-sm">✅ Live Trading</Badge>
               <p className="text-sm text-muted-foreground">
-                Advanced trading with automatic routing and gasless approvals using Zora's infrastructure
+                Real trades executed on Base Mainnet using Zora's trading infrastructure
               </p>
             </div>
             <div className="space-y-2">
-              <Badge variant="secondary" className="text-sm">Multi-Token Support</Badge>
+              <Badge variant="secondary" className="text-sm">🛡️ Secure Permits</Badge>
               <p className="text-sm text-muted-foreground">
-                Trade with ETH, USDC, ZORA and other tokens with built-in slippage protection
+                Gasless approvals with permit signatures for ERC20 token trades
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Badge variant="secondary" className="text-sm">📊 Slippage Protection</Badge>
+              <p className="text-sm text-muted-foreground">
+                Automatic slippage protection: 5% for buys, 15% for sells
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Badge variant="secondary" className="text-sm">🔄 Auto-routing</Badge>
+              <p className="text-sm text-muted-foreground">
+                Semi-automatic routing for optimal trade execution
               </p>
             </div>
           </div>

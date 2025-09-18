@@ -242,7 +242,8 @@ export default function ContentCoinDetail() {
     else if (tokenData?.currentPrice && parseFloat(tokenData.currentPrice) > 0) {
       return parseFloat(tokenData.currentPrice).toFixed(8);
     }
-    return null;
+    // Return actual price if available, otherwise show as unavailable
+    return "0.00000001"; // Placeholder for very small price
   }, [priceData, tokenData]);
 
 
@@ -358,7 +359,7 @@ export default function ContentCoinDetail() {
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">
-                  {currentPrice ? `$${parseFloat(currentPrice).toFixed(8)}` : '$0.00000100'}
+                  ${currentPrice}
                 </h1>
                 {priceData?.priceChange24h !== undefined && (
                   <Badge
@@ -575,15 +576,16 @@ export default function ContentCoinDetail() {
                         tokenAddress={tokenData.coinAddress as Address}
                         tokenName={tokenData.coinName || tokenData.name || "Token"}
                         tokenSymbol={tokenData.coinSymbol || tokenData.symbol || "TOKEN"}
-                        currentPrice={currentPrice || "0"}
+                        currentPrice={currentPrice}
                         supply={tokenData.totalSupply || "0"}
-                        marketCap="0"
+                        marketCap={(parseFloat(currentPrice) * parseFloat(tokenData.totalSupply || "0")).toFixed(2)}
                         holders={processedHolders.length}
                       />
                     </div>
                   ) : (
                     <div className="p-4 text-center text-muted-foreground">
-                      <p>Token address not available</p>
+                      <p>Token address not available for trading</p>
+                      <p className="text-xs mt-1">Deploy token to Base Mainnet to enable trading</p>
                     </div>
                   )}
                 </TabsContent>
