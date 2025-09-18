@@ -9,10 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
 import { formatEther, parseEther, type Address } from 'viem';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-// Using Zora SDK via API routes instead of direct contract calls
+import { useAccount, useReadContract, useWalletClient, usePublicClient } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
-import { useWallet } from '@/hooks/useWallet';
+import { tradeCoin } from '@zoralabs/coins-sdk';
+import { base } from 'viem/chains';
 
 // Zora Trading Status Hook
 const useZoraTradingStatus = () => {
@@ -89,8 +89,11 @@ export function TokenTrading({
     },
   });
 
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
+
   const handleBuy = async () => {
-    if (!isConnected) {
+    if (!isConnected || !account || !walletClient || !publicClient) {
       toast({
         title: "Wallet not connected",
         description: "Please connect your wallet to trade",
@@ -107,39 +110,47 @@ export function TokenTrading({
       return;
     }
 
+    // Check if we're on Base Mainnet
+    if (walletClient.chain?.id !== 8453) {
+      toast({
+        title: "Wrong Network",
+        description: "Please switch to Base Mainnet to use Zora Trading",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Call Zora Trading API
-      const response = await fetch(ZORA_TRADING_API.buy, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const tradeParameters = {
+        sell: { type: "eth" as const },
+        buy: {
+          type: "erc20" as const,
+          address: tokenAddress,
         },
-        body: JSON.stringify({
-          tokenAddress,
-          ethAmount: parseEther(buyAmount).toString(),
-          slippage: 0.05,
-          senderAddress: account
-        })
+        amountIn: parseEther(buyAmount),
+        slippage: 0.05,
+        sender: account,
+      };
+
+      const receipt = await tradeCoin({
+        tradeParameters,
+        walletClient,
+        account: walletClient.account!,
+        publicClient,
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Buy order prepared",
-          description: `Use your wallet to complete the transaction for ${buyAmount} ETH worth of ${tokenSymbol}`,
-        });
-        setBuyAmount('');
-      } else {
-        throw new Error(result.error || 'Buy preparation failed');
-      }
+      toast({
+        title: "Purchase Successful! 🎉",
+        description: `Successfully bought ${tokenSymbol} tokens`,
+      });
+      setBuyAmount('');
     } catch (error: any) {
       console.error('Buy failed:', error);
       toast({
         title: "Buy failed",
-        description: error.message || "Failed to prepare buy order",
+        description: error.message || "Transaction failed",
         variant: "destructive"
       });
     } finally {
@@ -148,7 +159,7 @@ export function TokenTrading({
   };
 
   const handleSell = async () => {
-    if (!isConnected) {
+    if (!isConnected || !account || !walletClient || !publicClient) {
       toast({
         title: "Wallet not connected",
         description: "Please connect your wallet to trade",
@@ -165,39 +176,47 @@ export function TokenTrading({
       return;
     }
 
+    // Check if we're on Base Mainnet
+    if (walletClient.chain?.id !== 8453) {
+      toast({
+        title: "Wrong Network",
+        description: "Please switch to Base Mainnet to use Zora Trading",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Call Zora Trading API
-      const response = await fetch(ZORA_TRADING_API.sell, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const tradeParameters = {
+        sell: { 
+          type: "erc20" as const, 
+          address: tokenAddress
         },
-        body: JSON.stringify({
-          tokenAddress,
-          tokenAmount: parseUnits(sellAmount, 18).toString(),
-          slippage: 0.15,
-          senderAddress: account
-        })
+        buy: { type: "eth" as const },
+        amountIn: parseUnits(sellAmount, 18),
+        slippage: 0.15,
+        sender: account,
+      };
+
+      const receipt = await tradeCoin({
+        tradeParameters,
+        walletClient,
+        account: walletClient.account!,
+        publicClient,
       });
 
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Sell order prepared",
-          description: `Use your wallet to complete selling ${sellAmount} ${tokenSymbol}`,
-        });
-        setSellAmount('');
-      } else {
-        throw new Error(result.error || 'Sell preparation failed');
-      }
+      toast({
+        title: "Sale Successful! 🎉",
+        description: `Successfully sold ${sellAmount} ${tokenSymbol}`,
+      });
+      setSellAmount('');
     } catch (error: any) {
       console.error('Sell failed:', error);
       toast({
         title: "Sell failed",
-        description: error.message || "Failed to prepare sell order",
+        description: error.message || "Transaction failed",
         variant: "destructive"
       });
     } finally {
@@ -261,16 +280,12 @@ export function TokenTrading({
             )}
           </CardTitle>
           <CardDescription>
-            {tradingStatus?.available 
-              ? "Buy and sell tokens using Zora's advanced trading infrastructure"
-              : "Trading with Zora SDK requires Base Mainnet deployment"
-            }
+            Buy and sell tokens using Zora's advanced trading infrastructure on Base Mainnet
           </CardDescription>
-          {tradingStatus && !tradingStatus.available && (
+          {walletClient?.chain?.id !== 8453 && (
             <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
               <p className="text-xs text-yellow-700 dark:text-yellow-400">
-                ⚠️ Advanced trading features are only available on Base Mainnet. 
-                Current network: {tradingStatus.network}
+                ⚠️ Zora Trading requires Base Mainnet. Please switch networks in your wallet.
               </p>
             </div>
           )}
