@@ -1,4 +1,3 @@
-
 "use client";
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +31,8 @@ export default function ZoraCreate() {
   const { address, isConnected } = useAccount();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('basic');
-  
+  const [isLoading, setIsLoading] = useState(false); // Added isLoading state
+
   const [formData, setFormData] = useState({
     name: '',
     symbol: '',
@@ -48,7 +48,7 @@ export default function ZoraCreate() {
   const [deployedTokenAddress, setDeployedTokenAddress] = useState<Address | null>(null);
 
   const { writeContract, data: hash, isPending, error } = useWriteContract();
-  
+
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
@@ -76,56 +76,84 @@ export default function ZoraCreate() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      const isCreatorCoin = activeTab === 'advanced';
-      
-      // Prepare token creation parameters
-      const tokenName = formData.name;
-      const tokenSymbol = formData.symbol;
-      const description = formData.description || `${formData.name} token created with Zora`;
-      
       toast({
-        title: "Deploying Token...",
-        description: "Please confirm the transaction in your wallet",
+        title: "Creating Token...",
+        description: "Your Zora token is being deployed to the blockchain",
       });
 
-      if (isCreatorCoin) {
-        // Deploy Creator Coin with vesting
-        await writeContract({
-          address: ZORA_FACTORY_ADDRESS,
-          abi: zoraFactoryImplAbi,
-          functionName: 'createCreatorCoin',
-          args: [
-            tokenName,
-            tokenSymbol,
-            address as Address, // creator address
-            [], // no custom hooks
-            "0x", // no hook data
-          ],
-        });
-      } else {
-        // Deploy Basic Token
-        await writeContract({
-          address: ZORA_FACTORY_ADDRESS,
-          abi: zoraFactoryImplAbi,
-          functionName: 'createContentCoin',
-          args: [
-            tokenName,
-            tokenSymbol,
-            description,
-            [], // no custom hooks
-            "0x", // no hook data
-          ],
-        });
+      // Create metadata object
+      const metadata = {
+        name: formData.name,
+        symbol: formData.symbol,
+        description: formData.description,
+        imageUri: formData.imageUri,
+        social: {
+          twitter: formData.twitter,
+          discord: formData.discord,
+          website: formData.website
+        },
+        currency: formData.currency,
+        startingMarketCap: formData.startingMarketCap
+      };
+
+      // Call your backend API to create the Zora coin
+      const response = await fetch('/api/creator-coins/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...metadata,
+          creatorAddress: address,
+          contentType: 'token', // This is a token creation, not content
+          mediaCid: 'none', // No media for pure tokens
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to create token: ${errorData}`);
       }
-      
-    } catch (error: any) {
+
+      const result = await response.json();
+
+      toast({
+        title: "Token Created Successfully! 🚀",
+        description: `${formData.name} (${formData.symbol}) deployed at ${result.coinAddress?.slice(0, 8)}...`,
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        symbol: '',
+        description: '',
+        imageUri: '',
+        twitter: '',
+        discord: '',
+        website: '',
+        currency: 'ETH',
+        startingMarketCap: 'LOW'
+      });
+
+      // Redirect to explore page or token detail
+      if (result.coinAddress) {
+        setTimeout(() => {
+          window.location.href = `/zora-token/${result.coinAddress}`;
+        }, 2000);
+      }
+
+    } catch (error) {
       console.error('Error creating token:', error);
       toast({
         title: "Creation Failed",
-        description: error?.message || "Failed to create token. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create token. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -135,7 +163,7 @@ export default function ZoraCreate() {
       title: "Token Created Successfully! 🚀",
       description: `${formData.name} (${formData.symbol}) has been deployed with Zora bonding curve`,
     });
-    
+
     // Reset form
     setFormData({
       name: '',
@@ -432,7 +460,7 @@ export default function ZoraCreate() {
                   </>
                 )}
               </Button>
-              
+
               <Button variant="outline" size="lg">
                 <a href="/zoraexplore" className="flex items-center gap-2">
                   <ExternalLink className="h-4 w-4" />
