@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { parseEther, formatEther, Address } from 'viem';
 import { Loader2, Coins, Zap, Rocket, Info, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -46,12 +46,6 @@ export default function ZoraCreate() {
   });
 
   const [deployedTokenAddress, setDeployedTokenAddress] = useState<Address | null>(null);
-
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
-
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -157,26 +151,6 @@ export default function ZoraCreate() {
     }
   };
 
-  // Handle successful transaction
-  if (isSuccess && hash && !deployedTokenAddress) {
-    toast({
-      title: "Token Created Successfully! 🚀",
-      description: `${formData.name} (${formData.symbol}) has been deployed with Zora bonding curve`,
-    });
-
-    // Reset form
-    setFormData({
-      name: '',
-      symbol: '',
-      description: '',
-      imageUri: '',
-      twitter: '',
-      discord: '',
-      website: '',
-      currency: 'ETH',
-      startingMarketCap: 'LOW'
-    });
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
