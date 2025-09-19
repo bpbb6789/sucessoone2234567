@@ -1,0 +1,395 @@
+chunk-H34T7B5R.js?v=bab99382:11 Module "buffer" has been externalized for browser compatibility. Cannot access "buffer.Buffer" in client code. See https://vite.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+get @ chunk-H34T7B5R.js?v=bab99382:11
+(anonymous) @ chunk-H34T7B5R.js?v=bab99382:62
+node_modules/bn.js/lib/bn.js @ chunk-H34T7B5R.js?v=bab99382:2901
+__require2 @ chunk-ONY6HBPH.js?v=bab99382:26
+(anonymous) @ chunk-A5MQPJJM.js?v=bab99382:3973Understand this warning
+chunk-A5MQPJJM.js?v=bab99382:11513 @farcaster/frame-sdk is deprecated. Please use @farcaster/miniapp-sdk instead.
+(anonymous) @ chunk-A5MQPJJM.js?v=bab99382:11513Understand this warning
+App.tsx:114 Uncaught ReferenceError: ZoraCreate is not defined
+    at AppContent (App.tsx:114:54)
+    at renderWithHooks (chunk-Z2GUPSCO.js?v=bab99382:11548:26)
+    at mountIndeterminateComponent (chunk-Z2GUPSCO.js?v=bab99382:14926:21)
+    at beginWork (chunk-Z2GUPSCO.js?v=bab99382:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-Z2GUPSCO.js?v=bab99382:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-Z2GUPSCO.js?v=bab99382:3699:24)
+    at invokeGuardedCallback (chunk-Z2GUPSCO.js?v=bab99382:3733:39)
+    at beginWork$1 (chunk-Z2GUPSCO.js?v=bab99382:19765:15)
+    at performUnitOfWork (chunk-Z2GUPSCO.js?v=bab99382:19198:20)
+    at workLoopSync (chunk-Z2GUPSCO.js?v=bab99382:19137:13)
+AppContent @ App.tsx:114
+renderWithHooks @ chunk-Z2GUPSCO.js?v=bab99382:11548
+mountIndeterminateComponent @ chunk-Z2GUPSCO.js?v=bab99382:14926
+beginWork @ chunk-Z2GUPSCO.js?v=bab99382:15914
+callCallback2 @ chunk-Z2GUPSCO.js?v=bab99382:3674
+invokeGuardedCallbackDev @ chunk-Z2GUPSCO.js?v=bab99382:3699
+invokeGuardedCallback @ chunk-Z2GUPSCO.js?v=bab99382:3733
+beginWork$1 @ chunk-Z2GUPSCO.js?v=bab99382:19765
+performUnitOfWork @ chunk-Z2GUPSCO.js?v=bab99382:19198
+workLoopSync @ chunk-Z2GUPSCO.js?v=bab99382:19137
+renderRootSync @ chunk-Z2GUPSCO.js?v=bab99382:19116
+performConcurrentWorkOnRoot @ chunk-Z2GUPSCO.js?v=bab99382:18678
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384Understand this error
+App.tsx:114 Uncaught ReferenceError: ZoraCreate is not defined
+    at AppContent (App.tsx:114:54)
+    at renderWithHooks (chunk-Z2GUPSCO.js?v=bab99382:11548:26)
+    at mountIndeterminateComponent (chunk-Z2GUPSCO.js?v=bab99382:14926:21)
+    at beginWork (chunk-Z2GUPSCO.js?v=bab99382:15914:22)
+    at HTMLUnknownElement.callCallback2 (chunk-Z2GUPSCO.js?v=bab99382:3674:22)
+    at Object.invokeGuardedCallbackDev (chunk-Z2GUPSCO.js?v=bab99382:3699:24)
+    at invokeGuardedCallback (chunk-Z2GUPSCO.js?v=bab99382:3733:39)
+    at beginWork$1 (chunk-Z2GUPSCO.js?v=bab99382:19765:15)
+    at performUnitOfWork (chunk-Z2GUPSCO.js?v=bab99382:19198:20)
+    at workLoopSync (chunk-Z2GUPSCO.js?v=bab99382:19137:13)
+AppContent @ App.tsx:114
+renderWithHooks @ chunk-Z2GUPSCO.js?v=bab99382:11548
+mountIndeterminateComponent @ chunk-Z2GUPSCO.js?v=bab99382:14926
+beginWork @ chunk-Z2GUPSCO.js?v=bab99382:15914
+callCallback2 @ chunk-Z2GUPSCO.js?v=bab99382:3674
+invokeGuardedCallbackDev @ chunk-Z2GUPSCO.js?v=bab99382:3699
+invokeGuardedCallback @ chunk-Z2GUPSCO.js?v=bab99382:3733
+beginWork$1 @ chunk-Z2GUPSCO.js?v=bab99382:19765
+performUnitOfWork @ chunk-Z2GUPSCO.js?v=bab99382:19198
+workLoopSync @ chunk-Z2GUPSCO.js?v=bab99382:19137
+renderRootSync @ chunk-Z2GUPSCO.js?v=bab99382:19116
+recoverFromConcurrentError @ chunk-Z2GUPSCO.js?v=bab99382:18736
+performConcurrentWorkOnRoot @ chunk-Z2GUPSCO.js?v=bab99382:18684
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384Understand this error
+chunk-Z2GUPSCO.js?v=bab99382:14032 The above error occurred in the <AppContent> component:
+
+    at AppContent (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/src/App.tsx?v=lZAKxk7D-Qo4eXetSrTwq:200:156)
+    at div
+    at ModalProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@rainbow-me_rainbowkit.js?v=bab99382:9595:26)
+    at ShowBalanceProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@rainbow-me_rainbowkit.js?v=bab99382:4714:32)
+    at TransactionStoreProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@rainbow-me_rainbowkit.js?v=bab99382:5152:3)
+    at ModalSizeProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@rainbow-me_rainbowkit.js?v=bab99382:5303:3)
+    at I18nProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@rainbow-me_rainbowkit.js?v=bab99382:4420:23)
+    at WalletButtonProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@rainbow-me_rainbowkit.js?v=bab99382:5279:33)
+    at RainbowKitChainProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@rainbow-me_rainbowkit.js?v=bab99382:4679:3)
+    at RainbowKitProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@rainbow-me_rainbowkit.js?v=bab99382:6085:3)
+    at OnchainKitProviderBoundary (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@coinbase_onchainkit.js?v=bab99382:217:5)
+    at QueryClientProviderWithDefault (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@coinbase_onchainkit.js?v=bab99382:202:3)
+    at WagmiProviderWithDefault (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@coinbase_onchainkit.js?v=bab99382:159:3)
+    at DefaultOnchainKitProviders (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@coinbase_onchainkit.js?v=bab99382:145:3)
+    at OnchainKitProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@coinbase_onchainkit.js?v=bab99382:400:3)
+    at QueryClientProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RYFDQYI5.js?v=bab99382:2934:3)
+    at Hydrate (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-3I735R7K.js?v=bab99382:3327:11)
+    at WagmiProvider (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-3I735R7K.js?v=bab99382:3351:11)
+    at WagmiApp (https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/src/App.tsx?v=lZAKxk7D-Qo4eXetSrTwq:77:18)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, OnchainKitProviderBoundary.
+logCapturedError @ chunk-Z2GUPSCO.js?v=bab99382:14032
+callback @ chunk-Z2GUPSCO.js?v=bab99382:14078
+callCallback @ chunk-Z2GUPSCO.js?v=bab99382:11248
+commitUpdateQueue @ chunk-Z2GUPSCO.js?v=bab99382:11265
+commitLayoutEffectOnFiber @ chunk-Z2GUPSCO.js?v=bab99382:17075
+commitLayoutMountEffects_complete @ chunk-Z2GUPSCO.js?v=bab99382:17980
+commitLayoutEffects_begin @ chunk-Z2GUPSCO.js?v=bab99382:17969
+commitLayoutEffects @ chunk-Z2GUPSCO.js?v=bab99382:17920
+commitRootImpl @ chunk-Z2GUPSCO.js?v=bab99382:19353
+commitRoot @ chunk-Z2GUPSCO.js?v=bab99382:19277
+finishConcurrentRender @ chunk-Z2GUPSCO.js?v=bab99382:18760
+performConcurrentWorkOnRoot @ chunk-Z2GUPSCO.js?v=bab99382:18718
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384Understand this error
+@coinbase_onchainkit.js?v=bab99382:226 Uncaught error: ReferenceError: ZoraCreate is not defined
+    at AppContent (App.tsx:114:54)
+    at renderWithHooks (chunk-Z2GUPSCO.js?v=bab99382:11548:26)
+    at mountIndeterminateComponent (chunk-Z2GUPSCO.js?v=bab99382:14926:21)
+    at beginWork (chunk-Z2GUPSCO.js?v=bab99382:15914:22)
+    at beginWork$1 (chunk-Z2GUPSCO.js?v=bab99382:19753:22)
+    at performUnitOfWork (chunk-Z2GUPSCO.js?v=bab99382:19198:20)
+    at workLoopSync (chunk-Z2GUPSCO.js?v=bab99382:19137:13)
+    at renderRootSync (chunk-Z2GUPSCO.js?v=bab99382:19116:15)
+    at recoverFromConcurrentError (chunk-Z2GUPSCO.js?v=bab99382:18736:28)
+    at performConcurrentWorkOnRoot (chunk-Z2GUPSCO.js?v=bab99382:18684:30) {componentStack: '\n    at AppContent (https://eaf5847c-c7b6-4bd7-ae1…App.tsx?v=lZAKxk7D-Qo4eXetSrTwq:77:18)\n    at App'}
+componentDidCatch @ @coinbase_onchainkit.js?v=bab99382:226
+callback @ chunk-Z2GUPSCO.js?v=bab99382:14084
+callCallback @ chunk-Z2GUPSCO.js?v=bab99382:11248
+commitUpdateQueue @ chunk-Z2GUPSCO.js?v=bab99382:11265
+commitLayoutEffectOnFiber @ chunk-Z2GUPSCO.js?v=bab99382:17075
+commitLayoutMountEffects_complete @ chunk-Z2GUPSCO.js?v=bab99382:17980
+commitLayoutEffects_begin @ chunk-Z2GUPSCO.js?v=bab99382:17969
+commitLayoutEffects @ chunk-Z2GUPSCO.js?v=bab99382:17920
+commitRootImpl @ chunk-Z2GUPSCO.js?v=bab99382:19353
+commitRoot @ chunk-Z2GUPSCO.js?v=bab99382:19277
+finishConcurrentRender @ chunk-Z2GUPSCO.js?v=bab99382:18760
+performConcurrentWorkOnRoot @ chunk-Z2GUPSCO.js?v=bab99382:18718
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384Understand this error
+chunk-A5MQPJJM.js?v=bab99382:11733 Error sending analytics: Error: ClientMetaManager not initialized
+    at ClientMetaManager.getClientMeta (chunk-A5MQPJJM.js?v=bab99382:11545:34)
+    at handleSendAnalytics (chunk-A5MQPJJM.js?v=bab99382:11720:48)
+    at sendAnalyticsPayload (chunk-A5MQPJJM.js?v=bab99382:11737:45)
+    at OnchainKitProviderBoundary.componentDidCatch (@coinbase_onchainkit.js?v=bab99382:227:5)
+    at OnchainKitProviderBoundary.callback (chunk-Z2GUPSCO.js?v=bab99382:14084:20)
+    at callCallback (chunk-Z2GUPSCO.js?v=bab99382:11248:20)
+    at commitUpdateQueue (chunk-Z2GUPSCO.js?v=bab99382:11265:17)
+    at commitLayoutEffectOnFiber (chunk-Z2GUPSCO.js?v=bab99382:17075:19)
+    at commitLayoutMountEffects_complete (chunk-Z2GUPSCO.js?v=bab99382:17980:17)
+    at commitLayoutEffects_begin (chunk-Z2GUPSCO.js?v=bab99382:17969:15)
+handleSendAnalytics @ chunk-A5MQPJJM.js?v=bab99382:11733
+await in handleSendAnalytics
+sendAnalyticsPayload @ chunk-A5MQPJJM.js?v=bab99382:11737
+componentDidCatch @ @coinbase_onchainkit.js?v=bab99382:227
+callback @ chunk-Z2GUPSCO.js?v=bab99382:14084
+callCallback @ chunk-Z2GUPSCO.js?v=bab99382:11248
+commitUpdateQueue @ chunk-Z2GUPSCO.js?v=bab99382:11265
+commitLayoutEffectOnFiber @ chunk-Z2GUPSCO.js?v=bab99382:17075
+commitLayoutMountEffects_complete @ chunk-Z2GUPSCO.js?v=bab99382:17980
+commitLayoutEffects_begin @ chunk-Z2GUPSCO.js?v=bab99382:17969
+commitLayoutEffects @ chunk-Z2GUPSCO.js?v=bab99382:17920
+commitRootImpl @ chunk-Z2GUPSCO.js?v=bab99382:19353
+commitRoot @ chunk-Z2GUPSCO.js?v=bab99382:19277
+finishConcurrentRender @ chunk-Z2GUPSCO.js?v=bab99382:18760
+performConcurrentWorkOnRoot @ chunk-Z2GUPSCO.js?v=bab99382:18718
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384Understand this error
+2index.ts:47 WalletConnect Core is already initialized. This is probably a mistake and can lead to unexpected behavior. Init() was called 2 times.
+getGlobalCore @ index.es-LP6I2EJD.js?v=bab99382:6358
+_Te @ index.es-LP6I2EJD.js?v=bab99382:6314
+_Ee @ index.es-LP6I2EJD.js?v=bab99382:7633
+init @ index.es-LP6I2EJD.js?v=bab99382:7636
+createClient @ index.es-LP6I2EJD.js?v=bab99382:8750
+initialize @ index.es-LP6I2EJD.js?v=bab99382:8746
+init @ index.es-LP6I2EJD.js?v=bab99382:8663
+initialize @ index.es-LP6I2EJD.js?v=bab99382:9108
+init @ index.es-LP6I2EJD.js?v=bab99382:8967
+initProvider @ chunk-7EKEPLSJ.js?v=bab99382:975
+await in initProvider
+getProvider @ chunk-7EKEPLSJ.js?v=bab99382:992
+setup @ chunk-7EKEPLSJ.js?v=bab99382:855
+setup @ chunk-SA2QK6L2.js?v=bab99382:2700
+(anonymous) @ chunk-SA2QK6L2.js?v=bab99382:2667
+createStoreImpl @ chunk-SA2QK6L2.js?v=bab99382:2476
+createStore2 @ chunk-SA2QK6L2.js?v=bab99382:2479
+createConfig @ chunk-SA2QK6L2.js?v=bab99382:2663
+(anonymous) @ index.ts:47
+mountMemo @ chunk-Z2GUPSCO.js?v=bab99382:12194
+useMemo @ chunk-Z2GUPSCO.js?v=bab99382:12518
+useMemo @ chunk-VT65UQWK.js?v=bab99382:1094
+useWagmiConfig @ index.ts:25
+WagmiApp @ App.tsx:72
+renderWithHooks @ chunk-Z2GUPSCO.js?v=bab99382:11548
+mountIndeterminateComponent @ chunk-Z2GUPSCO.js?v=bab99382:14926
+beginWork @ chunk-Z2GUPSCO.js?v=bab99382:15914
+beginWork$1 @ chunk-Z2GUPSCO.js?v=bab99382:19753
+performUnitOfWork @ chunk-Z2GUPSCO.js?v=bab99382:19198
+workLoopSync @ chunk-Z2GUPSCO.js?v=bab99382:19137
+renderRootSync @ chunk-Z2GUPSCO.js?v=bab99382:19116
+performConcurrentWorkOnRoot @ chunk-Z2GUPSCO.js?v=bab99382:18678
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384Understand this warning
+2index.es-LP6I2EJD.js?v=bab99382:4073 Uncaught (in promise) UnknownError: Internal error.
+O @ index.es-LP6I2EJD.js?v=bab99382:4073
+await in O
+h @ index.es-LP6I2EJD.js?v=bab99382:4088
+_Te @ index.es-LP6I2EJD.js?v=bab99382:6325
+_Ee @ index.es-LP6I2EJD.js?v=bab99382:7633
+init @ index.es-LP6I2EJD.js?v=bab99382:7636
+createClient @ index.es-LP6I2EJD.js?v=bab99382:8750
+initialize @ index.es-LP6I2EJD.js?v=bab99382:8746
+init @ index.es-LP6I2EJD.js?v=bab99382:8663
+initialize @ index.es-LP6I2EJD.js?v=bab99382:9108
+init @ index.es-LP6I2EJD.js?v=bab99382:8967
+initProvider @ chunk-7EKEPLSJ.js?v=bab99382:975
+await in initProvider
+getProvider @ chunk-7EKEPLSJ.js?v=bab99382:992
+setup @ chunk-7EKEPLSJ.js?v=bab99382:855
+setup @ chunk-3I735R7K.js?v=bab99382:2872
+(anonymous) @ chunk-3I735R7K.js?v=bab99382:2839
+createStoreImpl @ chunk-3I735R7K.js?v=bab99382:2648
+createStore2 @ chunk-3I735R7K.js?v=bab99382:2651
+createConfig @ chunk-3I735R7K.js?v=bab99382:2835
+getDefaultConfig @ @rainbow-me_rainbowkit.js?v=bab99382:10832
+(anonymous) @ walletConnect.ts:9Understand this error
+chunk-ANJCMEYS.js?v=bab99382:5 Uncaught (in promise) UnknownError: Internal error.
+request.onabort.request.onerror @ chunk-ANJCMEYS.js?v=bab99382:5
+IndexedDB
+createStore @ chunk-ANJCMEYS.js?v=bab99382:9
+createStorage @ dist-RULU4XQ4.js?v=bab99382:35674
+(anonymous) @ dist-RULU4XQ4.js?v=bab99382:35696Understand this error
+VM1935:1 Analytics SDK: Error: IndexedDB:Get:InternalError
+    at at (<anonymous>:1:59290)
+    at async <anonymous>:1:72427 undefined
+onError @ VM1935:1
+at @ VM1935:1
+await in at
+(anonymous) @ VM1935:1
+yn @ VM1935:1
+initCCA @ dist-RULU4XQ4.js?v=bab99382:1374
+(anonymous) @ dist-RULU4XQ4.js?v=bab99382:1359
+loadTelemetryScript @ dist-RULU4XQ4.js?v=bab99382:1350
+createCoinbaseWalletSDK @ dist-RULU4XQ4.js?v=bab99382:40312
+getProvider @ chunk-7EKEPLSJ.js?v=bab99382:118
+await in getProvider
+reconnect @ chunk-3I735R7K.js?v=bab99382:1279
+await in reconnect
+onMount @ chunk-3I735R7K.js?v=bab99382:3215
+await in onMount
+(anonymous) @ chunk-3I735R7K.js?v=bab99382:3340
+commitHookEffectListMount @ chunk-Z2GUPSCO.js?v=bab99382:16915
+commitPassiveMountOnFiber @ chunk-Z2GUPSCO.js?v=bab99382:18156
+commitPassiveMountEffects_complete @ chunk-Z2GUPSCO.js?v=bab99382:18129
+commitPassiveMountEffects_begin @ chunk-Z2GUPSCO.js?v=bab99382:18119
+commitPassiveMountEffects @ chunk-Z2GUPSCO.js?v=bab99382:18109
+flushPassiveEffectsImpl @ chunk-Z2GUPSCO.js?v=bab99382:19490
+flushPassiveEffects @ chunk-Z2GUPSCO.js?v=bab99382:19447
+(anonymous) @ chunk-Z2GUPSCO.js?v=bab99382:19328
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384
+VM1935:1 Analytics SDK: Error: IndexedDB:Get:InternalError
+    at at (<anonymous>:1:59290) undefined
+onError @ VM1935:1
+at @ VM1935:1
+await in at
+(anonymous) @ VM1935:1
+yn @ VM1935:1
+initCCA @ dist-RULU4XQ4.js?v=bab99382:1374
+(anonymous) @ dist-RULU4XQ4.js?v=bab99382:1359
+loadTelemetryScript @ dist-RULU4XQ4.js?v=bab99382:1350
+createCoinbaseWalletSDK @ dist-RULU4XQ4.js?v=bab99382:40312
+getProvider @ chunk-7EKEPLSJ.js?v=bab99382:118
+await in getProvider
+reconnect @ chunk-3I735R7K.js?v=bab99382:1279
+await in reconnect
+onMount @ chunk-3I735R7K.js?v=bab99382:3215
+await in onMount
+(anonymous) @ chunk-3I735R7K.js?v=bab99382:3340
+commitHookEffectListMount @ chunk-Z2GUPSCO.js?v=bab99382:16915
+commitPassiveMountOnFiber @ chunk-Z2GUPSCO.js?v=bab99382:18156
+commitPassiveMountEffects_complete @ chunk-Z2GUPSCO.js?v=bab99382:18129
+commitPassiveMountEffects_begin @ chunk-Z2GUPSCO.js?v=bab99382:18119
+commitPassiveMountEffects @ chunk-Z2GUPSCO.js?v=bab99382:18109
+flushPassiveEffectsImpl @ chunk-Z2GUPSCO.js?v=bab99382:19490
+flushPassiveEffects @ chunk-Z2GUPSCO.js?v=bab99382:19447
+(anonymous) @ chunk-Z2GUPSCO.js?v=bab99382:19328
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384
+zoraexplore:1 Uncaught (in promise) TypeError: Internal error when calculating storage usage.Understand this error
+5VM1935:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM1935:1
+ot @ VM1935:1
+await in ot
+st @ VM1935:1
+ft @ VM1935:1
+(anonymous) @ VM1935:1
+vt @ VM1935:1
+(anonymous) @ VM1935:1
+setTimeout
+Pt @ VM1935:1
+(anonymous) @ VM1935:1
+gn @ VM1935:1
+(anonymous) @ VM1935:1
+await in (anonymous)
+yn @ VM1935:1
+initCCA @ dist-RULU4XQ4.js?v=bab99382:1374
+(anonymous) @ dist-RULU4XQ4.js?v=bab99382:1359
+loadTelemetryScript @ dist-RULU4XQ4.js?v=bab99382:1350
+createCoinbaseWalletSDK @ dist-RULU4XQ4.js?v=bab99382:40312
+getProvider @ chunk-7EKEPLSJ.js?v=bab99382:118
+await in getProvider
+reconnect @ chunk-3I735R7K.js?v=bab99382:1279
+await in reconnect
+onMount @ chunk-3I735R7K.js?v=bab99382:3215
+await in onMount
+(anonymous) @ chunk-3I735R7K.js?v=bab99382:3340
+commitHookEffectListMount @ chunk-Z2GUPSCO.js?v=bab99382:16915
+commitPassiveMountOnFiber @ chunk-Z2GUPSCO.js?v=bab99382:18156
+commitPassiveMountEffects_complete @ chunk-Z2GUPSCO.js?v=bab99382:18129
+commitPassiveMountEffects_begin @ chunk-Z2GUPSCO.js?v=bab99382:18119
+commitPassiveMountEffects @ chunk-Z2GUPSCO.js?v=bab99382:18109
+flushPassiveEffectsImpl @ chunk-Z2GUPSCO.js?v=bab99382:19490
+flushPassiveEffects @ chunk-Z2GUPSCO.js?v=bab99382:19447
+(anonymous) @ chunk-Z2GUPSCO.js?v=bab99382:19328
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384
+VM1935:1  POST https://cca-lite.coinbase.com/metrics net::ERR_ABORTED 401 (Unauthorized)
+_t @ VM1935:1
+(anonymous) @ VM1935:1
+requestIdleCallback
+yt @ VM1935:1
+Qt @ VM1935:1
+(anonymous) @ VM1935:1
+setTimeout
+ht @ VM1935:1
+Ht @ VM1935:1
+analyticsTracker @ VM1935:1
+u @ VM1935:1
+requestIdleCallback
+N @ VM1935:1
+R @ VM1935:1
+e @ VM1935:1
+(anonymous) @ VM1935:1
+yn @ VM1935:1
+initCCA @ dist-RULU4XQ4.js?v=bab99382:1374
+(anonymous) @ dist-RULU4XQ4.js?v=bab99382:1359
+loadTelemetryScript @ dist-RULU4XQ4.js?v=bab99382:1350
+createCoinbaseWalletSDK @ dist-RULU4XQ4.js?v=bab99382:40312
+getProvider @ chunk-7EKEPLSJ.js?v=bab99382:118
+await in getProvider
+reconnect @ chunk-3I735R7K.js?v=bab99382:1279
+await in reconnect
+onMount @ chunk-3I735R7K.js?v=bab99382:3215
+await in onMount
+(anonymous) @ chunk-3I735R7K.js?v=bab99382:3340
+commitHookEffectListMount @ chunk-Z2GUPSCO.js?v=bab99382:16915
+commitPassiveMountOnFiber @ chunk-Z2GUPSCO.js?v=bab99382:18156
+commitPassiveMountEffects_complete @ chunk-Z2GUPSCO.js?v=bab99382:18129
+commitPassiveMountEffects_begin @ chunk-Z2GUPSCO.js?v=bab99382:18119
+commitPassiveMountEffects @ chunk-Z2GUPSCO.js?v=bab99382:18109
+flushPassiveEffectsImpl @ chunk-Z2GUPSCO.js?v=bab99382:19490
+flushPassiveEffects @ chunk-Z2GUPSCO.js?v=bab99382:19447
+(anonymous) @ chunk-Z2GUPSCO.js?v=bab99382:19328
+workLoop @ chunk-Z2GUPSCO.js?v=bab99382:197
+flushWork @ chunk-Z2GUPSCO.js?v=bab99382:176
+performWorkUntilDeadline @ chunk-Z2GUPSCO.js?v=bab99382:384Understand this error
+chunk-6UZYXEWV.js?v=bab99382:3281 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+VM1935:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM1935:1
+ot @ VM1935:1
+await in ot
+st @ VM1935:1
+(anonymous) @ VM1935:1
+(anonymous) @ VM1935:1
+VM1935:1 Analytics SDK: Error: IndexedDB:Set:InternalError
+    at ot (<anonymous>:1:59439) undefined
+onError @ VM1935:1
+ot @ VM1935:1
+await in ot
+st @ VM1935:1
+ft @ VM1935:1
+(anonymous) @ VM1935:1
+vt @ VM1935:1
+(anonymous) @ VM1935:1
+setTimeout
+Pt @ VM1935:1
+(anonymous) @ VM1935:1
+requestIdleCallback
+yt @ VM1935:1
+$t @ VM1935:1
+analyticsTracker @ VM1935:1
+u @ VM1935:1
+N @ VM1935:1
+q @ VM1935:1
+(anonymous) @ VM1935:1
+(anonymous) @ VM1935:1
+s @ VM1935:1
+(anonymous) @ VM1935:1
+(anonymous) @ VM1935:1
+n @ VM1935:1
+VM1935:1  POST https://cca-lite.coinbase.com/metrics net::ERR_ABORTED 401 (Unauthorized)
