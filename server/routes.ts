@@ -3912,50 +3912,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { address } = req.params;
       
-      const token = await db.query(`
-        SELECT 
-          address,
-          name,
-          symbol,
-          description,
-          creator_address as creator,
-          token_type as type,
-          created_at as "createdAt",
-          COALESCE(price, '0.001') as price,
-          COALESCE(market_cap, '1000') as "marketCap",
-          COALESCE(volume_24h, '100') as "volume24h",
-          COALESCE(holders, 1) as holders,
-          COALESCE(change_24h, 0) as "change24h",
-          COALESCE(total_supply, '1000000000000000000000000') as "totalSupply"
-        FROM creator_coins 
-        WHERE address = $1 AND network = 'Base Sepolia'
-      `, [address]);
-
-      if (token.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: 'Token not found'
-        });
+      // Find the token by coin address in the creator coins table
+      const token = await db.select().from(creatorCoins).where(eq(creatorCoins.coinAddress, address)).limit(1);
+      
+      if (!token.length) {
+        return res.status(404).json({ message: "Token not found" });
       }
 
-      const tokenData = token.rows[0];
-      const formattedToken = {
-        address: tokenData.address,
-        name: tokenData.name,
-        symbol: tokenData.symbol,
-        description: tokenData.description || `${tokenData.name} token created with Zora`,
-        type: tokenData.type === 'creator' ? 'creator' : 'content',
-        creator: tokenData.creator,
-        price: tokenData.price,
-        marketCap: tokenData.marketCap,
-        volume24h: tokenData.volume24h,
-        holders: tokenData.holders,
-        change24h: parseFloat(tokenData.change24h),
-        totalSupply: tokenData.totalSupply,
-        createdAt: tokenData.createdAt
-      };
+      const tokenData = token[0];
 
-      res.json(formattedToken);
+      // Return token details
+      res.json({
+        address: tokenData.coinAddress,
+        name: tokenData.coinName,
+        symbol: tokenData.coinSymbol,
+        description: tokenData.description,
+        imageUri: tokenData.thumbnailCid ? `https://gateway.pinata.cloud/ipfs/${tokenData.thumbnailCid}` : null,
+        metadataUri: tokenData.metadataUri,
+        creator: tokenData.creatorAddress,
+        status: tokenData.status,
+        createdAt: tokenData.createdAt,
+        deployedAt: tokenData.deployedAt,
+        txHash: tokenData.deploymentTxHash,
+        currency: tokenData.currency,
+        startingMarketCap: tokenData.startingMarketCap,
+        social: {
+          twitter: tokenData.twitter,
+          discord: tokenData.discord,
+          website: tokenData.website
+        }
+      });
     } catch (error) {
       console.error('Error fetching token details:', error);
       res.status(500).json({
