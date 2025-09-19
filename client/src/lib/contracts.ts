@@ -7,6 +7,13 @@ export const CONTRACTS = {
   WETH: '0x4267d742e4fd1c03805083b087deb575203e9b19' as Address, // WETH token for Base Sepolia
 } as const
 
+// Zora Factory contract address on Base Sepolia (your custom deployment)
+export const ZORA_FACTORY_ADDRESS = "0xAe028301c7822F2c254A43451D22dB5Fe447a4a0" as Address;
+
+// Zora Factory Implementation address
+export const ZORA_FACTORY_IMPL = "0xb4ac7Bac55f22B88C43b848f3D6d1492C4C823f1" as Address;
+
+
 // Bonding Curve Factory ABI (minimal interface for client)
 export const BONDING_CURVE_FACTORY_ABI = [
   "function deployCurve(address token, address creator) external returns (address)",

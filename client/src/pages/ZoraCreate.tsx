@@ -24,8 +24,8 @@ const marketCaps = [
   { value: 'HIGH', label: 'High Market Cap', description: 'Starting at ~$10K market cap' },
 ];
 
-// Zora Factory contract address on Base Sepolia
-const ZORA_FACTORY_ADDRESS = "0xa8452ec99ce0c64f20701db7dd3abdb607c00496" as Address;
+// Your deployed Zora Factory contract address on Base Sepolia
+const ZORA_FACTORY_ADDRESS = "0xAe028301c7822F2c254A43451D22dB5Fe447a4a0" as Address;
 
 export default function ZoraCreate() {
   const { address, isConnected } = useAccount();
@@ -476,9 +476,9 @@ export default function ZoraCreate() {
           <CardContent className="p-6 text-center">
             <h3 className="font-semibold mb-2">How Zora Factory Works</h3>
             <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
-              Your token will be deployed using Zora's factory contract at{' '}
+              Your token will be deployed using your custom Zora factory at{' '}
               <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs">
-                0xa8452ec99ce0c64f20701db7dd3abdb607c00496
+                0xAe028301c7822F2c254A43451D22dB5Fe447a4a0
               </code>{' '}
               on Base network. The factory automatically creates bonding curves, sets up Uniswap V4 hooks, 
               and enables decentralized trading with built-in creator rewards.
