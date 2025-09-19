@@ -9,10 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAccount } from '@/hooks/useWallet';
-import { parseEther } from 'viem';
-import { Loader2, Coins, Zap, Rocket, Info, ExternalLink } from 'lucide-react';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { parseEther, formatEther, Address } from 'viem';
+import { Loader2, Coins, Zap, Rocket, Info, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { zoraFactoryImplAbi } from '@/lib/contracts';
 
 const currencies = [
   { value: 'ETH', label: 'ETH', description: 'Ethereum' },
@@ -24,10 +25,13 @@ const marketCaps = [
   { value: 'HIGH', label: 'High Market Cap', description: 'Starting at ~$10K market cap' },
 ];
 
+// Zora Factory contract address on Base Sepolia
+const ZORA_FACTORY_ADDRESS = "0xa8452ec99ce0c64f20701db7dd3abdb607c00496" as Address;
+
 export default function ZoraCreate() {
   const { address, isConnected } = useAccount();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('basic');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -39,6 +43,14 @@ export default function ZoraCreate() {
     website: '',
     currency: 'ETH',
     startingMarketCap: 'LOW'
+  });
+
+  const [deployedTokenAddress, setDeployedTokenAddress] = useState<Address | null>(null);
+
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -64,47 +76,79 @@ export default function ZoraCreate() {
       return;
     }
 
-    setIsLoading(true);
-    
     try {
-      // This would integrate with your Zora factory contract
-      // Using the ZoraFactoryImpl contract from your coins directory
+      const isCreatorCoin = activeTab === 'advanced';
+      
+      // Prepare token creation parameters
+      const tokenName = formData.name;
+      const tokenSymbol = formData.symbol;
+      const description = formData.description || `${formData.name} token created with Zora`;
+      
       toast({
-        title: "Creating Token...",
-        description: "Your Zora token is being deployed to the blockchain",
+        title: "Deploying Token...",
+        description: "Please confirm the transaction in your wallet",
       });
 
-      // Simulate the deployment process
-      setTimeout(() => {
-        setIsLoading(false);
-        toast({
-          title: "Token Created Successfully! 🚀",
-          description: `${formData.name} (${formData.symbol}) has been deployed with Zora bonding curve`,
+      if (isCreatorCoin) {
+        // Deploy Creator Coin with vesting
+        await writeContract({
+          address: ZORA_FACTORY_ADDRESS,
+          abi: zoraFactoryImplAbi,
+          functionName: 'createCreatorCoin',
+          args: [
+            tokenName,
+            tokenSymbol,
+            address as Address, // creator address
+            [], // no custom hooks
+            "0x", // no hook data
+          ],
         });
-        
-        // Reset form
-        setFormData({
-          name: '',
-          symbol: '',
-          description: '',
-          imageUri: '',
-          twitter: '',
-          discord: '',
-          website: '',
-          currency: 'ETH',
-          startingMarketCap: 'LOW'
+      } else {
+        // Deploy Basic Token
+        await writeContract({
+          address: ZORA_FACTORY_ADDRESS,
+          abi: zoraFactoryImplAbi,
+          functionName: 'createContentCoin',
+          args: [
+            tokenName,
+            tokenSymbol,
+            description,
+            [], // no custom hooks
+            "0x", // no hook data
+          ],
         });
-      }, 3000);
-    } catch (error) {
+      }
+      
+    } catch (error: any) {
       console.error('Error creating token:', error);
       toast({
         title: "Creation Failed",
-        description: "Failed to create token. Please try again.",
+        description: error?.message || "Failed to create token. Please try again.",
         variant: "destructive",
       });
-      setIsLoading(false);
     }
   };
+
+  // Handle successful transaction
+  if (isSuccess && hash && !deployedTokenAddress) {
+    toast({
+      title: "Token Created Successfully! 🚀",
+      description: `${formData.name} (${formData.symbol}) has been deployed with Zora bonding curve`,
+    });
+    
+    // Reset form
+    setFormData({
+      name: '',
+      symbol: '',
+      description: '',
+      imageUri: '',
+      twitter: '',
+      discord: '',
+      website: '',
+      currency: 'ETH',
+      startingMarketCap: 'LOW'
+    });
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">

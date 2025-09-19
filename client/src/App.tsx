@@ -64,6 +64,7 @@ import ContentNew from "@/pages/ContentNew";
 import ExploreContent from "@/pages/ExploreContent";
 import ZoraCreate from "@/pages/ZoraCreate";
 import ZoraExplore from "@/pages/ZoraExplore";
+import ZoraTokenDetail from "@/pages/ZoraTokenDetail";
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -115,6 +116,7 @@ function AppContent() {
                 <Route path="/create-content-coin" component={CreateContentCoin} />
                 <Route path="/zoracreate" component={ZoraCreate} />
                 <Route path="/zoraexplore" component={ZoraExplore} />
+                <Route path="/zora-token/:address" component={ZoraTokenDetail} />
                 <Route path="/watch/:id" component={Watch} />
                 <Route path="/creatorcoins" component={CreatorCoins} />
                 <Route path="/contentcoin" component={ContentCoin} />

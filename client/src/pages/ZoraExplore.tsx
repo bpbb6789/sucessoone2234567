@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,9 +139,9 @@ export default function ZoraExplore() {
       token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
       token.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesType = selectedType === 'all' || token.type === selectedType;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -324,112 +323,113 @@ export default function ZoraExplore() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredTokens.map((token: ZoraToken) => (
-              <Card 
-                key={token.id}
-                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 group bg-white dark:bg-gray-800 border-2 hover:border-purple-200"
-              >
-                <CardContent className="p-0">
-                  {/* Token Header */}
-                  <div className="relative p-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900 dark:to-blue-900">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                        {token.symbol.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate text-gray-900 dark:text-gray-100">
-                          {token.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{token.symbol}</p>
-                      </div>
-                      <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    
-                    {/* Type Badge */}
-                    <Badge 
-                      className={`absolute top-2 right-2 ${tokenTypes.find(t => t.value === token.type)?.color}`}
-                    >
-                      {tokenTypes.find(t => t.value === token.type)?.label}
-                    </Badge>
-                  </div>
-
-                  <div className="p-4">
-                    {/* Description */}
-                    {token.description && (
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                        {token.description}
-                      </p>
-                    )}
-
-                    {/* Price Info */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Price</span>
-                        <span className="font-semibold">{formatPrice(token.price)}</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">24h Change</span>
-                        {formatChange(token.change24h)}
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Market Cap</span>
-                        <span className="font-medium">{formatMarketCap(token.marketCap)}</span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Holders</span>
-                        <span className="font-medium">{token.holders}</span>
-                      </div>
-                    </div>
-
-                    {/* Stats */}
-                    {token.stats && (
-                      <div className="flex justify-between items-center mb-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          {token.stats.views}
+              <Link key={token.id} href={`/zora/${token.id}`}>
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 group bg-white dark:bg-gray-800 border-2 hover:border-purple-200"
+                >
+                  <CardContent className="p-0">
+                    {/* Token Header */}
+                    <div className="relative p-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900 dark:to-blue-900">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                          {token.symbol.charAt(0)}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Heart className="h-3 w-3" />
-                          {token.stats.likes}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate text-gray-900 dark:text-gray-100">
+                            {token.name}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{token.symbol}</p>
+                        </div>
+                        <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+
+                      {/* Type Badge */}
+                      <Badge 
+                        className={`absolute top-2 right-2 ${tokenTypes.find(t => t.value === token.type)?.color}`}
+                      >
+                        {tokenTypes.find(t => t.value === token.type)?.label}
+                      </Badge>
+                    </div>
+
+                    <div className="p-4">
+                      {/* Description */}
+                      {token.description && (
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          {token.description}
+                        </p>
+                      )}
+
+                      {/* Price Info */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Price</span>
+                          <span className="font-semibold">{formatPrice(token.price)}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">24h Change</span>
+                          {formatChange(token.change24h)}
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Market Cap</span>
+                          <span className="font-medium">{formatMarketCap(token.marketCap)}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Holders</span>
+                          <span className="font-medium">{token.holders}</span>
                         </div>
                       </div>
-                    )}
 
-                    {/* Creator Info */}
-                    <div className="pt-3 border-t">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Creator</span>
-                        <span className="text-xs font-mono">
-                          {token.creator.slice(0, 6)}...{token.creator.slice(-4)}
-                        </span>
+                      {/* Stats */}
+                      {token.stats && (
+                        <div className="flex justify-between items-center mb-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Eye className="h-3 w-3" />
+                            {token.stats.views}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Heart className="h-3 w-3" />
+                            {token.stats.likes}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Creator Info */}
+                      <div className="pt-3 border-t">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Creator</span>
+                          <span className="text-xs font-mono">
+                            {token.creator.slice(0, 6)}...{token.creator.slice(-4)}
+                          </span>
+                        </div>
                       </div>
+
+                      {/* Social Links */}
+                      {token.socialLinks && (
+                        <div className="mt-3 flex gap-2">
+                          {token.socialLinks.twitter && (
+                            <Button size="sm" variant="ghost" className="p-1 h-auto">
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {token.socialLinks.discord && (
+                            <Button size="sm" variant="ghost" className="p-1 h-auto">
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                          {token.socialLinks.website && (
+                            <Button size="sm" variant="ghost" className="p-1 h-auto">
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </div>
-
-                    {/* Social Links */}
-                    {token.socialLinks && (
-                      <div className="mt-3 flex gap-2">
-                        {token.socialLinks.twitter && (
-                          <Button size="sm" variant="ghost" className="p-1 h-auto">
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
-                        )}
-                        {token.socialLinks.discord && (
-                          <Button size="sm" variant="ghost" className="p-1 h-auto">
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
-                        )}
-                        {token.socialLinks.website && (
-                          <Button size="sm" variant="ghost" className="p-1 h-auto">
-                            <ExternalLink className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
@@ -443,7 +443,7 @@ export default function ZoraExplore() {
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/zoracreate">
-                <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
                   <Zap className="h-5 w-5 mr-2" />
                   Create Token
                 </Button>

@@ -57,3 +57,113 @@ export interface SellTokenParams {
 
 // Export the ABIs for direct use
 export { PUMP_FUN_ABI, TOKEN_FACTORY_ABI, TOKEN_ABI }
+export const zoraFactoryImplAbi = [
+  {
+    type: "function",
+    name: "createContentCoin",
+    inputs: [
+      { name: "name", type: "string" },
+      { name: "symbol", type: "string" },
+      { name: "description", type: "string" },
+      { name: "hooks", type: "address[]" },
+      { name: "hookData", type: "bytes" }
+    ],
+    outputs: [{ name: "coin", type: "address" }],
+    stateMutability: "payable"
+  },
+  {
+    type: "function",
+    name: "createCreatorCoin",
+    inputs: [
+      { name: "name", type: "string" },
+      { name: "symbol", type: "string" },
+      { name: "creator", type: "address" },
+      { name: "hooks", type: "address[]" },
+      { name: "hookData", type: "bytes" }
+    ],
+    outputs: [{ name: "coin", type: "address" }],
+    stateMutability: "payable"
+  },
+  {
+    type: "function",
+    name: "getAllCreatedCoins",
+    inputs: [],
+    outputs: [{ name: "", type: "address[]" }],
+    stateMutability: "view"
+  },
+  {
+    type: "event",
+    name: "CoinCreated",
+    inputs: [
+      { name: "coin", type: "address", indexed: true },
+      { name: "creator", type: "address", indexed: true },
+      { name: "name", type: "string", indexed: false },
+      { name: "symbol", type: "string", indexed: false }
+    ]
+  }
+] as const;
+
+export const contentCoinAbi = [
+  {
+    type: "function",
+    name: "name",
+    inputs: [],
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "symbol",
+    inputs: [],
+    outputs: [{ name: "", type: "string" }],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "totalSupply",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "balanceOf",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "buyWithEth",
+    inputs: [
+      { name: "recipient", type: "address" },
+      { name: "minTokensOut", type: "uint256" }
+    ],
+    outputs: [{ name: "tokensOut", type: "uint256" }],
+    stateMutability: "payable"
+  },
+  {
+    type: "function",
+    name: "sellForEth",
+    inputs: [
+      { name: "tokensToSell", type: "uint256" },
+      { name: "minEthOut", type: "uint256" }
+    ],
+    outputs: [{ name: "ethOut", type: "uint256" }],
+    stateMutability: "nonpayable"
+  },
+  {
+    type: "function",
+    name: "getBuyPrice",
+    inputs: [{ name: "ethAmount", type: "uint256" }],
+    outputs: [{ name: "tokenAmount", type: "uint256" }],
+    stateMutability: "view"
+  },
+  {
+    type: "function",
+    name: "getSellPrice",
+    inputs: [{ name: "tokenAmount", type: "uint256" }],
+    outputs: [{ name: "ethAmount", type: "uint256" }],
+    stateMutability: "view"
+  }
+] as const;
