@@ -62,6 +62,8 @@ import Admin from "./pages/Admin";
 import Feed from "./pages/Feed";
 import ContentNew from "@/pages/ContentNew";
 import ExploreContent from "@/pages/ExploreContent";
+import ZoraCreate from "@/pages/ZoraCreate";
+import ZoraExplore from "@/pages/ZoraExplore";
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
