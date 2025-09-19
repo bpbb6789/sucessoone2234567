@@ -2331,6 +2331,177 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct token creation endpoint (no file upload required)
+  app.post("/api/creator-coins/create", async (req, res) => {
+    console.log('🚀 Direct token creation started');
+    console.log('Request body:', req.body);
+
+    try {
+      const {
+        name, symbol, description, imageUri, 
+        creatorAddress, contentType, mediaCid,
+        currency, startingMarketCap,
+        twitter, discord, website
+      } = req.body;
+
+      console.log('📋 Token creation parameters:', {
+        name, symbol, creatorAddress, currency, startingMarketCap
+      });
+
+      // Validate required fields
+      if (!name || !symbol || !creatorAddress) {
+        console.error('❌ Missing required fields:', {
+          name: !!name,
+          symbol: !!symbol,
+          creatorAddress: !!creatorAddress
+        });
+        return res.status(400).json({ message: "Name, symbol, and creator address are required" });
+      }
+
+      // Create Zora metadata
+      console.log('📝 Creating Zora metadata...');
+      let metadataUri: string | null = null;
+      
+      try {
+        metadataUri = await createZoraMetadata({
+          name: name,
+          description: description || `Token created by ${creatorAddress}`,
+          imageUrl: imageUri || 'https://via.placeholder.com/400x400.png?text=' + encodeURIComponent(symbol),
+          contentType: contentType || 'token',
+          attributes: [
+            { trait_type: 'Token Symbol', value: symbol },
+            { trait_type: 'Creator', value: creatorAddress },
+            { trait_type: 'Currency', value: currency || 'ETH' },
+            { trait_type: 'Starting Market Cap', value: startingMarketCap || 'LOW' }
+          ]
+        });
+        console.log('✅ Metadata created successfully:', metadataUri);
+      } catch (metadataError) {
+        console.error('❌ Failed to create metadata:', metadataError);
+        return res.status(500).json({
+          error: "Metadata creation failed",
+          details: metadataError instanceof Error ? metadataError.message : 'Unknown error'
+        });
+      }
+
+      // Create creator coin in database
+      const coinData = {
+        creatorAddress,
+        title: name,
+        description: description || `Token: ${name}`,
+        contentType: contentType || 'token',
+        mediaCid: mediaCid || 'none',
+        thumbnailCid: 'none', // Use 'none' instead of null to match schema
+        metadataUri: metadataUri,
+        coinName: name,
+        coinSymbol: symbol,
+        currency: currency || 'ETH',
+        startingMarketCap: startingMarketCap || 'LOW',
+        twitter: twitter || null,
+        discord: discord || null,
+        website: website || null,
+        status: 'pending' as const // Use 'pending' to match existing pattern
+      };
+
+      console.log('💾 Saving token to database...', coinData);
+      const validatedCoinData = insertCreatorCoinSchema.parse(coinData);
+      const [newCoin] = await db.insert(creatorCoins).values(validatedCoinData).returning();
+
+      // Trigger notification for coin creation
+      await triggerNotification('content_coin_created', {
+        creatorAddress: newCoin.creatorAddress,
+        coinName: newCoin.coinName,
+        coinId: newCoin.id
+      });
+
+      // Update status to creating before deployment
+      await db.update(creatorCoins)
+        .set({ status: 'creating', updatedAt: new Date() })
+        .where(eq(creatorCoins.id, newCoin.id));
+
+      // Deploy the token immediately
+      console.log('🔧 Creating token with Zora SDK...');
+      console.log(`Deployment params:`, {
+        name: newCoin.coinName,
+        symbol: newCoin.coinSymbol,
+        metadataUri: newCoin.metadataUri,
+        startingMarketCap: newCoin.startingMarketCap,
+        currency: newCoin.currency,
+        creator: newCoin.creatorAddress
+      });
+
+      let deploymentResult;
+      try {
+        deploymentResult = await createCreatorCoin({
+          name: newCoin.coinName,
+          symbol: newCoin.coinSymbol,
+          uri: newCoin.metadataUri,
+          currency: newCoin.currency,
+          creatorAddress: newCoin.creatorAddress,
+          startingMarketCap: newCoin.startingMarketCap
+        });
+      } catch (error: any) {
+        console.error('❌ Token deployment failed:', error);
+        // Mark coin as failed
+        await db.update(creatorCoins)
+          .set({ status: 'failed', updatedAt: new Date() })
+          .where(eq(creatorCoins.id, newCoin.id));
+        
+        throw error;
+      }
+
+      console.log(`✅ Token deployed successfully:`, deploymentResult);
+
+      // Update coin with deployment info
+      const updatedCoin = await db.update(creatorCoins)
+        .set({
+          status: 'deployed',
+          coinAddress: deploymentResult.coinAddress,
+          deploymentTxHash: deploymentResult.txHash,
+          deployedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(creatorCoins.id, newCoin.id))
+        .returning();
+
+      // Trigger deployment success notifications
+      await triggerNotification('creator_coin_deployed', {
+        creatorAddress: newCoin.creatorAddress,
+        coinName: newCoin.coinName,
+        coinSymbol: newCoin.coinSymbol,
+        coinId: newCoin.id,
+        coinAddress: deploymentResult.coinAddress,
+        txHash: deploymentResult.txHash,
+        deploymentStatus: 'success'
+      });
+
+      console.log(`✅ Token creation completed for ${newCoin.id}`);
+
+      res.status(201).json({
+        success: true,
+        message: "Token created successfully",
+        coin: updatedCoin[0],
+        coinId: newCoin.id,
+        coinAddress: deploymentResult.coinAddress,
+        txHash: deploymentResult.txHash,
+        metadataUri: newCoin.metadataUri
+      });
+
+    } catch (error) {
+      console.error("❌ Token creation error:", error);
+      
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        console.error('Validation errors:', (error as any).errors);
+        res.status(400).json({ message: "Invalid token data", errors: (error as any).errors });
+      } else {
+        res.status(500).json({
+          error: "Token creation failed",
+          details: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+  });
+
   app.post("/api/creator-coins/:id/deploy", async (req, res) => {
     const coinId = req.params.id;
     console.log(`🚀 Starting deployment for creator coin: ${coinId}`);
