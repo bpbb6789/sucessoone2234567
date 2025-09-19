@@ -110,6 +110,9 @@ function AppContent() {
                 <Route path="/search" component={Search} />
                 <Route path="/create-token" component={CreateChannel} />
                 <Route path="/createtoken" component={CreateToken} />
+                <Route path="/create-content-coin" component={CreateContentCoin} />
+                <Route path="/zoracreate" component={ZoraCreate} />
+                <Route path="/zoraexplore" component={ZoraExplore} />
                 <Route path="/watch/:id" component={Watch} />
                 <Route path="/creatorcoins" component={CreatorCoins} />
                 <Route path="/contentcoin" component={ContentCoin} />
