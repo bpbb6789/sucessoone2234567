@@ -64,6 +64,7 @@ import ContentNew from "@/pages/ContentNew";
 import ExploreContent from "@/pages/ExploreContent";
 import ZoraCreate from "@/pages/ZoraCreate";
 import ZoraTokenDetail from "@/pages/ZoraTokenDetail";
+import CreatorProfile from './pages/CreatorProfile';
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -138,6 +139,7 @@ function AppContent() {
                 <Route path="/doc" component={Doc} />
                 <Route path="/faq" component={FAQ} />
                 <Route path="/creators" component={Creators} /> {/* New route for Creators page */}
+                <Route path="/creators/:address" component={CreatorProfile} />
                 <Route path="/channels" component={Channels} />
                 <Route path="/leaderboard" component={Leaderboard} />
                 <Route path="/contentnew" component={ContentNew} />

@@ -5,7 +5,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeTelegramService } from './services/telegramService';
-import { startTelegramLeaderboardScheduler } from './services/telegramLeaderboard';
+import { initializeTelegramLeaderboard } from './services/telegramLeaderboard'; // Corrected import
 import { initializeDatabase } from './initializeDatabase';
 import { contentTokenRouter } from './contentTokenRoutes';
 import { initializeBlockchainEventListener } from './services/blockchainEventListener';
@@ -57,7 +57,8 @@ app.use((req, res, next) => {
 
   // Initialize Telegram service and start leaderboard scheduler
   initializeTelegramService();
-  startTelegramLeaderboardScheduler();
+  // Start the Telegram leaderboard scheduler
+  initializeTelegramLeaderboard(); // Corrected function call
 
   // Initialize and start blockchain event listener for trading events
   const eventListener = initializeBlockchainEventListener();
