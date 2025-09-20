@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, TrendingDown, DollarSign, Users, Loader2 } from 'lucide-react';
@@ -94,8 +94,35 @@ export function TokenTrading({
     if (currentChainId === 84532) {
       toast({
         title: "Base Sepolia Trading",
-        description: "Trading on Base Sepolia testnet - some features may be limited",
+        description: "Using custom trading implementation for Base Sepolia testnet",
       });
+
+      // Use your server-side trading API for Base Sepolia
+      try {
+        const response = await fetch('/api/trade-coin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'buy',
+            coinAddress: tokenAddress,
+            ethAmount: buyAmount,
+            userAddress: account
+          })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          toast({
+            title: "Purchase Successful! 🎉",
+            description: `Successfully bought ${tokenSymbol} tokens for ${buyAmount} ETH`,
+          });
+          setBuyAmount('');
+          setTimeout(refetchBalances, 2000);
+          return;
+        }
+      } catch (error) {
+        console.error('Base Sepolia trading error:', error);
+      }
     }
 
     // Check if user has enough ETH

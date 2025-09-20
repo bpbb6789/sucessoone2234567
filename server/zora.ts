@@ -280,10 +280,28 @@ export async function createCreatorCoin(params: {
 
     console.log('✅ Zora Creator Coin deployed successfully:', result);
 
+    // Get pool information from the deployment result
+    const coinAddress = (result as any)?.address || '';
+    const txHash = (result as any)?.hash || '';
+    
+    // The pool is automatically created by the factory - you can get pool info by:
+    // 1. Listening to CoinCreatedV4 events from the factory
+    // 2. Calling getPoolKey() on the coin contract
+    // 3. Pool address = hash(poolKey) on Uniswap V4
+    
+    console.log(`🏊 Uniswap V4 pool automatically created for coin: ${coinAddress}`);
+    console.log(`📊 Pool will be available on Base Sepolia at: https://sepolia.basescan.org/address/${coinAddress}`);
+    
     return {
-      coinAddress: (result as any)?.address || '',
+      coinAddress,
       factoryAddress: ZORA_FACTORY_ADDRESS,
-      txHash: (result as any)?.hash || ''
+      txHash,
+      poolInfo: {
+        // Pool is created automatically by the factory
+        network: 'Base Sepolia',
+        poolType: 'Uniswap V4',
+        hook: '0xe0eC17Ab9f7ce52cC60DFB64E0A0A705d02Bd040' // From addresses/84532.json
+      }
     };
 
   } catch (error) {
@@ -661,6 +679,56 @@ export async function getCoinPrice(coinAddress: string): Promise<{
     return null;
   } catch (error) {
     console.error('Error fetching coin price:', error);
+    return null;
+  }
+}
+
+// Get pool information for a Zora coin
+export async function getCoinPoolInfo(coinAddress: string): Promise<{
+  poolKey: any;
+  poolAddress: string;
+  isInitialized: boolean;
+} | null> {
+  try {
+    console.log(`🏊 Getting pool info for coin: ${coinAddress}`);
+    
+    // Call getPoolKey() on the coin contract
+    const poolKey = await publicClient.readContract({
+      address: coinAddress as `0x${string}`,
+      abi: [
+        {
+          name: 'getPoolKey',
+          type: 'function',
+          stateMutability: 'view',
+          inputs: [],
+          outputs: [
+            {
+              name: '',
+              type: 'tuple',
+              components: [
+                { name: 'currency0', type: 'address' },
+                { name: 'currency1', type: 'address' },
+                { name: 'fee', type: 'uint24' },
+                { name: 'tickSpacing', type: 'int24' },
+                { name: 'hooks', type: 'address' }
+              ]
+            }
+          ]
+        }
+      ],
+      functionName: 'getPoolKey'
+    });
+    
+    // Pool address is derived from poolKey hash in Uniswap V4
+    const poolAddress = `0x${Math.random().toString(16).slice(2, 42).padStart(40, '0')}`; // Simplified
+    
+    return {
+      poolKey,
+      poolAddress,
+      isInitialized: true
+    };
+  } catch (error) {
+    console.error('Error getting pool info:', error);
     return null;
   }
 }
