@@ -321,8 +321,9 @@ export default function ZoraCreate() {
         </div>
 
         <Tabs defaultValue="token" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="token">Create Token</TabsTrigger>
+            <TabsTrigger value="creator">Creator Token</TabsTrigger>
             <TabsTrigger value="import">Import Content</TabsTrigger>
             <TabsTrigger value="channel">Create Channel</TabsTrigger>
           </TabsList>
@@ -528,6 +529,164 @@ export default function ZoraCreate() {
                     </>
                   )}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="creator" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Creator Token</CardTitle>
+                <CardDescription>Deploy a creator coin with vesting schedule and enhanced features</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="creator-name">Creator Name *</Label>
+                    <Input
+                      id="creator-name"
+                      placeholder="Creator Name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="creator-symbol">Creator Symbol *</Label>
+                    <Input
+                      id="creator-symbol"
+                      placeholder="CREATOR"
+                      value={formData.symbol}
+                      onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
+                      maxLength={8}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="creator-description">Creator Description</Label>
+                  <Textarea
+                    id="creator-description"
+                    placeholder="Describe your creator brand and what holders will get..."
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                {/* Creator Social Links */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="creator-twitter">Twitter</Label>
+                    <Input
+                      id="creator-twitter"
+                      placeholder="@username"
+                      value={formData.twitter}
+                      onChange={(e) => handleInputChange('twitter', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="creator-discord">Discord</Label>
+                    <Input
+                      id="creator-discord"
+                      placeholder="discord.gg/invite"
+                      value={formData.discord}
+                      onChange={(e) => handleInputChange('discord', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="creator-website">Website</Label>
+                    <Input
+                      id="creator-website"
+                      placeholder="https://creator.com"
+                      value={formData.website}
+                      onChange={(e) => handleInputChange('website', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Creator Token Image */}
+                <div className="space-y-3">
+                  <Label>Creator Avatar/Logo</Label>
+                  
+                  {!selectedFile ? (
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                        isDragging 
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+                          : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => document.getElementById('creator-media-upload')?.click()}
+                    >
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm font-medium">Upload creator avatar</p>
+                      <p className="text-xs text-muted-foreground">Images (max 50MB)</p>
+                      <input
+                        id="creator-media-upload"
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleFileInput}
+                        disabled={!isConnected}
+                      />
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <FileImage className="h-4 w-4 text-purple-500" />
+                          <span className="text-sm font-medium">{selectedFile.name}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeSelectedFile}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {selectedFile.type.startsWith('image/') && (
+                        <div className="aspect-square w-24 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                          <img src={previewUrl} alt="Creator Avatar" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Creator Token Features */}
+                <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-green-900 dark:text-green-100 mb-3">
+                      Creator Token Features
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-green-800 dark:text-green-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        500M tokens to liquidity pool
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        500M tokens vested over 5 years
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        Automatic Uniswap V4 integration
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600">✓</span>
+                        Built-in rewards distribution
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
           </TabsContent>
