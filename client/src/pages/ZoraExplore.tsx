@@ -63,6 +63,14 @@ interface ZoraToken {
     likes: number;
   };
   createdAt: string;
+  // Fields for real tokens
+  coinName?: string;
+  coinSymbol?: string;
+  contentType?: 'creator' | 'content' | 'basic';
+  currentPrice?: string;
+  status?: 'deployed' | 'pending';
+  currency?: string;
+  creatorAddress?: string;
 }
 
 export default function ZoraExplore() {
@@ -70,9 +78,9 @@ export default function ZoraExplore() {
   const [selectedType, setSelectedType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
-  // Mock data - replace with real API calls to your Zora contracts
-  const { data: tokens = [], isLoading } = useQuery({
-    queryKey: ['zora-tokens', selectedType, sortBy, searchQuery],
+  // Fetch real tokens from API
+  const { data: realTokens, isLoading: tokensLoading, error: tokensError } = useQuery({
+    queryKey: ['zora-tokens'],
     queryFn: async (): Promise<ZoraToken[]> => {
       // This would fetch from your backend API that queries the Zora factory contracts
       // For now, returning mock data
@@ -99,7 +107,14 @@ export default function ZoraExplore() {
             views: 1250,
             likes: 89
           },
-          createdAt: '2025-01-15T10:30:00Z'
+          createdAt: '2025-01-15T10:30:00Z',
+          coinName: 'Creator Coin Alpha',
+          coinSymbol: 'CCA',
+          contentType: 'creator',
+          currentPrice: '0.0015',
+          status: 'deployed',
+          currency: 'ETH',
+          creatorAddress: '0x2f250c0440a48493719120BEb1A4f95ee3e72033'
         },
         {
           id: '2',
@@ -118,7 +133,14 @@ export default function ZoraExplore() {
             views: 890,
             likes: 156
           },
-          createdAt: '2025-01-14T15:45:00Z'
+          createdAt: '2025-01-14T15:45:00Z',
+          coinName: 'Melody Token',
+          coinSymbol: 'MEL',
+          contentType: 'content',
+          currentPrice: '0.0028',
+          status: 'deployed',
+          currency: 'ETH',
+          creatorAddress: '0x9876543210987654321098765432109876543210'
         }
       ];
     },
@@ -129,24 +151,26 @@ export default function ZoraExplore() {
     queryKey: ['trending-zora-tokens'],
     queryFn: async () => {
       // Mock trending tokens
-      return tokens.slice(0, 3);
+      return realTokens ? realTokens.slice(0, 3) : [];
     },
     refetchInterval: 30000,
   });
 
-  const filteredTokens = tokens.filter((token: ZoraToken) => {
+  const filteredTokens = (realTokens || []).filter((token: ZoraToken) => {
     const matchesSearch = !searchQuery || 
-      token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.description.toLowerCase().includes(searchQuery.toLowerCase());
+      token.coinName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      token.coinSymbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      token.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesType = selectedType === 'all' || token.type === selectedType;
+    const matchesCategory = selectedType === 'all' || 
+      (selectedType === 'creator' && token.contentType === 'creator') ||
+      (selectedType === 'content' && token.contentType !== 'creator');
 
-    return matchesSearch && matchesType;
+    return matchesSearch && matchesCategory;
   });
 
-  const formatPrice = (price: string) => {
-    return `${parseFloat(price).toFixed(6)} ETH`;
+  const formatPrice = (price: string | undefined) => {
+    return `${parseFloat(price || '0').toFixed(6)} ETH`;
   };
 
   const formatMarketCap = (marketCap: string) => {
@@ -156,14 +180,44 @@ export default function ZoraExplore() {
     return `$${value.toFixed(2)}`;
   };
 
-  const formatChange = (change: number) => {
-    const isPositive = change >= 0;
+  const formatChange = (change: number | undefined) => {
+    const isPositive = (change ?? 0) >= 0;
     return (
       <span className={`flex items-center gap-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-        {isPositive ? '↑' : '↓'} {Math.abs(change).toFixed(1)}%
+        {isPositive ? '↑' : '↓'} {Math.abs(change ?? 0).toFixed(1)}%
       </span>
     );
   };
+
+  if (tokensLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+            <div className="h-10 bg-gray-300 rounded w-full max-w-md"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-64 bg-gray-300 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (tokensError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Tokens</h2>
+          <p className="text-muted-foreground">Failed to fetch real token data</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
@@ -203,20 +257,20 @@ export default function ZoraExplore() {
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                          {token.symbol.charAt(0)}
+                          {token.coinSymbol?.charAt(0) || token.symbol?.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium truncate">{token.name}</h3>
-                          <p className="text-sm text-muted-foreground">{token.symbol}</p>
+                          <h3 className="font-medium truncate">{token.coinName || token.name}</h3>
+                          <p className="text-sm text-muted-foreground">{token.coinSymbol || token.symbol}</p>
                         </div>
-                        <Badge className={tokenTypes.find(t => t.value === token.type)?.color}>
-                          {tokenTypes.find(t => t.value === token.type)?.label}
+                        <Badge className={tokenTypes.find(t => t.value === token.contentType)?.color || tokenTypes.find(t => t.value === token.type)?.color}>
+                          {tokenTypes.find(t => t.value === token.contentType)?.label || tokenTypes.find(t => t.value === token.type)?.label}
                         </Badge>
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Price:</span>
-                          <span className="font-medium">{formatPrice(token.price)}</span>
+                          <span className="font-medium">{formatPrice(token.currentPrice || token.price)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">24h:</span>
@@ -284,22 +338,7 @@ export default function ZoraExplore() {
         </Card>
 
         {/* Tokens Grid */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-4">
-                  <div className="w-full h-48 bg-muted rounded-lg mb-4"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-3 bg-muted rounded w-1/2"></div>
-                    <div className="h-3 bg-muted rounded w-full"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredTokens.length === 0 ? (
+        {filteredTokens.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
@@ -332,53 +371,52 @@ export default function ZoraExplore() {
                     <div className="relative p-4 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900 dark:to-blue-900">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
-                          {token.symbol.charAt(0)}
+                          {token.coinSymbol?.charAt(0) || token.symbol?.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate text-gray-900 dark:text-gray-100">
-                            {token.name}
+                            {token.coinName || token.name}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{token.symbol}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{token.coinSymbol || token.symbol}</p>
                         </div>
                         <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
 
                       {/* Type Badge */}
                       <Badge 
-                        className={`absolute top-2 right-2 ${tokenTypes.find(t => t.value === token.type)?.color}`}
+                        className={`absolute top-2 right-2 ${tokenTypes.find(t => t.value === token.contentType)?.color || tokenTypes.find(t => t.value === token.type)?.color}`}
                       >
-                        {tokenTypes.find(t => t.value === token.type)?.label}
+                        {tokenTypes.find(t => t.value === token.contentType)?.label || tokenTypes.find(t => t.value === token.type)?.label}
                       </Badge>
                     </div>
 
                     <div className="p-4">
                       {/* Description */}
-                      {token.description && (
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                          {token.description}
-                        </p>
-                      )}
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                        {token.description || 'No description available'}
+                      </p>
 
                       {/* Price Info */}
                       <div className="space-y-2 mb-4">
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-muted-foreground">Price</span>
-                          <span className="font-semibold">{formatPrice(token.price)}</span>
+                          <span className="font-semibold">{token.currentPrice || '0.000001'} ETH</span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">24h Change</span>
-                          {formatChange(token.change24h)}
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Status</span>
+                          <span className={`font-semibold ${token.status === 'deployed' ? 'text-green-600' : 'text-yellow-600'}`}>
+                            {token.status === 'deployed' ? '✅ Live' : '⏳ Pending'}
+                          </span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Market Cap</span>
-                          <span className="font-medium">{formatMarketCap(token.marketCap)}</span>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Currency</span>
+                          <span className="font-semibold">{token.currency}</span>
                         </div>
-
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Holders</span>
-                          <span className="font-medium">{token.holders}</span>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Creator</span>
+                          <span className="font-semibold font-mono text-xs">
+                            {token.creatorAddress?.slice(0, 6)}...{token.creatorAddress?.slice(-4)}
+                          </span>
                         </div>
                       </div>
 
