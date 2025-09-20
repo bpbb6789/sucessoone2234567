@@ -53,11 +53,78 @@ export default function Token() {
 
   const tokenAddress = getTokenAddressFromPath() as `0x${string}` | null;
 
-  // Get token bonding curve data from Zora API
-  const { data: bondingCurveData, isError: tokenDataError, isLoading: contractLoading } = useQuery({
-    queryKey: ['/api/zora/bonding-curve', tokenAddress],
+  // Get real token data from the deployed contract and database
+  const { data: tokenData, isError: tokenDataError, isLoading: contractLoading } = useQuery({
+    queryKey: ['token-data', tokenAddress],
+    queryFn: async () => {
+      if (!tokenAddress) throw new Error('No token address');
+      
+      // First try to get data from our creator coins database
+      const coinResponse = await fetch(`/api/creator-coins/${tokenAddress}`);
+      if (coinResponse.ok) {
+        const coinData = await coinResponse.json();
+        
+        // Get real price data from DexScreener if available
+        let realPrice = "0.00000100";
+        let realMarketCap = "1.00";
+        let realVolume = "0";
+        let priceChange = 0;
+        let realHolders = 0;
+        
+        try {
+          const dexResponse = await fetch(`/api/dexscreener/${tokenAddress}`);
+          if (dexResponse.ok) {
+            const dexData = await dexResponse.json();
+            if (dexData.price) {
+              realPrice = parseFloat(dexData.price).toFixed(8);
+              realMarketCap = parseFloat(dexData.marketCap || "0").toFixed(2);
+              realVolume = parseFloat(dexData.volume24h || "0").toFixed(2);
+              priceChange = dexData.priceChange24h || 0;
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to fetch DexScreener data:', error);
+        }
+        
+        // Get real holder count
+        try {
+          const holdersResponse = await fetch('/api/token-holders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tokenAddress })
+          });
+          if (holdersResponse.ok) {
+            const holdersData = await holdersResponse.json();
+            realHolders = holdersData.holderCount || 0;
+          }
+        } catch (error) {
+          console.warn('Failed to fetch holder count:', error);
+        }
+        
+        return {
+          address: tokenAddress,
+          name: coinData.coinName || coinData.title,
+          symbol: coinData.coinSymbol || coinData.symbol,
+          price: realPrice,
+          marketCap: realMarketCap,
+          volume24h: realVolume,
+          holders: realHolders,
+          supply: "1000000",
+          createdBy: coinData.creatorAddress,
+          description: coinData.description || `${coinData.coinName} token`,
+          change24h: priceChange,
+          imageUri: coinData.thumbnailCid ? `https://gateway.pinata.cloud/ipfs/${coinData.thumbnailCid}` : null,
+          contractAddress: tokenAddress,
+          deploymentTx: coinData.deploymentTxHash,
+          status: coinData.status
+        };
+      }
+      
+      throw new Error('Token not found in database');
+    },
     enabled: !!tokenAddress,
     retry: 2,
+    refetchInterval: 30000, // Refetch every 30 seconds for live data
   });
 
   // Helper function to format numbers for display
@@ -78,7 +145,7 @@ export default function Token() {
         return;
       }
 
-      // Wait for contract data to load
+      // Wait for token data to load
       if (contractLoading) {
         setIsLoading(true);
         return;
@@ -86,19 +153,19 @@ export default function Token() {
 
       // Handle contract errors
       if (tokenDataError) {
-        console.error("Contract data error:", tokenDataError);
+        console.error("Token data error:", tokenDataError);
         toast({
           title: "Error loading token",
-          description: "Failed to load token data from contract. The token may not exist.",
+          description: "Failed to load token data. The token may not exist.",
           variant: "destructive"
         });
         setIsLoading(false);
         return;
       }
 
-      // Check if we have contract data
-      if (!bondingCurveData) {
-        console.log("No bonding curve data available");
+      // Check if we have token data
+      if (!tokenData) {
+        console.log("No token data available");
         setIsLoading(false);
         return;
       }
@@ -106,50 +173,13 @@ export default function Token() {
       try {
         setIsLoading(true);
 
-        // Extract data from bonding curve struct
-        const {
-          tokenMint,
-          virtualTokenReserves,
-          virtualEthReserves,
-          realTokenReserves,
-          realEthReserves,
-          tokenTotalSupply,
-          mcapLimit,
-          complete
-        } = bondingCurveData;
-
-        // Calculate basic metrics from bonding curve
-        const virtualEthReservesEth = Number(formatUnits(virtualEthReserves, 18));
-        const virtualTokenReservesNum = Number(formatUnits(virtualTokenReserves, 18));
-        const totalSupplyNum = Number(formatUnits(tokenTotalSupply, 18));
-        
-        // Calculate current price (ETH per token)
-        const pricePerTokenEth = virtualEthReservesEth / virtualTokenReservesNum;
-        const priceUSD = pricePerTokenEth * 3000; // Approximate ETH price
-
-        // Calculate market cap
-        const marketCapValue = priceUSD * totalSupplyNum;
-
-        // Real data will be fetched from indexing service when available
-        const volume24h = "0";
-        const holders = 0;
-
-        const processedTokenData: TokenData = {
-          address: tokenAddress,
-          name: "Token", // Would fetch from token contract
-          symbol: "TKN", // Would fetch from token contract
-          price: priceUSD.toFixed(8),
-          marketCap: marketCapValue.toFixed(2),
-          volume24h: volume24h,
-          holders: holders,
-          supply: formatUnits(tokenTotalSupply, 18),
-          createdBy: "0x0000000000000000000000000000000000000000", // Would get from indexer
-          description: 'Token created through PumpFun bonding curve',
-          imageUri: undefined
-        };
-
-        console.log("Processed token data:", processedTokenData);
-        setTokenData(processedTokenData);
+        // Use the real token data from the query
+        if (tokenData) {
+          setTokenData(tokenData);
+          console.log("Using real token data:", tokenData);
+        } else {
+          console.warn("No token data available");
+        }
       } catch (error) {
         console.error('Error processing token data:', error);
         toast({
@@ -163,7 +193,7 @@ export default function Token() {
     };
 
     fetchTokenData();
-  }, [tokenAddress, bondingCurveData, tokenDataError, contractLoading, toast]);
+  }, [tokenAddress, tokenData, tokenDataError, contractLoading, toast]);
 
   if (isLoading || contractLoading) {
     return (

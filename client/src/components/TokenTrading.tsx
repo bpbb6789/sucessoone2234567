@@ -79,13 +79,23 @@ export function TokenTrading({
 
     // Check if we're on a supported network (Base Mainnet or Base Sepolia)
     const supportedChainIds = [8453, 84532]; // Base Mainnet, Base Sepolia
-    if (!supportedChainIds.includes(walletClient.chain?.id || 0)) {
+    const currentChainId = walletClient.chain?.id || 0;
+
+    if (!supportedChainIds.includes(currentChainId)) {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Base Mainnet or Base Sepolia to use Zora Trading",
+        description: "Please switch to Base Mainnet or Base Sepolia to trade tokens",
         variant: "destructive"
       });
       return;
+    }
+
+    // Note: For Base Sepolia, we'll use our own trading implementation
+    if (currentChainId === 84532) {
+      toast({
+        title: "Base Sepolia Trading",
+        description: "Trading on Base Sepolia testnet - some features may be limited",
+      });
     }
 
     // Check if user has enough ETH
@@ -167,13 +177,23 @@ export function TokenTrading({
 
     // Check if we're on a supported network (Base Mainnet or Base Sepolia)
     const supportedChainIds = [8453, 84532]; // Base Mainnet, Base Sepolia
-    if (!supportedChainIds.includes(walletClient.chain?.id || 0)) {
+    const currentChainId = walletClient.chain?.id || 0;
+
+    if (!supportedChainIds.includes(currentChainId)) {
       toast({
         title: "Wrong Network",
-        description: "Please switch to Base Mainnet or Base Sepolia to use Zora Trading",
+        description: "Please switch to Base Mainnet or Base Sepolia to trade tokens",
         variant: "destructive"
       });
       return;
+    }
+
+    // Note: For Base Sepolia, we'll use our own trading implementation
+    if (currentChainId === 84532) {
+      toast({
+        title: "Base Sepolia Trading",
+        description: "Trading on Base Sepolia testnet - some features may be limited",
+      });
     }
 
     // Check if user has enough tokens
