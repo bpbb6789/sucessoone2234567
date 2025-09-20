@@ -13,11 +13,8 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreatorCoinUpload, useDeployCreatorCoin } from '@/hooks/useCreatorCoins';
-import { useUrlImport } from '@/hooks/useContentImports';
-import { useQuery } from '@tanstack/react-query';
-import CreateChannel from '@/components/CreateChannel';
 import { useTriggerNotification } from "@/hooks/useNotifications";
-import { useMutation } from '@tanstack/react-query'; // Import useMutation
+import { useMutation } from '@tanstack/react-query';
 
 const contentTypes = [
   { id: 'image', name: 'Image', icon: FileImage, description: 'JPG, PNG, GIF, SVG images', accept: 'image/*' },
@@ -44,9 +41,7 @@ export default function CreateContentCoin() {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [uploadedCoin, setUploadedCoin] = useState<any>(null);
 
-  // Import tab state
-  const [importUrl, setImportUrl] = useState('');
-  const [activeTab, setActiveTab] = useState('upload');
+  
 
   // Form state
   const [formData, setFormData] = useState({
@@ -67,41 +62,7 @@ export default function CreateContentCoin() {
   const { toast } = useToast();
   const { address, isConnected } = useAccount();
   const uploadMutation = useCreatorCoinUpload();
-  // const deployMutation = useDeployCreatorCoin(); // This is replaced by the useMutation hook below
-  const urlImportMutation = useUrlImport();
   const triggerNotification = useTriggerNotification();
-
-  // Get user's channel data for imports
-  const { data: userChannelData } = useQuery({
-    queryKey: ["user-channel", address],
-    queryFn: async () => {
-      if (!address) return null;
-      const response = await fetch(`/api/me`, {
-        headers: { 'x-wallet-address': address }
-      });
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: !!address,
-  });
-
-  // Get user's Web3 channels for imports
-  const { data: userChannels = [] } = useQuery({
-    queryKey: ["user-web3-channels", address],
-    queryFn: async () => {
-      if (!address) return [];
-      const response = await fetch('/api/web3-channels');
-      if (!response.ok) return [];
-      const allChannels = await response.json();
-      return allChannels.filter((channel: any) => 
-        channel.owner?.toLowerCase() === address.toLowerCase()
-      );
-    },
-    enabled: !!address,
-  });
-
-  // Use the first Web3 channel if user has one, otherwise use 'public' for imports
-  const channelId = userChannels.length > 0 ? userChannels[0].id : 'public';
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -357,65 +318,6 @@ export default function CreateContentCoin() {
     }
   };
 
-  const handleUrlImport = async () => {
-    if (!importUrl || !formData.coinName || !formData.coinSymbol) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in URL, coin name, and symbol.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const hostname = new URL(importUrl).hostname;
-
-      toast({
-        title: "Import Started",
-        description: "Processing shorts content... Downloading and extracting thumbnail (5-10s)"
-      });
-
-      const result = await urlImportMutation.mutateAsync({
-        url: importUrl,
-        channelId,
-        contentType: 'reel', // Default to reel for shorts
-        title: formData.title, // Use title from form data
-        description: formData.description || `Content imported from ${importUrl}`,
-        coinName: formData.coinName,
-        coinSymbol: formData.coinSymbol
-      });
-
-      // If import was successful, treat it like an uploaded coin
-      setUploadedCoin({
-        id: result.content.id,
-        coinName: formData.coinName,
-        coinSymbol: formData.coinSymbol,
-        contentType: 'video',
-        status: 'uploaded'
-      });
-
-      // Set creator name and name for notification context
-      setFormData(prev => ({
-        ...prev,
-        creatorName: userChannelData?.name || '',
-        name: formData.coinName // Use coinName as the name for notification
-      }));
-
-      setImportUrl('');
-      toast({
-        title: "Import Complete",
-        description: "Short video has been processed and is ready for tokenization!"
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to import content";
-      toast({
-        title: "Import Failed",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    }
-  };
-
 
 
   return (
@@ -430,32 +332,17 @@ export default function CreateContentCoin() {
             </h1>
           </div>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Upload your content or import shorts and transform them into tradable creator coins using Zora's advanced bonding curve technology
+            Upload your content and transform it into tradable creator coins using Zora's advanced bonding curve technology
           </p>
         </div>
 
 
 
-        {/* Tabs for Upload vs Import vs Create Channel */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="upload" className="flex items-center gap-2" data-testid="tab-upload">
-              <Upload className="h-4 w-4" />
-              Upload File
-            </TabsTrigger>
-            <TabsTrigger value="import" className="flex items-center gap-2" data-testid="tab-import">
-              <ExternalLink className="h-4 w-4" />
-              Import Shorts
-            </TabsTrigger>
-            <TabsTrigger value="channel" className="flex items-center gap-2" data-testid="tab-channel">
-              <Coins className="h-4 w-4" />
-              Create Channel
-            </TabsTrigger>
-          </TabsList>
+        {/* Content Upload Section */}
+        <div className="w-full">{/* Removed tabs, now just direct upload functionality */}
 
-          <TabsContent value="upload" className="space-y-6">
-            {/* Upload Content */}
-            {!selectedFile && !uploadedCoin && (
+          {/* Upload Content */}
+          {!selectedFile && !uploadedCoin && (
           <Card className="border-purple-200 dark:border-purple-800">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -741,124 +628,7 @@ export default function CreateContentCoin() {
             </Card>
           </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="import" className="space-y-6">
-            {/* Import Content Form */}
-            <Card className="border-purple-200 dark:border-purple-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ExternalLink className="h-5 w-5" />
-                  Import Short-Form Content
-                </CardTitle>
-                <CardDescription>
-                  Import videos from TikTok, YouTube Shorts, Instagram Reels, or Twitter and create content coins
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="import-url">Content URL *</Label>
-                  <Input
-                    placeholder="https://youtube.com/shorts/... or https://instagram.com/reel/..."
-                    value={importUrl}
-                    onChange={(e) => setImportUrl(e.target.value)}
-                    className="flex-1"
-                    data-testid="import-url-input"
-                    disabled={!isConnected}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Supports: TikTok, YouTube Shorts, Instagram Reels, Twitter videos (15-90 seconds)
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="import-coin-name">Coin Name *</Label>
-                    <Input
-                      id="import-coin-name"
-                      value={formData.coinName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, coinName: e.target.value }))}
-                      placeholder="Epic Dance Video"
-                      data-testid="input-import-coin-name"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="import-coin-symbol">Symbol *</Label>
-                    <Input
-                      id="import-coin-symbol"
-                      value={formData.coinSymbol}
-                      onChange={(e) => setFormData(prev => ({ ...prev, coinSymbol: e.target.value.toUpperCase() }))}
-                      placeholder="DANCE"
-                      maxLength={6}
-                      data-testid="input-import-coin-symbol"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="import-title">Content Title (Optional)</Label>
-                  <Input
-                    id="import-title"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Custom title for your content coin"
-                    data-testid="input-import-title"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="import-description">Description (Optional)</Label>
-                  <Textarea
-                    id="import-description"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe why this content should be tokenized..."
-                    rows={3}
-                    data-testid="input-import-description"
-                  />
-                </div>
-
-                <Button 
-                  onClick={handleUrlImport}
-                  disabled={!isConnected || !importUrl.trim() || urlImportMutation.isPending}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                  data-testid="import-content-button"
-                >
-                  {urlImportMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing shorts content...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Import & Prepare Coin
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="channel" className="space-y-6">
-            {/* Create Channel Content */}
-            <Card className="border-purple-200 dark:border-purple-800">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Coins className="h-5 w-5" />
-                  Create Your Channel Coin
-                </CardTitle>
-                <CardDescription>
-                  Deploy a Zora-based channel with bonding curve tokenomics
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CreateChannel />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        </div>
 
         {/* Deployment (shown for both upload and import) */}
         {uploadedCoin && (

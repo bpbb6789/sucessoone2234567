@@ -11,6 +11,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAccount } from 'wagmi';
 import { parseEther, formatEther, Address } from 'viem';
 import { Loader2, Coins, Zap, Rocket, Info, ExternalLink, CheckCircle, AlertCircle, Upload, X, FileImage, Video, Music, FileText, Play } from 'lucide-react';
+import CreateChannel from '@/components/CreateChannel';
+import { useUrlImport } from '@/hooks/useContentImports';
+import { useMutation } from '@tanstack/react-query';
+import { useTriggerNotification } from "@/hooks/useNotifications";
+import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { zoraFactoryImplAbi } from '@/lib/contracts';
 
@@ -37,6 +42,9 @@ export default function ZoraCreate() {
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
 
+  // Import Shorts state
+  const [importUrl, setImportUrl] = useState('');
+  
   const [formData, setFormData] = useState({
     name: '',
     symbol: '',
@@ -50,6 +58,42 @@ export default function ZoraCreate() {
   });
 
   const [deployedTokenAddress, setDeployedTokenAddress] = useState<Address | null>(null);
+
+  // Import Shorts hooks
+  const urlImportMutation = useUrlImport();
+  const triggerNotification = useTriggerNotification();
+
+  // Get user's channel data for imports
+  const { data: userChannelData } = useQuery({
+    queryKey: ["user-channel", address],
+    queryFn: async () => {
+      if (!address) return null;
+      const response = await fetch(`/api/me`, {
+        headers: { 'x-wallet-address': address }
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!address,
+  });
+
+  // Get user's Web3 channels for imports
+  const { data: userChannels = [] } = useQuery({
+    queryKey: ["user-web3-channels", address],
+    queryFn: async () => {
+      if (!address) return [];
+      const response = await fetch('/api/web3-channels');
+      if (!response.ok) return [];
+      const allChannels = await response.json();
+      return allChannels.filter((channel: any) => 
+        channel.owner?.toLowerCase() === address.toLowerCase()
+      );
+    },
+    enabled: !!address,
+  });
+
+  // Use the first Web3 channel if user has one, otherwise use 'public' for imports
+  const channelId = userChannels.length > 0 ? userChannels[0].id : 'public';
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -145,6 +189,50 @@ export default function ZoraCreate() {
     if (file.type.startsWith('video/')) return Video;
     if (file.type.startsWith('audio/')) return Music;
     return FileText;
+  };
+
+  const handleUrlImport = async () => {
+    if (!importUrl || !formData.name || !formData.symbol) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in URL, token name, and symbol.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const hostname = new URL(importUrl).hostname;
+
+      toast({
+        title: "Import Started",
+        description: "Processing shorts content... Downloading and extracting thumbnail (5-10s)"
+      });
+
+      const result = await urlImportMutation.mutateAsync({
+        url: importUrl,
+        channelId,
+        contentType: 'reel',
+        title: formData.name,
+        description: formData.description || `Content imported from ${importUrl}`,
+        coinName: formData.name,
+        coinSymbol: formData.symbol
+      });
+
+      // Reset form after successful import
+      setImportUrl('');
+      toast({
+        title: "Import Complete",
+        description: "Short video has been processed and is ready for tokenization!"
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to import content";
+      toast({
+        title: "Import Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCreateToken = async () => {
@@ -310,7 +398,7 @@ export default function ZoraCreate() {
         </Card>
 
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="basic" className="flex items-center gap-2">
               <Coins className="h-4 w-4" />
               Basic Token
@@ -319,7 +407,15 @@ export default function ZoraCreate() {
               <Rocket className="h-4 w-4" />
               Creator Coin
             </TabsTrigger>
-          </TabsList>
+            <TabsTrigger value="import" className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4" />
+              Import Shorts
+            </TabsTrigger>
+            <TabsTrigger value="channel" className="flex items-center gap-2">
+              <Coins className="h-4 w-4" />
+              Create Channel
+            </TabsTrigger>
+          </TabsList></TabsList>
 
           <TabsContent value="basic" className="space-y-6">
             <Card>
@@ -697,6 +793,146 @@ export default function ZoraCreate() {
                     Built-in rewards distribution
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="import" className="space-y-6">
+            {/* Import Short-Form Content */}
+            <Card className="border-purple-200 bg-purple-50 dark:bg-purple-900/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ExternalLink className="h-5 w-5" />
+                  Import Short-Form Content
+                </CardTitle>
+                <CardDescription>
+                  Import videos from TikTok, YouTube Shorts, Instagram Reels, or Twitter and create tokens
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="import-url">Content URL *</Label>
+                  <Input
+                    placeholder="https://youtube.com/shorts/... or https://instagram.com/reel/..."
+                    value={importUrl}
+                    onChange={(e) => setImportUrl(e.target.value)}
+                    className="flex-1"
+                    disabled={!isConnected}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Supports: TikTok, YouTube Shorts, Instagram Reels, Twitter videos (15-90 seconds)
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="import-token-name">Token Name *</Label>
+                    <Input
+                      id="import-token-name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      placeholder="Epic Dance Token"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="import-token-symbol">Symbol *</Label>
+                    <Input
+                      id="import-token-symbol"
+                      value={formData.symbol}
+                      onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
+                      placeholder="DANCE"
+                      maxLength={6}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="import-description">Description (Optional)</Label>
+                  <Textarea
+                    id="import-description"
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    placeholder="Describe why this content should be tokenized..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Base Currency</Label>
+                    <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map(currency => (
+                          <SelectItem key={currency.value} value={currency.value}>
+                            <div>
+                              <div className="font-medium">{currency.label}</div>
+                              <div className="text-xs text-muted-foreground">{currency.description}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Starting Market Cap</Label>
+                    <Select value={formData.startingMarketCap} onValueChange={(value) => handleInputChange('startingMarketCap', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {marketCaps.map(cap => (
+                          <SelectItem key={cap.value} value={cap.value}>
+                            <div>
+                              <div className="font-medium">{cap.label}</div>
+                              <div className="text-xs text-muted-foreground">{cap.description}</div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleUrlImport}
+                  disabled={!isConnected || !importUrl.trim() || urlImportMutation.isPending}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                >
+                  {urlImportMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing shorts content...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Import & Create Token
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="channel" className="space-y-6">
+            {/* Create Channel Content */}
+            <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Coins className="h-5 w-5" />
+                  Create Your Channel Token
+                </CardTitle>
+                <CardDescription>
+                  Deploy a Zora-based channel with bonding curve tokenomics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CreateChannel />
               </CardContent>
             </Card>
           </TabsContent>
