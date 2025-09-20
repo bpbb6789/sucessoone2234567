@@ -50,118 +50,60 @@ export interface DexScreenerResponse {
   pairs: DexScreenerToken[] | null;
 }
 
-// Get real trading data from DexScreener
+// Get real-time price data from DexScreener API
 export async function getDexScreenerData(tokenAddress: string): Promise<{
-  price: number | null;
-  marketCap: number | null;
-  volume24h: number | null;
-  priceChange24h: number | null;
-  chartData: Array<{time: number, price: number, volume: number}> | null;
-}> {
+  price: string;
+  priceChange24h: number;
+  volume24h: string;
+  marketCap: string;
+  liquidity: string;
+} | null> {
   try {
-    console.log(`🔍 Fetching DexScreener data for token: ${tokenAddress}`);
-    
-    // DexScreener API endpoint for token search
-    const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`, {
-      method: 'GET',
+    console.log(`📊 Fetching DexScreener data for token: ${tokenAddress}`);
+
+    // DexScreener API endpoint for Base Sepolia
+    const url = `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`;
+
+    const response = await fetch(url, {
       headers: {
-        'Accept': 'application/json',
-      },
+        'User-Agent': 'ContentCoin-Platform/1.0'
+      }
     });
 
     if (!response.ok) {
-      console.log(`⚠️ DexScreener API error: ${response.status}`);
-      return {
-        price: null,
-        marketCap: null,
-        volume24h: null,
-        priceChange24h: null,
-        chartData: null
-      };
+      console.warn(`⚠️ DexScreener API returned ${response.status} for ${tokenAddress}`);
+      return null;
     }
 
-    const data = await response.json() as DexScreenerResponse;
-    
+    const data = await response.json();
+
     if (!data.pairs || data.pairs.length === 0) {
-      console.log(`⚠️ No trading pairs found for ${tokenAddress} on DexScreener`);
-      return {
-        price: null,
-        marketCap: null,
-        volume24h: null,
-        priceChange24h: null,
-        chartData: null
-      };
+      console.log(`📊 No trading pairs found for ${tokenAddress} on DexScreener`);
+      return null;
     }
 
-    // Get the most liquid pair (highest volume)
-    const mostLiquidPair = data.pairs.reduce((prev, current) => {
-      return (current.volume.h24 > prev.volume.h24) ? current : prev;
-    });
+    // Get the most liquid pair
+    const pair = data.pairs.sort((a: any, b: any) => 
+      parseFloat(b.liquidity?.usd || '0') - parseFloat(a.liquidity?.usd || '0')
+    )[0];
 
-    console.log(`✅ Found trading pair on ${mostLiquidPair.dexId}`);
-
-    // Extract real trading data
-    const realData = {
-      price: mostLiquidPair.priceUsd ? parseFloat(mostLiquidPair.priceUsd) : null,
-      marketCap: mostLiquidPair.marketCap || mostLiquidPair.fdv || null,
-      volume24h: mostLiquidPair.volume.h24 || null,
-      priceChange24h: mostLiquidPair.priceChange.h24 || null,
-      chartData: null // Will implement historical data separately
-    };
-
-    console.log(`✅ DexScreener data for ${tokenAddress}:`, realData);
-    return realData;
-
-  } catch (error) {
-    console.error('DexScreener API error:', error);
     return {
-      price: null,
-      marketCap: null,
-      volume24h: null,
-      priceChange24h: null,
-      chartData: null
+      price: pair.priceUsd || '0',
+      priceChange24h: pair.priceChange?.h24 || 0,
+      volume24h: pair.volume?.h24 || '0',
+      marketCap: pair.marketCap || '0',
+      liquidity: pair.liquidity?.usd || '0'
     };
-  }
-}
 
-// Get historical chart data for trading charts
-export async function getDexScreenerChartData(pairAddress: string, timeframe: '5m' | '1h' | '6h' | '24h' = '24h'): Promise<Array<{
-  time: number;
-  price: number;
-  volume: number;
-}> | null> {
-  try {
-    // Note: DexScreener doesn't provide historical OHLCV data in their free API
-    // This would require a paid plan or alternative data source
-    console.log(`📊 Chart data would require DexScreener Pro API or alternative source`);
-    return null;
   } catch (error) {
-    console.error('Error fetching chart data:', error);
+    console.error(`❌ Error fetching DexScreener data for ${tokenAddress}:`, error);
     return null;
   }
 }
 
-// Integrate DexScreener data into coin price function
-export async function getEnhancedCoinPrice(coinAddress: string): Promise<{
-  price: string;
-  marketCap: string;
-  volume24h: string;
-  priceChange24h: number;
-  source: 'dexscreener' | 'blockchain';
-}> {
-  // First try DexScreener for real trading data
-  const dexData = await getDexScreenerData(coinAddress);
-  
-  if (dexData.price && dexData.marketCap && dexData.volume24h) {
-    return {
-      price: dexData.price.toFixed(6),
-      marketCap: dexData.marketCap.toFixed(2),
-      volume24h: dexData.volume24h.toFixed(2),
-      priceChange24h: dexData.priceChange24h || 0,
-      source: 'dexscreener'
-    };
-  }
-
-  // Fallback: throw error (no mock data)
-  throw new Error(`No real trading data available for ${coinAddress} on DexScreener`);
+// API route handler for DexScreener data
+export async function handleDexScreenerRequest(tokenAddress: string) {
+  return await getDexScreenerData(tokenAddress);
 }
+
+// Validate content for tokenization

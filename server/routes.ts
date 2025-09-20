@@ -7,11 +7,7 @@ import {
   createZoraMetadata,
   createCreatorCoin,
   validateContentForTokenization,
-  generateThumbnail,
-  getCoinPrice,
-  getCoinHolders,
-  buyCoin,
-  sellCoin
+  generateThumbnail
 } from './zora';
 import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema,
@@ -36,8 +32,11 @@ import { registerAdvancedTradingRoutes } from './routes/advancedTrading';
 import { ethers } from 'ethers';
 import { initializeDatabase } from './initializeDatabase';
 import { zoraTradingService } from './services/zoraTradingService';
-// getCoinPrice imported above
+import { getCoinPrice } from './zora';
 import { getTokenHolders } from './blockchain';
+import contentRoutes from './contentTokenRoutes';
+import contentCoinTradingRoutes from './routes/contentCoinTrading';
+import dexscreenerRoutes from './routes/dexscreener';
 
 
 const prisma = new PrismaClient();
@@ -991,7 +990,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Using ethers to call the payoutRecipient function
       const { ethers } = await import('ethers');
       const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
-      
+
       // ABI for payoutRecipient function
       const abi = [
         "function payoutRecipient() view returns (address)"
@@ -1004,15 +1003,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`✅ PayoutRecipient check: ${payoutRecipient} === ${userAddress} ? ${isPayoutRecipient}`);
 
-      res.json({ 
+      res.json({
         isPayoutRecipient,
         payoutRecipient,
-        userAddress 
+        userAddress
       });
 
     } catch (error) {
       console.error('Error checking payout recipient:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to check payout recipient',
         message: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -2152,7 +2151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Doppler quote endpoint removed  
+  // Doppler quote endpoint removed
   app.post("/api/doppler/quote", async (req, res) => {
     res.status(501).json({
       message: "Doppler V4 system has been removed",
@@ -2384,7 +2383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const {
-        name, symbol, description, imageUri, 
+        name, symbol, description, imageUri,
         creatorAddress, contentType, mediaCid,
         currency, startingMarketCap,
         twitter, discord, website
@@ -2407,7 +2406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create Zora metadata
       console.log('📝 Creating Zora metadata...');
       let metadataUri: string | null = null;
-      
+
       try {
         metadataUri = await createZoraMetadata({
           name: name,
@@ -2492,7 +2491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await db.update(creatorCoins)
           .set({ status: 'failed', updatedAt: new Date() })
           .where(eq(creatorCoins.id, newCoin.id));
-        
+
         throw error;
       }
 
@@ -2535,7 +2534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("❌ Token creation error:", error);
-      
+
       if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
         console.error('Validation errors:', (error as any).errors);
         res.status(400).json({ message: "Invalid token data", errors: (error as any).errors });
@@ -2705,7 +2704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  
+
 
 
 
@@ -2740,14 +2739,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { getDexScreenerData } = await import('./dexscreener.js');
         const dexData = await getDexScreenerData(coinAddress);
-        
+
         // Calculate creator earnings (typically 0.5% of volume)
         const volume24h = parseFloat(dexData.volume24h || '0');
         const earnings24h = (volume24h * 0.005).toFixed(4); // 0.5% creator fee
-        
+
         // Estimate weekly earnings (assuming consistent daily volume)
         const earningsThisWeek = (parseFloat(earnings24h) * 7).toFixed(4);
-        
+
         // For total earnings, we'd need historical data - using weekly estimate for now
         const totalEarnings = earningsThisWeek;
 
@@ -2966,99 +2965,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: 'Failed to fetch latest deployed coin',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
-    }
-  });
-
-  // Creator Coin Trading API Routes - Transaction Preparation (User-Signed)
-  app.post('/api/creator-coins/:address/buy-tx', async (req, res) => {
-    try {
-      const { address } = req.params;
-      const { ethAmount, userAddress } = req.body;
-      
-      if (!ethAmount || parseFloat(ethAmount) <= 0) {
-        return res.status(400).json({ error: 'Invalid ETH amount' });
-      }
-      
-      if (!userAddress) {
-        return res.status(400).json({ error: 'User address required' });
-      }
-      
-      console.log(`🛒 Preparing buy tx for ${address}: ${ethAmount} ETH from ${userAddress}`);
-      
-      // TODO: Use Zora SDK to prepare actual transaction data
-      // For now, return the token contract address for direct interaction
-      const txData = {
-        to: address, // Token contract address
-        data: '0x', // Buy function call data - would be prepared by Zora SDK
-        estimatedGas: '100000',
-        estimatedTokensReceived: Math.floor(parseFloat(ethAmount) * 1000000).toString()
-      };
-      
-      res.json(txData);
-    } catch (error) {
-      console.error('Buy tx preparation error:', error);
-      res.status(500).json({ error: 'Failed to prepare buy transaction' });
-    }
-  });
-
-  app.post('/api/creator-coins/:address/sell-tx', async (req, res) => {
-    try {
-      const { address } = req.params;
-      const { tokenAmount, userAddress } = req.body;
-      
-      if (!tokenAmount || parseFloat(tokenAmount) <= 0) {
-        return res.status(400).json({ error: 'Invalid token amount' });
-      }
-      
-      if (!userAddress) {
-        return res.status(400).json({ error: 'User address required' });
-      }
-      
-      console.log(`💸 Preparing sell tx for ${address}: ${tokenAmount} tokens from ${userAddress}`);
-      
-      // TODO: Use Zora SDK to prepare actual transaction data
-      // For now, return the token contract address for direct interaction
-      const txData = {
-        to: address, // Token contract address
-        data: '0x', // Sell function call data - would be prepared by Zora SDK
-        estimatedGas: '120000',
-        estimatedEthReceived: (parseFloat(tokenAmount) * 0.000001).toFixed(8)
-      };
-      
-      res.json(txData);
-    } catch (error) {
-      console.error('Sell tx preparation error:', error);
-      res.status(500).json({ error: 'Failed to prepare sell transaction' });
-    }
-  });
-
-  app.get('/api/creator-coins/:address/trades', async (req, res) => {
-    try {
-      const { address } = req.params;
-      
-      // Get recent trades from the database
-      const trades = await db
-        .select()
-        .from(creatorCoinTrades)
-        .innerJoin(creatorCoins, eq(creatorCoins.id, creatorCoinTrades.coinId))
-        .where(eq(creatorCoins.coinAddress, address))
-        .orderBy(desc(creatorCoinTrades.createdAt))
-        .limit(50);
-      
-      const formattedTrades = trades.map(({ creator_coin_trades }) => ({
-        id: creator_coin_trades.id,
-        userAddress: creator_coin_trades.userAddress,
-        tradeType: creator_coin_trades.tradeType,
-        amount: creator_coin_trades.amount,
-        price: creator_coin_trades.price,
-        transactionHash: creator_coin_trades.transactionHash,
-        createdAt: creator_coin_trades.createdAt?.toISOString() || new Date().toISOString()
-      }));
-      
-      res.json(formattedTrades);
-    } catch (error) {
-      console.error('Trades fetch error:', error);
-      res.status(500).json({ error: 'Failed to fetch trades' });
     }
   });
 
@@ -3470,7 +3376,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             entityType: 'content_coin',
             entityId: data.coinId,
             actorAddress: data.creatorAddress,
-            actorName: data.creatorName,
             actionUrl: `/content-coin/${data.coinId}`
           });
           break;
@@ -4071,7 +3976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This would typically query the Zora factory contract for all created tokens
       // For now, we'll return data from the database or mock data
       const tokens = await db.query(`
-        SELECT 
+        SELECT
           address,
           name,
           symbol,
@@ -4084,7 +3989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           COALESCE(volume_24h, '100') as "volume24h",
           COALESCE(holders, 1) as holders,
           COALESCE(change_24h, 0) as "change24h"
-        FROM creator_coins 
+        FROM creator_coins
         WHERE network = 'Base Sepolia'
         ORDER BY created_at DESC
       `);
@@ -4127,10 +4032,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/zora-token/:address", async (req, res) => {
     try {
       const { address } = req.params;
-      
+
       // Find the token by coin address in the creator coins table
       const token = await db.select().from(creatorCoins).where(eq(creatorCoins.coinAddress, address)).limit(1);
-      
+
       if (!token.length) {
         return res.status(404).json({ message: "Token not found" });
       }
