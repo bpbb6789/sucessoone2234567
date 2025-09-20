@@ -93,6 +93,11 @@ export function Header() {
 
         {/* Right Section */}
         <div className="flex items-center space-x-2">
+          {!isMobile && (
+            <Link href="/contents" className="text-sm font-medium hover:text-purple-600 transition-colors">
+              Content Tokens
+            </Link>
+          )}
           {isMobile && (
             <>
               <Button

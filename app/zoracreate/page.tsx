@@ -391,9 +391,9 @@ export default function ZoraCreatePage() {
               </Button>
               
               <Button variant="outline" size="lg" asChild>
-                <a href="/zoraexplore" className="flex items-center gap-2">
+                <a href="/contents" className="flex items-center gap-2">
                   <ExternalLink className="h-4 w-4" />
-                  Explore Tokens
+                  View All Content
                 </a>
               </Button>
             </div>
