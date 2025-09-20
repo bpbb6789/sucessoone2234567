@@ -9,7 +9,7 @@ export const queryClient = new QueryClient();
 export const config = getDefaultConfig({
   appName: 'UniPump',
   projectId: import.meta.env.VITE_WC_PROJECT_ID || "8b2d0dd39c1cced02ecce163a96a8cb5",
-  chains: [base, baseSepolia], // Support both Base Mainnet and Sepolia
+  chains: [base, baseSepolia], // Base Mainnet first for trading, Sepolia for testing
   ssr: false,
 });
 

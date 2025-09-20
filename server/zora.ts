@@ -5,7 +5,7 @@ import {
   DeployCurrency
 } from '@zoralabs/coins-sdk';
 import { createPublicClient, createWalletClient, http } from 'viem';
-import { baseSepolia } from 'viem/chains';
+import { base, baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { uploadJSONToIPFS } from './ipfs';
 import { formatEther, formatUnits, parseEther, parseUnits } from 'viem';
@@ -36,23 +36,38 @@ const PLATFORM_REFERRER_ADDRESS = '0x71527294D2a4dF27266580b6E07723721944Bf93' a
 const getRpcTransports = () => {
   const transports = [];
 
-  // Primary: Use environment variable if available
-  if (process.env.BASE_SEPOLIA_RPC_URL) {
-    transports.push(http(process.env.BASE_SEPOLIA_RPC_URL));
-  }
+  // Check if we should use mainnet (production) or testnet
+  const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET === 'true';
 
-  // Backup: Public endpoints
-  transports.push(
-    http('https://sepolia.base.org'),
-    http('https://base-sepolia-rpc.publicnode.com'),
-    http('https://base-sepolia.blockpi.network/v1/rpc/public')
-  );
+  if (useMainnet) {
+    // Base Mainnet endpoints
+    if (process.env.BASE_MAINNET_RPC_URL) {
+      transports.push(http(process.env.BASE_MAINNET_RPC_URL));
+    }
+    transports.push(
+      http('https://mainnet.base.org'),
+      http('https://base-mainnet.g.alchemy.com/v2/demo'),
+      http('https://base.blockpi.network/v1/rpc/public')
+    );
+  } else {
+    // Base Sepolia endpoints (for testing)
+    if (process.env.BASE_SEPOLIA_RPC_URL) {
+      transports.push(http(process.env.BASE_SEPOLIA_RPC_URL));
+    }
+    transports.push(
+      http('https://sepolia.base.org'),
+      http('https://base-sepolia-rpc.publicnode.com'),
+      http('https://base-sepolia.blockpi.network/v1/rpc/public')
+    );
+  }
 
   return transports;
 };
 
+const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET === 'true';
+
 const publicClient = createPublicClient({
-  chain: baseSepolia,
+  chain: useMainnet ? base : baseSepolia,
   transport: getRpcTransports()[0] // Use first available transport
 });
 
@@ -80,7 +95,7 @@ const getWalletClient = () => {
 
   return createWalletClient({
     account,
-    chain: baseSepolia,
+    chain: useMainnet ? base : baseSepolia,
     transport: http()
   });
 };

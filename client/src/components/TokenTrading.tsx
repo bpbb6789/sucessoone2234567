@@ -7,8 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { TrendingUp, Loader2, TrendingDown } from 'lucide-react';
 import { formatEther, parseEther, type Address, formatUnits, parseUnits } from 'viem';
-import { useAccount, useBalance, useWalletClient, usePublicClient } from 'wagmi';
+import { useAccount, useBalance, useWalletClient, usePublicClient, useSwitchChain } from 'wagmi';
 import { tradeCoin } from '@zoralabs/coins-sdk';
+import { base } from 'viem/chains';
 
 interface TokenTradingProps {
   tokenAddress: Address;
@@ -35,9 +36,10 @@ export function TokenTrading({
   const [tradeMode, setTradeMode] = useState<'buy' | 'sell'>('buy');
   const [isTrading, setIsTrading] = useState(false);
 
-  const { isConnected, address: account } = useAccount();
+  const { isConnected, address: account, chainId } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
+  const { switchChain } = useSwitchChain();
 
   // Get user's ETH balance
   const { data: ethBalance, refetch: refetchEthBalance } = useBalance({
@@ -74,16 +76,29 @@ export function TokenTrading({
       return;
     }
 
-    const supportedChainIds = [8453, 84532];
-    const currentChainId = walletClient.chain?.id || 0;
-
-    if (!supportedChainIds.includes(currentChainId)) {
-      toast({
-        title: "Wrong Network",
-        description: "Please switch to Base Mainnet or Base Sepolia",
-        variant: "destructive"
-      });
-      return;
+    // Check if we're on the correct network - prioritize Base Mainnet for trading
+    const currentChainId = chainId || walletClient.chain?.id || 0;
+    
+    if (currentChainId !== 8453) {
+      try {
+        toast({
+          title: "Switching to Base Mainnet",
+          description: "Switching to Base Mainnet for optimal trading experience...",
+        });
+        
+        await switchChain({ chainId: 8453 });
+        
+        // Wait a moment for the network switch to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      } catch (error) {
+        console.error('Network switch failed:', error);
+        toast({
+          title: "Network switch failed",
+          description: "Please manually switch to Base Mainnet for trading",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     setIsTrading(true);
@@ -108,7 +123,6 @@ export function TokenTrading({
         description: "Please confirm the transaction in your wallet",
       });
 
-      // Assuming tradeCoin is an async function that handles the transaction
       await tradeCoin({
         tradeParameters,
         walletClient,
@@ -127,11 +141,21 @@ export function TokenTrading({
 
     } catch (error: any) {
       console.error('Trade failed:', error);
-      toast({
-        title: "Trade failed",
-        description: error.shortMessage || error.message || "Transaction failed",
-        variant: "destructive"
-      });
+      
+      // Handle specific network errors
+      if (error.message?.includes('Client network needs to be base or baseSepolia')) {
+        toast({
+          title: "Network Error",
+          description: "Please ensure you're connected to Base Mainnet and try again",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Trade failed",
+          description: error.shortMessage || error.message || "Transaction failed",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsTrading(false);
     }
@@ -277,10 +301,16 @@ export function TokenTrading({
           )}
         </Button>
 
-        {/* Network Warning */}
-        {walletClient?.chain?.id !== 8453 && (
-          <div className="text-xs text-yellow-600 text-center p-2 bg-yellow-50 dark:bg-yellow-950 rounded">
-            ⚠️ Switch to Base Mainnet for optimal trading
+        {/* Network Status */}
+        {chainId !== 8453 && (
+          <div className="text-xs text-blue-600 text-center p-2 bg-blue-50 dark:bg-blue-950 rounded">
+            🚀 Will auto-switch to Base Mainnet for trading
+          </div>
+        )}
+        
+        {chainId === 8453 && (
+          <div className="text-xs text-green-600 text-center p-2 bg-green-50 dark:bg-green-950 rounded">
+            ✅ Connected to Base Mainnet - Ready to trade
           </div>
         )}
       </CardContent>
