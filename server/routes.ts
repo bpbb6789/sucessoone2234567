@@ -3404,6 +3404,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             actorAddress: data.creatorAddress,
             actionUrl: `/content-coin/${data.coinId}`
           });
+
+          // Send Telegram notification for deployed content coin
+          const telegramServiceLaunch = getTelegramService();
+          if (telegramServiceLaunch) {
+            await telegramServiceLaunch.notifyNewContentCoin({
+              title: data.coinName,
+              coinSymbol: data.coinSymbol || 'COIN',
+              creator: data.creatorAddress,
+              contentType: data.contentType || 'content',
+              coinAddress: data.coinAddress,
+              marketCap: data.marketCap || '0.00',
+              totalSupply: data.totalSupply || '1.00B',
+              currentPrice: data.currentPrice || '0.000001',
+              createdAt: new Date().toISOString()
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
           break;
 
         case 'follow':
@@ -3499,6 +3515,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             actorAddress: data.creatorAddress,
             actionUrl: `/content-coin/${data.coinId}`
           });
+
+          // Send Telegram notification for content coin creation (not deployed yet)
+          const telegramServiceCreated = getTelegramService();
+          if (telegramServiceCreated) {
+            await telegramServiceCreated.notifyNewContentCoin({
+              title: data.coinName,
+              coinSymbol: data.coinSymbol || 'COIN',
+              creator: data.creatorAddress,
+              contentType: data.contentType || 'content',
+              createdAt: new Date().toISOString()
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
           break;
 
         case 'creator_coin_deployed':
@@ -3517,6 +3545,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
             actionUrl: `/content-coin/${data.coinId}`
           });
+
+          // Send Telegram notification for deployed content coin
+          const telegramServiceDeployed = getTelegramService();
+          if (telegramServiceDeployed) {
+            await telegramServiceDeployed.notifyNewContentCoin({
+              title: data.coinName,
+              coinSymbol: data.coinSymbol,
+              creator: data.creatorAddress,
+              contentType: data.contentType || 'content',
+              coinAddress: data.coinAddress,
+              marketCap: data.marketCap || '0.00',
+              totalSupply: data.totalSupply || '1.00B',
+              currentPrice: data.currentPrice || '0.000001',
+              createdAt: new Date().toISOString()
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
           break;
 
         case 'content_uploaded':
@@ -3559,6 +3603,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             metadata: { amount: data.amount, price: data.price, tradeType: data.tradeType },
             actionUrl: `/content-coin/${data.coinId}`
           });
+
+          // Send Telegram notification for content coin trade
+          const telegramServiceTrade = getTelegramService();
+          if (telegramServiceTrade) {
+            await telegramServiceTrade.notifyTrade({
+              type: data.tradeType.toUpperCase() as 'BUY' | 'SELL',
+              coinSymbol: data.coinSymbol || 'COIN',
+              amount: data.amount,
+              price: data.price,
+              trader: data.traderAddress
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
           break;
 
         case 'web3_channel_created':
@@ -3573,12 +3629,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
             actionUrl: `/channel/${data.channelId}`
           });
           break;
+
+        case 'new_creator_joined':
+          // Send Telegram notification for new creator
+          const telegramServiceNewCreator = getTelegramService();
+          if (telegramServiceNewCreator) {
+            await telegramServiceNewCreator.notifyNewCreator({
+              name: data.creatorName || data.creatorAddress.slice(0, 8) + '...',
+              address: data.creatorAddress,
+              contentCoins: data.contentCoins || 0
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
+          break;
+
+        case 'market_cap_milestone':
+          // Send Telegram notification for market cap milestone
+          const telegramServiceMilestone = getTelegramService();
+          if (telegramServiceMilestone) {
+            await telegramServiceMilestone.notifyMilestone({
+              type: 'MARKET_CAP',
+              milestone: data.milestone,
+              current: data.current
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
+          break;
+
+        case 'daily_leaderboard':
+          // Send Telegram notification for daily leaderboard
+          const telegramServiceLeaderboard = getTelegramService();
+          if (telegramServiceLeaderboard) {
+            await telegramServiceLeaderboard.notifyLeaderboard({
+              type: data.leaderboardType || 'CREATOR',
+              topEntries: data.topEntries
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
+          break;
+
+        case 'top_performers_24h':
+          // Send Telegram notification for top 24h performers
+          const telegramServiceTop24h = getTelegramService();
+          if (telegramServiceTop24h) {
+            await telegramServiceTop24h.notifyLeaderboard({
+              type: 'COIN',
+              topEntries: data.topCoins
+            }).catch(err => console.log('Telegram notification failed:', err));
+          }
+          break;
+
+        case 'creator_earnings_update':
+          // Send Telegram notification for creator earnings
+          const telegramServiceEarnings = getTelegramService();
+          if (telegramServiceEarnings && data.significant) {
+            await telegramServiceEarnings.sendMessage(
+              `💰 <b>Creator Earnings Update!</b>\n\n👤 Creator: ${data.creatorAddress.slice(0, 6)}...${data.creatorAddress.slice(-4)}\n💵 Total Earnings: $${data.totalEarnings}\n📈 24h Earnings: $${data.earnings24h}\n🪙 Active Coins: ${data.activeCoins}\n\n#CreatorEarnings #TopEarner`,
+              { parseMode: 'HTML' }
+            ).catch(err => console.log('Telegram notification failed:', err));
+          }
+          break;
       }
     } catch (error) {
       console.error('Failed to trigger notification:', error);
     }
   }
 
+
+  // Add API endpoint to manually trigger daily leaderboard
+  app.post('/api/telegram/daily-leaderboard', async (req, res) => {
+    try {
+      console.log('🏆 Manually triggering daily leaderboard...');
+      
+      // Get top creators by content coins count
+      const topCreators = await db
+        .select({
+          creator: creatorCoins.creatorAddress,
+          count: sql<number>`count(*)`.as('count')
+        })
+        .from(creatorCoins)
+        .where(sql`${creatorCoins.status} = 'deployed'`)
+        .groupBy(creatorCoins.creatorAddress)
+        .orderBy(sql`count(*) desc`)
+        .limit(10);
+
+      if (topCreators.length > 0) {
+        const leaderboardData = topCreators.map((creator, index) => ({
+          name: creator.creator.slice(0, 8) + '...',
+          value: `${creator.count} coins`,
+          rank: index + 1
+        }));
+
+        await triggerNotification('daily_leaderboard', {
+          leaderboardType: 'CREATOR',
+          topEntries: leaderboardData
+        });
+
+        res.json({ success: true, message: 'Daily leaderboard sent', count: topCreators.length });
+      } else {
+        res.json({ success: false, message: 'No creators found' });
+      }
+    } catch (error) {
+      console.error('Failed to send daily leaderboard:', error);
+      res.status(500).json({ error: 'Failed to send daily leaderboard' });
+    }
+  });
+
+  // Add API endpoint to manually trigger top performers 24h
+  app.post('/api/telegram/top-performers', async (req, res) => {
+    try {
+      console.log('🎯 Manually triggering top performers...');
+      
+      // Get top coins by market cap
+      const topCoins = await db
+        .select()
+        .from(creatorCoins)
+        .where(sql`${creatorCoins.status} = 'deployed' AND ${creatorCoins.coinAddress} IS NOT NULL`)
+        .orderBy(sql`CAST(${creatorCoins.marketCap} AS DECIMAL) DESC`)
+        .limit(10);
+
+      if (topCoins.length > 0) {
+        const topPerformersData = topCoins.map((coin, index) => ({
+          name: `${coin.coinName} (${coin.coinSymbol})`,
+          value: `$${coin.marketCap || '0.00'}`,
+          rank: index + 1
+        }));
+
+        await triggerNotification('top_performers_24h', {
+          topCoins: topPerformersData
+        });
+
+        res.json({ success: true, message: 'Top performers sent', count: topCoins.length });
+      } else {
+        res.json({ success: false, message: 'No coins found' });
+      }
+    } catch (error) {
+      console.error('Failed to send top performers:', error);
+      res.status(500).json({ error: 'Failed to send top performers' });
+    }
+  });
+
+  // Add API endpoint to manually trigger new creator notification
+  app.post('/api/telegram/new-creator', async (req, res) => {
+    try {
+      const { creatorAddress, creatorName } = req.body;
+      
+      if (!creatorAddress) {
+        return res.status(400).json({ error: 'Creator address required' });
+      }
+
+      // Get creator's content coins count
+      const contentCoinsCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(creatorCoins)
+        .where(eq(creatorCoins.creatorAddress, creatorAddress))
+        .then(result => result[0]?.count || 0);
+
+      await triggerNotification('new_creator_joined', {
+        creatorAddress,
+        creatorName: creatorName || creatorAddress.slice(0, 8) + '...',
+        contentCoins: contentCoinsCount
+      });
+
+      res.json({ success: true, message: 'New creator notification sent' });
+    } catch (error) {
+      console.error('Failed to send new creator notification:', error);
+      res.status(500).json({ error: 'Failed to send new creator notification' });
+    }
+  });
+
+  // Add API endpoint to manually trigger market cap milestone
+  app.post('/api/telegram/market-milestone', async (req, res) => {
+    try {
+      const { milestone, current } = req.body;
+      
+      if (!milestone || !current) {
+        return res.status(400).json({ error: 'Milestone and current value required' });
+      }
+
+      await triggerNotification('market_cap_milestone', {
+        milestone,
+        current
+      });
+
+      res.json({ success: true, message: 'Market milestone notification sent' });
+    } catch (error) {
+      console.error('Failed to send market milestone:', error);
+      res.status(500).json({ error: 'Failed to send market milestone' });
+    }
+  });
 
   // Trade notification endpoint
   app.post('/api/trades/notify', async (req, res) => {
