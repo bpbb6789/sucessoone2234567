@@ -37,6 +37,7 @@ import { getTokenHolders } from './blockchain';
 import contentRoutes from './contentTokenRoutes';
 import contentCoinTradingRoutes from './routes/contentCoinTrading';
 import dexscreenerRoutes from './routes/dexscreener';
+import { blockchainEventsRouter } from './routes/blockchainEvents';
 
 
 const prisma = new PrismaClient();
@@ -53,22 +54,22 @@ function handleDatabaseError(error: any, operation: string) {
 app.post('/api/upload-metadata', async (req, res) => {
   try {
     const metadata = req.body;
-    
+
     if (!metadata.name || !metadata.symbol) {
       return res.status(400).json({ error: 'Name and symbol are required' });
     }
 
     // Upload to IPFS
     const cid = await uploadJSONToIPFS(metadata);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       cid,
       uri: `https://gateway.pinata.cloud/ipfs/${cid}`
     });
   } catch (error) {
     console.error('Metadata upload error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Metadata upload failed',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
@@ -3558,7 +3559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (telegramServiceDeployed) {
             await telegramServiceDeployed.notifyNewContentCoin({
               title: data.coinName,
-              coinSymbol: data.coinSymbol,
+              coinSymbol: data.coinSymbol || 'COIN',
               creator: data.creatorAddress,
               contentType: data.contentType || 'content',
               coinAddress: data.coinAddress,
@@ -3706,7 +3707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/telegram/daily-leaderboard', async (req, res) => {
     try {
       console.log('🏆 Manually triggering daily leaderboard...');
-      
+
       // Get top creators by content coins count
       const topCreators = await db
         .select({
@@ -3745,7 +3746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/telegram/top-performers', async (req, res) => {
     try {
       console.log('🎯 Manually triggering top performers...');
-      
+
       // Get top coins by market cap
       const topCoins = await db
         .select()
@@ -3779,7 +3780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/telegram/new-creator', async (req, res) => {
     try {
       const { creatorAddress, creatorName } = req.body;
-      
+
       if (!creatorAddress) {
         return res.status(400).json({ error: 'Creator address required' });
       }
@@ -3808,7 +3809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/telegram/market-milestone', async (req, res) => {
     try {
       const { milestone, current } = req.body;
-      
+
       if (!milestone || !current) {
         return res.status(400).json({ error: 'Milestone and current value required' });
       }
@@ -3866,11 +3867,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if identifier is a database ID (UUID format) instead of contract address
       if (!identifier.startsWith('0x') || identifier.length !== 42) {
         console.log(`🔍 Looking up contract address for database ID: ${identifier}`);
-        
+
         try {
           // Get the contract address from the creator coin record
           const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, identifier)).limit(1);
-          
+
           if (!coin.length || !coin[0].coinAddress) {
             return res.status(404).json({
               error: 'Token not found or not deployed',
@@ -3897,7 +3898,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!dexData || !dexData.price) {
         // For Zora tokens on testnet, provide estimated market cap based on Zora's bonding curve
         console.log(`📊 No DEX data found, using Zora bonding curve estimation`);
-        
+
         return res.json({
           price: '0.000035',
           marketCap: '35000', // $35K estimated market cap for Zora tokens
@@ -4008,7 +4009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: user.address,
           rank: index + 1,
           address: user.address,
-          username: user.name || `User ${user.address.slice(0, 8)}`,
+          name: user.name || `User ${user.address.slice(0, 8)}`,
           avatar: user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.address}`,
 
           // Content metrics
@@ -4216,11 +4217,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Register advanced trading routes
-  registerAdvancedTradingRoutes(app);
-
+  app.use(advancedTradingRouter);
   // Register content token routes
   const { setupContentTokenRoutes } = await import('./contentTokenRoutes');
   setupContentTokenRoutes(app);
+  // Register blockchain events router
+  app.use(blockchainEventsRouter);
 
   // Database health check
   app.get('/api/database/health', async (req, res) => {

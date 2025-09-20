@@ -4,7 +4,11 @@ dotenv.config();
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { initializeTelegramService } from "./services/telegramService";
+import { initializeTelegramService } from './services/telegramService';
+import { startTelegramLeaderboardScheduler } from './services/telegramLeaderboard';
+import { initializeDatabase } from './initializeDatabase';
+import { contentTokenRouter } from './contentTokenRoutes';
+import { initializeBlockchainEventListener } from './services/blockchainEventListener';
 
 const app = express();
 app.use(express.json());
@@ -51,12 +55,13 @@ app.use((req, res, next) => {
     log("Warning: Database connection failed, but continuing startup...");
   }
 
-  // Initialize Telegram service
+  // Initialize Telegram service and start leaderboard scheduler
   initializeTelegramService();
+  startTelegramLeaderboardScheduler();
 
-  // Initialize Telegram leaderboard scheduler
-  const { initializeTelegramLeaderboard } = await import("./services/telegramLeaderboard.js");
-  initializeTelegramLeaderboard();
+  // Initialize and start blockchain event listener for trading events
+  const eventListener = initializeBlockchainEventListener();
+  eventListener.startListening();
 
   const server = await registerRoutes(app);
 
