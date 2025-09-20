@@ -1,3 +1,4 @@
+
 "use client";
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,43 +7,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAccount } from 'wagmi';
-import { parseEther, formatEther, Address } from 'viem';
-import { Loader2, Coins, Zap, Rocket, Info, ExternalLink, CheckCircle, AlertCircle, Upload, X, FileImage, Video, Music, FileText, Play } from 'lucide-react';
+import { Loader2, Rocket, Upload, X, FileImage, Video, Music, FileText, ExternalLink } from 'lucide-react';
 import CreateChannel from '@/components/CreateChannel';
 import { useUrlImport } from '@/hooks/useContentImports';
-import { useMutation } from '@tanstack/react-query';
-import { useTriggerNotification } from "@/hooks/useNotifications";
-import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
-import { zoraFactoryImplAbi } from '@/lib/contracts';
 
 const currencies = [
-  { value: 'ETH', label: 'ETH', description: 'Ethereum' },
-  { value: 'ZORA', label: 'ZORA', description: 'Zora Protocol Token' },
+  { value: 'ETH', label: 'ETH' },
+  { value: 'ZORA', label: 'ZORA' },
 ];
 
 const marketCaps = [
-  { value: 'LOW', label: 'Low Market Cap', description: 'Starting at ~$1K market cap' },
-  { value: 'HIGH', label: 'High Market Cap', description: 'Starting at ~$10K market cap' },
+  { value: 'LOW', label: 'Low (~$1K)' },
+  { value: 'HIGH', label: 'High (~$10K)' },
 ];
-
-// Your deployed Zora Factory contract address on Base Sepolia
-const ZORA_FACTORY_ADDRESS = "0xAe028301c7822F2c254A43451D22dB5Fe447a4a0" as Address;
 
 export default function ZoraCreate() {
   const { address, isConnected } = useAccount();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState('token');
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
-
-  // Import Shorts state
   const [importUrl, setImportUrl] = useState('');
   
   const [formData, setFormData] = useState({
@@ -57,43 +47,7 @@ export default function ZoraCreate() {
     startingMarketCap: 'LOW'
   });
 
-  const [deployedTokenAddress, setDeployedTokenAddress] = useState<Address | null>(null);
-
-  // Import Shorts hooks
   const urlImportMutation = useUrlImport();
-  const triggerNotification = useTriggerNotification();
-
-  // Get user's channel data for imports
-  const { data: userChannelData } = useQuery({
-    queryKey: ["user-channel", address],
-    queryFn: async () => {
-      if (!address) return null;
-      const response = await fetch(`/api/me`, {
-        headers: { 'x-wallet-address': address }
-      });
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: !!address,
-  });
-
-  // Get user's Web3 channels for imports
-  const { data: userChannels = [] } = useQuery({
-    queryKey: ["user-web3-channels", address],
-    queryFn: async () => {
-      if (!address) return [];
-      const response = await fetch('/api/web3-channels');
-      if (!response.ok) return [];
-      const allChannels = await response.json();
-      return allChannels.filter((channel: any) => 
-        channel.owner?.toLowerCase() === address.toLowerCase()
-      );
-    },
-    enabled: !!address,
-  });
-
-  // Use the first Web3 channel if user has one, otherwise use 'public' for imports
-  const channelId = userChannels.length > 0 ? userChannels[0].id : 'public';
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -120,7 +74,6 @@ export default function ZoraCreate() {
   };
 
   const handleFileSelect = (file: File) => {
-    // Validate file type
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp',
       'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm',
@@ -136,7 +89,6 @@ export default function ZoraCreate() {
       return;
     }
 
-    // Validate file size (50MB limit)
     if (file.size > 50 * 1024 * 1024) {
       toast({
         title: "File Too Large",
@@ -158,6 +110,22 @@ export default function ZoraCreate() {
     }
   };
 
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl('');
+    }
+    setFormData(prev => ({ ...prev, imageUri: '' }));
+  };
+
+  const getFileTypeIcon = (file: File) => {
+    if (file.type.startsWith('image/')) return FileImage;
+    if (file.type.startsWith('video/')) return Video;
+    if (file.type.startsWith('audio/')) return Music;
+    return FileText;
+  };
+
   const uploadMediaToIPFS = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -175,22 +143,6 @@ export default function ZoraCreate() {
     return `https://gateway.pinata.cloud/ipfs/${result.cid}`;
   };
 
-  const removeSelectedFile = () => {
-    setSelectedFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl('');
-    }
-    setFormData(prev => ({ ...prev, imageUri: '' }));
-  };
-
-  const getFileTypeIcon = (file: File) => {
-    if (file.type.startsWith('image/')) return FileImage;
-    if (file.type.startsWith('video/')) return Video;
-    if (file.type.startsWith('audio/')) return Music;
-    return FileText;
-  };
-
   const handleUrlImport = async () => {
     if (!importUrl || !formData.name || !formData.symbol) {
       toast({
@@ -202,16 +154,14 @@ export default function ZoraCreate() {
     }
 
     try {
-      const hostname = new URL(importUrl).hostname;
-
       toast({
         title: "Import Started",
-        description: "Processing shorts content... Downloading and extracting thumbnail (5-10s)"
+        description: "Processing content..."
       });
 
       const result = await urlImportMutation.mutateAsync({
         url: importUrl,
-        channelId,
+        channelId: 'public',
         contentType: 'reel',
         title: formData.name,
         description: formData.description || `Content imported from ${importUrl}`,
@@ -219,11 +169,10 @@ export default function ZoraCreate() {
         coinSymbol: formData.symbol
       });
 
-      // Reset form after successful import
       setImportUrl('');
       toast({
         title: "Import Complete",
-        description: "Short video has been processed and is ready for tokenization!"
+        description: "Content processed successfully!"
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to import content";
@@ -248,7 +197,7 @@ export default function ZoraCreate() {
     if (!formData.name || !formData.symbol) {
       toast({
         title: "Missing Information",
-        description: "Please fill in at least the token name and symbol",
+        description: "Please fill in token name and symbol",
         variant: "destructive",
       });
       return;
@@ -259,7 +208,6 @@ export default function ZoraCreate() {
     try {
       let finalImageUri = formData.imageUri;
 
-      // Upload media file if selected
       if (selectedFile) {
         setIsUploading(true);
         toast({
@@ -284,10 +232,9 @@ export default function ZoraCreate() {
 
       toast({
         title: "Creating Token...",
-        description: "Your Zora token is being deployed to the blockchain",
+        description: "Your token is being deployed",
       });
 
-      // Create metadata object
       const metadata = {
         name: formData.name,
         symbol: formData.symbol,
@@ -302,7 +249,6 @@ export default function ZoraCreate() {
         startingMarketCap: formData.startingMarketCap
       };
 
-      // Call your backend API to create the Zora coin
       const response = await fetch('/api/creator-coins/create', {
         method: 'POST',
         headers: {
@@ -311,7 +257,7 @@ export default function ZoraCreate() {
         body: JSON.stringify({
           ...metadata,
           creatorAddress: address,
-          contentType: 'token', // This is a token creation, not content
+          contentType: 'token',
           mediaCid: selectedFile ? 'uploaded' : 'none',
         }),
       });
@@ -324,8 +270,8 @@ export default function ZoraCreate() {
       const result = await response.json();
 
       toast({
-        title: "Token Created Successfully! 🚀",
-        description: `${formData.name} (${formData.symbol}) deployed with ${selectedFile ? 'custom asset' : 'default icon'}!`,
+        title: "Token Created! 🚀",
+        description: `${formData.name} (${formData.symbol}) deployed successfully!`,
       });
 
       // Reset form
@@ -342,7 +288,6 @@ export default function ZoraCreate() {
       });
       removeSelectedFile();
 
-      // Redirect to explore page or token detail
       if (result.coinAddress) {
         setTimeout(() => {
           window.location.href = `/zora-token/${result.coinAddress}`;
@@ -362,87 +307,49 @@ export default function ZoraCreate() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header */}
+      <div className="container mx-auto px-4 max-w-3xl">
+        {/* Simple Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Zap className="h-10 w-10 text-purple-600" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Zora Create
-            </h1>
-          </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Deploy your token using Zora's advanced bonding curve technology with automatic liquidity and trading
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            Launch Your Token
+          </h1>
+          <p className="text-muted-foreground">
+            Create tokens with Zora's bonding curve technology
           </p>
         </div>
 
-        {/* Info Card */}
-        <Card className="mb-8 border-blue-200 bg-blue-50 dark:bg-blue-900/20">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-blue-600 mt-1" />
-              <div>
-                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                  Powered by Zora Factory
-                </h3>
-                <p className="text-blue-800 dark:text-blue-200 text-sm">
-                  Your token will be deployed using Zora's battle-tested factory contracts with built-in bonding curves, 
-                  automatic Uniswap V4 integration, and creator rewards. No coding required!
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="basic" className="flex items-center gap-2">
-              <Coins className="h-4 w-4" />
-              Basic Token
-            </TabsTrigger>
-            <TabsTrigger value="advanced" className="flex items-center gap-2">
-              <Rocket className="h-4 w-4" />
-              Creator Coin
-            </TabsTrigger>
-            <TabsTrigger value="import" className="flex items-center gap-2">
-              <ExternalLink className="h-4 w-4" />
-              Import Shorts
-            </TabsTrigger>
-            <TabsTrigger value="channel" className="flex items-center gap-2">
-              <Coins className="h-4 w-4" />
-              Create Channel
-            </TabsTrigger>
+        <Tabs defaultValue="token" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="token">Create Token</TabsTrigger>
+            <TabsTrigger value="import">Import Content</TabsTrigger>
+            <TabsTrigger value="channel">Create Channel</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="space-y-6">
+          <TabsContent value="token" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Create Basic Token</CardTitle>
-                <CardDescription>
-                  Deploy a standard ERC-20 token with Zora bonding curve mechanics
-                </CardDescription>
+                <CardTitle>Token Details</CardTitle>
+                <CardDescription>Create your token with custom settings</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Basic Token Form */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Token Name *</Label>
                     <Input
                       id="name"
-                      placeholder="My Awesome Token"
+                      placeholder="My Token"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="symbol">Token Symbol *</Label>
+                    <Label htmlFor="symbol">Symbol *</Label>
                     <Input
                       id="symbol"
-                      placeholder="MAT"
+                      placeholder="MTK"
                       value={formData.symbol}
                       onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
                       maxLength={6}
@@ -454,20 +361,20 @@ export default function ZoraCreate() {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Describe your token and its purpose..."
+                    placeholder="Describe your token..."
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
                     rows={3}
                   />
                 </div>
 
-                {/* Media Upload Section */}
-                <div className="space-y-4">
-                  <Label>Token Asset (Image, Video, Audio)</Label>
+                {/* Simple Media Upload */}
+                <div className="space-y-3">
+                  <Label>Token Image/Media</Label>
                   
                   {!selectedFile ? (
                     <div
-                      className={`border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer ${
+                      className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
                         isDragging 
                           ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
                           : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
@@ -477,13 +384,9 @@ export default function ZoraCreate() {
                       onDrop={handleDrop}
                       onClick={() => document.getElementById('media-upload')?.click()}
                     >
-                      <div className="text-center">
-                        <Upload className="h-8 w-8 mx-auto mb-3 text-gray-400" />
-                        <p className="text-sm font-medium">Drop your asset here or click to browse</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Supports: JPG, PNG, GIF, SVG, MP4, MOV, MP3, WAV (max 50MB)
-                        </p>
-                      </div>
+                      <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm font-medium">Upload asset or drag and drop</p>
+                      <p className="text-xs text-muted-foreground">Images, videos, audio (max 50MB)</p>
                       <input
                         id="media-upload"
                         type="file"
@@ -495,18 +398,13 @@ export default function ZoraCreate() {
                     </div>
                   ) : (
                     <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
                           {(() => {
                             const IconComponent = getFileTypeIcon(selectedFile);
-                            return <IconComponent className="h-5 w-5 text-purple-500" />;
+                            return <IconComponent className="h-4 w-4 text-purple-500" />;
                           })()}
-                          <div>
-                            <p className="text-sm font-medium">{selectedFile.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
+                          <span className="text-sm font-medium">{selectedFile.name}</span>
                         </div>
                         <Button
                           variant="ghost"
@@ -518,53 +416,29 @@ export default function ZoraCreate() {
                         </Button>
                       </div>
                       
-                      {/* Media Preview */}
                       {selectedFile.type.startsWith('image/') && (
                         <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
                           <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                         </div>
                       )}
-                      {selectedFile.type.startsWith('video/') && (
-                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
-                          <video src={previewUrl} className="w-full h-full object-cover" controls />
-                        </div>
-                      )}
-                      {selectedFile.type.startsWith('audio/') && (
-                        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                          <div className="flex items-center gap-3 mb-3">
-                            <Music className="h-8 w-8 text-purple-500" />
-                            <div>
-                              <p className="font-medium">Audio Preview</p>
-                              <p className="text-sm text-muted-foreground">{selectedFile.name}</p>
-                            </div>
-                          </div>
-                          <audio src={previewUrl} controls className="w-full" />
-                        </div>
-                      )}
                     </div>
                   )}
 
-                  {/* Manual URL Input (Alternative) */}
                   <div className="space-y-2">
-                    <Label htmlFor="imageUri">Or paste image URL directly</Label>
+                    <Label htmlFor="imageUri">Or paste image URL</Label>
                     <Input
                       id="imageUri"
-                      placeholder="https://example.com/token-image.png"
+                      placeholder="https://example.com/image.png"
                       value={formData.imageUri}
                       onChange={(e) => handleInputChange('imageUri', e.target.value)}
                       disabled={!!selectedFile}
                     />
-                    {selectedFile && (
-                      <p className="text-xs text-muted-foreground">
-                        URL input disabled while file is selected
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Base Currency</Label>
+                    <Label>Currency</Label>
                     <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
                       <SelectTrigger>
                         <SelectValue />
@@ -572,10 +446,7 @@ export default function ZoraCreate() {
                       <SelectContent>
                         {currencies.map(currency => (
                           <SelectItem key={currency.value} value={currency.value}>
-                            <div>
-                              <div className="font-medium">{currency.label}</div>
-                              <div className="text-xs text-muted-foreground">{currency.description}</div>
-                            </div>
+                            {currency.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -583,7 +454,7 @@ export default function ZoraCreate() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Starting Market Cap</Label>
+                    <Label>Market Cap</Label>
                     <Select value={formData.startingMarketCap} onValueChange={(value) => handleInputChange('startingMarketCap', value)}>
                       <SelectTrigger>
                         <SelectValue />
@@ -591,10 +462,7 @@ export default function ZoraCreate() {
                       <SelectContent>
                         {marketCaps.map(cap => (
                           <SelectItem key={cap.value} value={cap.value}>
-                            <div>
-                              <div className="font-medium">{cap.label}</div>
-                              <div className="text-xs text-muted-foreground">{cap.description}</div>
-                            </div>
+                            {cap.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -605,209 +473,11 @@ export default function ZoraCreate() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="advanced" className="space-y-6">
+          <TabsContent value="import" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Create Creator Coin</CardTitle>
-                <CardDescription>
-                  Deploy a creator coin with vesting schedule and enhanced features
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Advanced Creator Coin Form */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="creator-name">Creator Name *</Label>
-                    <Input
-                      id="creator-name"
-                      placeholder="Creator Name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="creator-symbol">Creator Symbol *</Label>
-                    <Input
-                      id="creator-symbol"
-                      placeholder="CREATOR"
-                      value={formData.symbol}
-                      onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
-                      maxLength={8}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="creator-description">Creator Description</Label>
-                  <Textarea
-                    id="creator-description"
-                    placeholder="Tell people about yourself and your creator coin..."
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    rows={4}
-                  />
-                </div>
-
-                {/* Media Upload Section for Creator Coins */}
-                <div className="space-y-4">
-                  <Label>Creator Coin Asset (Logo, Avatar, Media)</Label>
-                  
-                  {!selectedFile ? (
-                    <div
-                      className={`border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer ${
-                        isDragging 
-                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
-                          : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
-                      }`}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      onClick={() => document.getElementById('creator-media-upload')?.click()}
-                    >
-                      <div className="text-center">
-                        <Upload className="h-8 w-8 mx-auto mb-3 text-gray-400" />
-                        <p className="text-sm font-medium">Upload your creator coin asset</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Supports: JPG, PNG, GIF, SVG, MP4, MOV, MP3, WAV (max 50MB)
-                        </p>
-                      </div>
-                      <input
-                        id="creator-media-upload"
-                        type="file"
-                        className="hidden"
-                        accept="image/*,video/*,audio/*"
-                        onChange={handleFileInput}
-                        disabled={!isConnected}
-                      />
-                    </div>
-                  ) : (
-                    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          {(() => {
-                            const IconComponent = getFileTypeIcon(selectedFile);
-                            return <IconComponent className="h-5 w-5 text-purple-500" />;
-                          })()}
-                          <div>
-                            <p className="text-sm font-medium">{selectedFile.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={removeSelectedFile}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      {/* Media Preview */}
-                      {selectedFile.type.startsWith('image/') && (
-                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
-                          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                      {selectedFile.type.startsWith('video/') && (
-                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
-                          <video src={previewUrl} className="w-full h-full object-cover" controls />
-                        </div>
-                      )}
-                      {selectedFile.type.startsWith('audio/') && (
-                        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                          <div className="flex items-center gap-3 mb-3">
-                            <Music className="h-8 w-8 text-purple-500" />
-                            <div>
-                              <p className="font-medium">Audio Preview</p>
-                              <p className="text-sm text-muted-foreground">{selectedFile.name}</p>
-                            </div>
-                          </div>
-                          <audio src={previewUrl} controls className="w-full" />
-                        </div>
-                      )}
-                    </div>
-                  )}</div>
-
-                <div className="space-y-4">
-                  <h4 className="font-medium">Social Links</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="twitter">Twitter/X</Label>
-                      <Input
-                        id="twitter"
-                        placeholder="@username"
-                        value={formData.twitter}
-                        onChange={(e) => handleInputChange('twitter', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="discord">Discord</Label>
-                      <Input
-                        id="discord"
-                        placeholder="Discord server invite"
-                        value={formData.discord}
-                        onChange={(e) => handleInputChange('discord', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="website">Website</Label>
-                      <Input
-                        id="website"
-                        placeholder="https://yourwebsite.com"
-                        value={formData.website}
-                        onChange={(e) => handleInputChange('website', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Creator Coin Features */}
-            <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-green-900 dark:text-green-100 mb-4">
-                  Creator Coin Features
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-800 dark:text-green-200">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-green-300">✓</Badge>
-                    500M tokens to liquidity pool
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-green-300">✓</Badge>
-                    500M tokens vested over 5 years
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-green-300">✓</Badge>
-                    Automatic Uniswap V4 integration
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="border-green-300">✓</Badge>
-                    Built-in rewards distribution
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="import" className="space-y-6">
-            {/* Import Short-Form Content */}
-            <Card className="border-purple-200 bg-purple-50 dark:bg-purple-900/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ExternalLink className="h-5 w-5" />
-                  Import Short-Form Content
-                </CardTitle>
-                <CardDescription>
-                  Import videos from TikTok, YouTube Shorts, Instagram Reels, or Twitter and create tokens
-                </CardDescription>
+                <CardTitle>Import Content</CardTitle>
+                <CardDescription>Import videos from social platforms and tokenize them</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -816,97 +486,40 @@ export default function ZoraCreate() {
                     placeholder="https://youtube.com/shorts/... or https://instagram.com/reel/..."
                     value={importUrl}
                     onChange={(e) => setImportUrl(e.target.value)}
-                    className="flex-1"
                     disabled={!isConnected}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Supports: TikTok, YouTube Shorts, Instagram Reels, Twitter videos (15-90 seconds)
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="import-token-name">Token Name *</Label>
+                    <Label>Token Name *</Label>
                     <Input
-                      id="import-token-name"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      placeholder="Epic Dance Token"
+                      placeholder="Content Token"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="import-token-symbol">Symbol *</Label>
+                    <Label>Symbol *</Label>
                     <Input
-                      id="import-token-symbol"
                       value={formData.symbol}
                       onChange={(e) => handleInputChange('symbol', e.target.value.toUpperCase())}
-                      placeholder="DANCE"
+                      placeholder="CTK"
                       maxLength={6}
                     />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="import-description">Description (Optional)</Label>
-                  <Textarea
-                    id="import-description"
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    placeholder="Describe why this content should be tokenized..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Base Currency</Label>
-                    <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currencies.map(currency => (
-                          <SelectItem key={currency.value} value={currency.value}>
-                            <div>
-                              <div className="font-medium">{currency.label}</div>
-                              <div className="text-xs text-muted-foreground">{currency.description}</div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Starting Market Cap</Label>
-                    <Select value={formData.startingMarketCap} onValueChange={(value) => handleInputChange('startingMarketCap', value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {marketCaps.map(cap => (
-                          <SelectItem key={cap.value} value={cap.value}>
-                            <div>
-                              <div className="font-medium">{cap.label}</div>
-                              <div className="text-xs text-muted-foreground">{cap.description}</div>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
 
                 <Button 
                   onClick={handleUrlImport}
                   disabled={!isConnected || !importUrl.trim() || urlImportMutation.isPending}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                  className="w-full"
                 >
                   {urlImportMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing shorts content...
+                      Processing...
                     </>
                   ) : (
                     <>
@@ -920,16 +533,10 @@ export default function ZoraCreate() {
           </TabsContent>
 
           <TabsContent value="channel" className="space-y-6">
-            {/* Create Channel Content */}
-            <Card className="border-green-200 bg-green-50 dark:bg-green-900/20">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Coins className="h-5 w-5" />
-                  Create Your Channel Token
-                </CardTitle>
-                <CardDescription>
-                  Deploy a Zora-based channel with bonding curve tokenomics
-                </CardDescription>
+                <CardTitle>Create Channel</CardTitle>
+                <CardDescription>Deploy a channel with tokenomics</CardDescription>
               </CardHeader>
               <CardContent>
                 <CreateChannel />
@@ -938,65 +545,41 @@ export default function ZoraCreate() {
           </TabsContent>
         </Tabs>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-4 mt-8">
+        {/* Action Button */}
+        <div className="mt-8 text-center">
           {!isConnected ? (
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">Connect your wallet to create tokens</p>
-              <Button onClick={() => {/* Add wallet connection logic */}}>
+            <div>
+              <p className="text-muted-foreground mb-4">Connect your wallet to get started</p>
+              <Button onClick={() => {}}>
                 Connect Wallet
               </Button>
             </div>
           ) : (
-            <div className="flex gap-4 justify-center">
-              <Button 
-                onClick={handleCreateToken}
-                disabled={isLoading || isUploading || !formData.name || !formData.symbol}
-                size="lg"
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8"
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Uploading Media...
-                  </>
-                ) : isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Creating Token...
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="mr-2 h-5 w-5" />
-                    Create Token
-                  </>
-                )}
-              </Button>
-
-              <Button variant="outline" size="lg" asChild>
-                <a href="/contents" className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  View All Content
-                </a>
-              </Button>
-            </div>
+            <Button 
+              onClick={handleCreateToken}
+              disabled={isLoading || isUploading || !formData.name || !formData.symbol}
+              size="lg"
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Uploading...
+                </>
+              ) : isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Rocket className="mr-2 h-5 w-5" />
+                  Create Token
+                </>
+              )}
+            </Button>
           )}
         </div>
-
-        {/* Footer Info */}
-        <Card className="mt-8 bg-gray-50 dark:bg-gray-800/50">
-          <CardContent className="p-6 text-center">
-            <h3 className="font-semibold mb-2">How Zora Factory Works</h3>
-            <p className="text-sm text-muted-foreground max-w-3xl mx-auto">
-              Your token will be deployed using your custom Zora factory at{' '}
-              <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs">
-                0xAe028301c7822F2c254A43451D22dB5Fe447a4a0
-              </code>{' '}
-              on Base network. The factory automatically creates bonding curves, sets up Uniswap V4 hooks, 
-              and enables decentralized trading with built-in creator rewards.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
