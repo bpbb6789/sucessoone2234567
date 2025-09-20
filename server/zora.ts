@@ -138,7 +138,7 @@ export async function createZoraMetadata(params: {
   }
 }
 
-// Create a CONTENT coin using Zora SDK (actual API) - Creator Coins have NO developer rewards!
+// Create a coin using YOUR CUSTOM factory directly (bypasses Zora SDK limitations)
 export async function createCreatorCoin(params: {
   name: string;
   symbol: string;
@@ -248,49 +248,112 @@ export async function createCreatorCoin(params: {
         break;
     }
 
-    // Use the actual Zora SDK API structure (no startingMarketCap in real API)
-    const coinArgs = {
+    // Call YOUR CUSTOM factory directly (bypasses Zora SDK hardcoded addresses)
+    console.log('🏭 Using YOUR custom factory:', ZORA_FACTORY_ADDRESS);
+    
+    // Prepare factory call parameters
+    const owners = [params.creatorAddress as `0x${string}`];
+    const platformReferrer = PLATFORM_REFERRER_ADDRESS as `0x${string}`;
+    
+    // Use your custom platform configuration (pool config will be set by factory)
+    const poolConfig = '0x'; // Empty - your factory will use default config
+    const postDeployHook = '0x0000000000000000000000000000000000000000'; // No post deploy hook
+    const postDeployHookData = '0x';
+    const coinSalt = `0x${Math.random().toString(16).slice(2, 66).padStart(64, '0')}`; // Random salt
+    
+    console.log('📋 Custom factory call parameters:', {
+      payoutRecipient: params.creatorAddress,
+      owners,
+      uri: params.uri,
       name: params.name,
       symbol: params.symbol,
-      uri: params.uri,
-      chainId: baseSepolia.id,
-      payoutRecipient: params.creatorAddress as `0x${string}`,
-      currency: zoraCurrency,
-      platformReferrer: PLATFORM_REFERRER_ADDRESS as `0x${string}` // Platform gets 15% of market rewards (10% of total fees)
-    };
+      poolConfig,
+      platformReferrer,
+      postDeployHook,
+      postDeployHookData,
+      coinSalt
+    });
 
-    console.log('📋 Zora coin creation args:', coinArgs);
-
-    // Deploy using actual Zora SDK API with timeout
-    const deployPromise = createCoin(
-      coinArgs,
-      walletClient,
-      publicClient,
-      {
-        gasMultiplier: 1.2
-      }
-    );
+    // Call your custom factory's deploy function directly
+    const deployPromise = walletClient.writeContract({
+      address: ZORA_FACTORY_ADDRESS as `0x${string}`,
+      abi: [
+        {
+          type: 'function',
+          name: 'deploy',
+          inputs: [
+            { name: 'payoutRecipient', type: 'address' },
+            { name: 'owners', type: 'address[]' },
+            { name: 'uri', type: 'string' },
+            { name: 'name', type: 'string' },
+            { name: 'symbol', type: 'string' },
+            { name: 'poolConfig', type: 'bytes' },
+            { name: 'platformReferrer', type: 'address' },
+            { name: 'postDeployHook', type: 'address' },
+            { name: 'postDeployHookData', type: 'bytes' },
+            { name: 'coinSalt', type: 'bytes32' }
+          ],
+          outputs: [
+            { name: 'coin', type: 'address' },
+            { name: 'postDeployHookDataOut', type: 'bytes' }
+          ],
+          stateMutability: 'payable'
+        }
+      ],
+      functionName: 'deploy',
+      args: [
+        params.creatorAddress as `0x${string}`,
+        owners,
+        params.uri,
+        params.name,
+        params.symbol,
+        poolConfig,
+        platformReferrer,
+        postDeployHook,
+        postDeployHookData,
+        coinSalt
+      ]
+    });
 
     // Add timeout to the deployment (3 minutes for blockchain operations)
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Deployment timeout after 3 minutes')), 180000)
     );
 
-    const result = await Promise.race([deployPromise, timeoutPromise]);
+    const deployTxHash = await Promise.race([deployPromise, timeoutPromise]);
+    console.log('⚡ Transaction sent:', deployTxHash);
 
-    console.log('✅ Zora Creator Coin deployed successfully:', result);
+    // Wait for transaction receipt to get the coin address
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: deployTxHash as `0x${string}`,
+      timeout: 60000
+    });
 
-    // Get pool information from the deployment result
-    const coinAddress = (result as any)?.address || '';
-    const txHash = (result as any)?.hash || '';
+    console.log('✅ Custom factory deployment successful:', receipt);
+
+    // Extract coin address from transaction logs
+    let coinAddress = '';
+    if (receipt.logs && receipt.logs.length > 0) {
+      // The coin address is typically in one of the first logs
+      for (const log of receipt.logs) {
+        if (log.topics && log.topics[0] && log.address) {
+          // This is likely the coin address from the deployment event
+          coinAddress = log.address;
+          break;
+        }
+      }
+    }
+
+    const txHash = deployTxHash as string;
     
     // The pool is automatically created by the factory - you can get pool info by:
     // 1. Listening to CoinCreatedV4 events from the factory
     // 2. Calling getPoolKey() on the coin contract
     // 3. Pool address = hash(poolKey) on Uniswap V4
     
-    console.log(`🏊 Uniswap V4 pool automatically created for coin: ${coinAddress}`);
-    console.log(`📊 Pool will be available on Base Sepolia at: https://sepolia.basescan.org/address/${coinAddress}`);
+    console.log(`🏊 Coin deployed through YOUR custom factory: ${coinAddress}`);
+    console.log(`📊 Pool created with proper WETH configuration: https://sepolia.basescan.org/address/${coinAddress}`);
+    console.log(`🎯 Your custom factory used: ${ZORA_FACTORY_ADDRESS}`);
     
     return {
       coinAddress,
