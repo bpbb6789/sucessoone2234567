@@ -1,0 +1,79 @@
+1. After creation coin, you should see this popup  "<div class="bg-success/10 border border-success rounded-3xl p-6 mb-8"><h3 class="text-xl font-semibold mb-4 text-success">🎉 Coin Created Successfully!</h3><div class="space-y-2"><p><strong>Transaction Hash:</strong><code class="text-sm ml-2 break-all">0xe904e73d3c10e899a05928d8e9f4527743d134995bf72121cb8664d53103e7ab</code></p><p><strong>Coin Address:</strong><code class="text-sm ml-2 break-all">0x892d6ABe6e436dE5805338A896CA494048B5FddF</code></p><p><strong>Network:</strong> Base Sepolia Testnet</p><div class="mt-4 flex gap-2 flex-wrap"><a target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline btn-success" href="https://sepolia.basescan.org/tx/0xe904e73d3c10e899a05928d8e9f4527743d134995bf72121cb8664d53103e7ab">📜 View Transaction</a><a target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline btn-success" href="https://sepolia.basescan.org/address/0x892d6ABe6e436dE5805338A896CA494048B5FddF">🛈 View Coin Contract</a><a rel="noopener noreferrer" class="btn btn-sm btn-outline btn-success" href="/post/0x892d6ABe6e436dE5805338A896CA494048B5FddF">🖼 View Post</a></div></div></div>"   2. remove all the mocks on this page https://eaf5847c-c7b6-4bd7-ae1b-adf26996fcf1-00-3qdzmc36ylgh9.janeway.replit.dev/zoraexplore  and show real created copins, no mocks, no simulation!  PUMPit
+Search
+
+
+
+U
+Create
+
+Discover
+Explore Content
+Create Token
+Zora Create
+Zora Explore
+Leaderboard
+Create Channel
+Creators
+Channels
+Trending Channels
+No channels available
+More
+Doc
+Activities
+FAQ
+Admin
+Zora Explore
+Discover and trade tokens created with Zora's bonding curve technology
+
+Search tokens by name, symbol, or description...
+All Tokens
+Creator Coins
+Content Coins
+Basic Tokens
+
+Newest First
+C
+Creator Token
+CREATOR
+
+Creator Coins
+A creator coin for content monetization
+
+Price
+0.001000 ETH
+24h Change
+↑ 12.5%
+Market Cap
+$10.00K
+Holders
+25
+1250
+89
+Creator
+0x2f25...2033
+
+
+M
+Music NFT Coin
+MUSIC
+
+Content Coins
+Token for music content creators
+
+Price
+0.002500 ETH
+24h Change
+↓ 5.2%
+Market Cap
+$25.00K
+Holders
+45
+890
+156
+Creator
+0x9876...3210
+Ready to Launch Your Token?
+Create your own token with Zora's advanced bonding curve technology
+
+Create Token
+View Factory
