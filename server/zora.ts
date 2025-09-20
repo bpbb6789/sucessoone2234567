@@ -24,10 +24,30 @@ if (zoraApiKey) {
   console.warn('⚠️  ZORA_API_KEY not found - SDK may use rate-limited requests');
 }
 
-// YOUR CUSTOM Zora factory addresses - with proper WETH configuration for trading
-// Custom Factory on Base Sepolia (your deployed factory with WETH support)
-const ZORA_FACTORY_ADDRESS = '0x90193C961A926261B756D1E5bb255e67ff9498A1' as const;
-const ZORA_HOOK_REGISTRY = '0x777777C4c14b133858c3982D41Dbf02509fc18d7' as const;
+// Network-aware Zora factory addresses - automatically selects correct network
+const getZoraFactoryAddress = () => {
+  const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET?.toLowerCase().trim() === 'true';
+  
+  if (useMainnet) {
+    // Base Mainnet factory - official Zora deployment
+    return '0x777777751622c0d3258f214F9DF38E35BF45baF3' as const;
+  } else {
+    // Base Sepolia factory - your custom deployment
+    return '0xAe028301c7822F2c254A43451D22dB5Fe447a4a0' as const;
+  }
+};
+
+const getZoraHookRegistry = () => {
+  const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET?.toLowerCase().trim() === 'true';
+  
+  if (useMainnet) {
+    // Base Mainnet hook registry
+    return '0x777777C4c14b133858c3982D41Dbf02509fc18d7' as const;
+  } else {
+    // Base Sepolia hook registry (may be 0x0 if not deployed)
+    return '0x0000000000000000000000000000000000000000' as const;
+  }
+};
 
 // Platform address for developer rewards (15% create referral + 15% trade referral)
 const PLATFORM_REFERRER_ADDRESS = '0x71527294D2a4dF27266580b6E07723721944Bf93' as const;
@@ -37,7 +57,7 @@ const getRpcTransports = () => {
   const transports = [];
 
   // Check if we should use mainnet (production) or testnet
-  const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET === 'true';
+  const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET?.toLowerCase().trim() === 'true';
 
   if (useMainnet) {
     // Base Mainnet endpoints
@@ -64,12 +84,27 @@ const getRpcTransports = () => {
   return transports;
 };
 
-const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET === 'true';
+// Network configuration - moved to function to ensure dotenv loads first
+const getNetworkConfig = () => {
+  const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET?.toLowerCase().trim() === 'true';
+  console.log(`🔧 Environment check: NODE_ENV="${process.env.NODE_ENV}", USE_BASE_MAINNET="${process.env.USE_BASE_MAINNET}"`);
+  console.log(`🌐 Network configuration: ${useMainnet ? 'Base Mainnet (8453)' : 'Base Sepolia (84532)'}`);
+  console.log(`🏭 Factory address: ${getZoraFactoryAddress()}`);
+  return useMainnet;
+};
 
-const publicClient = createPublicClient({
-  chain: useMainnet ? base : baseSepolia,
-  transport: getRpcTransports()[0] // Use first available transport
-});
+// Create public client - will be initialized when getPublicClient() is called
+let publicClient: any = null;
+const getPublicClient = () => {
+  if (!publicClient) {
+    const useMainnet = getNetworkConfig();
+    publicClient = createPublicClient({
+      chain: useMainnet ? base : baseSepolia,
+      transport: getRpcTransports()[0] // Use first available transport
+    });
+  }
+  return publicClient;
+};
 
 // Get deployment account (server-side signing for demonstration)
 const getDeploymentAccount = () => {
@@ -93,6 +128,8 @@ const getWalletClient = () => {
     return null;
   }
 
+  const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET?.toLowerCase().trim() === 'true';
+  
   return createWalletClient({
     account,
     chain: useMainnet ? base : baseSepolia,
@@ -181,7 +218,7 @@ export async function createCreatorCoin(params: {
     console.log('🔑 Using deployer address:', walletClient.account.address);
 
     // Check deployer balance before deployment
-    const balance = await publicClient.getBalance({
+    const balance = await getPublicClient().getBalance({
       address: walletClient.account.address
     });
     console.log(`💰 Deployer balance: ${balance} wei (${Number(balance) / 1e18} ETH)`);
@@ -264,7 +301,7 @@ export async function createCreatorCoin(params: {
     }
 
     // Call YOUR CUSTOM factory directly (bypasses Zora SDK hardcoded addresses)
-    console.log('🏭 Using YOUR custom factory:', ZORA_FACTORY_ADDRESS);
+    console.log('🏭 Using factory for network:', getZoraFactoryAddress());
 
     // Prepare factory call parameters
     const owners = [params.creatorAddress as `0x${string}`];
@@ -291,7 +328,7 @@ export async function createCreatorCoin(params: {
 
     // Call your custom factory's deploy function directly
     const deployPromise = walletClient.writeContract({
-      address: ZORA_FACTORY_ADDRESS as `0x${string}`,
+      address: getZoraFactoryAddress() as `0x${string}`,
       abi: [
         {
           type: 'function',
@@ -339,7 +376,7 @@ export async function createCreatorCoin(params: {
     console.log('⚡ Transaction sent:', deployTxHash);
 
     // Wait for transaction receipt to get the coin address
-    const receipt = await publicClient.waitForTransactionReceipt({
+    const receipt = await getPublicClient().waitForTransactionReceipt({
       hash: deployTxHash as `0x${string}`,
       timeout: 60000
     });
@@ -354,7 +391,7 @@ export async function createCreatorCoin(params: {
 
       for (const log of receipt.logs) {
         // Check if this log is from the factory and has data
-        if (log.address.toLowerCase() === ZORA_FACTORY_ADDRESS.toLowerCase() && log.data && log.data !== '0x') {
+        if (log.address.toLowerCase() === getZoraFactoryAddress().toLowerCase() && log.data && log.data !== '0x') {
           try {
             // Try to decode the log data to extract coin address
             // The coin address is usually the first 32 bytes after the topics
@@ -376,7 +413,7 @@ export async function createCreatorCoin(params: {
         }
 
         // Fallback: check if any log address looks like a newly deployed contract
-        if (!coinAddress && log.address && log.address !== ZORA_FACTORY_ADDRESS && log.address.match(/^0x[a-fA-F0-9]{40}$/)) {
+        if (!coinAddress && log.address && log.address !== getZoraFactoryAddress() && log.address.match(/^0x[a-fA-F0-9]{40}$/)) {
           coinAddress = log.address;
           console.log(`✅ Using contract address from logs: ${coinAddress}`);
         }
@@ -389,8 +426,8 @@ export async function createCreatorCoin(params: {
 
       // Call the factory's coinAddress function to get the predicted address
       try {
-        coinAddress = await publicClient.readContract({
-          address: ZORA_FACTORY_ADDRESS as `0x${string}`,
+        coinAddress = await getPublicClient().readContract({
+          address: getZoraFactoryAddress() as `0x${string}`,
           abi: [
             {
               type: 'function',
@@ -439,12 +476,12 @@ export async function createCreatorCoin(params: {
 
     console.log(`🏊 Coin deployed through YOUR custom factory: ${coinAddress}`);
     console.log(`📊 Pool created with proper WETH configuration: https://sepolia.basescan.org/address/${coinAddress}`);
-    console.log(`🎯 Your custom factory used: ${ZORA_FACTORY_ADDRESS}`);
+    console.log(`🎯 Factory used: ${getZoraFactoryAddress()}`);
     console.log(`🔍 Transaction: https://sepolia.basescan.org/tx/${txHash}`);
 
     return {
       coinAddress,
-      factoryAddress: ZORA_FACTORY_ADDRESS,
+      factoryAddress: getZoraFactoryAddress(),
       txHash
     };
 
@@ -502,7 +539,7 @@ function simulateZoraDeployment(params: {
 
   const result = {
     coinAddress: simulatedCoinAddress,
-    factoryAddress: ZORA_FACTORY_ADDRESS, // Use Zora factory, not PumpFun
+    factoryAddress: getZoraFactoryAddress(), // Use Zora factory, not PumpFun
     txHash: simulatedTxHash
   };
 
@@ -847,7 +884,7 @@ export async function getCoinPoolInfo(coinAddress: string): Promise<{
     console.log(`🏊 Getting pool info for coin: ${coinAddress}`);
 
     // Call getPoolKey() on the coin contract
-    const poolKey = await publicClient.readContract({
+    const poolKey = await getPublicClient().readContract({
       address: coinAddress as `0x${string}`,
       abi: [
         {
