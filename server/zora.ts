@@ -9,8 +9,8 @@ import { baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { uploadJSONToIPFS } from './ipfs';
 import { formatEther, formatUnits, parseEther, parseUnits } from 'viem';
-import { getDexScreenerData, getEnhancedCoinPrice } from './dexscreener.js';
-import { eq } from 'drizzle-orm';
+import { getDexScreenerData } from './dexscreener.js';
+import { eq, sql } from 'drizzle-orm';
 import { creatorCoins } from '../shared/schema.js';
 import { db } from './db.js';
 
@@ -24,9 +24,9 @@ if (zoraApiKey) {
   console.warn('⚠️  ZORA_API_KEY not found - SDK may use rate-limited requests');
 }
 
-// Zora contract addresses - these are the official Zora addresses, NOT PumpFun
-// Zora Factory on Base Sepolia (different from mainnet)
-const ZORA_FACTORY_ADDRESS = '0x777777751622c0d3258f214F9DF38E35BF45baF3' as const;
+// YOUR CUSTOM Zora factory addresses - with proper WETH configuration for trading
+// Custom Factory on Base Sepolia (your deployed factory with WETH support)
+const ZORA_FACTORY_ADDRESS = '0x90193C961A926261B756D1E5bb255e67ff9498A1' as const;
 const ZORA_HOOK_REGISTRY = '0x777777C4c14b133858c3982D41Dbf02509fc18d7' as const;
 
 // Platform address for developer rewards (15% create referral + 15% trade referral)
@@ -295,13 +295,7 @@ export async function createCreatorCoin(params: {
     return {
       coinAddress,
       factoryAddress: ZORA_FACTORY_ADDRESS,
-      txHash,
-      poolInfo: {
-        // Pool is created automatically by the factory
-        network: 'Base Sepolia',
-        poolType: 'Uniswap V4',
-        hook: '0xe0eC17Ab9f7ce52cC60DFB64E0A0A705d02Bd040' // From addresses/84532.json
-      }
+      txHash
     };
 
   } catch (error) {
@@ -749,7 +743,7 @@ export async function getCoinHolders(coinAddress: string): Promise<{
           holders: basescanHolders.map((holder: any) => ({
             address: holder.address,
             balance: holder.balance,
-            percentage: (BigInt(holder.balance) * 10000n / totalSupply) / 100
+            percentage: Number((BigInt(holder.balance) * 10000n) / totalSupply) / 100
           })),
           totalHolders: basescanHolders.length
         };
