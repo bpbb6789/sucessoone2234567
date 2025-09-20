@@ -32,7 +32,7 @@ import { registerAdvancedTradingRoutes } from './routes/advancedTrading';
 import { ethers } from 'ethers';
 import { initializeDatabase } from './initializeDatabase';
 import { zoraTradingService } from './services/zoraTradingService';
-import { getCoinPrice } from './zora';
+// Removed custom bonding curve - using Zora's built-in system
 import { getTokenHolders } from './blockchain';
 import contentRoutes from './contentTokenRoutes';
 import contentCoinTradingRoutes from './routes/contentCoinTrading';
@@ -2482,8 +2482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           symbol: newCoin.coinSymbol,
           uri: newCoin.metadataUri,
           currency: newCoin.currency,
-          creatorAddress: newCoin.creatorAddress,
-          startingMarketCap: newCoin.startingMarketCap
+          creatorAddress: newCoin.creatorAddress
         });
       } catch (error: any) {
         console.error('❌ Token deployment failed:', error);
@@ -3350,7 +3349,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             entityType: 'token',
             entityId: data.tokenId,
             actorAddress: data.traderAddress,
-            metadata: { amount: data.amount, price: data.price, tradeType: data.tradeType },
             actionUrl: `/token/${data.tokenId}`
           });
 

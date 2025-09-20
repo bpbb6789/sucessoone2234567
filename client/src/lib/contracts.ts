@@ -1,9 +1,8 @@
 import { Address } from 'viem'
 import { TOKEN_ABI } from '../../../abi/TokenAbi'
 
-// Bonding Curve Contract addresses on Base Sepolia network
+// Network Contract addresses on Base Sepolia network
 export const CONTRACTS = {
-  BONDING_CURVE_FACTORY: '0x787b9de286a18da63805e9df943286bba2ca0c3d' as Address, // Main bonding curve factory
   WETH: '0x4267d742e4fd1c03805083b087deb575203e9b19' as Address, // WETH token for Base Sepolia
 } as const
 
@@ -14,13 +13,7 @@ export const ZORA_FACTORY_ADDRESS = "0xAe028301c7822F2c254A43451D22dB5Fe447a4a0"
 export const ZORA_FACTORY_IMPL = "0xb4ac7Bac55f22B88C43b848f3D6d1492C4C823f1" as Address;
 
 
-// Bonding Curve Factory ABI (minimal interface for client)
-export const BONDING_CURVE_FACTORY_ABI = [
-  "function deployCurve(address token, address creator) external returns (address)",
-  "function getCurve(address creator, address token) external view returns (address)",
-  "function curveExists(address creator, address token) external view returns (bool)",
-  "event CurveDeployed(address indexed creator, address indexed token, address indexed curve, uint256 curveIndex)"
-] as const
+// Custom bonding curve removed - using Zora's built-in system
 
 // Bonding Curve Exchange ABI (minimal interface for client)
 export const BONDING_CURVE_EXCHANGE_ABI = [

@@ -23,7 +23,7 @@ const upload = multer({
       'audio/mpeg', 'audio/wav', 'audio/flac', 'audio/ogg',
       'application/pdf', 'text/plain'
     ];
-    
+
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -68,7 +68,7 @@ function generateValidAddress(): string {
 }
 
 export function setupContentTokenRoutes(app: Express) {
-  
+
   // Upload content to IPFS
   app.post('/api/upload-content', upload.single('file'), async (req, res) => {
     try {
@@ -76,8 +76,8 @@ export function setupContentTokenRoutes(app: Express) {
         return res.status(400).json({ error: 'No file provided' });
       }
 
-      const { contentType, title, description } = req.body;
-      
+      const { contentType, description } = req.body;
+
       console.log('Uploading content to IPFS:', {
         filename: req.file.originalname,
         size: req.file.size,
@@ -89,13 +89,12 @@ export function setupContentTokenRoutes(app: Express) {
       const file = new File([req.file.buffer], req.file.originalname, {
         type: req.file.mimetype,
       });
-      
+
       const uploadResult = await pinata.upload.public.file(file, {
         metadata: {
           name: req.file.originalname,
           keyvalues: {
             contentType: contentType,
-            title: title || req.file.originalname,
             description: description || '',
             uploadedAt: new Date().toISOString()
           }
@@ -176,11 +175,11 @@ export function setupContentTokenRoutes(app: Express) {
       console.log(`   Coin: ${coinName} (${coinSymbol})`);
       console.log(`   Supply: ${totalSupply}`);
       console.log(`   Strategy: Deploy token first, then create curve separately`);
-      
+
       // First, diagnose the factory to understand what's wrong
       const diagnosis = await bondingCurveService.diagnoseFactoryContract();
       console.log(`🔍 Factory diagnosis:`, diagnosis);
-      
+
       // Simulate the call to get the exact error
       const simulation = await bondingCurveService.simulateContentCoinWithCurve(
         coinName,
@@ -190,7 +189,7 @@ export function setupContentTokenRoutes(app: Express) {
         creatorAddress
       );
       console.log(`🧪 Simulation result:`, simulation);
-      
+
       // For now, use the existing separate deployment approach
       // Deploy token first using basic ERC20 deployment
       const tokenDeployResult = await bondingCurveService.deployERC20Token(
@@ -199,26 +198,26 @@ export function setupContentTokenRoutes(app: Express) {
         totalSupply,
         creatorAddress
       );
-      
+
       if (!tokenDeployResult.success) {
         throw new Error(tokenDeployResult.error || 'Failed to deploy ERC20 token');
       }
-      
+
       console.log(`✅ Token deployed:`, tokenDeployResult);
-      
+
       // STEP 2: Deploy bonding curve for the token (if needed)
       let curveAddress = null;
       let curveDeployTx = null;
-      
+
       if (tokenDeployResult.tokenAddress) {
         console.log(`🚀 Deploying bonding curve for token: ${tokenDeployResult.tokenAddress}`);
-        
+
         const curveDeployResult = await bondingCurveService.deployBondingCurve(
           tokenDeployResult.tokenAddress,
           creatorAddress,
           `coin-${Date.now()}`
         );
-        
+
         if (curveDeployResult.success) {
           curveAddress = curveDeployResult.curveAddress;
           curveDeployTx = curveDeployResult.transactionHash;
@@ -424,7 +423,7 @@ export function setupContentTokenRoutes(app: Express) {
 
       // Calculate tokens that would be received for the ETH amount
       const tokensReceived = await bondingCurveService.calculateBuyTokens(address, amount);
-      
+
       if (!tokensReceived) {
         throw new Error('Failed to calculate buy amount - curve may not exist');
       }
@@ -457,7 +456,7 @@ export function setupContentTokenRoutes(app: Express) {
 
       // Calculate ETH that would be received for the token amount
       const ethReceived = await bondingCurveService.calculateSellTokens(address, amount);
-      
+
       if (!ethReceived) {
         throw new Error('Failed to calculate sell amount - curve may not exist');
       }
