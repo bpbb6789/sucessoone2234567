@@ -163,6 +163,26 @@ export default function ContentCoinDetail() {
   );
   const { data: priceData } = useCreatorCoinPrice(tokenAddress || "");
 
+  // Fetch real trading data from DexScreener
+  const { data: dexData } = useQuery({
+    queryKey: [`dexscreener-${tokenAddress}`],
+    queryFn: async () => {
+      if (!tokenData?.coinAddress) return null;
+      try {
+        const response = await fetch(`/api/dexscreener/${tokenData.coinAddress}`);
+        if (response.ok) {
+          return await response.json();
+        }
+        return null;
+      } catch (error) {
+        console.warn('Failed to fetch DexScreener data:', error);
+        return null;
+      }
+    },
+    enabled: !!tokenData?.coinAddress,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   // Removed auction check - using instant trading via Zora SDK
 
   // Fetch creator coin data
@@ -232,18 +252,18 @@ export default function ContentCoinDetail() {
     }));
   }, [holdersData]);
 
-  // Calculate current price for display
+  // Calculate current price for display using real data
   const currentPrice = useMemo(() => {
-    // Use price data if available
+    // Use real DexScreener price data if available
     if (priceData?.price && parseFloat(priceData.price) > 0) {
       return parseFloat(priceData.price).toFixed(8);
     }
-    // Use token data if no price data
+    // Use database price if available
     else if (tokenData?.currentPrice && parseFloat(tokenData.currentPrice) > 0) {
       return parseFloat(tokenData.currentPrice).toFixed(8);
     }
-    // Return actual price if available, otherwise show as unavailable
-    return "0.00000001"; // Placeholder for very small price
+    // For tokens without trading data, fetch from DexScreener
+    return "No trading data"; // Show when no real price available
   }, [priceData, tokenData]);
 
 
@@ -359,14 +379,20 @@ export default function ContentCoinDetail() {
             <div className="mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">
-                  ${currentPrice}
+                  {dexData?.price ? `$${parseFloat(dexData.price).toFixed(8)}` : 
+                   currentPrice !== "No trading data" ? `$${currentPrice}` : "No Price Data"}
                 </h1>
-                {priceData?.priceChange24h !== undefined && (
+                {(dexData?.priceChange24h !== undefined || priceData?.priceChange24h !== undefined) && (
                   <Badge
-                    className={`${priceData.priceChange24h >= 0 ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}`}
+                    className={`${(dexData?.priceChange24h || priceData?.priceChange24h || 0) >= 0 ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}`}
                   >
-                    {priceData.priceChange24h >= 0 ? "+" : ""}
-                    {priceData.priceChange24h.toFixed(2)}%
+                    {(dexData?.priceChange24h || priceData?.priceChange24h || 0) >= 0 ? "+" : ""}
+                    {(dexData?.priceChange24h || priceData?.priceChange24h || 0).toFixed(2)}%
+                  </Badge>
+                )}
+                {dexData?.price && (
+                  <Badge variant="outline" className="text-green-600 border-green-600">
+                    Live Price
                   </Badge>
                 )}
               </div>
@@ -576,16 +602,19 @@ export default function ContentCoinDetail() {
                         tokenAddress={tokenData.coinAddress as Address}
                         tokenName={tokenData.coinName || tokenData.name || "Token"}
                         tokenSymbol={tokenData.coinSymbol || tokenData.symbol || "TOKEN"}
-                        currentPrice={currentPrice}
-                        supply={tokenData.totalSupply || "0"}
-                        marketCap={(parseFloat(currentPrice) * parseFloat(tokenData.totalSupply || "0")).toFixed(2)}
+                        currentPrice={dexData?.price ? dexData.price.toString() : currentPrice}
+                        supply={tokenData.totalSupply || "1000000"}
+                        marketCap={dexData?.marketCap ? dexData.marketCap.toString() : "0"}
                         holders={processedHolders.length}
                       />
                     </div>
                   ) : (
                     <div className="p-4 text-center text-muted-foreground">
-                      <p>Token address not available for trading</p>
-                      <p className="text-xs mt-1">Deploy token to Base Mainnet to enable trading</p>
+                      <div className="bg-yellow-50 dark:bg-yellow-950 p-3 rounded-lg mb-3">
+                        <p className="text-yellow-700 dark:text-yellow-400 text-sm">⚠️ Trading requires Base Mainnet deployment</p>
+                      </div>
+                      <p>Token needs to be deployed to Base Mainnet for trading</p>
+                      <p className="text-xs mt-1">Current deployment: Base Sepolia (Testnet)</p>
                     </div>
                   )}
                 </TabsContent>
