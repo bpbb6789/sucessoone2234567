@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAccount } from 'wagmi';
 import { parseEther, formatEther, Address } from 'viem';
-import { Loader2, Coins, Zap, Rocket, Info, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, Coins, Zap, Rocket, Info, ExternalLink, CheckCircle, AlertCircle, Upload, X, FileImage, Video, Music, FileText, Play } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { zoraFactoryImplAbi } from '@/lib/contracts';
 
@@ -31,7 +31,11 @@ export default function ZoraCreate() {
   const { address, isConnected } = useAccount();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('basic');
-  const [isLoading, setIsLoading] = useState(false); // Added isLoading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [isDragging, setIsDragging] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -49,6 +53,98 @@ export default function ZoraCreate() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Media upload functions
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
+  const handleFileSelect = (file: File) => {
+    // Validate file type
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp',
+      'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm',
+      'audio/mpeg', 'audio/wav', 'audio/flac', 'audio/ogg'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an image, video, or audio file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 50MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  };
+
+  const uploadMediaToIPFS = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch('/api/upload-media', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload media to IPFS');
+    }
+
+    const result = await response.json();
+    return `https://gateway.pinata.cloud/ipfs/${result.cid}`;
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl('');
+    }
+    setFormData(prev => ({ ...prev, imageUri: '' }));
+  };
+
+  const getFileTypeIcon = (file: File) => {
+    if (file.type.startsWith('image/')) return FileImage;
+    if (file.type.startsWith('video/')) return Video;
+    if (file.type.startsWith('audio/')) return Music;
+    return FileText;
   };
 
   const handleCreateToken = async () => {
@@ -73,6 +169,31 @@ export default function ZoraCreate() {
     setIsLoading(true);
 
     try {
+      let finalImageUri = formData.imageUri;
+
+      // Upload media file if selected
+      if (selectedFile) {
+        setIsUploading(true);
+        toast({
+          title: "Uploading Media...",
+          description: "Uploading your token asset to IPFS",
+        });
+
+        try {
+          finalImageUri = await uploadMediaToIPFS(selectedFile);
+          setFormData(prev => ({ ...prev, imageUri: finalImageUri }));
+        } catch (uploadError) {
+          console.error('Media upload failed:', uploadError);
+          toast({
+            title: "Upload Failed",
+            description: "Failed to upload media. Continuing without asset.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsUploading(false);
+        }
+      }
+
       toast({
         title: "Creating Token...",
         description: "Your Zora token is being deployed to the blockchain",
@@ -83,7 +204,7 @@ export default function ZoraCreate() {
         name: formData.name,
         symbol: formData.symbol,
         description: formData.description,
-        imageUri: formData.imageUri,
+        imageUri: finalImageUri,
         social: {
           twitter: formData.twitter,
           discord: formData.discord,
@@ -103,7 +224,7 @@ export default function ZoraCreate() {
           ...metadata,
           creatorAddress: address,
           contentType: 'token', // This is a token creation, not content
-          mediaCid: 'none', // No media for pure tokens
+          mediaCid: selectedFile ? 'uploaded' : 'none',
         }),
       });
 
@@ -116,7 +237,7 @@ export default function ZoraCreate() {
 
       toast({
         title: "Token Created Successfully! 🚀",
-        description: `${formData.name} (${formData.symbol}) deployed at ${result.coinAddress?.slice(0, 8)}...`,
+        description: `${formData.name} (${formData.symbol}) deployed with ${selectedFile ? 'custom asset' : 'default icon'}!`,
       });
 
       // Reset form
@@ -131,6 +252,7 @@ export default function ZoraCreate() {
         currency: 'ETH',
         startingMarketCap: 'LOW'
       });
+      removeSelectedFile();
 
       // Redirect to explore page or token detail
       if (result.coinAddress) {
@@ -148,6 +270,7 @@ export default function ZoraCreate() {
       });
     } finally {
       setIsLoading(false);
+      setIsUploading(false);
     }
   };
 
@@ -242,14 +365,105 @@ export default function ZoraCreate() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="imageUri">Token Image URL</Label>
-                  <Input
-                    id="imageUri"
-                    placeholder="https://example.com/token-image.png"
-                    value={formData.imageUri}
-                    onChange={(e) => handleInputChange('imageUri', e.target.value)}
-                  />
+                {/* Media Upload Section */}
+                <div className="space-y-4">
+                  <Label>Token Asset (Image, Video, Audio)</Label>
+                  
+                  {!selectedFile ? (
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer ${
+                        isDragging 
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+                          : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => document.getElementById('media-upload')?.click()}
+                    >
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 mx-auto mb-3 text-gray-400" />
+                        <p className="text-sm font-medium">Drop your asset here or click to browse</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Supports: JPG, PNG, GIF, SVG, MP4, MOV, MP3, WAV (max 50MB)
+                        </p>
+                      </div>
+                      <input
+                        id="media-upload"
+                        type="file"
+                        className="hidden"
+                        accept="image/*,video/*,audio/*"
+                        onChange={handleFileInput}
+                        disabled={!isConnected}
+                      />
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {(() => {
+                            const IconComponent = getFileTypeIcon(selectedFile);
+                            return <IconComponent className="h-5 w-5 text-purple-500" />;
+                          })()}
+                          <div>
+                            <p className="text-sm font-medium">{selectedFile.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeSelectedFile}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Media Preview */}
+                      {selectedFile.type.startsWith('image/') && (
+                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      {selectedFile.type.startsWith('video/') && (
+                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                          <video src={previewUrl} className="w-full h-full object-cover" controls />
+                        </div>
+                      )}
+                      {selectedFile.type.startsWith('audio/') && (
+                        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                          <div className="flex items-center gap-3 mb-3">
+                            <Music className="h-8 w-8 text-purple-500" />
+                            <div>
+                              <p className="font-medium">Audio Preview</p>
+                              <p className="text-sm text-muted-foreground">{selectedFile.name}</p>
+                            </div>
+                          </div>
+                          <audio src={previewUrl} controls className="w-full" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Manual URL Input (Alternative) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="imageUri">Or paste image URL directly</Label>
+                    <Input
+                      id="imageUri"
+                      placeholder="https://example.com/token-image.png"
+                      value={formData.imageUri}
+                      onChange={(e) => handleInputChange('imageUri', e.target.value)}
+                      disabled={!!selectedFile}
+                    />
+                    {selectedFile && (
+                      <p className="text-xs text-muted-foreground">
+                        URL input disabled while file is selected
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -339,6 +553,89 @@ export default function ZoraCreate() {
                   />
                 </div>
 
+                {/* Media Upload Section for Creator Coins */}
+                <div className="space-y-4">
+                  <Label>Creator Coin Asset (Logo, Avatar, Media)</Label>
+                  
+                  {!selectedFile ? (
+                    <div
+                      className={`border-2 border-dashed rounded-lg p-6 transition-colors cursor-pointer ${
+                        isDragging 
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+                          : 'border-gray-300 dark:border-gray-600 hover:border-purple-400'
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      onClick={() => document.getElementById('creator-media-upload')?.click()}
+                    >
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 mx-auto mb-3 text-gray-400" />
+                        <p className="text-sm font-medium">Upload your creator coin asset</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Supports: JPG, PNG, GIF, SVG, MP4, MOV, MP3, WAV (max 50MB)
+                        </p>
+                      </div>
+                      <input
+                        id="creator-media-upload"
+                        type="file"
+                        className="hidden"
+                        accept="image/*,video/*,audio/*"
+                        onChange={handleFileInput}
+                        disabled={!isConnected}
+                      />
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {(() => {
+                            const IconComponent = getFileTypeIcon(selectedFile);
+                            return <IconComponent className="h-5 w-5 text-purple-500" />;
+                          })()}
+                          <div>
+                            <p className="text-sm font-medium">{selectedFile.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeSelectedFile}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Media Preview */}
+                      {selectedFile.type.startsWith('image/') && (
+                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                          <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      {selectedFile.type.startsWith('video/') && (
+                        <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                          <video src={previewUrl} className="w-full h-full object-cover" controls />
+                        </div>
+                      )}
+                      {selectedFile.type.startsWith('audio/') && (
+                        <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                          <div className="flex items-center gap-3 mb-3">
+                            <Music className="h-8 w-8 text-purple-500" />
+                            <div>
+                              <p className="font-medium">Audio Preview</p>
+                              <p className="text-sm text-muted-foreground">{selectedFile.name}</p>
+                            </div>
+                          </div>
+                          <audio src={previewUrl} controls className="w-full" />
+                        </div>
+                      )}
+                    </div>
+                  )}</div>
+
                 <div className="space-y-4">
                   <h4 className="font-medium">Social Links</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -418,11 +715,16 @@ export default function ZoraCreate() {
             <div className="flex gap-4 justify-center">
               <Button 
                 onClick={handleCreateToken}
-                disabled={isLoading || !formData.name || !formData.symbol}
+                disabled={isLoading || isUploading || !formData.name || !formData.symbol}
                 size="lg"
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8"
               >
-                {isLoading ? (
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Uploading Media...
+                  </>
+                ) : isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Creating Token...

@@ -38,7 +38,7 @@ import contentRoutes from './contentTokenRoutes';
 import contentCoinTradingRoutes from './routes/contentCoinTrading';
 import dexscreenerRoutes from './routes/dexscreener';
 import { blockchainEventsRouter } from './routes/blockchainEvents';
-
+import setupMediaUploadRoutes from './routes/mediaUpload';
 
 const prisma = new PrismaClient();
 
@@ -2882,15 +2882,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(10);
 
       // Calculate totals
-      const totalMarketCap = creatorCoinsData.reduce((sum, coin) => 
+      const totalMarketCap = creatorCoinsData.reduce((sum, coin) =>
         sum + parseFloat(coin.marketCap || '0'), 0
       );
-      
-      const totalVolume = creatorCoinsData.reduce((sum, coin) => 
+
+      const totalVolume = creatorCoinsData.reduce((sum, coin) =>
         sum + parseFloat(coin.volume24h || '0'), 0
       );
-      
-      const totalHolders = creatorCoinsData.reduce((sum, coin) => 
+
+      const totalHolders = creatorCoinsData.reduce((sum, coin) =>
         sum + (coin.holders || 0), 0
       );
 
@@ -2915,20 +2915,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bio: profile?.description,
         isVerified: profile?.isVerified || false,
         memberSince: profile?.createdAt?.toISOString() || new Date().toISOString(),
-        
+
         // Stats
         totalEarnings,
         totalMarketCap: totalMarketCap.toFixed(2),
         coinsCreated: creatorCoinsData.length,
         totalHolders,
-        
+
         // Social
         socialLinks: {
-          x: profile?.twitter,
-          website: profile?.website,
-          farcaster: false // Would implement real Farcaster verification
+          x: profile?.twitter ? true : false,
+          website: profile?.website
         },
-        
+
         // Recent activity
         recentCoins
       };
@@ -2953,11 +2952,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const creatorsData = await db
         .select({
           creatorAddress: creatorCoins.creatorAddress,
-          creatorCoinsCount: sql`COUNT(*)`.as('creator_coins_count'),
-          totalLikes: sql`SUM(COALESCE(likes, 0))`.as('total_likes'),
-          totalComments: sql`SUM(COALESCE(comments, 0))`.as('total_comments'),
-          firstCreated: sql`MIN(${creatorCoins.createdAt})`.as('first_created'),
-          latestCreated: sql`MAX(${creatorCoins.createdAt})`.as('latest_created')
+          creatorCoinsCount: sql<number>`COUNT(*)`.as('creator_coins_count'),
+          totalLikes: sql<number>`SUM(COALESCE(likes, 0))`.as('total_likes'),
+          totalComments: sql<number>`SUM(COALESCE(comments, 0))`.as('total_comments'),
+          firstCreated: sql<string>`MIN(${creatorCoins.createdAt})`.as('first_created'),
+          latestCreated: sql<string>`MAX(${creatorCoins.createdAt})`.as('latest_created')
         })
         .from(creatorCoins)
         .where(sql`${creatorCoins.creatorAddress} IS NOT NULL AND ${creatorCoins.creatorAddress} != ''`)
@@ -2969,7 +2968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get profile data for all creators
       const profilesPromises = creatorsData.map(async (creator) => {
         try {
-          const profile = await db
+          const profiles = await db
             .select({
               address: walletProfiles.address,
               name: walletProfiles.name,
@@ -2982,7 +2981,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .where(eq(walletProfiles.address, creator.creatorAddress))
             .limit(1);
 
-          return profile[0] || null;
+          return profiles[0] || null;
         } catch (error) {
           console.warn(`Failed to fetch profile for ${creator.creatorAddress}:`, error);
           return null;
@@ -4034,24 +4033,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalVolume: sql<string>`SUM(CAST(COALESCE(${creatorCoins.volume24h}, '0') AS DECIMAL))`.as('total_volume'),
           totalHolders: sql<number>`SUM(COALESCE(${creatorCoins.holders}, 0))`.as('total_holders'),
           topCoinName: sql<string>`(
-            SELECT ${creatorCoins.coinName} 
-            FROM ${creatorCoins} c2 
+            SELECT ${creatorCoins.coinName}
+            FROM ${creatorCoins} c2
             WHERE c2.creator_address = ${creatorCoins.creatorAddress}
-            ORDER BY CAST(COALESCE(c2.market_cap, '0') AS DECIMAL) DESC 
+            ORDER BY CAST(COALESCE(c2.market_cap, '0') AS DECIMAL) DESC
             LIMIT 1
           )`.as('top_coin_name'),
           topCoinSymbol: sql<string>`(
-            SELECT ${creatorCoins.coinSymbol} 
-            FROM ${creatorCoins} c2 
+            SELECT ${creatorCoins.coinSymbol}
+            FROM ${creatorCoins} c2
             WHERE c2.creator_address = ${creatorCoins.creatorAddress}
-            ORDER BY CAST(COALESCE(c2.market_cap, '0') AS DECIMAL) DESC 
+            ORDER BY CAST(COALESCE(c2.market_cap, '0') AS DECIMAL) DESC
             LIMIT 1
           )`.as('top_coin_symbol'),
           topCoinMarketCap: sql<string>`(
             SELECT COALESCE(c2.market_cap, '0')
-            FROM ${creatorCoins} c2 
+            FROM ${creatorCoins} c2
             WHERE c2.creator_address = ${creatorCoins.creatorAddress}
-            ORDER BY CAST(COALESCE(c2.market_cap, '0') AS DECIMAL) DESC 
+            ORDER BY CAST(COALESCE(c2.market_cap, '0') AS DECIMAL) DESC
             LIMIT 1
           )`.as('top_coin_market_cap'),
         })
@@ -4070,7 +4069,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .from(walletProfiles)
             .where(eq(walletProfiles.address, creator.creatorAddress))
             .limit(1);
-          
+
           if (profiles.length > 0) {
             profilesMap.set(creator.creatorAddress, profiles[0]);
           }
@@ -4084,51 +4083,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const profile = profilesMap.get(creator.creatorAddress);
         const totalEarnings = (parseFloat(creator.totalVolume) * 0.05).toFixed(2);
         const earnings24h = (parseFloat(totalEarnings) * 0.1).toFixed(2); // Estimate 10% of total was earned in 24h
-        
+
         return {
           id: creator.creatorAddress,
           rank: index + 1,
           address: creator.creatorAddress,
           name: profile?.name || `Creator ${creator.creatorAddress.slice(0, 8)}`,
           avatar: profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.creatorAddress}`,
-          
+
           // Content metrics
           contentsCreated: creator.creatorCoinsCount,
           totalViews: Math.floor(Math.random() * 10000), // Would need to track views in real app
           totalLikes: creator.totalLikes,
-          
-          // Trading metrics  
+
+          // Trading metrics
           tradesCount: Math.floor(Math.random() * 100),
           volumeTraded: `${creator.totalVolume} ETH`,
           uniqueTokensTraded: creator.creatorCoinsCount,
-          
+
           // Channel metrics
           channelsCreated: 0, // Would calculate from web3Channels
           totalSubscribers: 0,
-          
-          // Earnings metrics (real calculated data)
+
+          // Earnings metrics
           totalEarnings: totalEarnings,
           earnings24h: earnings24h,
           tradingProfit: (parseFloat(totalEarnings) * 0.3).toFixed(2),
-          
+
           // Market metrics
           totalMarketCap: creator.totalMarketCap,
           avgTokenPrice: parseFloat(creator.avgPrice).toFixed(6),
           topCoinSymbol: creator.topCoinSymbol,
           topCoinMarketCap: creator.topCoinMarketCap,
-          
+
           // Time metrics
           memberSince: creator.firstCreated,
-          lastActive: creator.latestCreated,
+          lastActive: 'Today',
           lastCoinCreated: creator.latestCreated,
-          
+
           // Social verification
           socialLinks: {
             x: profile?.twitter ? true : false,
             farcaster: Math.random() > 0.7, // Random for demo
             website: profile?.website
           },
-          
+
           // Performance metrics
           marketCapGrowth24h: (Math.random() - 0.5) * 20, // Random growth between -10% and +10%
           priceChange24h: (Math.random() - 0.5) * 30,
@@ -4147,7 +4146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return b.contentsCreated - a.contentsCreated;
           case 'trading':
             return parseFloat(b.volumeTraded) - parseFloat(a.volumeTraded);
-          default:
+          default: // overall
             return parseFloat(b.totalEarnings) - parseFloat(a.totalEarnings);
         }
       });
@@ -4270,7 +4269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Overall score
           overallScore: Math.round(overallScore),
 
-          // Social info - remove random generation
+          // Social info
           socialLinks: {
             x: false, // Real social verification needed
             farcaster: false, // Real social verification needed
@@ -4461,7 +4460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Register advanced trading routes
-  app.use(advancedTradingRouter);
+  // app.use(advancedTradingRouter); // This line is causing the error, uncomment when router is defined
   // Register content token routes
   const { setupContentTokenRoutes } = await import('./contentTokenRoutes');
   setupContentTokenRoutes(app);
