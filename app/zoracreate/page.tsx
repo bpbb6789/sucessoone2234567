@@ -70,41 +70,114 @@ export default function ZoraCreatePage() {
     setIsLoading(true);
     
     try {
-      // This would integrate with your Zora factory contract
-      // Using the ZoraFactoryImpl contract from your coins directory
       toast({
         title: "Creating Token...",
         description: "Your Zora token is being deployed to the blockchain",
       });
 
-      // Simulate the deployment process
-      setTimeout(() => {
-        setIsLoading(false);
-        toast({
-          title: "Token Created Successfully! 🚀",
-          description: `${formData.name} (${formData.symbol}) has been deployed with Zora bonding curve`,
-        });
+      // Create metadata URI first
+      let metadataUri = formData.imageUri;
+      if (!metadataUri) {
+        // Create a basic metadata object
+        const metadata = {
+          name: formData.name,
+          description: formData.description || `${formData.name} token created with Zora`,
+          symbol: formData.symbol,
+          image: formData.imageUri || '',
+          attributes: [
+            { trait_type: 'Currency', value: formData.currency },
+            { trait_type: 'Market Cap', value: formData.startingMarketCap },
+            { trait_type: 'Platform', value: 'Zora Create' }
+          ]
+        };
         
-        // Reset form
-        setFormData({
-          name: '',
-          symbol: '',
-          description: '',
-          imageUri: '',
-          twitter: '',
-          discord: '',
-          website: '',
-          currency: 'ETH',
-          startingMarketCap: 'LOW'
+        // Upload metadata to IPFS
+        const metadataResponse = await fetch('/api/upload-metadata', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(metadata)
         });
-      }, 3000);
+
+        if (metadataResponse.ok) {
+          const metadataResult = await metadataResponse.json();
+          metadataUri = `https://gateway.pinata.cloud/ipfs/${metadataResult.cid}`;
+        }
+      }
+
+      // Use the proper creator coins API that actually deploys
+      const response = await fetch('/api/creator-coins/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorAddress: address,
+          title: formData.name,
+          description: formData.description,
+          contentType: 'token',
+          mediaCid: 'none', // This is a pure token, no media
+          coinName: formData.name,
+          coinSymbol: formData.symbol,
+          currency: formData.currency,
+          startingMarketCap: formData.startingMarketCap,
+          twitter: formData.twitter || undefined,
+          discord: formData.discord || undefined,
+          website: formData.website || undefined,
+          metadataUri: metadataUri
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Failed to create token: ${errorData}`);
+      }
+
+      const result = await response.json();
+      
+      // Now deploy the token
+      const deployResponse = await fetch(`/api/creator-coins/${result.coin.id}/deploy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!deployResponse.ok) {
+        const errorText = await deployResponse.text();
+        throw new Error(errorText || 'Deployment failed');
+      }
+
+      const deployResult = await deployResponse.json();
+
+      toast({
+        title: "Token Created Successfully! 🚀",
+        description: `${formData.name} (${formData.symbol}) has been deployed to the blockchain!`,
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        symbol: '',
+        description: '',
+        imageUri: '',
+        twitter: '',
+        discord: '',
+        website: '',
+        currency: 'ETH',
+        startingMarketCap: 'LOW'
+      });
+
+      // Redirect to the token page
+      if (deployResult.coin?.coinAddress) {
+        setTimeout(() => {
+          window.location.href = `/creator-coins/${result.coin.id}`;
+        }, 2000);
+      }
+
     } catch (error) {
       console.error('Error creating token:', error);
       toast({
         title: "Creation Failed",
-        description: "Failed to create token. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create token. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
