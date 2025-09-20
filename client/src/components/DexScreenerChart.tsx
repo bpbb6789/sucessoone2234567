@@ -23,17 +23,25 @@ export function DexScreenerChart({ tokenAddress, tokenSymbol }: DexScreenerChart
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch DexScreener data
   useEffect(() => {
     const fetchDexScreenerData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
+
+        // Only fetch if we have a valid contract address (starts with 0x)
+        if (!tokenAddress || !tokenAddress.startsWith('0x') || tokenAddress.length !== 42) {
+          setError('Invalid contract address');
+          setData(null);
+          return;
+        }
+
         const response = await fetch(`/api/dexscreener/${tokenAddress}`);
         if (!response.ok) {
           throw new Error('Failed to fetch trading data');
         }
-        
+
         const dexData = await response.json();
         setData(dexData);
       } catch (err) {

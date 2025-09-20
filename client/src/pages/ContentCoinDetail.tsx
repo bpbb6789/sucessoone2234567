@@ -301,6 +301,7 @@ export default function ContentCoinDetail() {
                   variant="outline"
                   size="sm"
                   onClick={() => window.open(`https://sepolia.basescan.org/token/${tokenData.coinAddress}`, '_blank')}
+                  disabled={!tokenData.coinAddress}
                 >
                   <ExternalLink className="h-4 w-4 mr-1" />
                   Basescan
@@ -309,6 +310,7 @@ export default function ContentCoinDetail() {
                   variant="outline"
                   size="sm"
                   onClick={() => window.open(`https://dexscreener.com/base-sepolia/${tokenData.coinAddress}`, '_blank')}
+                  disabled={!tokenData.coinAddress}
                 >
                   <ExternalLink className="h-4 w-4 mr-1" />
                   DEX Screener

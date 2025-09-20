@@ -3590,13 +3590,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Token address is required' });
       }
 
+      // Validate token address format
+      if (!tokenAddress.startsWith('0x') || tokenAddress.length !== 42) {
+        return res.status(400).json({
+          error: 'Invalid token address format',
+          message: 'Token address must be a valid Ethereum address'
+        });
+      }
+
       console.log(`🔍 Fetching DexScreener data for: ${tokenAddress}`);
 
       // Import getDexScreenerData function
       const { getDexScreenerData } = await import('./dexscreener.js');
       const dexData = await getDexScreenerData(tokenAddress);
 
-      if (!dexData.price) {
+      if (!dexData || !dexData.price) {
         return res.status(404).json({
           error: 'No trading data found',
           message: 'Token not actively traded on DEX platforms'
@@ -3609,7 +3617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         marketCap: dexData.marketCap,
         volume24h: dexData.volume24h,
         priceChange24h: dexData.priceChange24h,
-        pairUrl: dexData.chartData ? `https://dexscreener.com/base/${tokenAddress}` : undefined,
+        pairUrl: `https://dexscreener.com/base-sepolia/${tokenAddress}`,
         dexName: 'Uniswap V3'
       });
 
