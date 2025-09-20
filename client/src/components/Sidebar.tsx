@@ -1,26 +1,4 @@
-import {
-  Home,
-  Play,
-  Radio,
-  Music,
-  Folder,
-  History,
-  Clock,
-  ThumbsUp,
-  ChevronDown,
-  Coins,
-  TrendingUp,
-  FileText,
-  Activity,
-  HelpCircle,
-  Upload,
-  FileImage,
-  Trophy,
-  Shield,
-  Sparkles,
-  Search,
-  Zap,
-} from "lucide-react";
+// Removed lucide-react icons import as we're using emojis now
 import { Link, useLocation } from "wouter";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -190,19 +168,19 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
 }
 
 const mainNavItems = [
-  { icon: FileImage, label: "Discover", href: "/" },
-  { icon: Sparkles, label: "Create Token", href: "/contentnew" },
-  { icon: Zap, label: "Launch", href: "/launch" },
-  { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
-  { icon: Trophy, label: "Creators", href: "/creators" },
-  { icon: Radio, label: "Channels", href: "/channels" },
+  { icon: "🔍", label: "Discover", href: "/" },
+  { icon: "✨", label: "Create Token", href: "/contentnew" },
+  { icon: "🚀", label: "Launch", href: "/launch" },
+  { icon: "🏆", label: "Leaderboard", href: "/leaderboard" },
+  { icon: "👨‍🎨", label: "Creators", href: "/creators" },
+  { icon: "📺", label: "Channels", href: "/channels" },
 ];
 
 const additionalItems = [
-  { icon: FileText, label: "Doc", href: "/doc" },
-  { icon: Activity, label: "Activities", href: "/activities" },
-  { icon: HelpCircle, label: "FAQ", href: "/faq" },
-  { icon: Shield, label: "Admin", href: "/admin" },
+  { icon: "📄", label: "Doc", href: "/doc" },
+  { icon: "📊", label: "Activities", href: "/activities" },
+  { icon: "❓", label: "FAQ", href: "/faq" },
+  { icon: "🛡️", label: "Admin", href: "/admin" },
 ];
 
 export function Sidebar() {
@@ -227,7 +205,6 @@ export function Sidebar() {
         {/* Main Navigation */}
         <div className="px-3 mb-4">
           {mainNavItems.map((item) => {
-            const Icon = item.icon;
             const isActive = location === item.href;
 
             return (
@@ -236,7 +213,7 @@ export function Sidebar() {
                   className={cn("nav-item", isActive && "active")}
                   data-testid={`nav-item-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
                 >
-                  <Icon className="w-6 h-6 flex-shrink-0" />
+                  <span className="text-xl flex-shrink-0">{item.icon}</span>
                   {isExpanded && (
                     <span className="sidebar-text">{item.label}</span>
                   )}
@@ -253,7 +230,7 @@ export function Sidebar() {
             {/* Top Trending Channels Section */}
             <div className="px-3 mb-4">
               <h3 className="sidebar-text text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 px-3">
-                Trending Channels
+                📈 Trending Channels
               </h3>
               {channelsLoading ? (
                 <div className="space-y-2">
@@ -324,7 +301,6 @@ export function Sidebar() {
             More
           </h3>
           {additionalItems.map((item) => {
-            const Icon = item.icon;
             const isActive = location === item.href;
 
             return (
@@ -333,7 +309,7 @@ export function Sidebar() {
                 href={item.href}
                 className={cn("nav-item", isActive && "active")}
               >
-                <Icon className="w-6 h-6 flex-shrink-0" />
+                <span className="text-xl flex-shrink-0">{item.icon}</span>
                 {isExpanded && (
                   <span className="sidebar-text">{item.label}</span>
                 )}
