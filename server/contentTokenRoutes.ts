@@ -1,8 +1,8 @@
 import { Express } from 'express';
 import multer from 'multer';
-import { bondingCurveService } from './bondingCurve';
 import { PinataSDK } from 'pinata';
 import { getAddress } from 'viem';
+import { createCreatorCoin } from './zora';
 
 // Initialize Pinata client
 const pinata = new PinataSDK({
@@ -159,90 +159,28 @@ export function setupContentTokenRoutes(app: Express) {
         creator: creatorAddress
       });
 
-      // Map market cap setting to K value for bonding curve
-      const kValueMap = {
-        'low': '1000000000000',    // 1e12
-        'medium': '5000000000000', // 5e12  
-        'high': '10000000000000'   // 10e12
-      };
-      const kValue = kValueMap[marketCapSetting as keyof typeof kValueMap] || kValueMap.medium;
-
-      // STEP 1: First, try to deploy just the token using the existing token factory  
-      // This separates token deployment from bonding curve deployment
-      // Skip the problematic combined deployment entirely
-      console.log(`🚀 DEPLOYING CONTENT COIN (SEPARATED APPROACH)`);
+      console.log(`🚀 DEPLOYING CONTENT COIN WITH ZORA`);
       console.log(`   Creator: ${creatorAddress}`);
       console.log(`   Coin: ${coinName} (${coinSymbol})`);
-      console.log(`   Supply: ${totalSupply}`);
-      console.log(`   Strategy: Deploy token first, then create curve separately`);
+      console.log(`   Description: ${description}`);
 
-      // First, diagnose the factory to understand what's wrong
-      const diagnosis = await bondingCurveService.diagnoseFactoryContract();
-      console.log(`🔍 Factory diagnosis:`, diagnosis);
+      // Create metadata URI for Zora
+      const metadataUri = `https://gateway.pinata.cloud/ipfs/${mediaCid}`;
 
-      // Simulate the call to get the exact error
-      const simulation = await bondingCurveService.simulateContentCoinWithCurve(
-        coinName,
-        coinSymbol,
-        totalSupply,
-        18,
-        creatorAddress
-      );
-      console.log(`🧪 Simulation result:`, simulation);
+      // Deploy using Zora's creator coin system
+      const deployResult = await createCreatorCoin({
+        name: coinName,
+        symbol: coinSymbol,
+        uri: metadataUri,
+        currency: 'ETH',
+        creatorAddress: creatorAddress || '0x0000000000000000000000000000000000000000'
+      });
 
-      // For now, use the existing separate deployment approach
-      // Deploy token first using basic ERC20 deployment
-      const tokenDeployResult = await bondingCurveService.deployERC20Token(
-        coinName,
-        coinSymbol,
-        totalSupply,
-        creatorAddress
-      );
-
-      if (!tokenDeployResult.success) {
-        throw new Error(tokenDeployResult.error || 'Failed to deploy ERC20 token');
-      }
-
-      console.log(`✅ Token deployed:`, tokenDeployResult);
-
-      // STEP 2: Deploy bonding curve for the token (if needed)
-      let curveAddress = null;
-      let curveDeployTx = null;
-
-      if (tokenDeployResult.tokenAddress) {
-        console.log(`🚀 Deploying bonding curve for token: ${tokenDeployResult.tokenAddress}`);
-
-        const curveDeployResult = await bondingCurveService.deployBondingCurve(
-          tokenDeployResult.tokenAddress,
-          creatorAddress,
-          `coin-${Date.now()}`
-        );
-
-        if (curveDeployResult.success) {
-          curveAddress = curveDeployResult.curveAddress;
-          curveDeployTx = curveDeployResult.transactionHash;
-          console.log(`✅ Bonding curve deployed:`, curveDeployResult);
-        } else {
-          console.log(`⚠️ Bonding curve deployment failed, continuing without curve:`, curveDeployResult.error);
-        }
-      }
-
-      const deployResult = {
-        success: true,
-        tokenAddress: tokenDeployResult.tokenAddress,
-        curveAddress: curveAddress,
-        transactionHash: tokenDeployResult.transactionHash,
-        curveTransactionHash: curveDeployTx,
-        separatedDeployment: true,
-        diagnosis,
-        simulation
-      };
-
-      console.log('Separated deployment completed:', deployResult);
+      console.log('Zora deployment completed:', deployResult);
 
       // Create content token entry
       const tokenData: ContentTokenData = {
-        tokenAddress: deployResult.tokenAddress!,
+        tokenAddress: deployResult.coinAddress,
         name: coinName,
         symbol: coinSymbol,
         description,
@@ -260,13 +198,13 @@ export function setupContentTokenRoutes(app: Express) {
       };
 
       // Store in memory (replace with database later)
-      contentTokens.set(deployResult.tokenAddress!, tokenData);
+      contentTokens.set(deployResult.coinAddress, tokenData);
 
       res.json({
         success: true,
-        tokenAddress: deployResult.tokenAddress,
-        curveAddress: deployResult.curveAddress,
-        transactionHash: deployResult.transactionHash,
+        tokenAddress: deployResult.coinAddress,
+        transactionHash: deployResult.txHash,
+        factoryAddress: deployResult.factoryAddress,
         tokenData
       });
 
@@ -421,20 +359,15 @@ export function setupContentTokenRoutes(app: Express) {
         return res.status(400).json({ error: 'Invalid amount' });
       }
 
-      // Calculate tokens that would be received for the ETH amount
-      const tokensReceived = await bondingCurveService.calculateBuyTokens(address, amount);
+      // For Zora coins, trading happens through the coin's built-in bonding curve
+      // This would require calling the coin contract's buyWithEth function
+      console.log(`Buy request for ${amount} ETH on token ${address}`);
 
-      if (!tokensReceived) {
-        throw new Error('Failed to calculate buy amount - curve may not exist');
-      }
-
-      // In a real implementation, you would execute the actual buy transaction here
-      // For now, return the calculation without executing the transaction
       res.json({
         success: true,
-        tokensReceived: tokensReceived.toString(),
-        transactionHash: 'Transaction execution not implemented yet',
-        message: 'This is a calculation only - actual trading not yet implemented'
+        message: 'Trading through Zora bonding curve - use TokenTrading component instead',
+        tokenAddress: address,
+        amount: amount
       });
     } catch (error) {
       console.error('Buy tokens error:', error);
@@ -454,20 +387,15 @@ export function setupContentTokenRoutes(app: Express) {
         return res.status(400).json({ error: 'Invalid amount' });
       }
 
-      // Calculate ETH that would be received for the token amount
-      const ethReceived = await bondingCurveService.calculateSellTokens(address, amount);
+      // For Zora coins, trading happens through the coin's built-in bonding curve
+      // This would require calling the coin contract's sellForEth function
+      console.log(`Sell request for ${amount} tokens on token ${address}`);
 
-      if (!ethReceived) {
-        throw new Error('Failed to calculate sell amount - curve may not exist');
-      }
-
-      // In a real implementation, you would execute the actual sell transaction here
-      // For now, return the calculation without executing the transaction
       res.json({
         success: true,
-        ethReceived: ethReceived.toString(),
-        transactionHash: 'Transaction execution not implemented yet',
-        message: 'This is a calculation only - actual trading not yet implemented'
+        message: 'Trading through Zora bonding curve - use TokenTrading component instead',
+        tokenAddress: address,
+        amount: amount
       });
     } catch (error) {
       console.error('Sell tokens error:', error);
