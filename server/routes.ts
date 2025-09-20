@@ -48,34 +48,6 @@ function handleDatabaseError(error: any, operation: string) {
   console.error(`Database error in ${operation}:`, error);
 
   // Check if it's a disabled endpoint error
-
-
-// Upload metadata to IPFS
-app.post('/api/upload-metadata', async (req, res) => {
-  try {
-    const metadata = req.body;
-
-    if (!metadata.name || !metadata.symbol) {
-      return res.status(400).json({ error: 'Name and symbol are required' });
-    }
-
-    // Upload to IPFS
-    const cid = await uploadJSONToIPFS(metadata);
-
-    res.json({
-      success: true,
-      cid,
-      uri: `https://gateway.pinata.cloud/ipfs/${cid}`
-    });
-  } catch (error) {
-    console.error('Metadata upload error:', error);
-    res.status(500).json({
-      error: 'Metadata upload failed',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-});
-
   if (error?.message?.includes('The endpoint has been disabled')) {
     console.error('❌ Database endpoint disabled - needs to be re-enabled via Neon Console or new database created');
     return {
@@ -158,6 +130,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("JSON upload error:", error);
       res.status(500).json({ message: "Failed to upload metadata to IPFS" });
+    }
+  });
+
+  // Upload metadata to IPFS
+  app.post('/api/upload-metadata', async (req, res) => {
+    try {
+      const metadata = req.body;
+
+      if (!metadata.name || !metadata.symbol) {
+        return res.status(400).json({ error: 'Name and symbol are required' });
+      }
+
+      // Upload to IPFS
+      const cid = await uploadJSONToIPFS(metadata);
+
+      res.json({
+        success: true,
+        cid,
+        uri: `https://gateway.pinata.cloud/ipfs/${cid}`
+      });
+    } catch (error) {
+      console.error('Metadata upload error:', error);
+      res.status(500).json({
+        error: 'Metadata upload failed',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
   // Channels
