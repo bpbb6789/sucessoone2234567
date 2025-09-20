@@ -415,7 +415,7 @@ export default function ZoraCreate() {
               <Coins className="h-4 w-4" />
               Create Channel
             </TabsTrigger>
-          </TabsList></TabsList>
+          </TabsList>
 
           <TabsContent value="basic" className="space-y-6">
             <Card>
