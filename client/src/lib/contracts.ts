@@ -15,25 +15,6 @@ export const ZORA_FACTORY_IMPL = "0xb4ac7Bac55f22B88C43b848f3D6d1492C4C823f1" as
 
 // Custom bonding curve removed - using Zora's built-in system
 
-// Bonding Curve Exchange ABI (minimal interface for client)
-export const BONDING_CURVE_EXCHANGE_ABI = [
-  "function buy(uint256 minTokensOut) external payable",
-  "function sell(uint256 tokenAmount, uint256 minEthOut) external",
-  "function calculateBuyTokens(uint256 ethAmount) external view returns (uint256)",
-  "function calculateSellTokens(uint256 tokenAmount) external view returns (uint256)",
-  "function getCurrentPrice() external view returns (uint256)",
-  "function getMarketCap() external view returns (uint256)",
-  "function totalSupplyInCurve() external view returns (uint256)",
-  "function ethReserve() external view returns (uint256)",
-  "function getInfo() external view returns (address, address, address, uint256, uint256)"
-] as const
-
-// Contract configurations for wagmi
-export const bondingCurveFactoryConfig = {
-  address: CONTRACTS.BONDING_CURVE_FACTORY,
-  abi: BONDING_CURVE_FACTORY_ABI,
-} as const
-
 // Types for token creation
 export interface TokenCreationParams {
   name: string
@@ -56,7 +37,7 @@ export interface SellTokenParams {
 }
 
 // Export the ABIs for direct use
-export { PUMP_FUN_ABI, TOKEN_FACTORY_ABI, TOKEN_ABI }
+export { TOKEN_ABI }
 export const zoraFactoryImplAbi = [
   {
     type: "function",
