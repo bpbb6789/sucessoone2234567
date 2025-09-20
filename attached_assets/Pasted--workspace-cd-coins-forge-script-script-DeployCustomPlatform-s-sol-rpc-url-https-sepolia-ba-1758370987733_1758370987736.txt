@@ -1,0 +1,954 @@
+~/workspace$ cd coins && forge script script/DeployCustomPlatform.s.sol --rpc-url https://sepolia.base.org --broadcast --verify
+FSkin > can't find skins directory!
+Forge v.1.6.57 (forge.GuiDesktop@4a94ee4)
+Linux (6.2.16 amd64)
+Language 'en-US' loaded successfully.
+(ThreadUtil first call): Running on a machine with 6 cpu core(s)
+Read cards: 25860 files in 2656 ms (25 parts) using thread pool
+Read cards: 599 files in 114 ms (5 parts) using thread pool
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Murasa Rootgrazer
+An unsupported card was requested: "Murasa Rootgrazer" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Roiling Regrowth
+An unsupported card was requested: "Roiling Regrowth" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Channeled Force
+An unsupported card was requested: "Channeled Force" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Clash of Titans
+An unsupported card was requested: "Clash of Titans" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Primal Empathy
+An unsupported card was requested: "Primal Empathy" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Rugged Highlands
+An unsupported card was requested: "Rugged Highlands" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swiftwater Cliffs
+An unsupported card was requested: "Swiftwater Cliffs" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Thornwood Falls
+An unsupported card was requested: "Thornwood Falls" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Elemental Masterpiece
+An unsupported card was requested: "Elemental Masterpiece" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Expressive Iteration
+An unsupported card was requested: "Expressive Iteration" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Letter of Acceptance
+An unsupported card was requested: "Letter of Acceptance" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Prismari Campus
+An unsupported card was requested: "Prismari Campus" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Resculpt
+An unsupported card was requested: "Resculpt" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Rootha, Mercurial Artist
+An unsupported card was requested: "Rootha, Mercurial Artist" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Storm-Kiln Artist
+An unsupported card was requested: "Storm-Kiln Artist" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Academy Ruins
+An unsupported card was requested: "Academy Ruins" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Bloodsworn Steward
+An unsupported card was requested: "Bloodsworn Steward" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Boompile
+An unsupported card was requested: "Boompile" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Buried Ruin
+An unsupported card was requested: "Buried Ruin" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Cascade Bluffs
+An unsupported card was requested: "Cascade Bluffs" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Chance Encounter
+An unsupported card was requested: "Chance Encounter" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Chandra's Ignition
+An unsupported card was requested: "Chandra's Ignition" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Chaos Warp
+An unsupported card was requested: "Chaos Warp" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Commander's Plate
+An unsupported card was requested: "Commander's Plate" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Crooked Scales
+An unsupported card was requested: "Crooked Scales" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Daretti, Scrap Savant
+An unsupported card was requested: "Daretti, Scrap Savant" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Embercleave
+An unsupported card was requested: "Embercleave" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Fiery Gambit
+An unsupported card was requested: "Fiery Gambit" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Flamekin Village
+An unsupported card was requested: "Flamekin Village" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Footfall Crater
+An unsupported card was requested: "Footfall Crater" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Goblin Archaeologist
+An unsupported card was requested: "Goblin Archaeologist" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Goblin Engineer
+An unsupported card was requested: "Goblin Engineer" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Goblin Kaboomist
+An unsupported card was requested: "Goblin Kaboomist" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Impulsive Maneuvers
+An unsupported card was requested: "Impulsive Maneuvers" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Inventors' Fair
+An unsupported card was requested: "Inventors' Fair" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Izzet Boilerworks
+An unsupported card was requested: "Izzet Boilerworks" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Karplusan Minotaur
+An unsupported card was requested: "Karplusan Minotaur" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Krark, the Thumbless
+An unsupported card was requested: "Krark, the Thumbless" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Long-Term Plans
+An unsupported card was requested: "Long-Term Plans" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mind Stone
+An unsupported card was requested: "Mind Stone" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mirror March
+An unsupported card was requested: "Mirror March" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mogg Assassin
+An unsupported card was requested: "Mogg Assassin" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Myriad Landscape
+An unsupported card was requested: "Myriad Landscape" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Negate
+An unsupported card was requested: "Negate" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Niv-Mizzet, Parun
+An unsupported card was requested: "Niv-Mizzet, Parun" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Planar Chaos
+An unsupported card was requested: "Planar Chaos" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Ral Zarek
+An unsupported card was requested: "Ral Zarek" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Reshape
+An unsupported card was requested: "Reshape" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Risky Move
+An unsupported card was requested: "Risky Move" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Shadowspear
+An unsupported card was requested: "Shadowspear" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Shivan Reef
+An unsupported card was requested: "Shivan Reef" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Slip Through Space
+An unsupported card was requested: "Slip Through Space" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Spark Double
+An unsupported card was requested: "Spark Double" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Squee's Revenge
+An unsupported card was requested: "Squee's Revenge" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Sulfur Falls
+An unsupported card was requested: "Sulfur Falls" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Sword of Vengeance
+An unsupported card was requested: "Sword of Vengeance" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Tavern Scoundrel
+An unsupported card was requested: "Tavern Scoundrel" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Temple of Epiphany
+An unsupported card was requested: "Temple of Epiphany" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Temple of the False God
+An unsupported card was requested: "Temple of the False God" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Temur Battle Rage
+An unsupported card was requested: "Temur Battle Rage" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: The Locust God
+An unsupported card was requested: "The Locust God" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Thought Vessel
+An unsupported card was requested: "Thought Vessel" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Tolaria West
+An unsupported card was requested: "Tolaria West" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Training Center
+An unsupported card was requested: "Training Center" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Tribute Mage
+An unsupported card was requested: "Tribute Mage" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Wandering Fumarole
+An unsupported card was requested: "Wandering Fumarole" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Whispersilk Cloak
+An unsupported card was requested: "Whispersilk Cloak" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Yusri, Fortune's Flame
+An unsupported card was requested: "Yusri, Fortune's Flame" from "SLD". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Valiant Rescuer
+An unsupported card was requested: "Valiant Rescuer" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Zenith Flare
+An unsupported card was requested: "Zenith Flare" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Rooting Moloch
+An unsupported card was requested: "Rooting Moloch" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Raugrin Crystal
+An unsupported card was requested: "Raugrin Crystal" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Reconnaissance Mission
+An unsupported card was requested: "Reconnaissance Mission" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Neutralize
+An unsupported card was requested: "Neutralize" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Savai Thundermane
+An unsupported card was requested: "Savai Thundermane" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Boon of the Wish-Giver
+An unsupported card was requested: "Boon of the Wish-Giver" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Ominous Seas
+An unsupported card was requested: "Ominous Seas" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Evolving Wilds
+An unsupported card was requested: "Evolving Wilds" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "MIC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "MIC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Barbarian Class
+An unsupported card was requested: "Barbarian Class" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Earth-Cult Elemental
+An unsupported card was requested: "Earth-Cult Elemental" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Archipelagore
+An unsupported card was requested: "Archipelagore" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Auspicious Starrix
+An unsupported card was requested: "Auspicious Starrix" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Boneyard Lurker
+An unsupported card was requested: "Boneyard Lurker" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Cavern Whisperer
+An unsupported card was requested: "Cavern Whisperer" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Chittering Harvester
+An unsupported card was requested: "Chittering Harvester" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Dismal Backwater
+An unsupported card was requested: "Dismal Backwater" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Dreamtail Heron
+An unsupported card was requested: "Dreamtail Heron" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Fertilid
+An unsupported card was requested: "Fertilid" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Glowstone Recluse
+An unsupported card was requested: "Glowstone Recluse" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Insatiable Hemophage
+An unsupported card was requested: "Insatiable Hemophage" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Jungle Hollow
+An unsupported card was requested: "Jungle Hollow" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Migration Path
+An unsupported card was requested: "Migration Path" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Migratory Greathorn
+An unsupported card was requested: "Migratory Greathorn" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Pouncing Shoreshark
+An unsupported card was requested: "Pouncing Shoreshark" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Thornwood Falls
+An unsupported card was requested: "Thornwood Falls" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Trumpeting Gnarr
+An unsupported card was requested: "Trumpeting Gnarr" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Dina, Soul Steeper
+An unsupported card was requested: "Dina, Soul Steeper" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Honor Troll
+An unsupported card was requested: "Honor Troll" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mortality Spear
+An unsupported card was requested: "Mortality Spear" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Witherbloom Campus
+An unsupported card was requested: "Witherbloom Campus" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "VOC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "VOC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Lorehold Campus
+An unsupported card was requested: "Lorehold Campus" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Reconstruct History
+An unsupported card was requested: "Reconstruct History" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Rip Apart
+An unsupported card was requested: "Rip Apart" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Secret Rendezvous
+An unsupported card was requested: "Secret Rendezvous" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Dawnhart Wardens
+An unsupported card was requested: "Dawnhart Wardens" from "MIC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "MIC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Moonsilver Key
+An unsupported card was requested: "Moonsilver Key" from "MIC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "MIC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Binding the Old Gods
+An unsupported card was requested: "Binding the Old Gods" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Canopy Tactician
+An unsupported card was requested: "Canopy Tactician" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Elderfang Ritualist
+An unsupported card was requested: "Elderfang Ritualist" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Elven Ambush
+An unsupported card was requested: "Elven Ambush" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Harald, King of Skemfar
+An unsupported card was requested: "Harald, King of Skemfar" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Jaspera Sentinel
+An unsupported card was requested: "Jaspera Sentinel" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Poison the Cup
+An unsupported card was requested: "Poison the Cup" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Return Upon the Tide
+An unsupported card was requested: "Return Upon the Tide" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Roots of Wisdom
+An unsupported card was requested: "Roots of Wisdom" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Skemfar Elderhall
+An unsupported card was requested: "Skemfar Elderhall" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Skemfar Shadowsage
+An unsupported card was requested: "Skemfar Shadowsage" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Tergrid's Shadow
+An unsupported card was requested: "Tergrid's Shadow" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Dungeon Map
+An unsupported card was requested: "Dungeon Map" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Evolving Wilds
+An unsupported card was requested: "Evolving Wilds" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Hama Pashar, Ruin Seeker
+An unsupported card was requested: "Hama Pashar, Ruin Seeker" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Minimus Containment
+An unsupported card was requested: "Minimus Containment" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Chaos Channeler
+An unsupported card was requested: "Chaos Channeler" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Warlock Class
+An unsupported card was requested: "Warlock Class" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: You Find Some Prisoners
+An unsupported card was requested: "You Find Some Prisoners" from "AFC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Biomathematician
+An unsupported card was requested: "Biomathematician" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Eureka Moment
+An unsupported card was requested: "Eureka Moment" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Golden Ratio
+An unsupported card was requested: "Golden Ratio" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Quandrix Campus
+An unsupported card was requested: "Quandrix Campus" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Quandrix Cultivator
+An unsupported card was requested: "Quandrix Cultivator" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Zimone, Quandrix Prodigy
+An unsupported card was requested: "Zimone, Quandrix Prodigy" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Imperial Recovery Unit
+An unsupported card was requested: "Imperial Recovery Unit" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mobilizer Mech
+An unsupported card was requested: "Mobilizer Mech" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Prodigy's Prototype
+An unsupported card was requested: "Prodigy's Prototype" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Surgehacker Mech
+An unsupported card was requested: "Surgehacker Mech" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Fracture
+An unsupported card was requested: "Fracture" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Secret Rendezvous
+An unsupported card was requested: "Secret Rendezvous" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Silverquill Campus
+An unsupported card was requested: "Silverquill Campus" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "C21". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Blood Curdle
+An unsupported card was requested: "Blood Curdle" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Blossoming Sands
+An unsupported card was requested: "Blossoming Sands" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Evolving Wilds
+An unsupported card was requested: "Evolving Wilds" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Jungle Hollow
+An unsupported card was requested: "Jungle Hollow" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Scoured Barrens
+An unsupported card was requested: "Scoured Barrens" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Titanoth Rex
+An unsupported card was requested: "Titanoth Rex" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Unbreakable Bond
+An unsupported card was requested: "Unbreakable Bond" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Void Beckoner
+An unsupported card was requested: "Void Beckoner" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Orochi Merge-Keeper
+An unsupported card was requested: "Orochi Merge-Keeper" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Towashi Guide-Bot
+An unsupported card was requested: "Towashi Guide-Bot" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Walking Skyscraper
+An unsupported card was requested: "Walking Skyscraper" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Invigorating Hot Spring
+An unsupported card was requested: "Invigorating Hot Spring" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Forest
+An unsupported card was requested: "Forest" from "NEC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Bloodtithe Harvester
+An unsupported card was requested: "Bloodtithe Harvester" from "VOC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "VOC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "VOC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Merfolk Windrobber
+An unsupported card was requested: "Merfolk Windrobber" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Soaring Thought-Thief
+An unsupported card was requested: "Soaring Thought-Thief" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Sure-Footed Infiltrator
+An unsupported card was requested: "Sure-Footed Infiltrator" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "ZNC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Evolving Wilds
+An unsupported card was requested: "Evolving Wilds" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Mountain
+An unsupported card was requested: "Mountain" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Swamp
+An unsupported card was requested: "Swamp" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Bloodfell Caves
+An unsupported card was requested: "Bloodfell Caves" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Scoured Barrens
+An unsupported card was requested: "Scoured Barrens" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Wind-Scarred Crag
+An unsupported card was requested: "Wind-Scarred Crag" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: General's Enforcer
+An unsupported card was requested: "General's Enforcer" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Dire Tactics
+An unsupported card was requested: "Dire Tactics" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Sanctuary Lockdown
+An unsupported card was requested: "Sanctuary Lockdown" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Bastion of Remembrance
+An unsupported card was requested: "Bastion of Remembrance" from "C20". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Behold the Multiverse
+An unsupported card was requested: "Behold the Multiverse" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Gates of Istfell
+An unsupported card was requested: "Gates of Istfell" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Glacial Floodplain
+An unsupported card was requested: "Glacial Floodplain" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Iron Verdict
+An unsupported card was requested: "Iron Verdict" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Island
+An unsupported card was requested: "Island" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Niko Defies Destiny
+An unsupported card was requested: "Niko Defies Destiny" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Plains
+An unsupported card was requested: "Plains" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Ravenform
+An unsupported card was requested: "Ravenform" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Replicating Ring
+An unsupported card was requested: "Replicating Ring" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Saw It Coming
+An unsupported card was requested: "Saw It Coming" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Surtland Elementalist
+An unsupported card was requested: "Surtland Elementalist" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Vega, the Watcher
+An unsupported card was requested: "Vega, the Watcher" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+[LOG]: (Lazy) Loading Card: Warhorn Blast
+An unsupported card was requested: "Warhorn Blast" from "KHC". 
+
+We're sorry, but this card is not supported yet.
+java.lang.IllegalArgumentException: No line matching interface SourceDataLine supporting format PCM_SIGNED 22050.0 Hz, 16 bit, mono, 2 bytes/frame, little-endian is supported.
+    at java.desktop/javax.sound.sampled.AudioSystem.getLine(AudioSystem.java:423)
+    at javazoom.jl.player.JavaSoundAudioDevice.createSource(JavaSoundAudioDevice.java:101)
+    at javazoom.jl.player.JavaSoundAudioDevice.writeImpl(JavaSoundAudioDevice.java:148)
+    at javazoom.jl.player.AudioDeviceBase.write(AudioDeviceBase.java:133)
+    at javazoom.jl.player.JavaSoundAudioDevice.test(JavaSoundAudioDevice.java:205)
+    at javazoom.jl.player.JavaSoundAudioDeviceFactory.testAudioDevice(JavaSoundAudioDeviceFactory.java:83)
+    at javazoom.jl.player.JavaSoundAudioDeviceFactory.createAudioDevice(JavaSoundAudioDeviceFactory.java:42)
+    at javazoom.jl.player.FactoryRegistry.createAudioDevice(FactoryRegistry.java:87)
+    at javazoom.jl.player.advanced.AdvancedPlayer.<init>(AdvancedPlayer.java:66)
+    at javazoom.jl.player.advanced.AdvancedPlayer.<init>(AdvancedPlayer.java:58)
+    at forge.sound.AudioMusic.play(AudioMusic.java:41)
+    at forge.sound.AudioMusic.play(AudioMusic.java:28)
+    at forge.sound.SoundSystem.changeBackgroundTrack(SoundSystem.java:217)
+    at forge.sound.SoundSystem.setBackgroundMusic(SoundSystem.java:192)
+    at forge.view.FView.initialize(FView.java:385)
+    at forge.control.FControl$3.run(FControl.java:266)
+    at java.desktop/java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:318)
+    at java.desktop/java.awt.EventQueue.dispatchEventImpl(EventQueue.java:773)
+    at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:720)
+    at java.desktop/java.awt.EventQueue$4.run(EventQueue.java:714)
+    at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+    at java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:87)
+    at java.desktop/java.awt.EventQueue.dispatchEvent(EventQueue.java:742)
+    at java.desktop/java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:203)
+    at java.desktop/java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:124)
+    at java.desktop/java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:113)
+    at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:109)
+    at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)
+    at java.desktop/java.awt.EventDispatchThread.run(EventDispatchThread.java:90)
