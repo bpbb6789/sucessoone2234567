@@ -95,6 +95,11 @@ contract DeployCustomPlatform is CoinsDeployerBase {
         console2.log("Platform Fee:", CustomPlatformConfig.PLATFORM_FEE_BPS, "bps");
         console2.log("Creator Vesting:", CustomPlatformConfig.CREATOR_VESTING_DURATION, "seconds");
         console2.log("Default Pool Fee:", CustomPlatformConfig.DEFAULT_POOL_FEE);
+        console2.log("WETH Address:", CustomPlatformConfig.WETH_ADDRESS);
+        
+        // Validate WETH address is not zero
+        require(CustomPlatformConfig.WETH_ADDRESS != address(0), "WETH address cannot be zero");
+        console2.log("✅ WETH address validation passed");
         
         console2.log("=== ON-CHAIN CONFIGURATION COMPLETE ===");
     }

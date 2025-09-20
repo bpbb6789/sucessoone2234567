@@ -24,6 +24,9 @@ library CustomPlatformConfig {
     /// @notice Maximum coins per creator (0 = unlimited)
     uint256 public constant MAX_COINS_PER_CREATOR = 0;
     
+    /// @notice WETH address for Base Sepolia (critical for pool creation)
+    address public constant WETH_ADDRESS = 0x4267D742e4fD1C03805083b087DeB575203e9b19;
+    
     /// @notice Enable/disable certain features
     bool public constant ALLOW_CREATOR_COINS = true;
     bool public constant ALLOW_CONTENT_COINS = true;
