@@ -39,18 +39,53 @@ export default function Profile() {
 
   const fetchUserTokens = async () => {
     try {
-      // Get tokens created by this user
-      const response = await fetch(`/api/creator-coins?creator=${address}`);
+      // Get all creator coins
+      const response = await fetch(`/api/creator-coins`);
       const allTokens = await response.json();
-      const userCreatedTokens = allTokens.filter((token: any) => 
-        token.creatorAddress?.toLowerCase() === address?.toLowerCase()
+      
+      // Filter tokens where user is either creator or payout recipient
+      const userRelatedTokens = allTokens.filter((token: any) => {
+        const creatorMatch = token.creatorAddress?.toLowerCase() === address?.toLowerCase();
+        // Check if this token has the user as payoutRecipient (would need to be checked via blockchain)
+        // For now, include tokens created by user
+        return creatorMatch;
+      });
+
+      setUserTokens(userRelatedTokens);
+
+      // Check deployed tokens for payoutRecipient status
+      const deployedTokens = allTokens.filter((token: any) => 
+        token.status === 'deployed' && token.coinAddress
       );
 
-      setUserTokens(userCreatedTokens);
+      for (const token of deployedTokens) {
+        try {
+          // Check if user is payoutRecipient via contract call
+          const response = await fetch('/api/check-payout-recipient', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tokenAddress: token.coinAddress,
+              userAddress: address
+            })
+          });
+          
+          if (response.ok) {
+            const { isPayoutRecipient } = await response.json();
+            if (isPayoutRecipient && !userRelatedTokens.find(t => t.id === token.id)) {
+              userRelatedTokens.push(token);
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to check payout recipient for token:', token.coinAddress);
+        }
+      }
+
+      setUserTokens(userRelatedTokens);
 
       // Calculate total earnings from trading fees
       let total = 0;
-      for (const token of userCreatedTokens) {
+      for (const token of userRelatedTokens) {
         if (token.coinAddress) {
           try {
             // Get real trading volume and calculate creator earnings

@@ -973,6 +973,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if user is payoutRecipient of a token
+  app.post("/api/check-payout-recipient", async (req, res) => {
+    try {
+      const { tokenAddress, userAddress } = req.body;
+
+      if (!tokenAddress || !userAddress) {
+        return res.status(400).json({ error: 'Token address and user address are required' });
+      }
+
+      console.log(`🔍 Checking payoutRecipient for token ${tokenAddress} and user ${userAddress}`);
+
+      // Using ethers to call the payoutRecipient function
+      const { ethers } = await import('ethers');
+      const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
+      
+      // ABI for payoutRecipient function
+      const abi = [
+        "function payoutRecipient() view returns (address)"
+      ];
+
+      const contract = new ethers.Contract(tokenAddress, abi, provider);
+      const payoutRecipient = await contract.payoutRecipient();
+
+      const isPayoutRecipient = payoutRecipient.toLowerCase() === userAddress.toLowerCase();
+
+      console.log(`✅ PayoutRecipient check: ${payoutRecipient} === ${userAddress} ? ${isPayoutRecipient}`);
+
+      res.json({ 
+        isPayoutRecipient,
+        payoutRecipient,
+        userAddress 
+      });
+
+    } catch (error) {
+      console.error('Error checking payout recipient:', error);
+      res.status(500).json({ 
+        error: 'Failed to check payout recipient',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Token holders endpoint
   app.post("/api/token-holders", async (req, res) => {
     try {
@@ -2806,7 +2848,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const profilesPromises = creatorsData.map(async (creator) => {
         try {
           const profile = await db
-            .select()
+            .select({
+              address: walletProfiles.address,
+              name: walletProfiles.name,
+              avatarUrl: walletProfiles.avatarUrl,
+              description: walletProfiles.description,
+              isVerified: walletProfiles.isVerified,
+              createdAt: walletProfiles.createdAt
+            })
             .from(walletProfiles)
             .where(eq(walletProfiles.address, creator.creatorAddress))
             .limit(1);
