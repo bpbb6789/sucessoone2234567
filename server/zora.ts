@@ -259,7 +259,7 @@ export async function createCreatorCoin(params: {
     const poolConfig = '0x'; // Empty - your factory will use default config
     const postDeployHook = '0x0000000000000000000000000000000000000000'; // No post deploy hook
     const postDeployHookData = '0x';
-    const coinSalt = `0x${Math.random().toString(16).slice(2, 66).padStart(64, '0')}`; // Random salt
+    const coinSalt = `0x${Math.random().toString(16).slice(2, 66).padStart(64, '0')}` as `0x${string}`; // Random salt
     
     console.log('📋 Custom factory call parameters:', {
       payoutRecipient: params.creatorAddress,
@@ -334,17 +334,88 @@ export async function createCreatorCoin(params: {
     // Extract coin address from transaction logs
     let coinAddress = '';
     if (receipt.logs && receipt.logs.length > 0) {
-      // The coin address is typically in one of the first logs
+      // Look for CreatorCoinCreated event signature: 0x... (keccak256 hash)
+      const creatorCoinCreatedTopic = '0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0'; // Example topic
+      
       for (const log of receipt.logs) {
-        if (log.topics && log.topics[0] && log.address) {
-          // This is likely the coin address from the deployment event
+        // Check if this log is from the factory and has data
+        if (log.address.toLowerCase() === ZORA_FACTORY_ADDRESS.toLowerCase() && log.data && log.data !== '0x') {
+          try {
+            // Try to decode the log data to extract coin address
+            // The coin address is usually the first 32 bytes after the topics
+            const dataWithoutPrefix = log.data.slice(2); // Remove 0x
+            if (dataWithoutPrefix.length >= 64) {
+              // Extract address from the data (first 32 bytes, last 20 bytes are the address)
+              const addressHex = dataWithoutPrefix.slice(24, 64); // Skip padding, get address
+              coinAddress = '0x' + addressHex;
+              
+              // Validate it looks like an address
+              if (coinAddress.length === 42 && coinAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+                console.log(`✅ Extracted coin address from logs: ${coinAddress}`);
+                break;
+              }
+            }
+          } catch (error) {
+            console.log('Failed to decode log data:', error);
+          }
+        }
+        
+        // Fallback: check if any log address looks like a newly deployed contract
+        if (!coinAddress && log.address && log.address !== ZORA_FACTORY_ADDRESS && log.address.match(/^0x[a-fA-F0-9]{40}$/)) {
           coinAddress = log.address;
-          break;
+          console.log(`✅ Using contract address from logs: ${coinAddress}`);
         }
       }
     }
 
+    // If we still don't have a coin address, we need to compute it deterministically
+    if (!coinAddress || coinAddress === '0x0000000000000000000000000000000000000000') {
+      console.log('⚠️ Could not extract coin address from logs, computing deterministically...');
+      
+      // Call the factory's coinAddress function to get the predicted address
+      try {
+        coinAddress = await publicClient.readContract({
+          address: ZORA_FACTORY_ADDRESS as `0x${string}`,
+          abi: [
+            {
+              type: 'function',
+              name: 'coinAddress',
+              inputs: [
+                { name: 'msgSender', type: 'address' },
+                { name: 'name', type: 'string' },
+                { name: 'symbol', type: 'string' },
+                { name: 'poolConfig', type: 'bytes' },
+                { name: 'platformReferrer', type: 'address' },
+                { name: 'coinSalt', type: 'bytes32' }
+              ],
+              outputs: [{ name: '', type: 'address' }],
+              stateMutability: 'view'
+            }
+          ],
+          functionName: 'coinAddress',
+          args: [
+            walletClient.account.address,
+            params.name,
+            params.symbol,
+            poolConfig,
+            platformReferrer,
+            coinSalt
+          ]
+        }) as `0x${string}`;
+        
+        console.log(`✅ Computed coin address deterministically: ${coinAddress}`);
+      } catch (error) {
+        console.error('❌ Failed to compute coin address:', error);
+        throw new Error('Failed to determine coin address after deployment');
+      }
+    }
+
     const txHash = deployTxHash as string;
+    
+    // Validate we have a proper coin address
+    if (!coinAddress || coinAddress === '' || coinAddress === '0x0000000000000000000000000000000000000000') {
+      throw new Error('Deployment succeeded but failed to determine coin address. Please check the transaction logs manually.');
+    }
     
     // The pool is automatically created by the factory - you can get pool info by:
     // 1. Listening to CoinCreatedV4 events from the factory
@@ -354,6 +425,7 @@ export async function createCreatorCoin(params: {
     console.log(`🏊 Coin deployed through YOUR custom factory: ${coinAddress}`);
     console.log(`📊 Pool created with proper WETH configuration: https://sepolia.basescan.org/address/${coinAddress}`);
     console.log(`🎯 Your custom factory used: ${ZORA_FACTORY_ADDRESS}`);
+    console.log(`🔍 Transaction: https://sepolia.basescan.org/tx/${txHash}`);
     
     return {
       coinAddress,
