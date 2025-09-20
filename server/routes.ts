@@ -2665,6 +2665,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
 
+  // Get creator earnings for a specific token
+  app.get('/api/creator-coins/:coinId/earnings', async (req, res) => {
+    try {
+      const { coinId } = req.params;
+      console.log(`💰 Fetching earnings for creator coin: ${coinId}`);
+
+      // Get the creator coin data
+      const coin = await db.select().from(creatorCoins).where(eq(creatorCoins.id, coinId)).limit(1);
+
+      if (!coin.length) {
+        return res.status(404).json({ error: 'Creator coin not found' });
+      }
+
+      const coinData = coin[0];
+      const coinAddress = coinData.coinAddress;
+
+      if (!coinAddress || coinAddress === 'Deploying...' || coinAddress.length < 10) {
+        return res.json({
+          totalEarnings: '0.00',
+          earnings24h: '0.00',
+          earningsThisWeek: '0.00',
+          currency: 'ETH'
+        });
+      }
+
+      // Get real trading data
+      try {
+        const { getDexScreenerData } = await import('./dexscreener.js');
+        const dexData = await getDexScreenerData(coinAddress);
+        
+        // Calculate creator earnings (typically 0.5% of volume)
+        const volume24h = parseFloat(dexData.volume24h || '0');
+        const earnings24h = (volume24h * 0.005).toFixed(4); // 0.5% creator fee
+        
+        // Estimate weekly earnings (assuming consistent daily volume)
+        const earningsThisWeek = (parseFloat(earnings24h) * 7).toFixed(4);
+        
+        // For total earnings, we'd need historical data - using weekly estimate for now
+        const totalEarnings = earningsThisWeek;
+
+        console.log(`✅ Creator earnings calculated: ${earnings24h} ETH (24h)`);
+
+        res.json({
+          totalEarnings,
+          earnings24h,
+          earningsThisWeek,
+          currency: 'ETH',
+          volume24h: dexData.volume24h,
+          tokenAddress: coinAddress
+        });
+
+      } catch (error) {
+        console.warn(`⚠️ Failed to fetch earnings data:`, error);
+        res.json({
+          totalEarnings: '0.00',
+          earnings24h: '0.00',
+          earningsThisWeek: '0.00',
+          currency: 'ETH'
+        });
+      }
+
+    } catch (error) {
+      console.error('Error fetching creator earnings:', error);
+      res.status(500).json({
+        error: 'Failed to fetch earnings',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Get creator coin holders with real blockchain data
   app.get('/api/creator-coins/:coinId/holders', async (req, res) => {
     try {

@@ -5,6 +5,8 @@ import useGetAllSales from "@/hooks/useGetAllSales";
 import { useLocation } from "wouter";
 import { erc20Abi, formatUnits } from "viem";
 import { useAccount, useReadContract } from "wagmi";
+import { Badge } from "@/components/ui/badge";
+import { Crown } from "lucide-react";
 
 export function CryptoPortfolio({ heldOnly, createdOnly }: { heldOnly?: boolean, createdOnly?: boolean }) {
   const { data } = useGetAllSales();
@@ -87,6 +89,12 @@ export const TokenCard = ({ token, userAddress, heldOnly, createdOnly }: { token
             <span>Creator:</span>
             <span className="bg-stone-800 px-2 py-1 rounded text-white">
               {token.createdBy ? `${token.createdBy.slice(0, 6)}...${token.createdBy.slice(-4)}` : 'No Creator'}
+              {token.createdBy?.toLowerCase() === userAddress?.toLowerCase() && (
+                <Badge variant="secondary" className="ml-2">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Owner
+                </Badge>
+              )}
             </span>
           </div>
           <div className="flex gap-2 mb-1 justify-center">

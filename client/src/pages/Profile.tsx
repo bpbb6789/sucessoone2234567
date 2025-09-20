@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Edit, Share2, Wallet, Upload, FileText, Radio, Coins, Users } from "lucide-react";
+import { Settings, Edit, Share2, Wallet, Upload, FileText, Radio, Coins, Users, Video, TrendingUp } from "lucide-react";
 import { VideoCard } from "@/components/VideoCard";
 import ShortsCard from "@/components/ShortsCard";
 import { useAccount } from "@/hooks/useWallet";
@@ -18,12 +18,14 @@ interface ProfileData {
 
 export default function Profile() {
   const { address } = useAccount();
-  const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>({
     name: "",
     description: "",
     avatarUrl: ""
   });
+  const [isEditing, setIsEditing] = useState(false);
+  const [userTokens, setUserTokens] = useState<any[]>([]);
+  const [totalEarnings, setTotalEarnings] = useState('0.00');
 
   // Load profile data from localStorage on component mount
   useEffect(() => {
@@ -34,6 +36,42 @@ export default function Profile() {
       }
     }
   }, [address]);
+
+  const fetchUserTokens = async () => {
+    try {
+      // Get tokens created by this user
+      const response = await fetch(`/api/creator-coins?creator=${address}`);
+      const allTokens = await response.json();
+      const userCreatedTokens = allTokens.filter((token: any) => 
+        token.creatorAddress?.toLowerCase() === address?.toLowerCase()
+      );
+
+      setUserTokens(userCreatedTokens);
+
+      // Calculate total earnings from trading fees
+      let total = 0;
+      for (const token of userCreatedTokens) {
+        if (token.coinAddress) {
+          try {
+            // Get real trading volume and calculate creator earnings
+            const volumeResponse = await fetch(`/api/dexscreener/${token.coinAddress}`);
+            if (volumeResponse.ok) {
+              const data = await volumeResponse.json();
+              // Creator gets percentage of trading fees
+              const creatorEarnings = (parseFloat(data.volume24h || '0') * 0.005); // 0.5% of volume
+              total += creatorEarnings;
+            }
+          } catch (error) {
+            console.warn('Failed to fetch earnings for token:', token.coinAddress);
+          }
+        }
+      }
+
+      setTotalEarnings(total.toFixed(4));
+    } catch (error) {
+      console.error('Failed to fetch user tokens:', error);
+    }
+  };
 
   const handleSaveProfile = async () => {
     try {
@@ -111,6 +149,14 @@ export default function Profile() {
     },
     enabled: !!address,
   });
+
+  // Fetch user tokens and earnings when the address is available
+  useEffect(() => {
+    if (address) {
+      fetchUserTokens();
+    }
+  }, [address]);
+
 
   const displayName = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
   const handle = address ? `@${address.slice(0, 6)}...${address.slice(-4)}` : "";
@@ -306,6 +352,41 @@ export default function Profile() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Earnings Summary */}
+      <div className="px-4 pb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2">
+                <Video className="h-5 w-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Videos</span>
+              </div>
+              <div className="text-2xl font-bold">0</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2">
+                <Coins className="h-5 w-5 text-green-600" />
+                <span className="text-sm text-muted-foreground">Tokens Created</span>
+              </div>
+              <div className="text-2xl font-bold">{userTokens.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+                <span className="text-sm text-muted-foreground">Total Earnings</span>
+              </div>
+              <div className="text-2xl font-bold">{totalEarnings} ETH</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

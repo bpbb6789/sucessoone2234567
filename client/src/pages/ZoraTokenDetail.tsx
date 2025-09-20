@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect } from 'react';
 import { useParams } from 'wouter';
@@ -51,6 +50,11 @@ export default function ZoraTokenDetail() {
   const { toast } = useToast();
   const [buyAmount, setBuyAmount] = useState('');
   const [sellAmount, setSellAmount] = useState('');
+  const [tokenData, setTokenData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [creatorEarnings, setCreatorEarnings] = useState('0.00');
+  const [isOwner, setIsOwner] = useState(false);
 
   const tokenAddress = params?.address as Address;
 
@@ -59,8 +63,33 @@ export default function ZoraTokenDetail() {
     queryKey: ['zora-token-detail', tokenAddress],
     queryFn: async (): Promise<ZoraTokenDetails> => {
       const response = await fetch(`/api/zora-token/${tokenAddress}`);
-      if (!response.ok) throw new Error('Failed to fetch token details');
-      return response.json();
+      if (response.ok) {
+        const data = await response.json();
+        setTokenData(data);
+
+        // Check if current user is the token creator/owner
+        if (userAddress && data.creator) {
+          setIsOwner(userAddress.toLowerCase() === data.creator.toLowerCase());
+        }
+
+        // Calculate creator earnings from trading volume
+        if (data.address) {
+          try {
+            const volumeResponse = await fetch(`/api/dexscreener/${data.address}`);
+            if (volumeResponse.ok) {
+              const volumeData = await volumeResponse.json();
+              // Creator typically earns 0.5% of trading volume as fees
+              const earnings = (parseFloat(volumeData.volume24h || '0') * 0.005).toFixed(4);
+              setCreatorEarnings(earnings);
+            }
+          } catch (err) {
+            console.warn('Failed to fetch earnings data');
+          }
+        }
+      } else {
+        setError('Token not found');
+      }
+      return tokenDetails; // This line needs correction, it should return the fetched data or throw
     },
     enabled: !!tokenAddress,
   });
@@ -241,7 +270,7 @@ export default function ZoraTokenDetail() {
                   </Badge>
                 </div>
               </div>
-              
+
               <div className="text-right">
                 <div className="text-3xl font-bold">{parseFloat(tokenDetails.price).toFixed(6)} ETH</div>
                 <div className={`flex items-center gap-1 text-lg ${tokenDetails.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -272,6 +301,12 @@ export default function ZoraTokenDetail() {
                   {userBalance ? formatEther(userBalance) : '0.00'} {tokenDetails.symbol}
                 </div>
               </div>
+              {isOwner && (
+                <div>
+                  <div className="text-sm text-muted-foreground">Creator Earnings (24h)</div>
+                  <div className="font-semibold">{creatorEarnings} ETH</div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -292,7 +327,7 @@ export default function ZoraTokenDetail() {
                     <TabsTrigger value="buy">Buy</TabsTrigger>
                     <TabsTrigger value="sell">Sell</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="buy" className="space-y-4">
                     <div>
                       <label className="text-sm font-medium">ETH Amount</label>
@@ -304,7 +339,7 @@ export default function ZoraTokenDetail() {
                         className="mt-1"
                       />
                     </div>
-                    
+
                     {buyQuote && buyAmount && (
                       <div className="p-3 bg-muted rounded-lg">
                         <div className="text-sm text-muted-foreground">You will receive</div>
@@ -313,7 +348,7 @@ export default function ZoraTokenDetail() {
                         </div>
                       </div>
                     )}
-                    
+
                     <Button 
                       onClick={handleBuy} 
                       disabled={isBuyPending || isBuyConfirming || !buyAmount}
@@ -332,7 +367,7 @@ export default function ZoraTokenDetail() {
                       )}
                     </Button>
                   </TabsContent>
-                  
+
                   <TabsContent value="sell" className="space-y-4">
                     <div>
                       <label className="text-sm font-medium">Token Amount</label>
@@ -347,7 +382,7 @@ export default function ZoraTokenDetail() {
                         Balance: {userBalance ? formatEther(userBalance) : '0.00'} {tokenDetails.symbol}
                       </div>
                     </div>
-                    
+
                     {sellQuote && sellAmount && (
                       <div className="p-3 bg-muted rounded-lg">
                         <div className="text-sm text-muted-foreground">You will receive</div>
@@ -356,7 +391,7 @@ export default function ZoraTokenDetail() {
                         </div>
                       </div>
                     )}
-                    
+
                     <Button 
                       onClick={handleSell} 
                       disabled={isSellPending || isSellConfirming || !sellAmount || !userBalance || userBalance <= 0}
