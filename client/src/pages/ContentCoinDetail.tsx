@@ -1,347 +1,262 @@
-"use client";
-
 import { useParams, Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Play,
   ArrowLeft,
   TrendingUp,
   TrendingDown,
   Users,
   Activity,
-  Image,
-  MessageCircle,
-  Share2,
-  Heart,
-  Copy,
-  ExternalLink,
-  Eye,
-  Hash,
-  Clock,
   DollarSign,
-  Crown,
-  Sparkles,
-  Settings,
+  ExternalLink,
+  Copy,
   Loader2,
-  Download,
-  MoreHorizontal,
-  Flag,
+  ShoppingCart,
+  ArrowUpDown,
+  Wallet,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-// Using Zora SDK via API routes instead of direct contract calls
-import TransactionComponent from "@/components/Transaction";
 import { ContentPreview } from "@/components/ContentPreview";
-import { TokenTrading } from "@/components/TokenTrading";
-import {
-  formatUnits,
-  parseUnits,
-  Address,
-  erc20Abi,
-  createPublicClient,
-  http,
-  parseEther,
-} from "viem";
-import { ethers } from "ethers";
-import { baseSepolia } from "viem/chains";
-
-// Create public client for blockchain interactions
-const publicClient = createPublicClient({
-  chain: baseSepolia,
-  transport: http(),
-});
-import { useState, useMemo, useEffect } from "react";
-// Removed wagmi hooks for auction integration - using Zora SDK via API routes
-
-// Creator coin related hooks
-import {
-  useBuyCreatorCoin,
-  useSellCreatorCoin,
-  useCreatorCoin,
-  useCreatorCoinPrice,
-} from "@/hooks/useCreatorCoins";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CreatorCoin } from "@shared/schema";
-import { DexScreenerChart } from "@/components/DexScreenerChart";
+import { useState } from "react";
+import { formatUnits, parseEther, Address } from "viem";
+import { useAccount, useConnect, useDisconnect, useSendTransaction } from "wagmi";
+import { baseSepolia } from "wagmi/chains";
 
-// Contract constants for Base Sepolia
-const CREATOR_COIN_TOKEN_ABI = [
-  {
-    inputs: [{ internalType: "address", name: "account", type: "address" }],
-    name: "balanceOf",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-] as const;
-
-type CommentData = {
-  id: string;
-  userAddress: string;
-  content: string;
-  timestamp?: Date;
-  ethAmount?: string;
-  type?: "buy" | "sell" | "comment";
+type HolderData = {
+  address: string;
+  balance: string;
+  percentage: number;
 };
 
 type TradeData = {
   id: string;
   userAddress: string;
-  ethAmount: string;
-  timestamp?: Date;
-  type: "buy" | "sell";
+  tradeType: "buy" | "sell";
+  amount: string;
+  price: string;
+  transactionHash?: string;
+  createdAt: string;
 };
-
-type HolderData = {
-  address: string;
-  balance: string;
-};
-
-// Utility function to format time ago
-function formatTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays}d ago`;
-}
-
-// Utility function to format token balance
-function formatTokenBalance(balance: bigint | string | null): string {
-  if (!balance || balance === 0n) return "0";
-
-  if (typeof balance === "bigint") {
-    const formatted = formatUnits(balance, 18);
-    const num = parseFloat(formatted);
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(2) + "M";
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(2) + "K";
-    } else {
-      return num.toLocaleString(undefined, { maximumFractionDigits: 6 });
-    }
-  }
-
-  return balance.toString();
-}
 
 export default function ContentCoinDetail() {
   const params = useParams();
   const tokenAddress = params.address;
-  // Removed auction state - using Zora SDK
   const { toast } = useToast();
-  const [selectedPeriod, setSelectedPeriod] = useState<
-    "1H" | "1D" | "1W" | "1M" | "All"
-  >("1D");
-  const [viewMode, setViewMode] = useState<"chart" | "image">("chart");
-
-
-  // Removed auction state - using instant trading now
-
-
-  // Fetch creator coin data using the token address as ID
-  const { data: creatorCoin, isLoading: isLoadingCoin } = useCreatorCoin(
-    tokenAddress || "",
-  );
-  const { data: priceData } = useCreatorCoinPrice(tokenAddress || "");
-
-  // Fetch real trading data from DexScreener
-  const { data: dexData } = useQuery({
-    queryKey: [`dexscreener-${tokenAddress}`],
-    queryFn: async () => {
-      if (!tokenData?.coinAddress) return null;
-      try {
-        const response = await fetch(`/api/dexscreener/${tokenData.coinAddress}`);
-        if (response.ok) {
-          return await response.json();
-        }
-        return null;
-      } catch (error) {
-        console.warn('Failed to fetch DexScreener data:', error);
-        return null;
-      }
-    },
-    enabled: !!tokenData?.coinAddress,
-    refetchInterval: 30000, // Refresh every 30 seconds
-  });
-
-  // Removed auction check - using instant trading via Zora SDK
+  const [buyAmount, setBuyAmount] = useState("");
+  const [sellAmount, setSellAmount] = useState("");
+  
+  // Wallet connection
+  const { address, isConnected } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+  const { sendTransaction, isPending: isTransactionPending } = useSendTransaction();
 
   // Fetch creator coin data
-  const {
-    data: tokenData,
-    isLoading: creatorCoinLoading,
-    error: creatorCoinError,
-  } = useQuery({
+  const { data: coin, isLoading: coinLoading, error: coinError } = useQuery<CreatorCoin>({
     queryKey: [`/api/creator-coins/${tokenAddress}`],
-    queryFn: async () => {
-      const response = await fetch(`/api/creator-coins/${tokenAddress}`);
-      if (!response.ok) throw new Error("Failed to fetch creator coin");
-      return response.json();
-    },
     enabled: !!tokenAddress,
   });
 
-  // Fetch comments
-  const { data: commentData, isLoading: commentsLoading } = useQuery<
-    CommentData[]
-  >({
-    queryKey: [`/api/creator-coins/${tokenAddress}/comments`],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/creator-coins/${tokenAddress}/comments`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch comments");
-      return response.json();
-    },
-    enabled: !!tokenAddress,
-  });
-
-  // Fetch trade activity
-  const { data: tradesData, isLoading: tradesLoading } = useQuery<TradeData[]>({
-    queryKey: [`/api/creator-coins/${tokenAddress}/trades`],
-    queryFn: async () => {
-      const response = await fetch(`/api/creator-coins/${tokenAddress}/trades`);
-      if (!response.ok) throw new Error("Failed to fetch trades");
-      return response.json();
-    },
-    enabled: !!tokenAddress,
-  });
-
-  // Fetch holders
-  const { data: holdersData, isLoading: holdersLoading } = useQuery<
-    HolderData[]
-  >({
+  // Fetch holders data
+  const { data: holders, isLoading: holdersLoading } = useQuery<HolderData[]>({
     queryKey: [`/api/creator-coins/${tokenAddress}/holders`],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/creator-coins/${tokenAddress}/holders`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch holders");
-      return response.json();
-    },
+    enabled: !!tokenAddress && !!coin?.coinAddress,
+  });
+
+  // Fetch trading activity
+  const { data: trades, isLoading: tradesLoading } = useQuery<TradeData[]>({
+    queryKey: [`/api/creator-coins/${tokenAddress}/trades`],
     enabled: !!tokenAddress,
   });
 
+  // Get transaction data for buy/sell
+  const { data: buyTxData } = useQuery({
+    queryKey: [`/api/creator-coins/${tokenAddress}/buy-tx`, buyAmount],
+    queryFn: async () => {
+      if (!buyAmount || !address) return null;
+      const response = await fetch(`/api/creator-coins/${tokenAddress}/buy-tx`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ethAmount: buyAmount, userAddress: address })
+      });
+      return response.json();
+    },
+    enabled: !!buyAmount && !!address && parseFloat(buyAmount) > 0,
+  });
 
+  const { data: sellTxData } = useQuery({
+    queryKey: [`/api/creator-coins/${tokenAddress}/sell-tx`, sellAmount],
+    queryFn: async () => {
+      if (!sellAmount || !address) return null;
+      const response = await fetch(`/api/creator-coins/${tokenAddress}/sell-tx`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tokenAmount: sellAmount, userAddress: address })
+      });
+      return response.json();
+    },
+    enabled: !!sellAmount && !!address && parseFloat(sellAmount) > 0,
+  });
 
-  // Process holders data with proper typing
-  const processedHolders = useMemo(() => {
-    if (!holdersData || !Array.isArray(holdersData)) return [];
-    return holdersData.map((holder) => ({
-      address: holder.address,
-      balance: holder.balance,
-    }));
-  }, [holdersData]);
-
-  // Calculate current price for display using real data
-  const currentPrice = useMemo(() => {
-    // Use real DexScreener price data if available
-    if (priceData?.price && parseFloat(priceData.price) > 0) {
-      return parseFloat(priceData.price).toFixed(8);
+  const handleBuy = async () => {
+    if (!isConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to trade",
+        variant: "destructive",
+      });
+      return;
     }
-    // Use database price if available
-    else if (tokenData?.currentPrice && parseFloat(tokenData.currentPrice) > 0) {
-      return parseFloat(tokenData.currentPrice).toFixed(8);
+
+    if (!buyAmount || parseFloat(buyAmount) <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid ETH amount",
+        variant: "destructive",
+      });
+      return;
     }
-    // For tokens without trading data, fetch from DexScreener
-    return "No trading data"; // Show when no real price available
-  }, [priceData, tokenData]);
 
+    if (!buyTxData?.to || !buyTxData?.data) {
+      toast({
+        title: "Transaction data unavailable",
+        description: "Unable to prepare transaction",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    try {
+      await sendTransaction({
+        to: buyTxData.to as Address,
+        data: buyTxData.data as `0x${string}`,
+        value: parseEther(buyAmount),
+        chainId: baseSepolia.id,
+      });
 
+      toast({
+        title: "Transaction submitted!",
+        description: "Your buy order is being processed on-chain",
+      });
+      
+      setBuyAmount("");
+      
+      // Invalidate queries after successful transaction
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: [`/api/creator-coins/${tokenAddress}`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/creator-coins/${tokenAddress}/holders`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/creator-coins/${tokenAddress}/trades`] });
+      }, 2000);
+    } catch (error: any) {
+      toast({
+        title: "Transaction failed",
+        description: error.message || "Failed to submit transaction",
+        variant: "destructive",
+      });
+    }
+  };
 
-  // Chart data for trading view - now uses real price data
-  const chartData = useMemo(() => {
-    if (!tokenData) return null;
+  const handleSell = async () => {
+    if (!isConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to trade",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const defaultPrice =
-      priceData?.price || tokenData?.currentPrice || tokenData?.price || "0";
-    const priceChange = priceData?.priceChange24h || 0;
+    if (!sellAmount || parseFloat(sellAmount) <= 0) {
+      toast({
+        title: "Invalid amount", 
+        description: "Please enter a valid token amount",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Generate realistic price points based on actual data
-    const generatePricePoints = (period: string) => {
-      const basePrice = parseFloat(defaultPrice);
-      const points: string[] = [];
-      const numPoints = 20;
-      const width = 300;
-      const height = 100;
-      const startX = 50;
-      const startY = 80;
+    if (!sellTxData?.to || !sellTxData?.data) {
+      toast({
+        title: "Transaction data unavailable",
+        description: "Unable to prepare transaction",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      for (let i = 0; i < numPoints; i++) {
-        const x = startX + (i * width) / (numPoints - 1);
-        // Create realistic price movement based on actual change
-        const timeProgress = i / (numPoints - 1);
-        const volatility =
-          period === "1H" ? 0.02 : period === "1D" ? 0.05 : 0.1;
-        const trendFactor = (priceChange / 100) * timeProgress;
-        const randomVariation = Math.sin(i * 0.5) * volatility;
-        const priceMultiplier = 1 + trendFactor + randomVariation;
-        const adjustedPrice = Math.max(0.001, basePrice * priceMultiplier);
+    try {
+      await sendTransaction({
+        to: sellTxData.to as Address,
+        data: sellTxData.data as `0x${string}`,
+        value: 0n, // No ETH value for sell
+        chainId: baseSepolia.id,
+      });
 
-        // Convert price to Y coordinate (invert for SVG)
-        const normalizedPrice =
-          (adjustedPrice - basePrice * 0.8) / (basePrice * 0.4);
-        const y = Math.max(
-          30,
-          Math.min(180, startY + height - normalizedPrice * height * 0.8),
-        );
+      toast({
+        title: "Transaction submitted!",
+        description: "Your sell order is being processed on-chain",
+      });
+      
+      setSellAmount("");
+      
+      // Invalidate queries after successful transaction
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: [`/api/creator-coins/${tokenAddress}`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/creator-coins/${tokenAddress}/holders`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/creator-coins/${tokenAddress}/trades`] });
+      }, 2000);
+    } catch (error: any) {
+      toast({
+        title: "Transaction failed",
+        description: error.message || "Failed to submit transaction",
+        variant: "destructive",
+      });
+    }
+  };
 
-        points.push(i === 0 ? `M${x},${y}` : `L${x},${y}`);
-      }
+  const copyAddress = async (address: string) => {
+    await navigator.clipboard.writeText(address);
+    toast({
+      title: "Copied!",
+      description: "Address copied to clipboard",
+    });
+  };
 
-      return points.join(" ");
-    };
+  const formatTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return "now";
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+  };
 
-    return {
-      "1H": { points: generatePricePoints("1H"), price: defaultPrice },
-      "1D": { points: generatePricePoints("1D"), price: defaultPrice },
-      "1W": { points: generatePricePoints("1W"), price: defaultPrice },
-      "1M": { points: generatePricePoints("1M"), price: defaultPrice },
-      All: { points: generatePricePoints("All"), price: defaultPrice },
-    };
-  }, [priceData, tokenData]);
-
-  // Get current chart data safely
-  const currentData = chartData?.[selectedPeriod] ||
-    chartData?.["1D"] || { points: "M50,160 L350,160", price: "0" };
-
-
-
-
-
-  if (creatorCoinLoading) {
+  if (coinLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
-  if (!tokenData) {
+  if (coinError || !coin) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Token Not Found</h1>
+          <p className="text-muted-foreground mb-4">
+            This token may not exist or has not been deployed yet.
+          </p>
           <Link to="/contentcoin">
             <Button>Back to Content Coins</Button>
           </Link>
@@ -350,403 +265,360 @@ export default function ContentCoinDetail() {
     );
   }
 
+  const currentPrice = coin.currentPrice ? parseFloat(coin.currentPrice) : 0;
+  const marketCap = coin.marketCap ? parseFloat(coin.marketCap) : 0;
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <Link to="/contentcoin">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </Link>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            <Share2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Heart className="h-4 w-4" />
-          </Button>
+      <div className="border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Link to="/contentcoin">
+              <Button variant="ghost" size="sm" data-testid="button-back">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Content Coins
+              </Button>
+            </Link>
+            
+            <div className="flex items-center gap-2">
+              {coin.coinAddress && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyAddress(coin.coinAddress!)}
+                    data-testid="button-copy-address"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Address
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`https://sepolia.basescan.org/token/${coin.coinAddress}`, '_blank')}
+                    data-testid="button-explorer"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Explorer
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Content - Card Layout */}
-      <div className="flex gap-2 p-6 min-h-[calc(100vh-140px)]">
-        {/* Left Side - Chart Area */}
-        <Card className="flex-1">
-          <CardContent className="p-4">
-            {/* Price Display */}
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold">
-                  {dexData?.price ? `$${parseFloat(dexData.price).toFixed(8)}` : 
-                   currentPrice !== "No trading data" ? `$${currentPrice}` : "No Price Data"}
-                </h1>
-                {(dexData?.priceChange24h !== undefined || priceData?.priceChange24h !== undefined) && (
-                  <Badge
-                    className={`${(dexData?.priceChange24h || priceData?.priceChange24h || 0) >= 0 ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}`}
-                  >
-                    {(dexData?.priceChange24h || priceData?.priceChange24h || 0) >= 0 ? "+" : ""}
-                    {(dexData?.priceChange24h || priceData?.priceChange24h || 0).toFixed(2)}%
-                  </Badge>
-                )}
-                {dexData?.price && (
-                  <Badge variant="outline" className="text-green-600 border-green-600">
-                    Live Price
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center gap-2 justify-between">
-                <div className="flex items-center gap-2">
-                  <p className="text-muted-foreground">
-                    {tokenData?.coinName || tokenData?.name || "Loading..."} (
-                    {tokenData?.coinSymbol || tokenData?.symbol || "..."})
-                  </p>
-                </div>
-
-                {/* Contract Scanner Links Dropdown */}
-                {tokenData?.coinAddress && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 gap-2"
-                        data-testid="button-contract-menu"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          navigator.clipboard.writeText(tokenData.coinAddress!);
-                          toast({
-                            title: "Copied!",
-                            description: "Contract address copied to clipboard",
-                          });
-                        }}
-                        data-testid="action-copy-address"
-                      >
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copy address
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => {
-                          const ipfsUrl = tokenData.mediaCid ? `https://gateway.pinata.cloud/ipfs/${tokenData.mediaCid}` : '#';
-                          window.open(ipfsUrl, '_blank');
-                        }}
-                        data-testid="action-download"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-
-                      <DropdownMenuItem
-                        onClick={() => window.open(`https://sepolia.basescan.org/token/${tokenData.coinAddress}`, '_blank')}
-                        data-testid="action-basescan"
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Basescan
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => window.open(`https://www.geckoterminal.com/base-sepolia/tokens/${tokenData.coinAddress}`, '_blank')}
-                        data-testid="action-geckoterminal"
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        GeckoTerminal
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => window.open(`https://dexscreener.com/base-sepolia/${tokenData.coinAddress}`, '_blank')}
-                        data-testid="action-dexscreener"
-                      >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        DEX Screener
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem
-                        onClick={() => window.open(`https://www.tokenchat.live/token/base/${tokenData.coinAddress}`, '_blank')}
-                        data-testid="action-tokenchat"
-                      >
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        TokenChat
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-
-                      <DropdownMenuItem
-                        onClick={() => {
-                          toast({
-                            title: "Report Submitted",
-                            description: "Thank you for your report. We'll review it shortly.",
-                          });
-                        }}
-                        className="text-red-600 focus:text-red-600"
-                        data-testid="action-report"
-                      >
-                        <Flag className="mr-2 h-4 w-4" />
-                        Report
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            </div>
-
-            {/* Chart/Image Toggle */}
-            <div className="flex items-center gap-2 mb-4">
-              <Button
-                variant={viewMode === "chart" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("chart")}
-                className={`${viewMode === "chart" ? "bg-white text-black" : ""}`}
-              >
-                <TrendingUp className="h-4 w-4 mr-1" />
-                Chart
-              </Button>
-              <Button
-                variant={viewMode === "image" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("image")}
-                className={`${viewMode === "image" ? "bg-white text-black" : ""}`}
-              >
-                <Image className="h-4 w-4 mr-1" />
-                Content
-              </Button>
-            </div>
-
-            {/* Chart/Content Area */}
-            {viewMode === "chart" && tokenData?.address ? (
-              <DexScreenerChart
-                tokenAddress={tokenData.address}
-                tokenSymbol={tokenData.coinSymbol || "Token"}
-              />
-            ) : viewMode === "image" ? (
-              <div className="h-80 bg-muted rounded-lg mb-4 relative overflow-hidden">
-                <div className="w-full h-full flex items-center justify-center">
-                  {tokenData?.mediaCid ? (
-                    <ContentPreview
-                      mediaCid={tokenData.mediaCid}
-                      thumbnailCid={tokenData.thumbnailCid}
-                      contentType={tokenData.contentType}
-                      title={tokenData.title || tokenData.coinName}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="text-center text-muted-foreground">
-                      <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No content available</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        {/* Right Side - Trading Panel */}
-        <Card className="w-96">
-          <CardContent className="p-0">
-
-            {/* Tabs Container */}
-            <Tabs defaultValue="trade" className="flex flex-col">
-              <div className="border-b border-border px-4 py-3">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger
-                    value="trade"
-                    className="flex items-center gap-1 text-xs"
-                  >
-                    <TrendingUp className="h-3 w-3" />
-                    Trade
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="comments"
-                    className="flex items-center gap-1 text-xs"
-                  >
-                    <MessageCircle className="h-3 w-3" />
-                    Comments
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="holders"
-                    className="flex items-center gap-1 text-xs"
-                  >
-                    <Users className="h-3 w-3" />
-                    Holders
-                    <Badge variant="secondary" className="text-xs ml-1">
-                      {processedHolders.length}
-                    </Badge>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="activity"
-                    className="flex items-center gap-1 text-xs"
-                  >
-                    <Activity className="h-3 w-3" />
-                    Activity
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              {/* Tab Content */}
-              <div className="max-h-[500px] overflow-y-auto">
-
-                {/* Trade Tab Content - Real Trading Interface */}
-                <TabsContent value="trade" className="p-0">
-                  {tokenData?.coinAddress ? (
-                    <div className="p-4">
-                      <TokenTrading
-                        tokenAddress={tokenData.coinAddress as Address}
-                        tokenName={tokenData.coinName || tokenData.name || "Token"}
-                        tokenSymbol={tokenData.coinSymbol || tokenData.symbol || "TOKEN"}
-                        currentPrice={dexData?.price ? dexData.price.toString() : currentPrice}
-                        supply={tokenData.totalSupply || "1000000"}
-                        marketCap={dexData?.marketCap ? dexData.marketCap.toString() : "0"}
-                        holders={processedHolders.length}
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Token Info */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Token Header */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                    {coin.mediaCid ? (
+                      <ContentPreview
+                        mediaCid={coin.mediaCid}
+                        thumbnailCid={coin.thumbnailCid}
+                        contentType={coin.contentType}
+                        title={coin.title}
+                        className="w-full h-full object-cover"
                       />
-                    </div>
-                  ) : (
-                    <div className="p-4 text-center text-muted-foreground">
-                      <div className="bg-yellow-50 dark:bg-yellow-950 p-3 rounded-lg mb-3">
-                        <p className="text-yellow-700 dark:text-yellow-400 text-sm">⚠️ Trading requires Base Mainnet deployment</p>
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                        {coin.coinSymbol?.[0] || 'T'}
                       </div>
-                      <p>Token needs to be deployed to Base Mainnet for trading</p>
-                      <p className="text-xs mt-1">Current deployment: Base Sepolia (Testnet)</p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                {/* Comments Tab Content */}
-                <TabsContent value="comments" className="p-4 space-y-0">
-                  {commentData &&
-                  Array.isArray(commentData) &&
-                  commentData.length > 0 ? (
-                    <div className="space-y-3">
-                      {commentData.map((comment) => (
-                        <div key={comment.id} className="flex gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage
-                              src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${comment.userAddress || "default"}`}
-                            />
-                            <AvatarFallback>
-                              {comment.userAddress?.slice(2, 4) || "XX"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-medium">
-                                {comment.userAddress
-                                  ? `${comment.userAddress.slice(0, 6)}...${comment.userAddress.slice(-4)}`
-                                  : "Anonymous"}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {comment.timestamp &&
-                                  formatTimeAgo(new Date(comment.timestamp))}
-                              </span>
-                            </div>
-                            <p className="text-sm">{comment.content || ""}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-400 py-8">
-                      <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No comments yet</p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="holders" className="p-4 space-y-0">
-                  {processedHolders && processedHolders.length > 0 ? (
-                    <div className="space-y-3">
-                      {processedHolders.map((holder, index) => (
-                        <div
-                          key={holder.address || index}
-                          className="flex justify-between items-center"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage
-                                src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address || "default"}`}
-                              />
-                              <AvatarFallback>
-                                {holder.address?.slice(2, 4) || "XX"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm font-mono">
-                              {holder.address
-                                ? `${holder.address.slice(0, 6)}...${holder.address.slice(-4)}`
-                                : "Unknown"}
-                            </span>
-                          </div>
-                          <span className="text-sm">
-                            {holder.balance || "0"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-400 py-8">
-                      <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No holders yet</p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="activity" className="p-4 space-y-0">
-                  {tradesData &&
-                  Array.isArray(tradesData) &&
-                  tradesData.length > 0 ? (
-                    <div className="space-y-3">
-                      {tradesData.map((trade) => (
-                        <div
-                          key={trade.id}
-                          className="flex justify-between items-center"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-2 h-2 rounded-full ${trade.type === "buy" ? "bg-green-400" : "bg-red-400"}`}
-                            />
-                            <span className="text-sm font-mono">
-                              {trade.userAddress
-                                ? `${trade.userAddress.slice(0, 6)}...${trade.userAddress.slice(-4)}`
-                                : "Unknown"}
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm">
-                              {trade.ethAmount || "0"} ETH
-                            </div>
-                            <div className="text-xs text-gray-400">
-                              {trade.timestamp &&
-                                formatTimeAgo(new Date(trade.timestamp))}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center text-gray-400 py-8">
-                      <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No activity yet</p>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="details" className="p-4 space-y-0">
-                  <div className="text-center text-gray-400 py-8">
-                    <Settings className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Details coming soon</p>
+                    )}
                   </div>
-                </TabsContent>
-              </div>
-            </Tabs>
-          </CardContent>
-        </Card>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h1 className="text-2xl font-bold" data-testid="text-token-name">
+                        {coin.coinName}
+                      </h1>
+                      <Badge variant="secondary" data-testid="text-token-symbol">
+                        ${coin.coinSymbol}
+                      </Badge>
+                      <Badge 
+                        variant={coin.status === 'deployed' ? 'default' : 'secondary'}
+                        data-testid="text-token-status"
+                      >
+                        {coin.status}
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-muted-foreground mb-4" data-testid="text-token-description">
+                      {coin.description}
+                    </p>
+                    
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        <span data-testid="text-current-price">
+                          ${currentPrice.toFixed(8)} ETH
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        <span data-testid="text-market-cap">
+                          ${marketCap.toLocaleString()} Market Cap
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span data-testid="text-holders-count">
+                          {coin.holders || 0} holders
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Content Preview */}
+            {coin.mediaCid && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                    <ContentPreview
+                      mediaCid={coin.mediaCid}
+                      thumbnailCid={coin.thumbnailCid}
+                      contentType={coin.contentType}
+                      title={coin.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column - Trading */}
+          <div className="space-y-6">
+            {/* Trading Panel */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ArrowUpDown className="h-5 w-5" />
+                  Trade {coin.coinSymbol}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!isConnected ? (
+                  <div className="text-center py-8 space-y-4">
+                    <Wallet className="h-12 w-12 mx-auto text-muted-foreground" />
+                    <div>
+                      <p className="font-medium mb-2">Connect Wallet to Trade</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Connect your wallet to buy and sell {coin?.coinSymbol || 'tokens'}
+                      </p>
+                      <Button 
+                        onClick={() => connect({ connector: connectors[0] })}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        data-testid="button-connect-wallet"
+                      >
+                        <Wallet className="h-4 w-4 mr-2" />
+                        Connect Wallet
+                      </Button>
+                    </div>
+                  </div>
+                ) : coin?.status === 'deployed' && coin.coinAddress ? (
+                  <>
+                    <div className="text-center py-2 mb-4 text-sm text-green-600 bg-green-50 rounded-lg">
+                      ✅ Wallet Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+                    </div>
+
+                    {/* Buy Section */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">Buy with ETH</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          step="0.001"
+                          placeholder="0.001"
+                          value={buyAmount}
+                          onChange={(e) => setBuyAmount(e.target.value)}
+                          data-testid="input-buy-amount"
+                        />
+                        <Button
+                          onClick={handleBuy}
+                          disabled={isTransactionPending || !buyAmount}
+                          className="bg-green-600 hover:bg-green-700"
+                          data-testid="button-buy"
+                        >
+                          {isTransactionPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Buy"
+                          )}
+                        </Button>
+                      </div>
+                      {buyTxData && (
+                        <p className="text-xs text-muted-foreground">
+                          Est. tokens: {buyTxData.estimatedTokensReceived}
+                        </p>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    {/* Sell Section */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">Sell Tokens</label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          step="1"
+                          placeholder="100"
+                          value={sellAmount}
+                          onChange={(e) => setSellAmount(e.target.value)}
+                          data-testid="input-sell-amount"
+                        />
+                        <Button
+                          onClick={handleSell}
+                          disabled={isTransactionPending || !sellAmount}
+                          variant="outline"
+                          className="border-red-200 text-red-600 hover:bg-red-50"
+                          data-testid="button-sell"
+                        >
+                          {isTransactionPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Sell"
+                          )}
+                        </Button>
+                      </div>
+                      {sellTxData && (
+                        <p className="text-xs text-muted-foreground">
+                          Est. ETH: {sellTxData.estimatedEthReceived}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="font-medium mb-2">Trading Not Available</p>
+                    <p className="text-sm">
+                      {coin.status === 'pending' 
+                        ? 'Token is being deployed...' 
+                        : 'Token deployment required for trading'}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Activity Tabs */}
+            <Card>
+              <Tabs defaultValue="holders" className="w-full">
+                <CardHeader className="pb-3">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="holders" data-testid="tab-holders">
+                      Holders ({holders?.length || 0})
+                    </TabsTrigger>
+                    <TabsTrigger value="trades" data-testid="tab-trades">
+                      Activity
+                    </TabsTrigger>
+                  </TabsList>
+                </CardHeader>
+                
+                <CardContent className="max-h-80 overflow-y-auto">
+                  <TabsContent value="holders" className="mt-0">
+                    {holdersLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : holders && holders.length > 0 ? (
+                      <div className="space-y-3">
+                        {holders.map((holder, index) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage 
+                                  src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${holder.address}`} 
+                                />
+                                <AvatarFallback>
+                                  {holder.address.slice(2, 4).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span 
+                                className="font-mono text-sm cursor-pointer hover:text-blue-600"
+                                onClick={() => copyAddress(holder.address)}
+                                data-testid={`text-holder-${index}`}
+                              >
+                                {holder.address.slice(0, 6)}...{holder.address.slice(-4)}
+                              </span>
+                            </div>
+                            <div className="text-right text-sm">
+                              <div className="font-medium">{holder.balance}</div>
+                              <div className="text-muted-foreground">
+                                {holder.percentage.toFixed(2)}%
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No holders yet</p>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="trades" className="mt-0">
+                    {tradesLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : trades && trades.length > 0 ? (
+                      <div className="space-y-3">
+                        {trades.map((trade) => (
+                          <div key={trade.id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${
+                                trade.tradeType === 'buy' ? 'bg-green-500' : 'bg-red-500'
+                              }`} />
+                              <span 
+                                className="font-mono text-sm cursor-pointer hover:text-blue-600"
+                                onClick={() => copyAddress(trade.userAddress)}
+                                data-testid={`text-trader-${trade.id}`}
+                              >
+                                {trade.userAddress.slice(0, 6)}...{trade.userAddress.slice(-4)}
+                              </span>
+                            </div>
+                            <div className="text-right text-sm">
+                              <div className={`font-medium ${
+                                trade.tradeType === 'buy' ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {trade.tradeType === 'buy' ? '+' : '-'}{trade.amount}
+                              </div>
+                              <div className="text-muted-foreground">
+                                {formatTimeAgo(trade.createdAt)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No trading activity yet</p>
+                      </div>
+                    )}
+                  </TabsContent>
+                </CardContent>
+              </Tabs>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

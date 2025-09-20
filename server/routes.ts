@@ -7,7 +7,11 @@ import {
   createZoraMetadata,
   createCreatorCoin,
   validateContentForTokenization,
-  generateThumbnail
+  generateThumbnail,
+  getCoinPrice,
+  getCoinHolders,
+  buyCoin,
+  sellCoin
 } from './zora';
 import {
   insertVideoSchema, insertShortsSchema, insertChannelSchema, insertPlaylistSchema,
@@ -32,7 +36,7 @@ import { registerAdvancedTradingRoutes } from './routes/advancedTrading';
 import { ethers } from 'ethers';
 import { initializeDatabase } from './initializeDatabase';
 import { zoraTradingService } from './services/zoraTradingService';
-import { getCoinPrice } from './zora';
+// getCoinPrice imported above
 import { getTokenHolders } from './blockchain';
 
 
@@ -2962,6 +2966,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: 'Failed to fetch latest deployed coin',
         details: error instanceof Error ? error.message : 'Unknown error'
       });
+    }
+  });
+
+  // Creator Coin Trading API Routes - Transaction Preparation (User-Signed)
+  app.post('/api/creator-coins/:address/buy-tx', async (req, res) => {
+    try {
+      const { address } = req.params;
+      const { ethAmount, userAddress } = req.body;
+      
+      if (!ethAmount || parseFloat(ethAmount) <= 0) {
+        return res.status(400).json({ error: 'Invalid ETH amount' });
+      }
+      
+      if (!userAddress) {
+        return res.status(400).json({ error: 'User address required' });
+      }
+      
+      console.log(`🛒 Preparing buy tx for ${address}: ${ethAmount} ETH from ${userAddress}`);
+      
+      // TODO: Use Zora SDK to prepare actual transaction data
+      // For now, return the token contract address for direct interaction
+      const txData = {
+        to: address, // Token contract address
+        data: '0x', // Buy function call data - would be prepared by Zora SDK
+        estimatedGas: '100000',
+        estimatedTokensReceived: Math.floor(parseFloat(ethAmount) * 1000000).toString()
+      };
+      
+      res.json(txData);
+    } catch (error) {
+      console.error('Buy tx preparation error:', error);
+      res.status(500).json({ error: 'Failed to prepare buy transaction' });
+    }
+  });
+
+  app.post('/api/creator-coins/:address/sell-tx', async (req, res) => {
+    try {
+      const { address } = req.params;
+      const { tokenAmount, userAddress } = req.body;
+      
+      if (!tokenAmount || parseFloat(tokenAmount) <= 0) {
+        return res.status(400).json({ error: 'Invalid token amount' });
+      }
+      
+      if (!userAddress) {
+        return res.status(400).json({ error: 'User address required' });
+      }
+      
+      console.log(`💸 Preparing sell tx for ${address}: ${tokenAmount} tokens from ${userAddress}`);
+      
+      // TODO: Use Zora SDK to prepare actual transaction data
+      // For now, return the token contract address for direct interaction
+      const txData = {
+        to: address, // Token contract address
+        data: '0x', // Sell function call data - would be prepared by Zora SDK
+        estimatedGas: '120000',
+        estimatedEthReceived: (parseFloat(tokenAmount) * 0.000001).toFixed(8)
+      };
+      
+      res.json(txData);
+    } catch (error) {
+      console.error('Sell tx preparation error:', error);
+      res.status(500).json({ error: 'Failed to prepare sell transaction' });
+    }
+  });
+
+  app.get('/api/creator-coins/:address/trades', async (req, res) => {
+    try {
+      const { address } = req.params;
+      
+      // Get recent trades from the database
+      const trades = await db
+        .select()
+        .from(creatorCoinTrades)
+        .innerJoin(creatorCoins, eq(creatorCoins.id, creatorCoinTrades.coinId))
+        .where(eq(creatorCoins.coinAddress, address))
+        .orderBy(desc(creatorCoinTrades.createdAt))
+        .limit(50);
+      
+      const formattedTrades = trades.map(({ creator_coin_trades }) => ({
+        id: creator_coin_trades.id,
+        userAddress: creator_coin_trades.userAddress,
+        tradeType: creator_coin_trades.tradeType,
+        amount: creator_coin_trades.amount,
+        price: creator_coin_trades.price,
+        transactionHash: creator_coin_trades.transactionHash,
+        createdAt: creator_coin_trades.createdAt?.toISOString() || new Date().toISOString()
+      }));
+      
+      res.json(formattedTrades);
+    } catch (error) {
+      console.error('Trades fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch trades' });
     }
   });
 
