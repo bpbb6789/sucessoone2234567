@@ -198,11 +198,6 @@ export function WalletConnectButton({
                             size === "lg" && "h-10 rounded-md px-8",
                           )}
                         >
-                          <img
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${account.address}`}
-                            alt="Profile Avatar"
-                            className="w-6 h-6 rounded-full"
-                          />
                           {!iconOnly && (
                             <span className="hidden sm:inline">
                               {account.displayName}
@@ -213,11 +208,6 @@ export function WalletConnectButton({
                       <DropdownMenuContent className="w-64 p-4" align="end">
                         {/* Profile Header */}
                         <div className="flex items-center gap-3 mb-4">
-                          <img
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${account.address}`}
-                            alt="Profile Avatar"
-                            className="w-10 h-10 rounded-full"
-                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-medium truncate">

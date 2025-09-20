@@ -169,11 +169,11 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
 
 const mainNavItems = [
   { icon: "🔍", label: "Discover", href: "/" },
-  { icon: "✨", label: "Create Token", href: "/contentnew" },
   { icon: "🚀", label: "Launch", href: "/launch" },
   { icon: "🏆", label: "Leaderboard", href: "/leaderboard" },
   { icon: "👨‍🎨", label: "Creators", href: "/creators" },
   { icon: "📺", label: "Channels", href: "/channels" },
+  { icon: "🪙", label: "Content Tokens", href: "/contents" },
 ];
 
 const additionalItems = [
