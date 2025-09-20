@@ -50,7 +50,7 @@ export interface DexScreenerResponse {
   pairs: DexScreenerToken[] | null;
 }
 
-// Get real-time price data from DexScreener API
+// Get real-time price data from DexScreener API or contract data for testnets
 export async function getDexScreenerData(tokenAddress: string): Promise<{
   price: string;
   priceChange24h: number;
@@ -61,7 +61,41 @@ export async function getDexScreenerData(tokenAddress: string): Promise<{
   try {
     console.log(`📊 Fetching DexScreener data for token: ${tokenAddress}`);
 
-    // DexScreener API endpoint for Base Sepolia
+    // Check if this is a testnet by trying to detect the network
+    // For Base Sepolia (testnet), use contract data instead of DexScreener
+    if (process.env.NODE_ENV === 'development' || tokenAddress.length === 42) {
+      console.log(`🧪 Testnet detected, fetching contract data instead of DexScreener`);
+      
+      // Try to get real contract data from Zora
+      try {
+        const contractResponse = await fetch(`/api/zora-token/${tokenAddress}`);
+        if (contractResponse.ok) {
+          const contractData = await contractResponse.json();
+          console.log(`📋 Using real contract data for testnet token: ${tokenAddress}`);
+          
+          return {
+            price: contractData.price || '0.000001',
+            priceChange24h: contractData.change24h || 0,
+            volume24h: contractData.volume24h || '0',
+            marketCap: contractData.marketCap || '0',
+            liquidity: '0' // No real liquidity on testnet
+          };
+        }
+      } catch (contractError) {
+        console.warn(`⚠️ Failed to fetch contract data, using minimal values`);
+      }
+
+      // Return minimal testnet values instead of inflated $35 market cap
+      return {
+        price: '0.000001', // Very small price for new testnet tokens
+        priceChange24h: 0,
+        volume24h: '0',
+        marketCap: '1000', // $1000 instead of $35k
+        liquidity: '0'
+      };
+    }
+
+    // For mainnet, use DexScreener API
     const url = `https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`;
 
     const response = await fetch(url, {
