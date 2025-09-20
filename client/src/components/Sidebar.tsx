@@ -191,12 +191,9 @@ function ChannelRealStats({ coinAddress, ticker }: { coinAddress?: string; ticke
 
 const mainNavItems = [
   { icon: FileImage, label: "Discover", href: "/" },
-  { icon: Search, label: "Explore Content", href: "/explorecontent" },
   { icon: Sparkles, label: "Create Token", href: "/contentnew" },
-  { icon: Zap, label: "Zora Create", href: "/zoracreate" },
-  { icon: Search, label: "Zora Explore", href: "/zoraexplore" },
+  { icon: Zap, label: "Launch", href: "/launch" },
   { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
-  { icon: Radio, label: "Create Channel", href: "/create-channel" },
   { icon: Trophy, label: "Creators", href: "/creators" },
   { icon: Radio, label: "Channels", href: "/channels" },
 ];

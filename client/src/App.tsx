@@ -115,6 +115,7 @@ function AppContent() {
                 <Route path="/createtoken" component={CreateToken} />
                 <Route path="/create-content-coin" component={CreateContentCoin} />
                 <Route path="/zoracreate" component={ZoraCreate} />
+                <Route path="/launch" component={ZoraCreate} />
                 <Route path="/zora-token/:address" component={ZoraTokenDetail} />
                 <Route path="/watch/:id" component={Watch} />
                 <Route path="/creatorcoins" component={CreatorCoins} />
