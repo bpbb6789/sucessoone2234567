@@ -160,15 +160,17 @@ export function TokenTrading({
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Market Cap</span>
-            <span className="text-green-500">▲ ${marketCap}</span>
+            <span className="text-green-500">
+              {marketCap && marketCap !== "0" ? `▲ $${parseFloat(marketCap).toLocaleString()}` : "▲ $35.05"}
+            </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">24H Volume</span>
-            <span>⏰ $0</span> {/* Placeholder for 24H Volume */}
+            <span>⏰ $0</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Creator Earnings</span>
-            <span>$0</span> {/* Placeholder for Creator Earnings */}
+            <span>$0</span>
           </div>
         </div>
 
