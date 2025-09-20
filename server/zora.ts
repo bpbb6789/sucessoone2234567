@@ -29,7 +29,8 @@ const getZoraFactoryAddress = () => {
   const useMainnet = process.env.NODE_ENV === 'production' || process.env.USE_BASE_MAINNET?.toLowerCase().trim() === 'true';
   
   if (useMainnet) {
-    // Base Mainnet factory - official Zora deployment
+    // Base Mainnet factory - deploy your custom factory here when ready
+    // For now using official Zora factory, but you can replace with your deployed mainnet factory
     return '0x777777751622c0d3258f214F9DF38E35BF45baF3' as const;
   } else {
     // Base Sepolia factory - your custom deployment
