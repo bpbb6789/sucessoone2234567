@@ -232,9 +232,9 @@ export default function CreateContentCoin() {
       console.log('✅ Upload successful:', result);
       setUploadedCoin(result.coin);
 
-      // Trigger notification for content coin creation
+      // Trigger notification for content coin creation (not launched yet)
       triggerNotification.mutate({
-        type: 'content_coin_launch',
+        type: 'content_coin_created',
         data: {
           recipientAddress: address,
           creatorAddress: address,
@@ -280,22 +280,34 @@ export default function CreateContentCoin() {
     },
     onSuccess: (data) => {
       console.log('✅ Deployment successful:', data);
-      // Show success toast
-      if (window.showToast) {
-        window.showToast({
-          title: "Deployment Successful! 🚀",
-          description: `Your content coin "${uploadedCoin?.coinName}" has been deployed to the blockchain!`,
-          type: "success"
-        });
-      }
-
+      
       // Update the coin with deployment info
-      setUploadedCoin(prev => prev ? {
+      setUploadedCoin((prev: any) => prev ? {
         ...prev,
         status: 'deployed',
         coinAddress: data.coin?.coinAddress || 'Deployed',
         deploymentTxHash: data.coin?.txHash
       } : null);
+
+      // Trigger notification for successful deployment (now actually launched)
+      triggerNotification.mutate({
+        type: 'content_coin_launch',
+        data: {
+          recipientAddress: address,
+          creatorAddress: address,
+          creatorName: formData.creatorName || 'Creator',
+          coinName: uploadedCoin?.coinName || 'Content Coin',
+          coinId: uploadedCoin?.id,
+          coinAddress: data.coin?.coinAddress,
+          txHash: data.coin?.txHash
+        }
+      });
+
+      // Show success toast
+      toast({
+        title: "Deployment Successful! 🚀",
+        description: `Your content coin "${uploadedCoin?.coinName}" has been deployed to the blockchain!`,
+      });
     },
     onError: (error) => {
       console.error('❌ Deployment failed:', error);
@@ -332,33 +344,7 @@ export default function CreateContentCoin() {
       return;
     }
 
-    deployMutation.mutate(uploadedCoin.id, {
-      onSuccess: (data) => {
-        // Trigger notification for content coin creation
-        triggerNotification.mutate({
-          type: 'content_coin_launch',
-          data: {
-            recipientAddress: address,
-            creatorAddress: address,
-            creatorName: formData.creatorName || 'Creator',
-            coinName: uploadedCoin.coinName, // Use uploadedCoin.coinName for consistency
-            coinId: data.coinId // Assuming data.coinId is the correct ID
-          }
-        });
-
-        // Success - redirect to the content coin page
-        // navigate(`/content-coin/${data.coinId}`); // Uncomment and import navigate if needed
-        // onSuccess?.(); // Uncomment if onSuccess is a prop
-      },
-      onError: (error: any) => {
-        console.error('❌ Deployment failed:', error);
-        toast({
-          title: "Deployment Failed",
-          description: error.message || "Failed to deploy creator coin",
-          variant: "destructive",
-        });
-      }
-    });
+    deployMutation.mutate();
   };
 
   const resetUpload = () => {
@@ -491,10 +477,9 @@ export default function CreateContentCoin() {
                         selectedType === type.id 
                           ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
                           : 'border-gray-200 dark:border-gray-700 hover:border-purple-300'
-                      }`}
-                      onClick={() => handleTypeSelect(type.id)}
+                      } ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => !isConnected ? null : handleTypeSelect(type.id)}
                       data-testid={`content-type-${type.id}`}
-                      disabled={!isConnected}
                     >
                       <CardContent className="p-4 text-center">
                         <Icon className={`h-8 w-8 mx-auto mb-2 ${
