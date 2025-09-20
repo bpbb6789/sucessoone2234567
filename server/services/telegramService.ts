@@ -181,18 +181,33 @@ export class TelegramService {
 #NewContentCoin #${data.coinSymbol} #Pending`;
     }
 
-    // Send with media if available
-    if (data.mediaUrl) {
-      if (data.contentType === 'video') {
-        return this.sendVideo(data.mediaUrl, message, { parseMode: 'HTML' });
-      } else if (data.contentType === 'image') {
-        return this.sendPhoto(data.mediaUrl, message, { parseMode: 'HTML' });
-      } else if (data.contentType === 'audio' || data.contentType === 'document') {
-        return this.sendDocument(data.mediaUrl, message, { parseMode: 'HTML' });
+    // Always try to send with media first
+    const mediaUrl = data.mediaUrl || data.thumbnailUrl;
+    if (mediaUrl) {
+      // Ensure URL is properly formatted for IPFS
+      const formattedUrl = mediaUrl.startsWith('http') ? mediaUrl : 
+                          mediaUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${mediaUrl}` : 
+                          `https://gateway.pinata.cloud/ipfs/${mediaUrl}`;
+      
+      console.log(`📤 Sending Telegram message with media: ${formattedUrl}`);
+      
+      try {
+        // Try different media types based on content or file extension
+        if (data.contentType === 'video' || data.contentType === 'reel' || formattedUrl.includes('.mp4') || formattedUrl.includes('.mov')) {
+          return await this.sendVideo(formattedUrl, message, { parseMode: 'HTML' });
+        } else if (data.contentType === 'audio' || formattedUrl.includes('.mp3') || formattedUrl.includes('.wav')) {
+          return await this.sendDocument(formattedUrl, message, { parseMode: 'HTML' });
+        } else if (data.contentType === 'gif' || formattedUrl.includes('.gif')) {
+          // GIFs work better as animations in Telegram
+          return await this.sendDocument(formattedUrl, message, { parseMode: 'HTML' });
+        } else {
+          // Default to photo for images and other visual content
+          return await this.sendPhoto(formattedUrl, message, { parseMode: 'HTML' });
+        }
+      } catch (mediaError) {
+        console.warn(`⚠️ Failed to send media ${formattedUrl}:`, mediaError);
+        // Fallback to text if media fails
       }
-    } else if (data.thumbnailUrl) {
-      // Use thumbnail if main media not available
-      return this.sendPhoto(data.thumbnailUrl, message, { parseMode: 'HTML' });
     }
 
     // Fallback to text message
@@ -242,10 +257,22 @@ export class TelegramService {
 #NewChannel #${data.name.replace(/\s+/g, '')}`;
     }
 
-    // Send with channel image if available
-    if (data.coverUrl || data.avatarUrl) {
-      const imageUrl = data.coverUrl || data.avatarUrl;
-      return this.sendPhoto(imageUrl, message, { parseMode: 'HTML' });
+    // Always try to send with image if available (prioritize cover over avatar)
+    const imageUrl = data.coverUrl || data.avatarUrl;
+    if (imageUrl) {
+      // Ensure URL is properly formatted for IPFS
+      const formattedUrl = imageUrl.startsWith('http') ? imageUrl : 
+                          imageUrl.startsWith('baf') ? `https://gateway.pinata.cloud/ipfs/${imageUrl}` : 
+                          `https://gateway.pinata.cloud/ipfs/${imageUrl}`;
+      
+      console.log(`📤 Sending channel Telegram message with image: ${formattedUrl}`);
+      
+      try {
+        return await this.sendPhoto(formattedUrl, message, { parseMode: 'HTML' });
+      } catch (mediaError) {
+        console.warn(`⚠️ Failed to send channel image ${formattedUrl}:`, mediaError);
+        // Fallback to text if image fails
+      }
     }
 
     return this.sendMessage(message, { parseMode: 'HTML' });
@@ -356,17 +383,24 @@ ${entries}
       // Post each content coin with delay to avoid rate limiting
       for (const coin of contentCoins) {
         try {
+          // Ensure proper IPFS URL formatting for media
           const mediaUrl = coin.mediaCid 
-            ? (coin.mediaCid.startsWith('baf') 
+            ? (coin.mediaCid.startsWith('http') 
+                ? coin.mediaCid 
+                : coin.mediaCid.startsWith('baf')
                 ? `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}` 
-                : coin.mediaCid)
+                : `https://gateway.pinata.cloud/ipfs/${coin.mediaCid}`)
             : undefined;
             
           const thumbnailUrl = coin.thumbnailCid 
-            ? (coin.thumbnailCid.startsWith('baf')
+            ? (coin.thumbnailCid.startsWith('http')
+                ? coin.thumbnailCid
+                : coin.thumbnailCid.startsWith('baf')
                 ? `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}`
-                : coin.thumbnailCid)
+                : `https://gateway.pinata.cloud/ipfs/${coin.thumbnailCid}`)
             : undefined;
+
+          console.log(`📤 Bulk posting content coin: ${coin.title} with media:`, { mediaUrl, thumbnailUrl });
 
           const success = await this.notifyNewContentCoin({
             title: coin.title,
@@ -440,23 +474,30 @@ ${entries}
       // Post each channel with delay to avoid rate limiting
       for (const channel of channels) {
         try {
+          // Ensure proper IPFS URL formatting for channel images
           const avatarUrl = channel.avatarUrl 
-            ? (channel.avatarUrl.startsWith('baf')
+            ? (channel.avatarUrl.startsWith('http')
+                ? channel.avatarUrl
+                : channel.avatarUrl.startsWith('baf')
                 ? `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`
-                : channel.avatarUrl)
+                : `https://gateway.pinata.cloud/ipfs/${channel.avatarUrl}`)
             : undefined;
             
           const coverUrl = channel.coverUrl 
-            ? (channel.coverUrl.startsWith('baf')
+            ? (channel.coverUrl.startsWith('http')
+                ? channel.coverUrl
+                : channel.coverUrl.startsWith('baf')
                 ? `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}`
-                : channel.coverUrl)
+                : `https://gateway.pinata.cloud/ipfs/${channel.coverUrl}`)
             : undefined;
+
+          console.log(`📤 Bulk posting channel: ${channel.name} with media:`, { avatarUrl, coverUrl });
 
           const success = await this.notifyNewChannel({
             name: channel.name,
-            creator: channel.creatorAddress,
+            creator: channel.createdBy || channel.creatorAddress || channel.owner,
             coinAddress: channel.coinAddress || undefined,
-            ticker: channel.coinSymbol || undefined,
+            ticker: channel.ticker || channel.coinSymbol || undefined,
             category: channel.category || undefined,
             avatarUrl,
             coverUrl,

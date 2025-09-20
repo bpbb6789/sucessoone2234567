@@ -1247,6 +1247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ticker: channel.ticker,
           category: channel.category,
           avatarUrl: channel.avatarCid ? `https://gateway.pinata.cloud/ipfs/${channel.avatarCid}` : undefined,
+          coverUrl: channel.coverCid ? `https://gateway.pinata.cloud/ipfs/${channel.coverCid}` : undefined,
           slug: channel.slug,
           createdAt: channel.createdAt?.toISOString()
         }).catch(err => console.log('Telegram notification failed:', err));
@@ -2370,7 +2371,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await triggerNotification('content_coin_created', {
         creatorAddress: newCoin.creatorAddress,
         coinName: newCoin.coinName,
-        coinId: newCoin.id
+        coinId: newCoin.id,
+        mediaUrl: newCoin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${newCoin.mediaCid}` : undefined,
+        thumbnailUrl: newCoin.thumbnailCid ? `https://gateway.pinata.cloud/ipfs/${newCoin.thumbnailCid}` : undefined
       });
 
       // Also trigger upload success notification
@@ -2380,7 +2383,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         coinName: newCoin.coinName,
         coinSymbol: newCoin.coinSymbol,
         contentType: newCoin.contentType,
-        coinId: newCoin.id
+        coinId: newCoin.id,
+        mediaUrl: newCoin.mediaCid ? `https://gateway.pinata.cloud/ipfs/${newCoin.mediaCid}` : undefined,
+        thumbnailUrl: newCoin.thumbnailCid ? `https://gateway.pinata.cloud/ipfs/${newCoin.thumbnailCid}` : undefined
       });
 
       console.log('✅ Upload completed successfully:', newCoin);
@@ -3524,6 +3529,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               coinSymbol: data.coinSymbol || 'COIN',
               creator: data.creatorAddress,
               contentType: data.contentType || 'content',
+              mediaUrl: data.mediaUrl,
+              thumbnailUrl: data.thumbnailUrl,
               createdAt: new Date().toISOString()
             }).catch(err => console.log('Telegram notification failed:', err));
           }
@@ -3558,6 +3565,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               marketCap: data.marketCap || '0.00',
               totalSupply: data.totalSupply || '1.00B',
               currentPrice: data.currentPrice || '0.000001',
+              mediaUrl: data.mediaUrl,
+              thumbnailUrl: data.thumbnailUrl,
               createdAt: new Date().toISOString()
             }).catch(err => console.log('Telegram notification failed:', err));
           }
