@@ -64,3 +64,47 @@ export default function setupMediaUploadRoutes(app: Express) {
     }
   });
 }
+import { Router } from 'express';
+import multer from 'multer';
+import { uploadFileToIPFS } from '../ipfs';
+
+const router = Router();
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+});
+
+// Media upload endpoint for token assets
+router.post('/upload-media', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file provided" });
+    }
+
+    console.log(`📤 Uploading media file: ${req.file.originalname} (${req.file.size} bytes)`);
+
+    // Upload file to IPFS
+    const file = new File([req.file.buffer], req.file.originalname, {
+      type: req.file.mimetype,
+    });
+
+    const cid = await uploadFileToIPFS(file);
+    console.log(`✅ Media uploaded to IPFS: ${cid}`);
+
+    res.json({
+      success: true,
+      cid,
+      url: `https://gateway.pinata.cloud/ipfs/${cid}`
+    });
+  } catch (error) {
+    console.error("❌ Media upload error:", error);
+    res.status(500).json({
+      message: "Failed to upload media to IPFS",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+export default router;

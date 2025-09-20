@@ -130,17 +130,27 @@ export default function ZoraCreate() {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/upload-media', {
-      method: 'POST',
-      body: formData
-    });
+    try {
+      const response = await fetch('/api/upload-media', {
+        method: 'POST',
+        body: formData
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to upload media to IPFS');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${response.status} ${errorText}`);
+      }
+
+      const result = await response.json();
+      if (!result.success || !result.cid) {
+        throw new Error('Invalid upload response');
+      }
+
+      return result.url;
+    } catch (error) {
+      console.error('Media upload error:', error);
+      throw new Error(`Failed to upload media: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    const result = await response.json();
-    return `https://gateway.pinata.cloud/ipfs/${result.cid}`;
   };
 
   const handleUrlImport = async () => {
@@ -263,8 +273,14 @@ export default function ZoraCreate() {
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`Failed to create token: ${errorData}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.details || errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = await response.text() || errorMessage;
+        }
+        throw new Error(`Token creation failed: ${errorMessage}`);
       }
 
       const result = await response.json();

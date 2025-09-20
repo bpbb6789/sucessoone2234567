@@ -39,6 +39,7 @@ import contentCoinTradingRoutes from './routes/contentCoinTrading';
 import dexscreenerRoutes from './routes/dexscreener';
 import { blockchainEventsRouter } from './routes/blockchainEvents';
 import setupMediaUploadRoutes from './routes/mediaUpload';
+import mediaUploadRoutes from './routes/mediaUpload';
 
 const prisma = new PrismaClient();
 
