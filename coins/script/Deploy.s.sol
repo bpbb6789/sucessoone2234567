@@ -10,14 +10,9 @@ contract DeployScript is CoinsDeployerBase {
 
         vm.startBroadcast();
 
-        // get deployer contract
-        DeterministicDeployerAndCaller deployer = createOrGetDeployerAndCaller();
-
-        deployZoraDeterministic(deployment, deployer);
+        // Standard deployment (no CREATE2/salt mining)
+        deployDevFactory(deployment);
 
         vm.stopBroadcast();
-
-        // save the deployment json
-        saveDeployment(deployment);
     }
 }

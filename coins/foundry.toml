@@ -1,7 +1,7 @@
 [profile.default]
 src = "src"
 test = "test"
-libs = ["node_modules", "lib"]
+libs = ["node_modules", "lib", "../shared-contracts"]
 via_ir = true
 optimizer = true
 solc_version = '0.8.28'
@@ -13,7 +13,8 @@ fs_permissions = [
   { access = "read", path = "./package.json" },
   { access = "readwrite", path = "./deterministicConfig" },
   { access = "read", path = "../shared-contracts/chainConfigs" },
-  { access = "read", path = "../shared-contracts/deterministicConfig" }
+  { access = "read", path = "../shared-contracts/deterministicConfig" },
+  { access = "read", path = "../shared-contracts/chainConfigs/8453.json" }
 ]
 
 [profile.ci.fuzz]
